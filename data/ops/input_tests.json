@@ -1,0 +1,78 @@
+[
+  {
+    "input": "MD 파일",
+    "title": "9/25 독서노트 — 『작은 습관의 힘』",
+    "day": "2026-09-25",
+    "day_basis": "확실",
+    "type": "생각·성찰",
+    "observation_state": "바뀜",
+    "thoughts": {
+      "thoughts": 3,
+      "by_kind": {
+        "해석": 1,
+        "다짐": 1,
+        "반성": 1
+      }
+    },
+    "relations": 0,
+    "question": "휴대폰을 침대 밖에 두는 것 말고, 습관을 바꾸기 위해 책상이나 방에서 바꿔 볼 수 있는 환경은 무엇인가?",
+    "gates": {
+      "G1_dropped_quotes": 0,
+      "G2_date_ok": true,
+      "G4_names_masked": 0,
+      "G3_rewritten": 0
+    },
+    "seconds": 60.81,
+    "est_cost_usd": 0.1
+  },
+  {
+    "input": "TXT 파일",
+    "title": "10/1 수요일 일기",
+    "day": "2026-10-01",
+    "day_basis": "확실",
+    "type": "생각·성찰",
+    "observation_state": "처음 쓰는 주제",
+    "thoughts": {
+      "thoughts": 2,
+      "by_kind": {
+        "해석": 1,
+        "질문": 1
+      }
+    },
+    "relations": 1,
+    "question": "칭찬이 기쁨이면서도 부담이 되는 이유는 무엇인가?",
+    "gates": {
+      "G1_dropped_quotes": 0,
+      "G2_date_ok": true,
+      "G4_names_masked": 0,
+      "G3_rewritten": 0
+    },
+    "seconds": 58.16,
+    "est_cost_usd": 0.1
+  },
+  {
+    "input": "직접 쓰기",
+    "title": "10/2 목요일",
+    "day": "2026-10-02",
+    "day_basis": "확실",
+    "type": "생각·성찰",
+    "observation_state": "처음 쓰는 주제",
+    "thoughts": {
+      "thoughts": 2,
+      "by_kind": {
+        "해석": 1,
+        "다짐": 1
+      }
+    },
+    "relations": 0,
+    "question": "의지보다 환경이 먼저라고 느낀 구체적인 장면은 무엇이었나?",
+    "gates": {
+      "G1_dropped_quotes": 0,
+      "G2_date_ok": true,
+      "G4_names_masked": 0,
+      "G3_rewritten": 0
+    },
+    "seconds": 57.78,
+    "est_cost_usd": 0.1
+  }
+]

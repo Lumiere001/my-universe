@@ -1,0 +1,135 @@
+# 🌌 나의 우주
+
+**내가 쓴 글에서 지켜 온 생각, 바뀐 생각, 아직 풀지 못한 긴장을 근거와 함께 보여 주는 서비스.**
+글 한 편은 별, 주제는 성운, 생각 사이의 관계는 별자리로 그립니다. 전남대 생성형 AI 트랙 LLMOps 1차 프로젝트 · 4조.
+
+- 입력: 직접 쓴 글, MD·TXT 파일, 인스타그램 "내 정보 다운로드" ZIP
+- Studio 에이전트 2개: **기록 Agent**(글 → 생각 구조화), **관측 Agent**(오늘 생각 vs 과거 생각 → 관계 판정)
+- 결과: **관측 보고서 JSON**(근거 인용 · 관측 상태 · 다음에 써 볼 질문)과 **2D 우주 화면**
+- 로그인 없음: 우주는 "정리된 기록 파일"(JSON)로 내려받았다가 다시 올립니다. 서버는 글을 저장하지 않습니다.
+
+![서비스 흐름](docs/images/workflow.png)
+
+## 왜 만드는가
+
+일기는 남는데 그 일기로 지금의 나를 이해하지 못합니다. 생각이 어떻게 바뀌었는지 알려면 지난 글을 직접 찾아 대조해야 하고, 처음 쓰는 사람은 쓸 거리가 막연해 기록이 쌓이지 않습니다.
+나의 우주는 사람을 판정하지 않고 **관측**합니다. 원문에 적힌 생각만 별로 띄우고, 원문으로 확인되는 관계는 실선, AI 추정은 점선으로 그리며, 모르는 것은 질문으로 남깁니다.
+
+## 전체 구조
+
+![전체 구조](docs/images/architecture.png)
+
+| 계층 | 파일 | 하는 일 |
+| --- | --- | --- |
+| 화면 | `streamlit_app.py`, `universe_view.py` | 우주 · 관측 보고서 / 글쓰기 / 가져오기 / 운영(Ops) |
+| 서비스 | `service.py` | 글 한 편 → 관측 보고서 파이프라인, 세션 실행 한도 |
+| 코드 | `importer.py` | 출처와 무관한 공통 기록, 인스타 글자 깨짐 복원 · 이어진 게시물 묶기 · 제목 속 날짜 · 소제목, HTML 변환 |
+| | `gates.py` | 관문 G1 원문에 없는 인용 · G2 날짜 · G3 사람 단정 표현 · G4 실명 가리기 |
+| | `universe.py` | 주제 → 성운 연결, 관련 과거 생각 고르기, 관계 규칙, 별 자리 |
+| | `observe_builder.py` | 관측 Agent에 보낼 비교 입력 HTML (오늘 생각 T1… · 과거 생각 P1…) |
+| | `embedder.py` | Solar Embedding (같은 이야기인가만 판단) |
+| 에이전트 | `agent_client.py`, `agent_configs/` | Studio 에이전트 실행(Files API + Jobs API, 재시도), Studio에서 내보낸 설정 |
+| 운영 | `runlog.py`, `tools/` | 원문 없는 실행 기록, 가상 데이터 평가, 흔들림 측정, 입력 3종 시험, 그림 |
+
+## Studio 에이전트
+
+![두 에이전트](docs/images/agents.png)
+
+HR 예시의 `Resume·JD Agent → matching_builder → Matching Agent`와 같은 모양입니다.
+
+| 에이전트 | 노드 | Classify 갈래 | Extract 스키마 |
+| --- | --- | --- | --- |
+| **기록 Agent** | Parse → Classify → Extract | 경험 기록 / 생각·성찰 / 창작 / 기타 | `summary` `period` `triggers` `addressee` `roles`(실명 X) `references` `events` `thoughts[]` = topic · thought · kind(해석·신념·원칙·질문·다짐·반성·감정) · certainty · quote(원문 그대로) · self_change · value |
+| **관측 Agent** | Parse → Classify → Extract | 해소 / 바뀜 / 긴장 / 어긋남 / 이어짐 / 처음 쓰는 주제 | `state` `summary` `question` `relations[]` = type · today_id · past_id · topic · explanation · author_stated · axis |
+
+- 설정 파일: `agent_configs/Record Agent.json`, `agent_configs/Observe Agent.json` (Studio에서 내보낸 원본, config #1)
+- `tools/make_agent_configs.py`가 처음 가져오기(import)용 설정을 만들었습니다. Studio에서 고친 뒤에는 다시 내보내 `agent_configs/`를 바꿉니다.
+
+**코드가 하는 판단 (에이전트 밖)**: 원문에 없는 인용은 버림 · 실명은 ○○ · 이어짐/바뀜/긴장/해소/어긋남은 같은 성운끼리만 · 다짐 뒤 30일 안의 반성은 어긋남 · 바뀜은 7일 이상, 긴장은 30일 이내 · 목표 충돌은 14일 안의 다짐 둘 · 감정끼리 달라진 것은 바뀜이 아님 · 작성자가 직접 쓴 변화 · 정리만 실선.
+
+## 실행 방법
+
+```bash
+uv venv --python 3.11 .venv && source .venv/bin/activate
+uv pip install -r requirements.txt
+cp .env.example .env        # 키와 에이전트 ID를 채운다
+
+python app.py               # 가상 인물 "하늘"의 인스타그램 ZIP(게시물 30개 → 글 29편)을 처리
+python app.py data/samples/2026-09-25-독서노트.md
+streamlit run streamlit_app.py
+```
+
+`python app.py` 결과: `output/records.json`(정리된 기록 파일), `result/reports/<기록ID>.json`(글마다 관측 보고서), `result/observation_report.json`(마지막 글).
+
+### 환경변수
+
+| 이름 | 설명 |
+| --- | --- |
+| `UPSTAGE_API_KEY` | Upstage Console 키 (Studio 에이전트와 같은 조직) |
+| `RECORD_AGENT_ID`, `RECORD_CONFIG_ID` | 기록 Agent ID와 설정 번호 |
+| `OBSERVE_AGENT_ID`, `OBSERVE_CONFIG_ID` | 관측 Agent ID와 설정 번호 |
+| `MAX_JOBS_PER_SESSION` (선택, 기본 40) | 세션당 Studio 실행 상한 (공개 배포에서 크레딧 보호) |
+| `MAX_IMPORT_POSTS` (선택, 기본 10) | 가져오기 한 번에 관측하는 글 수 |
+| `DISK_CACHE` (선택, 기본 0) | 1이면 추출 결과를 디스크에 캐시 (로컬 개발 전용) |
+
+### Railway 배포
+
+1. GitHub 저장소 연결 → 자동 빌드 (`requirements.txt`, `.python-version`)
+2. Variables에 위 환경변수 입력 (`DISK_CACHE`는 넣지 않거나 0)
+3. Start Command: `streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true` (`Procfile`과 같음)
+4. Public Domain 생성 → 접속하면 데모 우주(가상 인물 하늘)가 먼저 보입니다
+
+## 평가와 운영(Ops)
+
+![Ops](docs/images/ops.png)
+
+- **관문 (0건이어야 함)**: G1 원문에 없는 인용, G2 추정 표시 없는 틀린 날짜, G3 사람을 단정하는 표현, G4 다른 사람 실명 노출. 평가 때만이 아니라 **모든 실행에서** 결과를 내보내기 전에 거릅니다.
+- **실행 기록**: `runs/run_log.jsonl`. 글 원문과 인용은 남기지 않고 실행 ID · 설정 번호 · 시간 · 페이지 · 추정 비용 · 관문 결과 · 개수만 남깁니다. 화면의 🛠 운영 탭에서 봅니다.
+- **가상 데이터 평가**: `python tools/eval_virtual.py`. 가상 글을 쓸 때 심어 둔 관계 8개(바뀜 · 긴장 · 해소 · 어긋남 · 목표 충돌 · 이어짐)와 금지 관계 1개(감정만 달라진 것)를 얼마나 찾는지 잽니다. 결과: `data/ops/eval_virtual.json`.
+- **흔들림 측정**: `python tools/stability.py`. 같은 글 3편을 3번씩 돌려 유형 · 생각 수 · 종류 · 인용이 같은지 잽니다. 결과: `data/ops/stability.json`.
+- **입력 3종 시험**: `python tools/test_inputs.py` (MD, TXT, 직접 쓰기) + `python app.py` (인스타그램 ZIP).
+- **설정 버전**: 실행은 `.env`의 `*_CONFIG_ID`로 고정합니다. Studio 설명을 고치면 새 config 번호가 생기고, 같은 평가 세트로 다시 재서 나아졌을 때만 번호를 올립니다. 나빠지면 이전 번호로 되돌립니다.
+
+평가 결과 요약은 아래 "MVP 측정 결과"에 있습니다.
+
+## 데이터 원칙
+
+- 시연과 평가 숫자는 **가상 인물 "하늘"**의 글로만 만듭니다(`tools/make_virtual_data.py`). 실제 인스타그램 내보내기와 구조(글자 깨짐, 이어진 게시물, 제목 속 날짜, P1 소제목)만 같습니다.
+- 공개 서버는 사용자의 글을 저장하지 않습니다(디스크 캐시 꺼짐). 우주는 브라우저 세션에만 있고, 사용자가 정리된 기록 파일로 보관합니다.
+- 사람 이름은 역할로 바꾸거나 ○○로 가립니다.
+
+## 가이드 고도화 포인트 적용
+
+| 포인트 | 적용 |
+| --- | --- |
+| 1 서비스 정체성 | 이름 · 한 줄 소개 · 사이드바 · 푸터 · 어두운 우주 테마 |
+| 2 입력 경험 | ZIP · MD · TXT 업로드, 형식 안내, "저장하고 관측하기" |
+| 3 결과 화면 | 2D 우주(별 카드, 가치 보기), 관측 보고서, 처리 시간 · 추정 비용 표시 |
+| 4 에이전트 품질 | 감정 규칙 · 관측 상태 우선순위를 Studio 설명에 넣음, 생각 종류 경계 설명 |
+| 5 안정성과 진행 표시 | 실패 시 한 번 재시도, 단계별 진행 표시, 실패해도 글 유지 · 이어서 진행 |
+| 6 결과 활용 | 관측 보고서 JSON, 정리된 기록 파일 내려받기 · 올리기 |
+| 8 구조 확장 | 일괄 분석(인스타그램 ZIP 가져오기, 이어진 게시물 묶기) |
+
+## MVP 측정 결과 (2026-10-03, 기록 Agent config #1 · 관측 Agent config #1)
+
+| 측정 | 결과 | 비고 |
+| --- | --- | --- |
+| 입력 3종 + ZIP | MD · TXT · 직접 쓰기 · 인스타그램 ZIP 모두 끝까지 실행 | `data/ops/input_tests.json` |
+| 관문 G1~G4 | 원문에 없는 인용 0 · 날짜 문제 0 · 단정 표현 0 · 보고서 속 실명 노출 0 (이름 2개를 ○○로 가림) | 가상 글 29편 |
+| 설계한 관계 찾기 | 두 글 짝 8/8, 관계 종류 7/8, 실선/점선 일치 7/7, 금지 관계(감정만 달라짐 → 바뀜) 0건 | `data/ops/eval_virtual.json` |
+| 흔들림 | 같은 글 3편 × 3번: 글 유형 · 생각 수 · 생각 종류 3/3 같음, 인용 겹침 1.0 | `data/ops/stability.json` |
+| 지연 | 기록 Agent 평균 30.6초, 관측 Agent 평균 32.6초 → 글 한 편 약 1분 | Studio Jobs API |
+| 비용 | 가상 글 29편 첫 처리: Studio 실행 50회, 추정 $2.40 (글당 약 $0.08) | Parse $0.01 + Extract $0.04 / 쪽 |
+
+**놓친 것과 한계**
+
+- 놓친 1개: 4/5 "혼자가 편하다" → 4/12 "함께해야 성장한다, 어느 쪽이 진짜 나일까"를 긴장이 아니라 바뀜(작성자가 직접 씀)으로 읽었습니다. 두 해석 모두 가능한 글입니다.
+- 설계 밖에서 찾은 관계 31개를 눈으로 보니 약 3분의 2는 그럴듯하고 약 3분의 1은 약하거나 틀렸습니다(예: 리더십 질문 → 독서노트 사이의 바뀜). 다음 평가 루프에서 관측 Agent 설명을 고칠 대상입니다.
+- 관계 규칙 4개(같은 두 글 사이 관계 하나, 질문 → 신념은 해소, 실선은 스스로 쓴 변화가 있을 때만, 주제 성운은 중심 보정 유사도 0.35)는 이 가상 데이터를 보고 PRD 규칙을 코드로 옮긴 것이라, 같은 데이터로 잰 위 숫자는 낙관적입니다. 팀원 둘이 따로 쓴 글로 다시 잽니다(E7).
+- 주제 낱말은 Solar Embedding 2로 그대로 비교하면 어떤 쌍이든 0.70~0.87이 나와서(실측), 흔한 주제 낱말 50개의 평균 벡터를 빼고 비교합니다.
+
+| 우주 화면 | 관측 보고서 |
+| --- | --- |
+| ![우주](docs/images/app-universe.jpg) | ![보고서](docs/images/app-report.jpg) |
+
+Studio 관측 Agent 실행 화면: ![Studio](docs/images/studio-observe-agent.jpg)

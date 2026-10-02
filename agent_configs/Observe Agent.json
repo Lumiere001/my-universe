@@ -1,0 +1,940 @@
+{
+  "kind": "studio.workflow-config-draft",
+  "schemaVersion": 3,
+  "exportedAt": "2026-10-02T16:27:32.746Z",
+  "exportedFrom": {
+    "workflowId": "agt_E8xfPQN6aXtn4F2piJVDes",
+    "workflowName": "나의 우주 관측 Agent",
+    "configId": "cfg_8sjzJhzwDmfsChFAVjFmGh",
+    "configVer": 1
+  },
+  "workflowConfig": {
+    "workflow_name": "나의 우주 관측 Agent",
+    "pipelineType": "classify-extract",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "standard",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": false,
+      "outputFormats": [
+        "html",
+        "text"
+      ],
+      "base64Encoding": [
+        "figure"
+      ]
+    },
+    "documentClassifyConfiguration": {
+      "modelName": "",
+      "schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "document-classify",
+          "schema": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "해소",
+                "description": "과거에 맞서던 두 생각(긴장)이나 오래 남은 질문이 오늘 글에서 하나의 결론으로 정리됐다."
+              },
+              {
+                "const": "바뀜",
+                "description": "같은 주제에 대한 과거의 신념·원칙·해석과 오늘의 생각이 반대이거나 기준이 달라졌다. 감정이 달라진 것만으로는 바뀜이 아니다."
+              },
+              {
+                "const": "긴장",
+                "description": "오늘 글 안에서, 또는 30일 안의 과거 생각과 서로 맞서는 두 생각이 함께 있고 아직 정리되지 않았다."
+              },
+              {
+                "const": "어긋남",
+                "description": "과거의 다짐과 오늘의 반성·행동 서술이 어긋나거나(말과 행동의 어긋남), 다른 주제의 두 다짐이 시간·에너지를 다툰다."
+              },
+              {
+                "const": "이어짐",
+                "description": "같은 주제의 과거 생각과 같은 방향의 생각이 다시 나왔다."
+              },
+              {
+                "const": "처음 쓰는 주제",
+                "description": "비교할 과거 생각이 없거나, 어떤 관계도 원문으로 확인되지 않는다. 다른 상태에 맞지 않으면 이것을 고른다."
+              }
+            ]
+          }
+        }
+      }
+    },
+    "informationExtractConfiguration": {
+      "modelName": "",
+      "schemas": [
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_1",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_2",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_3",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_4",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_5",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Observe_6",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "관측 상태 하나. 여러 개가 겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제 순으로 고른다."
+                  },
+                  "description": ""
+                },
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "오늘 관측을 2문장 이내로. 사람을 평가하거나 '너는 ~한 사람이다'처럼 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "question": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글쓴이가 다음에 써 볼 질문 하나. 비교에서 비어 있는 곳을 묻는다."
+                  },
+                  "description": ""
+                },
+                "relations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "다음 중 하나: 이어짐 / 바뀜 / 긴장 / 해소 / 어긋남 / 목표 충돌. 감정끼리 달라진 것은 바뀜으로 쓰지 않는다."
+                      },
+                      "today_id": {
+                        "type": "string",
+                        "description": "오늘 생각의 ID(예: T1)."
+                      },
+                      "past_id": {
+                        "type": "string",
+                        "description": "과거 생각의 ID(예: P3). 같은 글 안의 긴장이면 오늘 생각 ID."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "두 생각이 함께 속한 주제."
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "description": "관계를 한 문장으로. 두 생각의 차이나 공통점을 사실대로."
+                      },
+                      "author_stated": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 변화나 정리를 썼으면 '예', 아니면 '아니오'."
+                      },
+                      "axis": {
+                        "type": "string",
+                        "description": "긴장이나 바뀜이면 두 생각이 오가는 양 끝의 이름(예: 혼자 ↔ 함께). 아니면 빈 문자열."
+                      }
+                    }
+                  },
+                  "description": "오늘 생각과 과거 생각 사이의 관계 목록. 입력 문서에 있는 생각 ID만 쓴다. 근거가 원문으로 확인되지 않으면 만들지 않는다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "state",
+                "source": "root"
+              },
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "question",
+                "source": "root"
+              },
+              {
+                "name": "type",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "today_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "past_id",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "explanation",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "author_stated",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              },
+              {
+                "name": "axis",
+                "source": "group_table",
+                "groupTableKey": "relations"
+              }
+            ]
+          },
+          "location": false
+        }
+      ],
+      "categorySchemaMapping": {
+        "해소": "Extract_Observe_1",
+        "바뀜": "Extract_Observe_2",
+        "긴장": "Extract_Observe_3",
+        "어긋남": "Extract_Observe_4",
+        "이어짐": "Extract_Observe_5",
+        "처음 쓰는 주제": "Extract_Observe_6"
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        }
+      },
+      {
+        "id": "e1",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_1"
+        },
+        "condition": {
+          "conditionName": "해소"
+        }
+      },
+      {
+        "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_2"
+        },
+        "condition": {
+          "conditionName": "바뀜"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_3"
+        },
+        "condition": {
+          "conditionName": "긴장"
+        }
+      },
+      {
+        "id": "e4",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_4"
+        },
+        "condition": {
+          "conditionName": "어긋남"
+        }
+      },
+      {
+        "id": "e5",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_5"
+        },
+        "condition": {
+          "conditionName": "이어짐"
+        }
+      },
+      {
+        "id": "e6",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Observe_6"
+        },
+        "condition": {
+          "conditionName": "처음 쓰는 주제"
+        }
+      }
+    ]
+  }
+}

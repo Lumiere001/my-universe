@@ -1,0 +1,135 @@
+{
+  "agent": "기록 Agent",
+  "config_id": "1",
+  "records": 3,
+  "runs_each": 3,
+  "type_agreement": "3/3",
+  "thought_count_agreement": "3/3",
+  "kind_agreement": "3/3",
+  "mean_quote_overlap": 1.0,
+  "detail": [
+    {
+      "record": "9/20 토요일 일기",
+      "type_same": true,
+      "thought_counts": [
+        5,
+        5,
+        5
+      ],
+      "kinds_same": true,
+      "kind_counts": [
+        {
+          "감정": 1,
+          "다짐": 1,
+          "질문": 2,
+          "해석": 1
+        },
+        {
+          "감정": 1,
+          "다짐": 1,
+          "질문": 2,
+          "해석": 1
+        },
+        {
+          "감정": 1,
+          "다짐": 1,
+          "질문": 2,
+          "해석": 1
+        }
+      ],
+      "quote_overlap_vs_first": [
+        1.0,
+        1.0
+      ],
+      "seconds": [
+        35.28,
+        32.38,
+        48.27
+      ],
+      "studio_cached": [
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "record": "4/12 순모임 후",
+      "type_same": true,
+      "thought_counts": [
+        3,
+        3,
+        3
+      ],
+      "kinds_same": true,
+      "kind_counts": [
+        {
+          "신념·원칙": 1,
+          "질문": 1,
+          "해석": 1
+        },
+        {
+          "신념·원칙": 1,
+          "질문": 1,
+          "해석": 1
+        },
+        {
+          "신념·원칙": 1,
+          "질문": 1,
+          "해석": 1
+        }
+      ],
+      "quote_overlap_vs_first": [
+        1.0,
+        1.0
+      ],
+      "seconds": [
+        33.4,
+        28.49,
+        28.85
+      ],
+      "studio_cached": [
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "record": "6/14 종강 일기 (1)",
+      "type_same": true,
+      "thought_counts": [
+        3,
+        3,
+        3
+      ],
+      "kinds_same": true,
+      "kind_counts": [
+        {
+          "다짐": 1,
+          "반성": 2
+        },
+        {
+          "다짐": 1,
+          "반성": 2
+        },
+        {
+          "다짐": 1,
+          "반성": 2
+        }
+      ],
+      "quote_overlap_vs_first": [
+        1.0,
+        1.0
+      ],
+      "seconds": [
+        29.36,
+        28.43,
+        31.42
+      ],
+      "studio_cached": [
+        false,
+        false,
+        false
+      ]
+    }
+  ]
+}

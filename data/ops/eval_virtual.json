@@ -1,0 +1,150 @@
+{
+  "designed_relations": 8,
+  "pair_recall": 1.0,
+  "type_recall": 0.875,
+  "line_agreement_on_found": 1.0,
+  "by_type": {
+    "바뀜": "1/1",
+    "긴장": "0/1",
+    "해소": "2/2",
+    "어긋남": "1/1",
+    "목표 충돌": "1/1",
+    "이어짐": "2/2"
+  },
+  "negatives_violated": 0,
+  "all_relations_found": 39,
+  "gates": {
+    "G1_dropped_quotes": 0,
+    "G2_date_problems": 0,
+    "G3_rewritten": 0,
+    "G4_names_masked_in_output": 2,
+    "G4_names_leaked_in_report": 0
+  },
+  "cost_latency": {
+    "studio_jobs": 53,
+    "avg_seconds_record_agent": 30.6,
+    "avg_seconds_observe_agent": 32.6,
+    "est_cost_usd": 2.65,
+    "est_cost_per_record_usd": 0.091
+  },
+  "detail": [
+    {
+      "type": "바뀜",
+      "past": "2026-03-14",
+      "today": "2026-09-20",
+      "topic": "진로",
+      "line": "실선",
+      "note": "작성자가 직접 변화를 씀",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "바뀜·실선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "긴장",
+      "past": "2026-04-05",
+      "today": "2026-04-12",
+      "topic": "관계",
+      "line": "점선",
+      "found_pair": true,
+      "found_type": false,
+      "got": [
+        "바뀜·실선"
+      ],
+      "line_ok": false
+    },
+    {
+      "type": "해소",
+      "past": "2026-04-12",
+      "today": "2026-06-20",
+      "topic": "관계",
+      "line": "실선",
+      "note": "작성자가 정리됐다고 씀",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "해소·실선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "어긋남",
+      "past": "2026-03-20",
+      "today": "2026-04-08",
+      "topic": "건강",
+      "line": "점선",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "어긋남·점선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "목표 충돌",
+      "past": "2026-05-10",
+      "today": "2026-05-15",
+      "topic": "학업·동아리",
+      "line": "점선",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "목표 충돌·점선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "해소",
+      "past": "2026-04-20",
+      "today": "2026-08-15",
+      "topic": "리더십",
+      "line": "점선",
+      "note": "질문이 신념이 됨",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "해소·점선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "이어짐",
+      "past": "2026-03-08",
+      "today": "2026-06-28",
+      "topic": "배움",
+      "line": "점선",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "이어짐·점선"
+      ],
+      "line_ok": true
+    },
+    {
+      "type": "이어짐",
+      "past": "2026-03-20",
+      "today": "2026-07-10",
+      "topic": "건강",
+      "line": "점선",
+      "note": "다짐이 지켜짐",
+      "found_pair": true,
+      "found_type": true,
+      "got": [
+        "이어짐·점선"
+      ],
+      "line_ok": true
+    }
+  ],
+  "negative_detail": [
+    {
+      "type": "바뀜",
+      "past": "2026-05-02",
+      "today": "2026-08-28",
+      "topic": "진로",
+      "note": "감정만 달라짐. 바뀜이 아니다",
+      "violated": false
+    }
+  ]
+}

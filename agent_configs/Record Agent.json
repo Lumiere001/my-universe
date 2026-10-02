@@ -1,0 +1,840 @@
+{
+  "kind": "studio.workflow-config-draft",
+  "schemaVersion": 3,
+  "exportedAt": "2026-10-02T16:27:13.121Z",
+  "exportedFrom": {
+    "workflowId": "agt_gomJkjwWbZ7LkLPh2LSdtC",
+    "workflowName": "나의 우주 기록 Agent",
+    "configId": "cfg_7HYJr8FR8GCsX3B5FD8qjL",
+    "configVer": 1
+  },
+  "workflowConfig": {
+    "workflow_name": "나의 우주 기록 Agent",
+    "pipelineType": "classify-extract",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "standard",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": false,
+      "outputFormats": [
+        "html",
+        "text"
+      ],
+      "base64Encoding": [
+        "figure"
+      ]
+    },
+    "documentClassifyConfiguration": {
+      "modelName": "",
+      "schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "document-classify",
+          "schema": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "경험 기록",
+                "description": "있었던 일과 일정을 주로 적은 글. 사건·장소·사람 위주이고, 생각이나 판단은 거의 없다."
+              },
+              {
+                "const": "생각·성찰",
+                "description": "생각, 깨달음, 신념, 질문, 다짐, 반성, 감정을 다루는 글. 말씀·책 묵상과 기도, 회고도 여기에 들어간다. 경험이 함께 있어도 생각을 다루는 부분이 있으면 이 유형이다."
+              },
+              {
+                "const": "창작",
+                "description": "시, 노래 가사, 짧은 소설처럼 비유와 형식을 갖춘 창작물이 중심인 글."
+              },
+              {
+                "const": "기타",
+                "description": "공지, 부탁, 한 줄 글, 사진 설명처럼 위 셋에 들지 않는 글."
+              }
+            ]
+          }
+        }
+      }
+    },
+    "informationExtractConfiguration": {
+      "modelName": "",
+      "schemas": [
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_1",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체를 1~2문장으로 요약. 사람을 평가하거나 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "period": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 다루는 기간. 다음 중 하나: 하루 / 요즘 / 기간 회고"
+                  },
+                  "description": ""
+                },
+                "triggers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "생각을 부른 계기. 각 항목은 다음 중 하나: 경험 / 대화 / 읽은 글 / 콘텐츠 / 뉴스·사건"
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. 다음 중 하나: 나 / 독자 / 특정 인물 / 신"
+                  },
+                  "description": ""
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글에 등장한 사람의 관계나 역할(예: 선배, 친구, 가족, 팀원, 리더). 실명은 절대 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "인용하거나 참고한 것의 주소나 제목(예: 성경 구절 주소, 책·노래·영화 제목). 인용 본문은 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일을 짧은 구절로. 생각이 아니라 사실만."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "description": "삶의 영역 수준의 짧은 명사 하나(예: 진로, 관계, 건강, 배움, 신앙, 공동체). 너무 넓은 '삶'이나 너무 좁은 '6시 기상'은 피한다."
+                      },
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장으로 쓴 생각."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석 / 신념·원칙 / 질문 / 다짐 / 반성 / 감정. 해석=무언가의 의미를 읽어 냄. 신념·원칙=일반적인 주장을 세움. 질문=답을 못 낸 물음. 다짐=앞으로 하겠다는 약속. 반성=기준에 비춰 나를 평가함('~하지 못했다', '~했어야 했는데'). 감정=평가 없이 마음 상태만 드러냄('무겁다', '기쁘다')."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "확신 정도. 다음 중 하나: 단정 / 고민 중 / 질문"
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "이 생각의 근거가 되는 원문 문장. 고치지 말고 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 생각이 바뀌었다고 쓴 경우에만 '예전 생각 → 지금 생각' 형식으로. 아니면 빈 문자열."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치. 다음 중 하나: 자율 / 도전 / 즐거움 / 성취 / 영향력 / 안정 / 규범 / 전통·신앙 / 배려 / 공익"
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "period",
+                "source": "root"
+              },
+              {
+                "name": "triggers",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "roles",
+                "source": "root"
+              },
+              {
+                "name": "references",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_2",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체를 1~2문장으로 요약. 사람을 평가하거나 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "period": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 다루는 기간. 다음 중 하나: 하루 / 요즘 / 기간 회고"
+                  },
+                  "description": ""
+                },
+                "triggers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "생각을 부른 계기. 각 항목은 다음 중 하나: 경험 / 대화 / 읽은 글 / 콘텐츠 / 뉴스·사건"
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. 다음 중 하나: 나 / 독자 / 특정 인물 / 신"
+                  },
+                  "description": ""
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글에 등장한 사람의 관계나 역할(예: 선배, 친구, 가족, 팀원, 리더). 실명은 절대 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "인용하거나 참고한 것의 주소나 제목(예: 성경 구절 주소, 책·노래·영화 제목). 인용 본문은 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일을 짧은 구절로. 생각이 아니라 사실만."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "description": "삶의 영역 수준의 짧은 명사 하나(예: 진로, 관계, 건강, 배움, 신앙, 공동체). 너무 넓은 '삶'이나 너무 좁은 '6시 기상'은 피한다."
+                      },
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장으로 쓴 생각."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석 / 신념·원칙 / 질문 / 다짐 / 반성 / 감정. 해석=무언가의 의미를 읽어 냄. 신념·원칙=일반적인 주장을 세움. 질문=답을 못 낸 물음. 다짐=앞으로 하겠다는 약속. 반성=기준에 비춰 나를 평가함('~하지 못했다', '~했어야 했는데'). 감정=평가 없이 마음 상태만 드러냄('무겁다', '기쁘다')."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "확신 정도. 다음 중 하나: 단정 / 고민 중 / 질문"
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "이 생각의 근거가 되는 원문 문장. 고치지 말고 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 생각이 바뀌었다고 쓴 경우에만 '예전 생각 → 지금 생각' 형식으로. 아니면 빈 문자열."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치. 다음 중 하나: 자율 / 도전 / 즐거움 / 성취 / 영향력 / 안정 / 규범 / 전통·신앙 / 배려 / 공익"
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "period",
+                "source": "root"
+              },
+              {
+                "name": "triggers",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "roles",
+                "source": "root"
+              },
+              {
+                "name": "references",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_3",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체를 1~2문장으로 요약. 사람을 평가하거나 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "period": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 다루는 기간. 다음 중 하나: 하루 / 요즘 / 기간 회고"
+                  },
+                  "description": ""
+                },
+                "triggers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "생각을 부른 계기. 각 항목은 다음 중 하나: 경험 / 대화 / 읽은 글 / 콘텐츠 / 뉴스·사건"
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. 다음 중 하나: 나 / 독자 / 특정 인물 / 신"
+                  },
+                  "description": ""
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글에 등장한 사람의 관계나 역할(예: 선배, 친구, 가족, 팀원, 리더). 실명은 절대 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "인용하거나 참고한 것의 주소나 제목(예: 성경 구절 주소, 책·노래·영화 제목). 인용 본문은 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일을 짧은 구절로. 생각이 아니라 사실만."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "description": "삶의 영역 수준의 짧은 명사 하나(예: 진로, 관계, 건강, 배움, 신앙, 공동체). 너무 넓은 '삶'이나 너무 좁은 '6시 기상'은 피한다."
+                      },
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장으로 쓴 생각."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석 / 신념·원칙 / 질문 / 다짐 / 반성 / 감정. 해석=무언가의 의미를 읽어 냄. 신념·원칙=일반적인 주장을 세움. 질문=답을 못 낸 물음. 다짐=앞으로 하겠다는 약속. 반성=기준에 비춰 나를 평가함('~하지 못했다', '~했어야 했는데'). 감정=평가 없이 마음 상태만 드러냄('무겁다', '기쁘다')."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "확신 정도. 다음 중 하나: 단정 / 고민 중 / 질문"
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "이 생각의 근거가 되는 원문 문장. 고치지 말고 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 생각이 바뀌었다고 쓴 경우에만 '예전 생각 → 지금 생각' 형식으로. 아니면 빈 문자열."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치. 다음 중 하나: 자율 / 도전 / 즐거움 / 성취 / 영향력 / 안정 / 규범 / 전통·신앙 / 배려 / 공익"
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "period",
+                "source": "root"
+              },
+              {
+                "name": "triggers",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "roles",
+                "source": "root"
+              },
+              {
+                "name": "references",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_4",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체를 1~2문장으로 요약. 사람을 평가하거나 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "period": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 다루는 기간. 다음 중 하나: 하루 / 요즘 / 기간 회고"
+                  },
+                  "description": ""
+                },
+                "triggers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "생각을 부른 계기. 각 항목은 다음 중 하나: 경험 / 대화 / 읽은 글 / 콘텐츠 / 뉴스·사건"
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. 다음 중 하나: 나 / 독자 / 특정 인물 / 신"
+                  },
+                  "description": ""
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글에 등장한 사람의 관계나 역할(예: 선배, 친구, 가족, 팀원, 리더). 실명은 절대 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "인용하거나 참고한 것의 주소나 제목(예: 성경 구절 주소, 책·노래·영화 제목). 인용 본문은 쓰지 않는다."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일을 짧은 구절로. 생각이 아니라 사실만."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "description": "삶의 영역 수준의 짧은 명사 하나(예: 진로, 관계, 건강, 배움, 신앙, 공동체). 너무 넓은 '삶'이나 너무 좁은 '6시 기상'은 피한다."
+                      },
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장으로 쓴 생각."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석 / 신념·원칙 / 질문 / 다짐 / 반성 / 감정. 해석=무언가의 의미를 읽어 냄. 신념·원칙=일반적인 주장을 세움. 질문=답을 못 낸 물음. 다짐=앞으로 하겠다는 약속. 반성=기준에 비춰 나를 평가함('~하지 못했다', '~했어야 했는데'). 감정=평가 없이 마음 상태만 드러냄('무겁다', '기쁘다')."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "확신 정도. 다음 중 하나: 단정 / 고민 중 / 질문"
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "이 생각의 근거가 되는 원문 문장. 고치지 말고 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 생각이 바뀌었다고 쓴 경우에만 '예전 생각 → 지금 생각' 형식으로. 아니면 빈 문자열."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치. 다음 중 하나: 자율 / 도전 / 즐거움 / 성취 / 영향력 / 안정 / 규범 / 전통·신앙 / 배려 / 공익"
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "period",
+                "source": "root"
+              },
+              {
+                "name": "triggers",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "roles",
+                "source": "root"
+              },
+              {
+                "name": "references",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        }
+      ],
+      "categorySchemaMapping": {
+        "경험 기록": "Extract_Record_1",
+        "생각·성찰": "Extract_Record_2",
+        "창작": "Extract_Record_3",
+        "기타": "Extract_Record_4"
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        }
+      },
+      {
+        "id": "e1",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_1"
+        },
+        "condition": {
+          "conditionName": "경험 기록"
+        }
+      },
+      {
+        "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_2"
+        },
+        "condition": {
+          "conditionName": "생각·성찰"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_3"
+        },
+        "condition": {
+          "conditionName": "창작"
+        }
+      },
+      {
+        "id": "e4",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_4"
+        },
+        "condition": {
+          "conditionName": "기타"
+        }
+      }
+    ]
+  }
+}
