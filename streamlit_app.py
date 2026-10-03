@@ -100,7 +100,7 @@ with st.sidebar:
 # 관측 보고서 그리기
 ##################################################
 
-def show_report(rid):
+def show_report(rid, where="u"):
     v = service.view_report(S, rid)
     st.markdown(f"#### {v['day']} · {v['title']}")
     st.caption(f"글 유형: {v['type']} · 날짜 {v['day_basis']}")
@@ -141,7 +141,7 @@ def show_report(rid):
         st.write(f"- G1 원문에 없는 인용 걸러냄: {g['G1_dropped_quotes']} · G2 날짜 확인: {'통과' if g['G2_date_ok'] else '확인 필요'} · "
                  f"G3 단정 표현 바꿈: {g.get('G3_rewritten', 0)} · G4 가린 이름: {g['G4_names_masked']}")
     st.download_button("관측 보고서 JSON 내려받기", json.dumps(v, ensure_ascii=False, indent=2),
-                       file_name=f"observation-{v['day']}.json", mime="application/json", key=f"dl-{rid}")
+                       file_name=f"observation-{v['day']}.json", mime="application/json", key=f"dl-{where}-{rid}")
     with st.expander("JSON 보기"):
         st.json(v)
 
@@ -194,17 +194,21 @@ with tab_w:
             with st.status("관측하는 중…", expanded=True) as status:
                 try:
                     run_one(rec, status)
-                    status.update(label="완료! 우주에 새 별이 떴습니다.", state="complete")
-                    st.session_state.selected = rec["id"]
+                    st.session_state.selected = st.session_state.just_written = rec["id"]
+                    st.rerun()   # 사이드바·우주 탭은 실행 전에 그려졌으므로 새 별이 보이도록 다시 그린다
                 except Exception as e:
                     status.update(label="실행하지 못했습니다", state="error")
                     st.error(f"{e} — 잠시 후 다시 시도해 주세요. 글은 지워지지 않았습니다.")
-            if rec["id"] in S["reports"]:
-                show_report(rec["id"])
+    done = st.session_state.pop("just_written", None)
+    if done in S["reports"]:
+        st.success("완료! 우주에 새 별이 떴습니다. 🌌 우주 탭에서도 볼 수 있어요.")
+        show_report(done, where="w")
 
 with tab_i:
     st.subheader("지난 글 가져오기")
     st.caption("인스타그램 '내 정보 다운로드' ZIP(JSON 형식), MD, TXT 파일을 올릴 수 있습니다. 사진은 쓰지 않고 글만 읽습니다.")
+    if st.session_state.get("imported"):
+        st.success(f"가져오기 끝: {st.session_state.pop('imported')}편이 우주에 더해졌습니다. 🌌 우주 탭에서 보세요.")
     files = st.file_uploader("파일 올리기", type=["zip", "md", "txt"], accept_multiple_files=True)
     if files:
         recs = []
@@ -232,7 +236,11 @@ with tab_i:
                             st.error(f"{rec['day']} 글에서 멈췄습니다: {e}. 다시 누르면 이어서 진행합니다(정리된 글은 다시 보내지 않습니다).")
                             break
                         bar.progress(i / len(chosen))
-                    status.update(label="가져오기 끝", state="complete")
+                    else:
+                        st.session_state.selected = S["order"][-1]
+                        st.session_state.imported = len(chosen)
+                        st.rerun()   # 사이드바·우주 탭을 새 별까지 포함해 다시 그린다
+                    status.update(label="가져오기 멈춤", state="error")
                 st.session_state.selected = S["order"][-1]
         else:
             st.info("새로 관측할 글이 없습니다 (이미 우주에 있는 글은 건너뜁니다).")
