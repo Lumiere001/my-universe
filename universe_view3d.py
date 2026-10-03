@@ -193,7 +193,7 @@ const selLab=label("sl","");selLab.style.display="none";
 
 /* ---------- 카메라 ---------- */
 const C=bb.getCenter(new THREE.Vector3()),rad=bb.getSize(new THREE.Vector3()).length()/2;
-const asp=wrap.clientWidth/Math.max(1,wrap.clientHeight),dist=rad/Math.sin(FOV*Math.PI/360)*.74*Math.max(1,1.4/asp);  // 좁은 화면이면 조금 물러선다
+const asp=wrap.clientWidth/Math.max(1,wrap.clientHeight),dist=rad/Math.sin(FOV*Math.PI/360)*.9*Math.max(1,1.5/asp);  // 좁은 화면이면 조금 물러선다
 // 옅은 안개: 먼(오래된) 선과 행성이 하늘색으로 조금 가라앉아 깊이가 읽힌다
 scene.fog=new THREE.Fog(0x063a8f,dist*.7,dist*2.6);
 const HOME={pos:C.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(dist)),tgt:C.clone()};  // 위에서 40° 기울여 원반 전체
