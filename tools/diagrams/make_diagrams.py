@@ -245,6 +245,86 @@ def d4():
               f'{tag("2차", "teal")} 버전이 섞인 우주 다시 돌리기 · 분류 목록 드리프트<br>{tag("2차", "teal")} GitHub Actions로 회귀 검사 자동화</div>')
     page("my-universe-4-ops", W, H, b)
 
+# ---------------------------------------------------------------- 5. Ops가 붙는 자리
+def d5():
+    W, H = 1600, 1040
+    b = ('<h1 style="top:20px">Ops는 어디에서 일어나나</h1>'
+         '<div class="sub" style="top:76px">위: 글 한 편이 지나가는 서비스 길과 Ops가 붙는 자리(A~H) · 아래: 설정을 바꿀 때 도는 품질 루프</div>')
+    lane = lambda y, t, c: f'<div style="position:absolute;left:40px;top:{y}px;font-size:19px;font-weight:800;color:{C[c][0]}">{t}</div>'
+    b += lane(126, "① 서비스 길 — 글 한 편이 들어올 때마다 (온라인)", "blue")
+
+    cw, ch, y0 = 170, 128, 196
+    gap = (W - 80 - 8 * cw) / 7
+    xs = [40 + i * (cw + gap) for i in range(8)]
+    nodes = [("blue", "doc_up", "글 입력", "ZIP · MD · TXT · 직접"), ("green", "doc_code", "공통 기록", "출처와 무관 → HTML"),
+             ("purple", "robot", "기록 Agent", "Studio · 생각 나누기"), ("orange", "shield", "관문", "G1 · G2 · G4"),
+             ("teal", "nebula", "성운 · 과거", "임베딩 · 과거 생각 10개"), ("purple", "robot", "관측 Agent", "Studio · 관계 판정"),
+             ("pink", "rules", "관계 규칙", "시간 · 감정 규칙 · G3"), ("blue", "stars", "보고서 · 우주", "JSON · 별자리")]
+    for x, (col, ic, t, d) in zip(xs, nodes):
+        dark = C[col][0]
+        bw = "3px" if t.endswith("Agent") else "2px"
+        b += card(x, y0, cw, ch, col, f'<div style="text-align:center">{icon(ic, dark, 46)}<div class="t" style="font-size:17px;color:{dark};margin-top:2px">{t}</div>'
+                                      f'<div class="ex" style="font-size:12.5px">{d}</div></div>').replace("border:2px solid", f"border:{bw} solid")
+    for x in (xs[2], xs[5]):   # B 설정 버전 꼬리표
+        b += (f'<div style="position:absolute;left:{x + cw / 2 - 58}px;top:{y0 - 16}px;width:116px;height:28px;border-radius:999px;background:{C["purple"][0]};'
+              f'color:#fff;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center">B · config #1</div>')
+    paths = [f"M{xs[i] + cw + 3},{y0 + ch / 2} L{xs[i + 1] - 5},{y0 + ch / 2}" for i in range(7)]
+
+    def badge(letter, now):
+        g = C["green"][0]
+        return (f'<span style="display:inline-flex;flex:none;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;'
+                f'font-weight:800;font-size:13px;margin-right:7px;{"background:" + g + ";color:#fff" if now else "border:2px solid #9aa3b5;color:#5b6478"}">{letter}</span>')
+
+    def callout(x, y, items):
+        rows = "".join(f'<div style="display:flex;align-items:flex-start;margin:0 0 9px">{badge(l, now)}<div><div style="font-weight:800;font-size:13.5px">{t}</div>'
+                       f'<div class="ex" style="font-size:12px">{d}</div></div></div>' for l, now, t, d in items)
+        return f'<div style="position:absolute;left:{x - 10}px;top:{y}px;width:{cw + 20}px;background:#fff;border:1.5px solid #dfe3ea;border-radius:12px;padding:10px 10px 2px">{rows}</div>'
+
+    yc = y0 + ch + 34
+    agent_ops = [("A", True, "비용 지키기", "같은 글은 다시 안 보냄 · 세션 40회 상한"), ("C", True, "재시도", "실패하면 한 번 더"),
+                 ("D", True, "실행 기록", "시간 · 비용 · 쪽수 (원문 없음)")]
+    b += callout(xs[2], yc, agent_ops + [("F", True, "흔들림 측정", "같은 글 3번 → 결과가 같은가")])
+    b += callout(xs[3], yc, [("E", True, "관문", "걸린 생각은 화면에 안 올림 · 걸린 수 기록")])
+    b += callout(xs[4], yc, [("H", False, "드리프트 지표", "성운 수 · '기타' 비율이 갑자기 변하나")])
+    b += callout(xs[5], yc, agent_ops + [("F", False, "흔들림 측정", "관측 Agent도 같은 글 3번")])
+    b += callout(xs[6], yc, [("E", True, "관문 G3", "사람을 단정하는 문장은 바꿈")])
+    b += callout(xs[7], yc, [("G", False, "사용자 확인", "점선 '맞다/아니다' = 운영 중 평가")])
+    dash = lambda x: f'<div style="position:absolute;left:{x + cw / 2}px;top:{y0 + ch}px;height:{yc - y0 - ch}px;border-left:2px dashed #b8c0cf"></div>'
+    b += "".join(dash(xs[i]) for i in (2, 3, 4, 5, 6, 7))
+
+    # ② 품질 루프
+    yl = 690
+    b += lane(yl - 44, "② 품질 루프 — Studio 설명(설정)을 바꿀 때마다 (오프라인 평가 · 회귀)", "purple")
+    bw4, bh = 340, 150
+    g4 = (W - 80 - 4 * bw4) / 3
+    bx = [40 + i * (bw4 + g4) for i in range(4)]
+    loop = [("yellow", "db", "고정 평가 세트", "가상 글 29편 + 심어 둔 관계 8개 + 금지 관계 1개<br>(다음) 팀원 둘이 붙인 생각 종류 정답"),
+            ("purple", "robot", "같은 길로 돌리기", "위 서비스 길을 그대로 (python app.py)<br>config #1과 #2를 같은 글로"),
+            ("teal", "chart", "비교", "관계 종류 맞힘 · 실선/점선 일치<br>금지 관계 · 관문 걸림 · 비용 · 시간"),
+            ("pink", "loop", "올리기 / 되돌리기", "나아졌으면 .env의 CONFIG_ID = 2<br>나빠지면 1로 그대로")]
+    for i, (x, (col, ic, t, d)) in enumerate(zip(bx, loop)):
+        dark = C[col][0]
+        b += card(x, yl, bw4, bh, col, f'<div class="head"><span class="num" style="background:{dark}">{i + 1}</span><div class="t" style="font-size:19px;color:{dark}">{t}</div>'
+                                         f'<div style="margin-left:auto">{icon(ic, dark, 40)}</div></div><div class="d" style="font-size:14px;margin-top:10px">{d}</div>')
+    paths += [f"M{bx[i] + bw4 + 4},{yl + bh / 2} L{bx[i + 1] - 6},{yl + bh / 2}" for i in range(3)]
+    b += arrows(W, H, paths)
+    # 올리기 → 두 에이전트의 config 꼬리표 (보라 점선)
+    pc = C["purple"][0]
+    cx3, cx6, top = xs[2] + cw / 2, xs[5] + cw / 2, y0 - 34
+    b += (f'<svg class="ar" width="{W}" height="{H}"><defs><marker id="p" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto">'
+          f'<path d="M0 0L10 5L0 10z" fill="{pc}"/></marker></defs>'
+          f'<path d="M{bx[3] + bw4 / 2},{yl - 2} V{yl - 18} H{W - 14} V{top} H{cx3} V{y0 - 20}" fill="none" stroke="{pc}" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#p)"/>'
+          f'<path d="M{cx6},{top} V{y0 - 20}" fill="none" stroke="{pc}" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#p)"/></svg>')
+    b += f'<div style="position:absolute;left:{W - 380}px;top:{top - 26}px;font-size:13px;font-weight:800;color:{pc}">설정 번호만 바꾸면 두 에이전트가 새 설정으로 돈다</div>'
+    # 밤사이 실제로 한 것 + 범례
+    b += card(40, yl + bh + 26, W - 80, 92, "gray",
+              '<div class="d" style="font-size:14.5px;line-height:1.6"><b>밤사이 실제로 3번 돌린 결과 (코드 규칙을 고침):</b> 관계 종류 맞힘 6/8 → 7/8 · 관계 49개 → 39개 · 근거 없는 실선 2개 → 점선 · 금지 관계 0건 유지 · 다시 돌린 비용 $0.10 (A 캐시 덕분)<br>'
+              '<b>다음:</b> Studio 관측 Agent 설명을 고쳐 config #2를 만들고 같은 루프로 비교 → 거짓 별자리(설계 밖 관계의 약 1/3)를 줄이는 것이 목표</div>')
+    b += (f'<div style="position:absolute;left:40px;top:{H - 44}px;font-size:13.5px;color:#5b6478;display:flex;align-items:center">'
+          f'{badge("A", True)}오늘 MVP에 들어 있음 &nbsp;&nbsp;&nbsp; {badge("G", False)}다음 단계 &nbsp;&nbsp;&nbsp;'
+          f'<span style="display:inline-block;width:26px;border-top:2px dashed #b8c0cf;margin:0 7px 0 4px"></span>그 단계에 붙는 Ops</div>')
+    page("my-universe-5-ops-map", W, H, b)
+
 
 if __name__ == "__main__":
-    d1(); d2(); d3(); d4()
+    d1(); d2(); d3(); d4(); d5()
