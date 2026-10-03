@@ -1,7 +1,8 @@
 """
 universe_view.py
 
-2D 우주 화면 (PRD §7). 글 = 별, 주제 = 성운, 관계 = 별자리.
+2D 우주 화면 (PRD §7). 태양계 = 삶의 영역(해), 궤도의 행성 = 세부 주제, 별 = 글, 관계 = 별자리.
+배치는 _solar 가 계산하고 3D 화면(universe_view3d.py)도 같은 값을 위에서 내려다본 꼴로 쓴다.
 Streamlit components.html 로 띄우는 독립 HTML(SVG + JS)을 만든다. 실명은 가린 뒤 넘긴다.
 
 기호 규칙
@@ -11,6 +12,7 @@ Streamlit components.html 로 띄우는 독립 HTML(SVG + JS)을 만든다. 실�
 """
 
 import json
+import math
 
 import gates
 
@@ -67,7 +69,50 @@ def _payload(state, selected=None):
              "topic": r["topic"], "why": mk(r["explanation"]), "axis": r["axis"],
              "aday": th[r["from"]]["day"], "bday": th[r["to"]]["day"]}
             for r in state["relations"] if r["status"] != "rejected" and r["from_record"] != r["to_record"]]
+    _solar(state, hubs, stars)
     return {"hubs": hubs, "stars": stars, "rels": rels, "cards": cards, "selected": selected}
+
+
+SLOT = [4, 1, 5, 7, 3, 0, 2, 8, 6]  # 3x3 칸: 글 많은 태양계부터 가운데 → 십자 → 모서리
+
+
+def _solar(state, hubs, stars):
+    """태양계 배치 (2D·3D 공통, 새 키만 더한다).
+    해 = 삶의 영역(hub sx, sy, sr), 궤도 = 세부 주제(hub orbits: 먼저 나온 주제가 안쪽, topic = topics 번호),
+    별 = 글(star sx, sy): 자기 주제 궤도 위, 앞쪽(+y) 주제 행성 옆에서 시작해 날짜 순으로 한 바퀴."""
+    th = list(state["thoughts"].values())
+    idx, order, mem = {}, {}, {}
+    for hp in hubs:
+        raw = [n for n, _ in sorted((state["hubs"][hp["id"]].get("topics") or {}).items(), key=lambda kv: -kv[1])]
+        idx[hp["id"]] = {n: j for j, n in enumerate(raw)}
+        first = {n: min((t["day"] for t in th if t["hub"] == hp["id"] and t["topic"] == n), default="9") for n in raw}
+        order[hp["id"]] = sorted(range(len(raw)), key=lambda j: (first[raw[j]], j))
+    for sp in stars:
+        sp["sx"] = sp["sy"] = 0.0
+        home = max(sp["links"], key=lambda l: l["n"])["hub"] if sp["links"] else sp.get("near_hub")
+        mine = [t["topic"] for t in th if t["record_id"] == sp["id"] and t["hub"] == home]
+        j = idx.get(home, {}).get(max(mine, key=mine.count)) if mine else None
+        mem.setdefault(home, []).append((sp, order.get(home, []).index(j) if j is not None else 0))
+    size = {}
+    for hp in hubs:
+        cnt = hp["count"]
+        r, gap = (7 + 3.4 * math.sqrt(cnt) if cnt else 5), 20 + 4.5 * math.sqrt(cnt)
+        nr = max(len(order[hp["id"]]), 1 if mem.get(hp["id"]) else 0)
+        hp["sr"] = round(r, 1)
+        hp["orbits"] = [{"r": round(r + gap * (k + 1), 1), "topic": order[hp["id"]][k] if k < len(order[hp["id"]]) else None} for k in range(nr)]
+        size[hp["id"]] = hp["orbits"][-1]["r"] + 14 if nr else r + 12
+    cell = 2 * max([1] + list(size.values())) + 40
+    cols = max(1, math.ceil(math.sqrt(len(hubs))))
+    rows = max(1, math.ceil(len(hubs) / cols))
+    for k, i in enumerate(sorted(range(len(hubs)), key=lambda i: (-hubs[i]["count"], i))):
+        hp, slot = hubs[i], (SLOT[k] if len(hubs) == 9 else k)
+        cx, cy = (slot % cols - (cols - 1) / 2) * cell, (slot // cols - (rows - 1) / 2) * cell
+        hp["sx"], hp["sy"] = round(cx, 1), round(cy, 1)
+        for ring_k, orb in enumerate(hp["orbits"]):
+            on = sorted((sp for sp, rk in mem.get(hp["id"], []) if rk == ring_k), key=lambda sp: sp["day"])
+            for q, sp in enumerate(on):
+                a = math.pi / 2 + 2 * math.pi * (q + .5) / len(on)
+                sp["sx"], sp["sy"] = round(cx + orb["r"] * math.cos(a), 1), round(cy + orb["r"] * math.sin(a), 1)
 
 
 def render(state, selected=None, height=660):
@@ -104,20 +149,24 @@ svg{width:100%;height:100%;cursor:grab}svg:active{cursor:grabbing}
 <div id="legend"><div><i style="border-color:var(--violet)"></i>이어짐 · 바뀜(화살표) · 해소</div>
 <div><i style="border-color:var(--coral)"></i>긴장(쌍성) · 어긋남 · 목표 충돌</div>
 <div><i style="border-color:#cfd3ef"></i>실선 = 원문으로 확인 &nbsp; <i style="border-color:#cfd3ef;border-top-style:dashed"></i>점선 = AI 추정</div>
-<div>별 크기 = 생각 수 · 밝기 = 확신 · <span style="color:var(--gold)">◯</span> 다짐 · <span style="color:#c4b5fd">?</span> 질문</div></div>
+<div>별 크기 = 생각 수 · 밝기 = 확신 · <span style="color:var(--gold)">◯</span> 다짐 · <span style="color:#c4b5fd">?</span> 질문</div>
+<div>태양계 = 삶의 영역 · 궤도의 행성 = 세부 주제 · 별 = 글 · 해에 가까운 궤도 = 먼저 나온 주제 · 선 = 생각의 관계</div></div>
 <div id="tip"></div></div>
 <div id="card"></div><div id="hint" style="position:absolute;right:14px;top:12px;font-size:12px;color:#9aa3c7">별을 누르면 그 글의 카드가 열립니다</div></div>
 <script>
 const D=__DATA__, NS="http://www.w3.org/2000/svg", svg=document.getElementById("svg");
 const VAL={"자율":"#7dd3fc","도전":"#f472b6","즐거움":"#fde047","성취":"#fb923c","영향력":"#c084fc","안정":"#94a3b8","규범":"#a3e635","전통·신앙":"#fcd34d","배려":"#5eead4","공익":"#60a5fa"};
 const CONF=new Set(["긴장","어긋남","목표 충돌"]);
+const PAL=["#8fb8f6","#7ee2a6","#6fd3c4","#b3c6fb","#a6e8c4","#7cc4ee","#c8d6ff","#62c99a","#9ad7f2","#b9e9d6"];
+for(const o of [...D.stars,...D.hubs])if(o.sx!=null){o.x=o.sx;o.y=o.sy}  // 태양계 배치(_solar)로 그린다
+const RX=h=>h.orbits&&h.orbits.length?h.orbits[h.orbits.length-1].r+14:(h.sr||6)+12;
 let mode="base", sel=D.selected, view;
 const S=Object.fromEntries(D.stars.map(s=>[s.id,s])), H=Object.fromEntries(D.hubs.map(h=>[h.id,h]));
 function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e}
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function fit(){const xs=[...D.stars.map(s=>s.x),...D.hubs.map(h=>h.x)],ys=[...D.stars.map(s=>s.y),...D.hubs.map(h=>h.y)];
+function fit(){const xs=[...D.stars.map(s=>s.x),...D.hubs.flatMap(h=>[h.x-RX(h),h.x+RX(h)])],ys=[...D.stars.map(s=>s.y),...D.hubs.flatMap(h=>[h.y-RX(h),h.y+RX(h)])];
  if(!xs.length){view=[-300,-220,600,440];return}
- const x0=Math.min(...xs)-110,x1=Math.max(...xs)+110,y0=Math.min(...ys)-90,y1=Math.max(...ys)+90;view=[x0,y0,x1-x0,y1-y0]}
+ const x0=Math.min(...xs)-30,x1=Math.max(...xs)+30,y0=Math.min(...ys)-40,y1=Math.max(...ys)+30;view=[x0,y0,x1-x0,y1-y0]}
 function draw(){svg.innerHTML="";svg.setAttribute("viewBox",view.join(" "));
  const defs=el("defs",{});
  defs.innerHTML='<filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
@@ -126,11 +175,15 @@ function draw(){svg.innerHTML="";svg.setAttribute("viewBox",view.join(" "));
  // 배경 별가루
  for(let i=0;i<140;i++){const r=(i*9301+49297)%233280/233280,q=(i*4241+1777)%233280/233280;
   el("circle",{cx:view[0]+r*view[2],cy:view[1]+q*view[3],r:.6+((i*7)%3)*.25,fill:"#fff",opacity:.12+((i*13)%5)*.05})}
- // 성운
- for(const h of D.hubs){const R=48+16*Math.sqrt(h.count);el("circle",{cx:h.x,cy:h.y,r:R,fill:"url(#neb)"});
-  const t=el("text",{x:h.x,y:h.y+4,"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#d9dcff",opacity:.92});t.textContent=h.name;
-  const c=el("text",{x:h.x,y:h.y+19,"text-anchor":"middle","font-size":10,fill:"#9aa3c7"});c.textContent=h.count?h.count+"편":"아직 관측 안 됨";
-  const tp=(h.topics||[]).slice(0,3).map(t=>t.name).join(" · ");if(tp){const u=el("text",{x:h.x,y:h.y+32,"text-anchor":"middle","font-size":9,fill:"#7f88b0"});u.textContent=tp}}
+ // 태양계: 궤도(세부 주제) · 주제 행성(앞쪽 = 아래) · 해(삶의 영역)
+ D.hubs.forEach((h,i)=>{const col=PAL[i%PAL.length],r=h.sr||6;
+  for(const o of h.orbits||[]){el("circle",{cx:h.x,cy:h.y,r:o.r,fill:"none",stroke:"#9fb3e0","stroke-width":.8,opacity:.3});
+   if(o.topic==null)continue;el("circle",{cx:h.x,cy:h.y+o.r,r:3,fill:col,opacity:.9});
+   if(o.topic<3&&h.topics[o.topic]){const t=el("text",{x:h.x,y:h.y+o.r+12,"text-anchor":"middle","font-size":9,fill:"#9fb3e0"});t.textContent=h.topics[o.topic].name}}
+  if(h.count)el("circle",{cx:h.x,cy:h.y,r:r*2.6,fill:"url(#neb)"});
+  el("circle",{cx:h.x,cy:h.y,r,fill:col,opacity:h.count?.95:.45,filter:"url(#glow)"});
+  const t=el("text",{x:h.x,y:h.y-r-17,"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#d9dcff",opacity:h.count?.95:.7});t.textContent=h.name;
+  const c=el("text",{x:h.x,y:h.y-r-5,"text-anchor":"middle","font-size":10,fill:"#9aa3c7"});c.textContent=h.count?h.count+"편":"아직 관측 안 됨"});
  const on=sel?new Set([sel,...D.rels.filter(r=>r.a===sel||r.b===sel).flatMap(r=>[r.a,r.b])]):null;
  // 글 → 주제 선 (생각이 올라가는 선)
  for(const s of D.stars){const dim=on&&!on.has(s.id)?.18:1;

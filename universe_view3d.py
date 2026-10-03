@@ -2,15 +2,15 @@
 universe_view3d.py
 
 3D 우주 화면. 2D 화면(universe_view.py)과 같은 데이터(_payload)를 Three.js 로 띄운다.
-글 = 별, 주제 = 행성(성운), 관계 = 별자리.
-시간은 원반의 반지름이다: 첫 기록이 가운데, 최근 글일수록 바깥(첫 기억에서 퍼져 나가는 우주).
-삶의 영역(D1..D9)마다 부채꼴 하나를 갖고, 별은 자기 영역 부채꼴 안에 놓인다.
+우주 안에 태양계가 여럿 있다 (2단 온톨로지: 삶의 영역 → 세부 주제 → 글).
+- 해 = 삶의 영역(D1..D9), 궤도의 행성 = 그 영역의 세부 주제(먼저 나온 주제가 해에 가까운 궤도)
+- 별 = 글. 자기 주제의 궤도 위에 날짜 순으로 놓인다(앞쪽 주제 행성 옆에서 시작해 시계 방향).
+- 관계 = 별자리. 서로 다른 태양계(삶의 영역)를 가로질러 이어진다.
 
 기호 규칙은 2D 와 같다.
 - 색은 두 뜻: 보라 = 이어지는 관계(이어짐 · 바뀜 · 해소), 주황 = 충돌(긴장 · 어긋남 · 목표 충돌)
 - 실선 = 원문으로 확인, 점선 = AI 추정
 - 별 크기 = 생각 수, 밝기 = 확신, 금색 고리 = 다짐(지켜지면 두껍게 채움), "?" = 질문
-행성은 자기 부채꼴의 바깥 끝(가장 최근 고리 너머)에 놓는다. 달마다 희미한 고리를 그린다.
 
 Three.js(r128)를 CDN 에서 읽는다. 못 읽으면 "평면 보기"로 돌아가라는 안내를 띄운다.
 """
@@ -21,7 +21,8 @@ from universe_view import _payload
 
 
 def render(state, selected=None, height=680):
-    data = json.dumps(_payload(state, selected), ensure_ascii=False).replace("</", "<\\/")
+    p = _payload(state, selected)
+    data = json.dumps(p, ensure_ascii=False).replace("</", "<\\/")
     return TEMPLATE.replace("__H__", str(int(height))).replace("__DATA__", data)
 
 
@@ -37,8 +38,7 @@ html,body{margin:0;height:100%;background:transparent;color:var(--ink);font-fami
 .hl{position:absolute;transform:translate(-50%,-100%);text-align:center;white-space:nowrap;font-weight:700;font-size:13px;line-height:1.15;color:#f4f7ff;text-shadow:0 1px 2px #00113a,0 0 8px #00133a,0 0 14px #00133a99}
 .hl small{display:block;font-weight:500;font-size:10.5px;color:#c3d3f6}.hl small.tp{font-size:9.5px;color:#9fb3e0}.hl.dim{opacity:.7}
 .ql{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:800;color:#ddd3ff;text-shadow:0 0 4px #2b1d86,0 0 8px #00133a}
-.mon{position:absolute;transform:translate(-50%,-50%);padding:0 5px;border-radius:6px;background:#03163f99;font-size:11px;color:#d3e0fb;white-space:nowrap;text-shadow:0 0 6px #00133a}
-.mon.end{color:#fff;font-weight:700}.mon.c{font-size:12.5px;font-weight:800;color:#fff;background:#03163fcc}
+.tl{position:absolute;transform:translate(-50%,0);font-size:10px;color:#cfe0ff;white-space:nowrap;text-shadow:0 0 4px #00133a,0 0 8px #00133a}
 .sl{position:absolute;transform:translate(0,-50%);font-size:11.5px;white-space:nowrap;color:#fff;background:#071a46d9;border:1px solid #3a5aa8;border-radius:7px;padding:2px 7px}
 #card{position:absolute;right:10px;top:10px;bottom:10px;width:min(330px,calc(100% - 20px));background:#0a1636f2;border:1px solid var(--line);border-radius:12px;overflow:auto;padding:16px 16px 24px;font-size:13px;line-height:1.55;display:none;box-shadow:0 8px 30px #0008}
 #card .x{position:absolute;right:10px;top:8px;cursor:pointer;color:var(--mute);font-size:18px}
@@ -67,7 +67,7 @@ html,body{margin:0;height:100%;background:transparent;color:var(--ink);font-fami
 <div><i style="border-color:var(--coral)"></i>긴장(쌍성) · 어긋남 · 목표 충돌</div>
 <div><i style="border-color:#e3e9ff"></i>실선 = 원문으로 확인 &nbsp; <i style="border-color:#e3e9ff;border-top-style:dashed"></i>점선 = AI 추정</div>
 <div>별 크기 = 생각 수 · 밝기 = 확신 · <span style="color:var(--gold)">◯</span> 다짐(채움 = 지킴) · <span style="color:#ddd3ff;font-weight:800">?</span> 질문</div>
-<div>행성 = 삶의 영역 · 중심 = 처음 기록, 바깥 = 최근</div><div id="vleg" style="display:none"></div></div>
+<div>태양계 = 삶의 영역 · 궤도의 행성 = 세부 주제 · 별 = 글 · 해에 가까운 궤도 = 먼저 나온 주제 · 선 = 생각의 관계</div><div id="vleg" style="display:none"></div></div>
 <div id="tip"></div><div id="hint">별을 누르면 그 글의 카드가 열립니다 · 끌어서 돌리기 · 휠로 확대</div>
 <div id="card"></div>
 <div id="msg">3D 화면을 불러오지 못했습니다. 위의 '평면 보기'를 눌러 주세요.</div></div>
@@ -135,23 +135,25 @@ function dust(n,size,op,seed,soft){const r=rng(seed),p=new Float32Array(n*3);for
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xf2f7ff,size,sizeAttenuation:false,transparent:true,opacity:op,depthWrite:false,fog:false,map:soft?SOFT:null})))}
 dust(1300,1.3,.5,7,false);dust(240,3.4,.75,11,true);
 
-/* ---------- 시간 → 반지름 (첫 기록 = 가운데, 최근일수록 바깥) · 영역 → 부채꼴 ---------- */
-const R0=50,R1=330,NH=Math.max(1,D.hubs.length),SEC=Math.PI*2/NH;
-const dn=d=>{const t=Date.parse(String(d)+"T00:00:00Z");return isNaN(t)?null:Math.round(t/864e5)};
-const ds=D.stars.map(s=>dn(s.day)).filter(v=>v!=null);
-const d0=ds.length?Math.min(...ds):0,d1=ds.length?Math.max(...ds):0;
-const rD=v=>d1>d0?R0+(R1-R0)*(Math.min(Math.max(v,d0),d1)-d0)/(d1-d0):(R0+R1)/2;
-const rOf=d=>{const v=dn(d);return rD(v==null?d0:v)};
-const ang=i=>-Math.PI/2+i*SEC;  // 2D 화면과 같은 순서: D1 이 위(먼 쪽)
-const onDisc=(r,a,y)=>new THREE.Vector3(r*Math.cos(a),y,r*Math.sin(a));
-const hubIdx={};D.hubs.forEach((h,i)=>hubIdx[h.id]=i);
-const jr=rng(5);
+/* ---------- 태양계: 해 = 영역, 궤도의 행성 = 세부 주제(먼저 나온 주제가 안쪽), 별 = 그 궤도 위의 글(날짜 순) ---------- */
+// 배치(sx, sy, sr, orbits)는 universe_view._solar 에서 2D 와 같이 계산한다. 3D 는 x = sx, z = sy 로 눕힌다.
+function orbit(c,r,op){const m=new THREE.Mesh(new THREE.RingGeometry(r-.6,r+.6,128),new THREE.MeshBasicMaterial({color:0xdbe6ff,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.copy(c);scene.add(m)}
+const hubObj={},marks=[],PLA=new THREE.SphereGeometry(3.4,20,14);
+D.hubs.forEach((h,i)=>{const cnt=h.count||0,r=+h.sr||6,col=new THREE.Color(PAL[i%PAL.length]),pos=new THREE.Vector3(+h.sx||0,0,+h.sy||0);
+ const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,48,32),new THREE.MeshPhongMaterial({color:col,emissive:col.clone().multiplyScalar(.14),specular:0x5a6a80,shininess:26}));
+ mesh.position.copy(pos);scene.add(mesh);
+ const atm=sprite(ATM,col,r*3.2,.8,true);atm.position.copy(pos);scene.add(atm);
+ if(cnt){const neb=sprite(SOFT,0x82b2f6,r*6,.12,true);neb.position.copy(pos);scene.add(neb)}else{mesh.material.transparent=true;mesh.material.opacity=.55}
+ const os=h.orbits||[];
+ hubObj[h.id]={h,pos,r,R:os.length?os[os.length-1].r+14:r+12,lab:label("hl"+(cnt?"":" dim"),esc(h.name)+"<small>"+(cnt?esc(cnt)+"편":"아직 관측 안 됨")+"</small>")};
+ for(const o of os){orbit(pos,o.r,.34);if(o.topic==null)continue;const pp=new THREE.Vector3(pos.x,0,pos.z+o.r);  // 주제 행성은 앞쪽, 첫 별과 마지막 별 사이 빈자리에
+  const pm=new THREE.Mesh(PLA,new THREE.MeshPhongMaterial({color:col.clone().lerp(new THREE.Color(0xffffff),.35),emissive:col.clone().multiplyScalar(.2),shininess:20}));pm.position.copy(pp);scene.add(pm);
+  if(o.topic<3&&h.topics[o.topic])marks.push({e:label("tl",esc(h.topics[o.topic].name)),p:pp})}});
 
 /* ---------- 별 (글) ---------- */
 const starObj={};
 for(const s of D.stars){
- const top=(s.links||[]).slice().sort((a,b)=>(b.n||0)-(a.n||0))[0],hi=hubIdx[top?top.hub:s.near_hub];
- const a=hi==null?jr()*Math.PI*2:ang(hi)+(jr()-.5)*SEC*.72,p=onDisc(rOf(s.day),a,(jr()-.5)*36),n=s.n||0,b=+s.bright||.35,R=n?Math.min(3+n*1.05,8.4):2;
+ const p=new THREE.Vector3(+s.sx||0,0,+s.sy||0),n=s.n||0,b=+s.bright||.35,R=n?Math.min(3+n*1.05,8.4):2;
  const g=new THREE.Group();g.position.copy(p);scene.add(g);
  const o={s,p,R,g,list:[]},add=m=>{g.add(m);o.list.push(m);return m};
  add(sprite(SOFT,0xd6e6ff,R*(n?7:5),n?.16+.36*b:.12,true));
@@ -161,17 +163,6 @@ for(const s of D.stars){
  o.sel=sprite(RING1,0xffffff,R*5,0,false);g.add(o.sel);
  if(s.question)o.q=label("ql","?");
  starObj[s.id]=o}
-
-/* ---------- 행성 (삶의 영역) — 자기 부채꼴 바깥 끝 ---------- */
-const hubObj={};
-D.hubs.forEach((h,i)=>{
- const cnt=h.count||0,r=cnt?9+5*Math.sqrt(cnt):6,col=new THREE.Color(PAL[i%PAL.length]),pos=onDisc(R1+70,ang(i),0);
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,48,32),new THREE.MeshPhongMaterial({color:col,emissive:col.clone().multiplyScalar(.14),specular:0x5a6a80,shininess:26}));
- mesh.position.copy(pos);scene.add(mesh);
- const atm=sprite(ATM,col,r*3.2,.8,true);atm.position.copy(pos);scene.add(atm);
- if(cnt){const neb=sprite(SOFT,0x82b2f6,r*9,.14,true);neb.position.copy(pos);scene.add(neb)}else{mesh.material.transparent=true;mesh.material.opacity=.55}
- const tp=(h.topics||[]).slice(0,3).map(t=>esc(t.name)).join(" · ");
- hubObj[h.id]={h,pos,r,lab:label("hl"+(cnt?"":" dim"),esc(h.name)+"<small>"+(cnt?esc(cnt)+"편":"아직 관측 안 됨")+"</small>"+(tp?"<small class=tp>"+tp+"</small>":""))}});
 
 /* ---------- 별 → 행성 선 ---------- */
 const links=[];
@@ -196,16 +187,8 @@ for(const r of D.rels){const A=starObj[r.a],B=starObj[r.b];if(!A||!B)continue;
   if(r.type==="해소"){const ring=sprite(RING1,col,B.R*5.6,.65,false);ring.position.copy(B.p);scene.add(ring);o.meshes.push(ring)}}
  relObjs.push(o)}
 
-/* ---------- 시간 고리 (기록이 있는 달마다 하나, 가운데 = 처음) ---------- */
-const pts=[...Object.values(starObj).map(o=>o.p),...Object.values(hubObj).map(o=>o.pos)];
+const pts=[...Object.values(starObj).map(o=>o.p),...Object.values(hubObj).flatMap(o=>[o.pos.clone().addScalar(o.R),o.pos.clone().addScalar(-o.R)])];
 const bb=new THREE.Box3().setFromPoints(pts.length?pts:[new THREE.Vector3()]);
-const months=[],LA=ang(Math.floor(NH*.72))+SEC/2;  // 달 글자는 두 영역 사이 빈 틈에 세운다
-function orbit(r,op){const m=new THREE.Mesh(new THREE.RingGeometry(r-.8,r+.8,160),new THREE.MeshBasicMaterial({color:0xdbe6ff,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;scene.add(m)}
-if(d1>d0){const yms=[...new Set(D.stars.map(s=>String(s.day).slice(0,7)))].filter(k=>/^\d{4}-\d\d$/.test(k)).sort(),multiYear=yms.length&&yms[0].slice(0,4)!==yms[yms.length-1].slice(0,4);
- for(const ym of yms){const y=+ym.slice(0,4),m=+ym.slice(5)-1,r=rD(Math.max(Date.UTC(y,m,1)/864e5,d0));orbit(r,.26);
-  months.push({e:label("mon",(multiYear&&(m===0||!months.length)?y+"년 ":"")+(m+1)+"월"),p:onDisc(r,LA,0)})}
- orbit(R1,.45);months.push({e:label("mon end","최근"),p:onDisc(R1,LA-SEC*.3,0)})}
-months.push({e:label("mon c","처음"),p:new THREE.Vector3()});
 const selLab=label("sl","");selLab.style.display="none";
 
 /* ---------- 카메라 ---------- */
@@ -232,7 +215,7 @@ function put(e,x,y,ok){if(!ok||x<-60||x>W+60||y<-40||y>Hh+40){e.style.display="n
 function placeLabels(){
  for(const id in hubObj){const o=hubObj[id],s=scr(o.pos);put(o.lab,s.x,s.y-pxr(o.pos,o.r)*1.08-4,s.ok)}
  for(const id in starObj){const o=starObj[id];if(!o.q)continue;const s=scr(o.p),pr=pxr(o.p,o.R);put(o.q,s.x+pr*1.5+5,s.y-pr*1.5-5,s.ok)}
- for(const m of months){const s=scr(m.p);put(m.e,s.x,s.y,s.ok)}
+ for(const m of marks){const s=scr(m.p);put(m.e,s.x,s.y+4,s.ok)}
  if(sel&&!cardOn){const o=starObj[sel],s=scr(o.p);put(selLab,s.x+pxr(o.p,o.R)*2.6+8,s.y,s.ok)}}
 
 /* ---------- 고르기 · 흐리게 ---------- */

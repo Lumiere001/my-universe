@@ -380,7 +380,7 @@ def d6():
               f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px">{grid}</div>'
               f'<div class="d" style="font-size:13.5px;margin-top:14px;line-height:1.55"><b>근거:</b> 삶의 영역은 주관적 안녕감 지표 PWI(Personal Wellbeing Index, International Wellbeing Group — OECD 2013 측정 지침이 영역 평가에서 인용)의 7개 영역 + 선택 영역 "영성·종교", '
               f'WHO 삶의 질 척도 WHOQOL의 "여가"에서 가져왔다. 감정은 영역이 아니라 생각의 종류 "감정"으로 담는다.<br><br>'
-              f'우주에서 <b>삶의 영역 = 행성</b>. AI가 뽑은 세부 주제(점선 칸)는 가장 가까운 영역 하나에 붙고, 아직 글이 없는 영역은 "관측 안 된 영역"으로 남는다.</div>')
+              f'우주에서 <b>삶의 영역 = 태양계(해)</b>, <b>세부 주제 = 그 해를 도는 행성</b>. AI가 뽑은 세부 주제(점선 칸)는 가장 가까운 영역 하나에 붙고, 아직 글이 없는 영역은 "관측 안 된 영역"으로 남는다.</div>')
     # 연결선 (술어)
     paths = ["M512,280 C540,280 540,300 562,300", "M275,432 L275,456", "M512,790 C540,790 540,720 562,720", "M1067,330 C1092,330 1092,330 1116,330"]
     b += arrows(W, H, [(p, 2.5, False) for p in paths])
