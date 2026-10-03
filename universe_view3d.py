@@ -68,7 +68,7 @@ html,body{margin:0;height:100%;background:transparent;color:var(--ink);font-fami
 <div><i style="border-color:#e3e9ff"></i>실선 = 원문으로 확인 &nbsp; <i style="border-color:#e3e9ff;border-top-style:dashed"></i>점선 = AI 추정</div>
 <div>별 크기 = 생각 수 · 밝기 = 확신 · <span style="color:var(--gold)">◯</span> 다짐(채움 = 지킴) · <span style="color:#ddd3ff;font-weight:800">?</span> 질문</div>
 <div>태양계 = 삶의 영역 · 궤도의 행성 = 세부 주제 · 별 = 글 · 해에 가까운 궤도 = 먼저 나온 주제 · 선 = 생각의 관계</div><div id="vleg" style="display:none"></div></div>
-<div id="tip"></div><div id="hint">별을 누르면 그 글의 카드가 열립니다 · 끌어서 돌리기 · 휠로 확대</div>
+<div id="tip"></div><div id="hint">별 = 그 글의 카드 · 해 = 그 태양계로 · 빈 곳 = 우주 전체 · 끌어서 돌리기 · 휠로 확대</div>
 <div id="card"></div>
 <div id="msg">3D 화면을 불러오지 못했습니다. 위의 '평면 보기'를 눌러 주세요.</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -237,7 +237,7 @@ function segD(px,py,a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;let t=l?((px-
 function pick(mx,my){let best=null,bd=1e9;
  for(const id in starObj){const o=starObj[id],s=scr(o.p);if(!s.ok)continue;const d=Math.hypot(s.x-mx,s.y-my);if(d<Math.max(8,pxr(o.p,o.R*1.6))&&d<bd){bd=d;best={k:"star",id}}}
  if(best)return best;
- for(const id in hubObj){const o=hubObj[id],s=scr(o.pos);if(!s.ok)continue;const d=Math.hypot(s.x-mx,s.y-my);if(d<Math.max(8,pxr(o.pos,o.r))&&d<bd){bd=d;best={k:"hub",id}}}
+ for(const id in hubObj){const o=hubObj[id],s=scr(o.pos);if(!s.ok)continue;const d=Math.hypot(s.x-mx,s.y-my);if(d<Math.max(12,pxr(o.pos,o.r)*1.4)&&d<bd){bd=d;best={k:"hub",id}}}
  if(best)return best;
  for(const o of relObjs){if(!relOn(o))continue;for(const ps of o.pts){let prev=null;for(const p of ps){const s=scr(p);if(prev&&prev.ok&&s.ok){const d=segD(mx,my,prev,s);if(d<6&&d<bd){bd=d;best={k:"rel",o}}}prev=s}}}
  return best}
@@ -251,10 +251,13 @@ function tipHTML(h){
 const rel=e=>{const r=canvas.getBoundingClientRect();return pick(e.clientX-r.left,e.clientY-r.top)};
 let down=null;
 canvas.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY];hideTip()});
-canvas.addEventListener("pointermove",e=>{if(e.buttons){hideTip();return}const h=rel(e);canvas.style.cursor=h&&h.k==="star"?"pointer":"";if(h)showTip(e,tipHTML(h));else hideTip()});
+canvas.addEventListener("pointermove",e=>{if(e.buttons){hideTip();return}const h=rel(e);canvas.style.cursor=h&&(h.k==="star"||h.k==="hub")?"pointer":"";if(h)showTip(e,tipHTML(h));else hideTip()});
 canvas.addEventListener("pointerleave",hideTip);
 canvas.addEventListener("pointerup",e=>{if(!down)return;const m=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;if(m>5)return;
- const h=rel(e);if(h&&h.k==="star"){select(h.id);card(h.id)}else{select(null);card(null)}});
+ const h=rel(e);if(h&&h.k==="star"){select(h.id);card(h.id)}else if(h&&h.k==="hub"){focusHub(h.id)}else{select(null);card(null);flyTo(HOME.pos,HOME.tgt)}});
+function flyTo(p,t){fl={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:p.clone(),t1:t.clone()}}
+// 해(삶의 영역)를 누르면 그 태양계가 화면 가운데 오도록 다가간다
+function focusHub(id){const o=hubObj[id],a=wrap.clientWidth/Math.max(1,wrap.clientHeight),d=o.R/Math.sin(FOV*Math.PI/360)*.62*Math.max(1,1.3/a);flyTo(o.pos.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(d)),o.pos)}
 
 /* ---------- 카드 (2D 화면과 같은 내용) ---------- */
 function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");cardOn=!!c;voT=c&&W>620?Math.min(330,W-20)/2:0;if(!c){box.style.display="none";hint.style.display="";return}box.style.display="block";hint.style.display="none";
@@ -273,7 +276,7 @@ function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");cardOn=!!
  if(mm.length)h+='<div class=hint style="margin-top:12px">'+mm.join("<br>")+'</div>';
  h+='<div class=hint style="margin-top:12px">점선은 AI 추정입니다. 확인·수정 기능은 다음 단계에 붙습니다.</div>';
  box.innerHTML=h;box.scrollTop=0;box.querySelector(".x").onclick=()=>{select(null);card(null)}}
-window.openStar=id=>{select(id);card(id)};
+window.openStar=id=>{select(id);card(id)};window.focusHub=focusHub;
 
 /* ---------- 그리기 ---------- */
 select(D.selected);
