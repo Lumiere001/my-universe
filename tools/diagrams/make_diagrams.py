@@ -141,7 +141,7 @@ def d2():
         b += card(X + i * (mw + 16), 406, mw, 150, "yellow", f'<div style="text-align:center">{icon("flow", C["yellow"][0], 46)}<div class="t" style="font-size:18px;margin-top:4px">{m}.py</div><div class="ex" style="font-size:14px">{d}</div></div>')
     b += f'<div class="c" style="left:{X - 14}px;top:580px;width:{Wd + 28}px;height:160px;border-color:{C["purple"][2]};border-style:dashed;background:transparent"></div>'
     aw = (Wd - 2 * 20) / 3
-    for i, (t, d, col) in enumerate([("기록 Agent", "Studio · 글 유형 4갈래 → 생각 나누기", "purple"), ("관측 Agent", "Studio · 관측 상태 6갈래 → 관계 판정", "purple"), ("Solar Embedding", "같은 이야기인가 (주제 → 성운)", "teal")]):
+    for i, (t, d, col) in enumerate([("기록 Agent", "Studio · 글 유형 4갈래 → 생각 나누기", "purple"), ("관측 Agent", "Studio · 관측 상태 6갈래 → 관계 판정", "purple"), ("Solar Embedding", "같은 이야기인가 (주제 → 삶의 영역)", "teal")]):
         b += row(X + i * (aw + 20), 594, aw, 132, col, "robot" if i < 2 else "nebula", t, d)
     rw = (Wd - 2 * 20) / 3
     for i, (t, d, ic) in enumerate([("관측 보고서 JSON", "근거 인용 · 관측 상태 · 질문", "stars"), ("정리된 기록 파일", "우주 전체 (JSON, 사용자가 보관)", "db"), ("실행 기록", "시간 · 비용 · 관문 (원문 없음)", "log")]):
