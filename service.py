@@ -5,7 +5,7 @@ service.py
 
 1. 기록 Agent (Parse → Classify → 유형별 Extract)
 2. 관문 G1 · G2 · G4 (원문 인용 대조, 날짜, 실명)
-3. 주제 → 성운 연결 (임베딩)
+3. 주제 → 삶의 영역(해) 연결 (임베딩)
 4. 관련 과거 생각 고르기 → 비교 입력 HTML
 5. 관측 Agent (Parse → Classify(관측 상태) → Extract(관측 보고서))
 6. 관계 규칙 · 관문 G3 → 관측 보고서
@@ -88,8 +88,8 @@ def process_record(state, rec, budget=None, progress=lambda step: None, extra_na
     runlog.write(run_id, "record", record_id=rid, **{k: m1[k] for k in ("agent", "config_id", "seconds", "pages", "est_cost", "cached")},
                  type=label, thoughts=len(thoughts), **g)
 
-    # 3. 주제 → 성운
-    progress("주제를 성운에 연결하는 중")
+    # 3. 주제 → 삶의 영역(해)
+    progress("주제를 삶의 영역(해)에 연결하는 중")
     texts = [t["topic"] for t in thoughts] + [t["thought"] for t in thoughts] + [state["records"][rid]["summary"]]
     embs = embedder.embed(texts)
     n = len(thoughts)
@@ -118,7 +118,7 @@ def process_record(state, rec, budget=None, progress=lambda step: None, extra_na
                       summary=" ".join(obs.get("summary") or []) or report["summary"],
                       relations=[r["id"] for r in kept], rule_notes=notes)
         report["run"]["observe_agent"] = m2
-        report["limits"].append(f"과거 생각 {len(past)}개와만 비교했습니다 (같은 성운이거나 유사도 {config.SAME_STORY_THETA} 이상, 최대 {config.PAST_LIMIT}개).")
+        report["limits"].append(f"과거 생각 {len(past)}개와만 비교했습니다 (같은 삶의 영역(해)이거나 유사도 {config.SAME_STORY_THETA} 이상, 최대 {config.PAST_LIMIT}개).")
         runlog.write(run_id, "observe", record_id=rid, **{k: m2[k] for k in ("agent", "config_id", "seconds", "pages", "est_cost", "cached")},
                      state=state_label, past=len(past), relations=len(kept), rule_changes=len(notes))
     if rec["day_basis"] == "추정":

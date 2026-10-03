@@ -222,7 +222,7 @@ function card(id){const c=D.cards[id],box=document.getElementById("card"),hint=d
  if(c.summary)h+=`<div>${esc(c.summary)}</div>`;
  if(c.question)h+=`<div style="margin:8px 0;color:#c4b5fd">다음에 써 볼 질문 · ${esc(c.question)}</div>`;
  h+=`<div style="margin-top:10px;font-weight:700">선 위의 생각 ${c.thoughts.length}개</div>`;
- if(!c.thoughts.length)h+=`<div class=hint>생각이 없는 글이라 가까운 성운에 희미하게만 이어 두었습니다.</div>`;
+ if(!c.thoughts.length)h+=`<div class=hint>생각이 없는 글이라 가까운 삶의 영역(해)에 희미하게만 이어 두었습니다.</div>`;
  for(const t of c.thoughts)h+=`<div class=th><span class="badge v">${esc(t.kind)}</span><span class=badge>${esc(t.certainty)}</span><span class=badge>${esc(t.topic)}</span>${t.value?`<span class=badge>${esc(t.value)}</span>`:""}
   <div style="margin-top:4px">${esc(t.thought)}</div><div class=q>“${esc(t.quote)}”</div>${t.change?`<div style="color:var(--violet);margin-top:3px">스스로 쓴 변화: ${esc(t.change)}</div>`:""}</div>`;
  if(rels.length){h+=`<div style="margin-top:12px;font-weight:700">이 별의 별자리 ${rels.length}개</div>`;

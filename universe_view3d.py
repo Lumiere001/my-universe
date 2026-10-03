@@ -193,7 +193,7 @@ const selLab=label("sl","");selLab.style.display="none";
 
 /* ---------- 카메라 ---------- */
 const C=bb.getCenter(new THREE.Vector3()),rad=bb.getSize(new THREE.Vector3()).length()/2;
-const asp=wrap.clientWidth/Math.max(1,wrap.clientHeight),dist=rad/Math.sin(FOV*Math.PI/360)*.9*Math.max(1,1.5/asp);  // 좁은 화면이면 조금 물러선다
+const asp=wrap.clientWidth&&wrap.clientHeight?wrap.clientWidth/wrap.clientHeight:1.6,dist=rad/Math.sin(FOV*Math.PI/360)*.9*Math.max(1,1.5/asp);  // 좁은 화면이면 조금 물러선다. 숨은 탭에서 열리면 크기가 0 이라 넓은 화면으로 친다
 // 옅은 안개: 먼(오래된) 선과 행성이 하늘색으로 조금 가라앉아 깊이가 읽힌다
 scene.fog=new THREE.Fog(0x063a8f,dist*.7,dist*2.6);
 const HOME={pos:C.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(dist)),tgt:C.clone()};  // 위에서 40° 기울여 원반 전체
@@ -266,7 +266,7 @@ function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");cardOn=!!
  if(c.summary)h+='<div>'+esc(c.summary)+'</div>';
  if(c.question)h+='<div style="margin:8px 0;color:#c4b5fd">다음에 써 볼 질문 · '+esc(c.question)+'</div>';
  const ths=c.thoughts||[];h+='<div style="margin-top:10px;font-weight:700">선 위의 생각 '+ths.length+'개</div>';
- if(!ths.length)h+='<div class=hint>생각이 없는 글이라 가까운 성운에 희미하게만 이어 두었습니다.</div>';
+ if(!ths.length)h+='<div class=hint>생각이 없는 글이라 가까운 삶의 영역(해)에 희미하게만 이어 두었습니다.</div>';
  for(const t of ths)h+='<div class=th><span class="badge v">'+esc(t.kind)+'</span><span class=badge>'+esc(t.certainty)+'</span><span class=badge>'+esc(t.topic)+'</span>'+(t.value?'<span class=badge>'+esc(t.value)+'</span>':'')
   +'<div style="margin-top:4px">'+esc(t.thought)+'</div><div class=q>“'+esc(t.quote)+'”</div>'+(t.change?'<div style="color:var(--violet);margin-top:3px">스스로 쓴 변화: '+esc(t.change)+'</div>':'')+'</div>';
  if(rels.length){h+='<div style="margin-top:12px;font-weight:700">이 별의 별자리 '+rels.length+'개</div>';

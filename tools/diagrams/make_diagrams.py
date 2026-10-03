@@ -100,13 +100,13 @@ def d1():
     xs = [40 + i * (cw + gx) for i in range(4)]
     y1, y2 = 140, 482
     row1 = [("blue", "대화 · 글 · 사진", "Talk · Write · Photo", "doc_up", "대화로 쓰기(요약 확인 후),<br>텍스트, 손글씨 사진", "MVP: 직접 쓰기 · MD·TXT · 인스타 ZIP"),
-            ("green", "공통 기록 → HTML", "Common Record", "doc_code", "출처와 무관한 기록으로 바꾸고<br>HTML로 Studio에 보냄", "이어진 게시물 묶기 · 제목 날짜 · 소제목"),
+            ("green", "공통 기록 → HTML", "Common Record", "doc_code", "어디서 온 글이든 같은 모양의<br>기록으로 바꾸고, HTML로 Studio에 보냄", "이어진 게시물 묶기 · 제목 날짜 · 소제목"),
             ("purple", "기록 Agent", "Studio · Parse → Classify → Extract", "robot", "글 유형을 고르고<br>생각을 하나씩 나눔", "주제 · 종류 · 확신 · 원문 인용 · 가치"),
-            ("orange", "관문", "Gates G1 · G2 · G4", "shield", "원문에 없는 인용은 버리고<br>날짜 확인, 실명은 ○○", "결과를 내보내기 전에 매번")]
-    row2 = [("teal", "성운 연결 · 과거 고르기", "Embedding", "nebula", "주제를 성운에 붙이고<br>관련 과거 생각 최대 10개", "같은 성운이거나 비슷한 생각"),
+            ("orange", "관문 (자동 검사)", "Gates", "shield", "원문에 없는 인용을 붙인 생각은<br>저장 안 함, 날짜 확인, 실명은 ○○", "결과를 내보내기 전에 매번")]
+    row2 = [("teal", "영역 연결 · 과거 고르기", "Embedding", "nebula", "주제를 삶의 영역(해)에 붙이고<br>비슷한 과거 생각 최대 10개", "같은 세부 주제 먼저"),
             ("yellow", "관측 Agent", "Studio · Parse → Classify → Extract", "compare", "오늘 생각(T)과 과거 생각(P)을<br>비교해 관계를 판정", "관측 상태 6가지 중 하나"),
-            ("pink", "관계 규칙", "Rules + Gate G3", "rules", "시간 · 감정 규칙으로 거르고<br>실선/점선을 정함", "감정이 달라진 것은 바뀜이 아님"),
-            ("blue", "보고서 · 한마디 · 우주", "Report · Words · Universe", "stars", "근거 인용이 붙은 보고서,<br>위로·격려 한마디, 새 별", "정리된 기록 파일로 저장")]
+            ("pink", "관계 규칙", "Rules + Gate", "rules", "시간 · 감정 규칙으로 거르고<br>실선/점선을 정함", "감정이 달라진 것은 바뀜이 아님"),
+            ("blue", "보고서 · 우주", "Report · Universe", "stars", "근거 인용이 붙은 보고서,<br>다음 질문, 새 별", "한마디는 11/7 · 기록 파일로 저장")]
     for i, r in enumerate(row1):
         b += card(xs[i], y1, cw, ch, r[0], step(i + 1, *r))
     for i, r in enumerate(row2):
@@ -135,7 +135,7 @@ def d2():
     X, Wd = 270, 1130
     b += row(X, 150, Wd, 104, "blue", "window", "화면", "💬 대화 일기(목업 · 2차) &nbsp;|&nbsp; 🌌 우주 · 관측 보고서 &nbsp;|&nbsp; ✍️ 글쓰기 &nbsp;|&nbsp; 📥 가져오기 &nbsp;|&nbsp; 🛠 운영(Ops) — Streamlit")
     b += row(X, 278, Wd, 104, "green", "gear", "service.py — 글 한 편 → 관측 보고서", "두 에이전트와 코드를 순서대로 부르고 보고서를 조립 · 세션당 실행 한도로 크레딧 보호")
-    mods = [("importer", "공통 기록 · HTML 변환"), ("gates", "관문 G1 · G2 · G3 · G4"), ("universe", "성운 · 과거 고르기 · 관계 규칙 · 별 자리"), ("observe_builder", "비교 입력 HTML (T1… P1…)")]
+    mods = [("importer", "공통 기록 · HTML 변환"), ("gates", "관문 G1 · G2 · G3 · G4"), ("universe", "삶의 영역 · 과거 고르기 · 관계 규칙 · 별 자리"), ("observe_builder", "비교 입력 HTML (T1… P1…)")]
     mw = (Wd - 3 * 16) / 4
     for i, (m, d) in enumerate(mods):
         b += card(X + i * (mw + 16), 406, mw, 150, "yellow", f'<div style="text-align:center">{icon("flow", C["yellow"][0], 46)}<div class="t" style="font-size:18px;margin-top:4px">{m}.py</div><div class="ex" style="font-size:14px">{d}</div></div>')
@@ -161,7 +161,7 @@ def d2():
 # ---------------------------------------------------------------- 3. 에이전트 동작
 def d3():
     W, H = 1440, 1170
-    b = '<h1 style="top:22px">두 에이전트는 이렇게 일한다</h1><div class="sub" style="top:78px">HR 예시의 Resume·JD Agent → matching_builder → Matching Agent와 같은 구조</div>'
+    b = '<h1 style="top:22px">두 에이전트는 이렇게 일한다</h1><div class="sub" style="top:78px">글 한 편 → 기록 Agent → 코드 → 관측 Agent → 코드(마무리) → 우주</div>'
 
     def node(x, y, w, h, color, title, en, body):
         dark = C[color][0]
@@ -182,26 +182,26 @@ def d3():
 
     a1, p1 = agent(130, "기록 Agent", "Studio · classify-extract · 글 한 편 → 구조화 JSON", "HTML로 보낸 글을<br>읽을 수 있는 텍스트로",
                    ["경험 기록", "생각·성찰", "창작", "기타"], "신앙 묵상 · 기도도 생각·성찰 (종교 유형 없음)",
-                   ["summary", "period", "triggers", "addressee", "roles(실명 X)", "references", "events", "thoughts[ ]"],
-                   "thoughts = topic · thought · kind(해석·신념·질문·다짐·반성·감정) · certainty · quote(원문 그대로) · self_change · value(10개 중)")
+                   ["요약", "기간", "계기", "말 거는 대상", "등장 관계(역할)", "참고한 것", "사건", "생각 표 [ ]"],
+                   "생각 표(7칸) = 세부 주제 · 생각 · 종류(해석·신념·질문·다짐·반성·감정) · 확신 · 원문 인용(그대로) · 스스로 쓴 변화 · 가치(10개 중)")
     b += a1
     # 코드 조립
     dark, bg, br = C["yellow"]
-    b += f'<div class="c" style="left:40px;top:468px;width:1360px;height:212px;border-color:{br};background:{bg}"><div class="head">{icon("flow", dark, 44)}<div style="margin-left:12px"><div class="t" style="color:{dark}">코드 (Python) — 두 에이전트 사이</div><div class="en" style="color:{dark}">matching_builder에 해당하는 부분</div></div></div></div>'
-    steps = [("orange", "관문 G1 · G2 · G4", "인용이 원문에 없으면 버림<br>날짜 확인 · 실명은 ○○"), ("teal", "주제 → 성운", "임베딩 (중심 보정)<br>비슷하면 붙이고 아니면 새 성운"),
-             ("teal", "과거 생각 고르기", "같은 성운이거나<br>비슷한 생각, 최대 10개"), ("yellow", "비교 입력 HTML", "오늘 생각 T1, T2 …<br>과거 생각 P1, P2 …")]
+    b += f'<div class="c" style="left:40px;top:468px;width:1360px;height:212px;border-color:{br};background:{bg}"><div class="head">{icon("flow", dark, 44)}<div style="margin-left:12px"><div class="t" style="color:{dark}">코드 (Python) — 두 에이전트 사이</div><div class="en" style="color:{dark}">비교할 재료를 준비한다</div></div></div></div>'
+    steps = [("orange", "관문 (자동 검사)", "인용이 원문에 없으면 저장 안 함<br>날짜 확인 · 실명은 ○○"), ("teal", "주제 → 삶의 영역(해)", "이름이 겹치면 그 영역,<br>아니면 가장 가까운 영역"),
+             ("teal", "과거 생각 고르기", "비슷한 생각 최대 10개<br>(같은 세부 주제 먼저)"), ("yellow", "비교 입력 HTML", "오늘 생각 T1, T2 …<br>과거 생각 P1, P2 …")]
     sw = 300
     for i, (col, t, d) in enumerate(steps):
         b += node(70 + i * (sw + 28), 544, sw, 120, col, t, "", f'<div class="ex" style="font-size:14px">{d}</div>')
     p_code = [f"M{70 + i * (sw + 28) + sw + 4},604 L{70 + (i + 1) * (sw + 28) - 6},604" for i in range(3)]
     a2, p2 = agent(714, "관측 Agent", "Studio · classify-extract · 비교 입력 → 관측 보고서", "T(오늘) · P(과거) 목록을<br>텍스트로",
                    ["해소", "바뀜", "긴장", "어긋남", "이어짐", "처음 쓰는 주제"], "겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음",
-                   ["state", "summary", "question", "relations[ ]"],
-                   "relations = type · today_id · past_id · topic · explanation · author_stated · axis<br>감정이 달라진 것만으로는 바뀜이 아님")
+                   ["관측 상태", "요약", "다음 질문", "관계 표 [ ]"],
+                   "관계 표(7칸) = 종류 · 오늘 ID · 과거 ID · 주제 · 설명 · 작성자가 직접 씀 · 긴장 축<br>감정이 달라진 것만으로는 바뀜이 아님")
     b += a2
     # 결과
-    b += node(40, 1046, 1360, 96, "green", "→ 코드: 관계 규칙 + 관문 G3 → 관측 보고서 JSON · 우주 별자리", "",
-              '<div class="ex" style="font-size:14.5px">없는 ID 버림 · 바뀜은 7일 이상 · 긴장은 30일 이내 · 목표 충돌은 14일 이내 · 감정끼리 바뀜 버림 · 작성자가 직접 쓴 변화·정리만 실선 · 사람 단정 표현은 바꿈</div>')
+    b += node(40, 1046, 1360, 96, "green", "→ 코드(마무리): 관계 규칙 + 관문 → 관측 보고서 · 우주 별자리", "",
+              '<div class="ex" style="font-size:14.5px">없는 ID 버림 · 같은 영역끼리 · 바뀜은 7일 이상 · 긴장은 30일 이내 · 목표 충돌은 14일 이내 · 감정끼리 바뀜 버림 · 두 에이전트가 모두 확인한 변화만 실선 · 사람 단정 표현은 바꿈</div>')
     paths = p1 + p_code + p2 + ["M720,432 L720,464", "M720,682 L720,710", "M720,1016 L720,1042"]
     b += arrows(W, H, paths)
     page("my-universe-3-agents", W, H, b)
@@ -257,9 +257,9 @@ def d5():
     gap = (W - 80 - 8 * cw) / 7
     xs = [40 + i * (cw + gap) for i in range(8)]
     nodes = [("blue", "doc_up", "대화 · 글 · 사진", "MVP: 직접 · MD · TXT · ZIP"), ("green", "doc_code", "공통 기록", "출처와 무관 → HTML"),
-             ("purple", "robot", "기록 Agent", "Studio · 생각 나누기"), ("orange", "shield", "관문", "G1 · G2 · G4"),
-             ("teal", "nebula", "성운 · 과거", "임베딩 · 과거 생각 10개"), ("purple", "robot", "관측 Agent", "Studio · 관계 판정"),
-             ("pink", "rules", "관계 규칙", "시간 · 감정 규칙 · G3"), ("blue", "stars", "보고서 · 우주", "JSON · 별자리")]
+             ("purple", "robot", "기록 Agent", "Studio · 생각 나누기"), ("orange", "shield", "관문", "자동 검사"),
+             ("teal", "nebula", "영역 · 과거", "임베딩 · 과거 생각 10개"), ("purple", "robot", "관측 Agent", "Studio · 관계 판정"),
+             ("pink", "rules", "관계 규칙", "시간 · 감정 규칙"), ("blue", "stars", "보고서 · 우주", "JSON · 별자리")]
     for x, (col, ic, t, d) in zip(xs, nodes):
         dark = C[col][0]
         bw = "3px" if t.endswith("Agent") else "2px"
@@ -267,7 +267,7 @@ def d5():
                                       f'<div class="ex" style="font-size:12.5px">{d}</div></div>').replace("border:2px solid", f"border:{bw} solid")
     for x in (xs[2], xs[5]):   # B 설정 버전 꼬리표
         b += (f'<div style="position:absolute;left:{x + cw / 2 - 58}px;top:{y0 - 16}px;width:116px;height:28px;border-radius:999px;background:{C["purple"][0]};'
-              f'color:#fff;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center">B · config #1</div>')
+              f'color:#fff;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center">B · 설정 #1</div>')
     paths = [f"M{xs[i] + cw + 3},{y0 + ch / 2} L{xs[i + 1] - 5},{y0 + ch / 2}" for i in range(7)]
 
     def badge(letter, now):
@@ -285,9 +285,9 @@ def d5():
                  ("D", True, "실행 기록", "시간 · 비용 · 쪽수 (원문 없음)")]
     b += callout(xs[2], yc, agent_ops + [("F", True, "흔들림 측정", "같은 글 3번 → 결과가 같은가")])
     b += callout(xs[3], yc, [("E", True, "관문", "걸린 생각은 화면에 안 올림 · 걸린 수 기록")])
-    b += callout(xs[4], yc, [("H", False, "드리프트 지표", "성운 수 · '기타' 비율이 갑자기 변하나")])
+    b += callout(xs[4], yc, [("H", False, "드리프트 지표", "영역 수 · '기타' 비율이 갑자기 변하나")])
     b += callout(xs[5], yc, agent_ops + [("F", False, "흔들림 측정", "관측 Agent도 같은 글 3번")])
-    b += callout(xs[6], yc, [("E", True, "관문 G3", "사람을 단정하는 문장은 바꿈")])
+    b += callout(xs[6], yc, [("E", True, "관문 (단정 표현)", "사람을 단정하는 문장은 바꿈")])
     b += callout(xs[7], yc, [("G", False, "사용자 확인", "점선 '맞다/아니다' = 운영 중 평가")])
     dash = lambda x: f'<div style="position:absolute;left:{x + cw / 2}px;top:{y0 + ch}px;height:{yc - y0 - ch}px;border-left:2px dashed #b8c0cf"></div>'
     b += "".join(dash(xs[i]) for i in (2, 3, 4, 5, 6, 7))
