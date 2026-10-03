@@ -11,6 +11,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+try:  # Streamlit Community Cloud: Secrets의 최상위 값은 st.secrets를 처음 읽을 때 환경변수로 올라온다
+    import streamlit as st
+    st.secrets.get("UPSTAGE_API_KEY")
+except Exception:
+    pass
+
 ##################################################
 # Upstage API · Studio Agents
 ##################################################
@@ -43,7 +49,6 @@ DEMO_UNIVERSE = DATA_DIR / "demo" / "universe-haneul.json"
 ##################################################
 
 SAME_STORY_THETA = 0.75     # 생각끼리 같은 이야기 후보
-NEW_HUB_THETA = 0.35        # 중심 보정 유사도가 이 값 미만이면 새 성운 (PRD 처음 값 0.6은 보정 전 기준이라 실측 후 조정)
 PAST_LIMIT = 10             # 관측 Agent에 넣는 과거 생각 수 (E4)
 CHANGE_MIN_DAYS = 7         # 바뀜: 시간 차 이상
 TENSION_MAX_DAYS = 30       # 긴장: 시간 차 이내

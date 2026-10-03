@@ -12,7 +12,7 @@
     "이어짐": "2/2"
   },
   "negatives_violated": 0,
-  "all_relations_found": 39,
+  "all_relations_found": 38,
   "gates": {
     "G1_dropped_quotes": 0,
     "G2_date_problems": 0,
@@ -21,11 +21,11 @@
     "G4_names_leaked_in_report": 0
   },
   "cost_latency": {
-    "studio_jobs": 53,
-    "avg_seconds_record_agent": 30.6,
-    "avg_seconds_observe_agent": 32.6,
-    "est_cost_usd": 2.65,
-    "est_cost_per_record_usd": 0.091
+    "studio_jobs": 81,
+    "avg_seconds_record_agent": 30.7,
+    "avg_seconds_observe_agent": 31.8,
+    "est_cost_usd": 4.05,
+    "est_cost_per_record_usd": 0.14
   },
   "detail": [
     {

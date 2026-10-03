@@ -7,3 +7,4 @@ runs/
 *.pyc
 .DS_Store
 tools/diagrams/out/
+tools/preview3d/

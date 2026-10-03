@@ -23,6 +23,11 @@ import service
 import universe
 import universe_view
 
+try:
+    import universe_view3d
+except ImportError:
+    universe_view3d = None
+
 st.set_page_config(page_title="나의 우주", page_icon="🌌", layout="wide")
 
 
@@ -88,7 +93,7 @@ with st.sidebar:
     st.caption("서버는 글을 저장하지 않습니다. 다음에 이어 쓰려면 이 파일을 내려받아 두세요.")
     st.divider()
     st.caption(f"이번 세션 Studio 실행 남은 횟수: {st.session_state.budget.left}/{config.MAX_JOBS_PER_SESSION}")
-    st.caption("Powered by Upstage Studio · 전남대 생성형 AI 트랙 4조")
+    st.caption("Powered by Upstage Studio · 전남대 생성형 AI 트랙 5조")
 
 
 ##################################################
@@ -157,7 +162,12 @@ with tab_u:
     else:
         left, right = st.columns([7, 4])
         with left:
-            components.html(universe_view.render(S, st.session_state.selected), height=680)
+            mode = st.radio("보기", ["3D", "평면"], horizontal=True, key="view_mode", label_visibility="collapsed",
+                            disabled=universe_view3d is None)
+            if mode == "3D" and universe_view3d:
+                components.html(universe_view3d.render(S, st.session_state.selected), height=680)
+            else:
+                components.html(universe_view.render(S, st.session_state.selected), height=680)
         with right:
             reported = [r for r in S["order"] if r in S["reports"]]
             names = {r: f"{S['records'][r]['day']} · {S['records'][r]['title'][:24]}" for r in reported}

@@ -99,14 +99,14 @@ def d1():
     cw, ch, gx = 300, 262, 46
     xs = [40 + i * (cw + gx) for i in range(4)]
     y1, y2 = 140, 482
-    row1 = [("blue", "글 쓰기 · 가져오기", "Write · Import", "doc_up", "직접 쓰기, MD·TXT,<br>인스타그램 ZIP", "사진은 쓰지 않고 글만"),
+    row1 = [("blue", "대화 · 글 · 사진", "Talk · Write · Photo", "doc_up", "대화로 쓰기(요약 확인 후),<br>텍스트, 손글씨 사진", "MVP: 직접 쓰기 · MD·TXT · 인스타 ZIP"),
             ("green", "공통 기록 → HTML", "Common Record", "doc_code", "출처와 무관한 기록으로 바꾸고<br>HTML로 Studio에 보냄", "이어진 게시물 묶기 · 제목 날짜 · 소제목"),
             ("purple", "기록 Agent", "Studio · Parse → Classify → Extract", "robot", "글 유형을 고르고<br>생각을 하나씩 나눔", "주제 · 종류 · 확신 · 원문 인용 · 가치"),
             ("orange", "관문", "Gates G1 · G2 · G4", "shield", "원문에 없는 인용은 버리고<br>날짜 확인, 실명은 ○○", "결과를 내보내기 전에 매번")]
     row2 = [("teal", "성운 연결 · 과거 고르기", "Embedding", "nebula", "주제를 성운에 붙이고<br>관련 과거 생각 최대 10개", "같은 성운이거나 비슷한 생각"),
             ("yellow", "관측 Agent", "Studio · Parse → Classify → Extract", "compare", "오늘 생각(T)과 과거 생각(P)을<br>비교해 관계를 판정", "관측 상태 6가지 중 하나"),
             ("pink", "관계 규칙", "Rules + Gate G3", "rules", "시간 · 감정 규칙으로 거르고<br>실선/점선을 정함", "감정이 달라진 것은 바뀜이 아님"),
-            ("blue", "관측 보고서 · 우주", "Report JSON · Universe", "stars", "근거 인용이 붙은 보고서와<br>새 별 · 별자리", "정리된 기록 파일로 저장")]
+            ("blue", "보고서 · 한마디 · 우주", "Report · Words · Universe", "stars", "근거 인용이 붙은 보고서,<br>위로·격려 한마디, 새 별", "정리된 기록 파일로 저장")]
     for i, r in enumerate(row1):
         b += card(xs[i], y1, cw, ch, r[0], step(i + 1, *r))
     for i, r in enumerate(row2):
@@ -133,7 +133,7 @@ def d2():
         return card(x, y, w, h, color, f'<div style="display:flex;align-items:center;gap:16px;height:100%">{icon(ic, dark, 58)}'
                                        f'<div><div class="t" style="font-size:20px">{title}</div><div class="d">{desc}</div></div></div>', dashed)
     X, Wd = 270, 1130
-    b += row(X, 150, Wd, 104, "blue", "window", "Streamlit 화면", "🌌 우주 · 관측 보고서 &nbsp;|&nbsp; ✍️ 글쓰기 &nbsp;|&nbsp; 📥 가져오기 &nbsp;|&nbsp; 🛠 운영(Ops) — 로그인 없이, 정리된 기록 파일로 저장")
+    b += row(X, 150, Wd, 104, "blue", "window", "화면", "💬 대화 일기(목업 · 2차) &nbsp;|&nbsp; 🌌 우주 · 관측 보고서 &nbsp;|&nbsp; ✍️ 글쓰기 &nbsp;|&nbsp; 📥 가져오기 &nbsp;|&nbsp; 🛠 운영(Ops) — Streamlit")
     b += row(X, 278, Wd, 104, "green", "gear", "service.py — 글 한 편 → 관측 보고서", "두 에이전트와 코드를 순서대로 부르고 보고서를 조립 · 세션당 실행 한도로 크레딧 보호")
     mods = [("importer", "공통 기록 · HTML 변환"), ("gates", "관문 G1 · G2 · G3 · G4"), ("universe", "성운 · 과거 고르기 · 관계 규칙 · 별 자리"), ("observe_builder", "비교 입력 HTML (T1… P1…)")]
     mw = (Wd - 3 * 16) / 4
@@ -256,7 +256,7 @@ def d5():
     cw, ch, y0 = 170, 128, 196
     gap = (W - 80 - 8 * cw) / 7
     xs = [40 + i * (cw + gap) for i in range(8)]
-    nodes = [("blue", "doc_up", "글 입력", "ZIP · MD · TXT · 직접"), ("green", "doc_code", "공통 기록", "출처와 무관 → HTML"),
+    nodes = [("blue", "doc_up", "대화 · 글 · 사진", "MVP: 직접 · MD · TXT · ZIP"), ("green", "doc_code", "공통 기록", "출처와 무관 → HTML"),
              ("purple", "robot", "기록 Agent", "Studio · 생각 나누기"), ("orange", "shield", "관문", "G1 · G2 · G4"),
              ("teal", "nebula", "성운 · 과거", "임베딩 · 과거 생각 10개"), ("purple", "robot", "관측 Agent", "Studio · 관계 판정"),
              ("pink", "rules", "관계 규칙", "시간 · 감정 규칙 · G3"), ("blue", "stars", "보고서 · 우주", "JSON · 별자리")]
@@ -325,6 +325,74 @@ def d5():
           f'<span style="display:inline-block;width:26px;border-top:2px dashed #b8c0cf;margin:0 7px 0 4px"></span>그 단계에 붙는 Ops</div>')
     page("my-universe-5-ops-map", W, H, b)
 
+# ---------------------------------------------------------------- 6. 온톨로지 표
+def d6():
+    W, H = 1600, 1060
+    b = ('<h1 style="top:20px">나의 우주 온톨로지 — 미리 정해 둔 표</h1>'
+         '<div class="sub" style="top:76px">무엇을(대상) · 어떤 칸으로(속성) · 어떤 값만(정해진 값) 기록하는가</div>')
+
+    def chips(items, color, open_=False):
+        dark, _, br = C[color]
+        st = "dashed" if open_ else "solid"
+        return "".join(f'<span class="chip" style="border-color:{br};border-style:{st};color:{dark};font-size:13px;padding:2px 9px">{i}</span>' for i in items)
+
+    def cls(x, y, w, h, color, ic, title, en, rows):
+        dark = C[color][0]
+        body = "".join(f'<div style="margin-top:9px"><div style="font-size:13px;font-weight:800;color:#33415c">{k}</div><div>{v}</div></div>' for k, v in rows)
+        return card(x, y, w, h, color, f'<div class="head">{icon(ic, dark, 38)}<div style="margin-left:10px"><div class="t" style="font-size:20px;color:{dark}">{title}</div>'
+                                       f'<div class="en" style="color:{dark}">{en}</div></div></div>{body}')
+
+    b += cls(40, 130, 470, 300, "blue", "doc_up", "기록", "Record · 글 한 편 (대화 · 텍스트 · 사진)", [
+        ("글 유형", chips(["경험 기록", "생각·성찰", "창작", "기타"], "blue")),
+        ("출처 · 날짜", chips(["대화", "텍스트", "사진", "인스타"], "blue") + chips(["다루는 날: 확실 / 추정"], "gray")),
+        ("확인 (대화로 쓴 글만)", chips(["확인 전", "확인됨"], "blue")),
+    ])
+    b += cls(40, 460, 470, 220, "green", "doc_code", "부분", "Section · 소제목 단위", [
+        ("계기", chips(["경험", "대화", "읽은 글", "콘텐츠", "뉴스·사건"], "green")),
+        ("말 거는 대상", chips(["나", "독자", "특정 인물", "신"], "green")),
+    ])
+    b += cls(40, 710, 470, 160, "gray", "user", "사람", "Person · 실명은 저장하지 않음", [
+        ("역할만", chips(["선배", "친구", "가족", "팀원", "리더", "…"], "gray", True)),
+    ])
+    b += cls(565, 130, 500, 420, "purple", "robot", "생각", "Thought · 별자리의 단위", [
+        ("종류", chips(["해석", "신념·원칙", "질문", "다짐", "반성", "감정"], "purple")),
+        ("확신", chips(["단정", "고민 중", "질문"], "purple")),
+        ("가치", chips(["자율", "도전", "즐거움", "성취", "영향력", "안정", "규범", "전통·신앙", "배려", "공익"], "purple")),
+        ("근거", chips(["원문 인용 (필수 · 글자 그대로)", "스스로 쓴 변화"], "gray")),
+    ])
+    b += cls(565, 580, 500, 290, "pink", "rules", "관계", "Relation · 생각 ↔ 생각", [
+        ("종류", chips(["이어짐", "바뀜", "긴장", "해소", "어긋남", "목표 충돌"], "pink")),
+        ("선", chips(["실선 = 원문으로 확인", "점선 = AI 추정"], "pink")),
+        ("긴장 축", chips(["혼자 ↔ 함께", "안정 ↔ 배움", "…"], "pink", True)),
+    ])
+    # 삶의 영역 (닫힌 10) + 세부 주제 (열린)
+    dark, bg, br = C["teal"]
+    doms = [("삶의 성취", "PWI", "진로 · 배움 · 면접"), ("관계", "PWI", "가족 · 친구"), ("공동체", "PWI", "동아리 · 교회"),
+            ("건강", "PWI · WHOQOL", "걷기 · 수면 · 마음"), ("생활 수준", "PWI", "돈 · 집"), ("미래 안정", "PWI", "취업 걱정"),
+            ("안전", "PWI", ""), ("영성·신앙", "PWI 선택 · WHOQOL", "말씀 묵상"), ("여가", "WHOQOL", "취미 · 여행")]
+    grid = "".join(f'<div style="border:2px solid {br};background:#fff;border-radius:12px;padding:7px 10px;text-align:center">'
+                   f'<div style="font-weight:800;color:{dark};font-size:15px">{d}</div>'
+                   f'<div style="font-size:11px;color:{dark};opacity:.8">{src}</div>'
+                   f'<div style="font-size:12px;color:#5b6478;margin-top:3px;border-top:1.5px dashed {br};padding-top:3px">{ex or "&nbsp;"}</div></div>' for d, src, ex in doms)
+    b += card(1120, 130, 440, 740, "teal",
+              f'<div class="head">{icon("nebula", dark, 40)}<div style="margin-left:10px"><div class="t" style="font-size:20px;color:{dark}">주제 = 2단</div>'
+              f'<div class="en" style="color:{dark}">위: 삶의 영역 (닫힌 9개) · 아래: 세부 주제 (열린 목록)</div></div></div>'
+              f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px">{grid}</div>'
+              f'<div class="d" style="font-size:13.5px;margin-top:14px;line-height:1.55"><b>근거:</b> 삶의 영역은 주관적 안녕감 지표 PWI(Personal Wellbeing Index, WHO · OECD 권고)의 7개 영역 + 선택 영역 "영성·종교", '
+              f'WHO 삶의 질 척도 WHOQOL의 "여가"에서 가져왔다. 감정은 영역이 아니라 생각의 종류 "감정"으로 담는다.<br><br>'
+              f'우주에서 <b>삶의 영역 = 행성</b>. AI가 뽑은 세부 주제(점선 칸)는 가장 가까운 영역 하나에 붙고, 아직 글이 없는 영역은 "관측 안 된 영역"으로 남는다.</div>')
+    # 연결선 (술어)
+    paths = ["M512,280 C540,280 540,300 562,300", "M275,432 L275,456", "M512,790 C540,790 540,720 562,720", "M1067,330 C1092,330 1092,330 1116,330"]
+    b += arrows(W, H, [(p, 2.5, False) for p in paths])
+    lab = lambda x, y, t: f'<div style="position:absolute;left:{x}px;top:{y}px;font-size:12.5px;font-weight:800;color:#33415c;background:#fff;padding:0 4px">{t}</div>'
+    b += lab(520, 262, "담는다") + lab(284, 434, "담는다") + lab(520, 742, "등장") + lab(1072, 306, "다룬다·속한다")
+    b += lab(820, 556, "생각 ↔ 생각")
+    b += card(40, 900, 1520, 120, "gray",
+              '<div class="d" style="font-size:15px;line-height:1.7"><b>닫힌 목록</b>(실선 칸 · 객관식): 미리 정한 보기 중에서만 AI가 고른다 → 사람마다 · 글마다 같은 기준으로 비교할 수 있다.<br>'
+              '<b>열린 목록</b>(점선 칸 · 주관식): 세부 주제 · 긴장 축 · 역할은 AI가 제안하고 사용자가 확인한다. '
+              '<b>관문</b>: 원문에 없는 인용, 실명, 사람을 단정하는 말은 저장 전에 거른다.</div>')
+    page("my-universe-6-ontology", W, H, b)
+
 
 if __name__ == "__main__":
-    d1(); d2(); d3(); d4(); d5()
+    d1(); d2(); d3(); d4(); d5(); d6()

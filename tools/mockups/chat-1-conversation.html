@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>대화로 쓰는 일기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1200px;height:860px;overflow:hidden}
+body{font-family:Pretendard,'Apple SD Gothic Neo',sans-serif;color:#e8ebff;background:linear-gradient(180deg,#00133a 0%,#063a8f 62%,#1f5cc4 100%);position:relative;word-break:keep-all;-webkit-font-smoothing:antialiased}
+/* backdrop */
+.aurora{position:absolute;inset:0;filter:blur(14px);background:
+ radial-gradient(ellipse 560px 240px at 20% 30%,rgba(130,178,246,.30),transparent 70%),
+ radial-gradient(ellipse 520px 220px at 82% 58%,rgba(104,214,154,.22),transparent 70%),
+ radial-gradient(ellipse 700px 200px at 50% 100%,rgba(130,178,246,.25),transparent 70%)}
+#stars{position:absolute;inset:0}
+.star{position:absolute;border-radius:50%;background:#fff}
+.planet{position:absolute;border-radius:50%}
+.p1{width:360px;height:360px;right:-150px;bottom:-180px;background:radial-gradient(circle at 32% 28%,#d6e4ff 0%,#86a9ef 13%,#3f66c8 40%,#1b3079 72%,#0b1748 100%);box-shadow:0 0 80px rgba(130,178,246,.5),inset -40px -50px 80px rgba(0,8,40,.55)}
+.p2{width:64px;height:64px;right:70px;top:38px;background:radial-gradient(circle at 34% 30%,#e9fff5 0%,#8eecc4 22%,#3fae86 58%,#16533f 100%);box-shadow:0 0 30px rgba(104,214,154,.55),inset -8px -10px 16px rgba(0,30,20,.5)}
+.p2::after{content:"";position:absolute;left:-22px;top:24px;width:108px;height:18px;border-radius:50%;border:2px solid rgba(200,255,230,.55);transform:rotate(-16deg)}
+/* title + callouts */
+.title{position:absolute;left:36px;top:44px;width:300px}
+.eyebrow{font-size:15px;font-weight:600;color:#6ee7b7;letter-spacing:.04em;margin-bottom:10px}
+.title h1{font-size:34px;line-height:1.25;font-weight:800;color:#fff}
+.co{position:absolute;width:320px;padding:16px 18px 16px 16px;border-radius:16px;background:rgba(8,18,58,.66);border:1px solid rgba(255,255,255,.20);box-shadow:0 10px 30px rgba(0,5,30,.35);display:flex;gap:12px}
+.co.l{left:32px}.co.r{left:848px}
+.n{flex:none;width:28px;height:28px;border-radius:50%;background:#a78bfa;color:#0b1230;font-weight:800;font-size:15px;display:grid;place-items:center;margin-top:1px}
+.co b{display:block;font-size:19px;line-height:1.4;font-weight:700;color:#fff}
+.co span{display:block;font-size:15px;line-height:1.45;color:#c9d3f5;margin-top:4px}
+#lines{position:absolute;inset:0;z-index:10;pointer-events:none}
+/* phone */
+.phone{position:absolute;left:395px;top:30px;width:410px;height:800px;border-radius:54px;background:#03061a;padding:9px;border:1.5px solid rgba(255,255,255,.30);box-shadow:0 30px 90px rgba(0,5,30,.65)}
+.screen{width:390px;height:780px;border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:radial-gradient(ellipse 380px 220px at 50% 0%,rgba(167,139,250,.14),transparent 70%),#0b1230}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:34px;border-radius:20px;background:#000;z-index:5}
+.status{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:600}
+.status svg{display:block}
+.hdr{flex:none;display:flex;align-items:center;gap:16px;padding:6px 18px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo{width:34px;height:34px;border-radius:50%;position:relative;flex:none;background:radial-gradient(circle at 34% 30%,#f1ebff 0%,#b9a2ff 22%,#7a5ce6 60%,#33237a 100%);box-shadow:0 0 14px rgba(167,139,250,.6)}
+.logo::after{content:"";position:absolute;left:-5px;top:13px;width:44px;height:9px;border-radius:50%;border:1.5px solid rgba(225,215,255,.75);transform:rotate(-18deg)}
+.hdr .t{font-size:18px;font-weight:800;color:#fff}
+.hdr .s{font-size:13px;color:#9aa3c7;margin-top:2px}
+.hdr .more{margin-left:auto;color:#9aa3c7;font-size:22px;letter-spacing:1px}
+/* chat */
+.chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:10px 14px 10px;overflow:hidden}
+.b{max-width:298px;padding:9px 13px;font-size:15px;line-height:1.48;border-radius:18px}
+.bot{align-self:flex-start;background:rgba(167,139,250,.17);border:1px solid rgba(167,139,250,.32);border-bottom-left-radius:6px}
+.me{align-self:flex-end;background:#2d3c8a;border:1px solid rgba(255,255,255,.08);border-bottom-right-radius:6px;color:#fff}
+.mem{background:rgba(167,139,250,.24);border-bottom:1.5px dashed #c4b5fd;border-radius:3px;padding:0 2px}
+/* footer */
+.foot{flex:none;padding:6px 12px 0}
+.endrow{display:flex;justify-content:center;margin-bottom:9px}
+.endbtn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:7px 15px;border-radius:999px;color:#ddd2ff;background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.55)}
+.inbar{display:flex;align-items:center;gap:8px;height:52px;border-radius:26px;background:#121a3d;border:1px solid rgba(255,255,255,.12);padding:0 7px 0 18px}
+.ph{flex:1;font-size:15px;color:#9aa3c7}
+.ic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none}
+.mic{background:rgba(110,231,183,.14);border:1px solid rgba(110,231,183,.45)}
+.send{background:#a78bfa}
+.home{width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);margin:12px auto 8px}
+</style></head>
+<body>
+<div class="aurora"></div><div id="stars"></div>
+<div class="planet p1"></div><div class="planet p2"></div>
+
+<div class="title"><div class="eyebrow">나의 우주 · 화면 1</div><h1>대화로 쓰는 일기</h1></div>
+
+<div class="phone"><div class="screen">
+ <div class="island"></div>
+ <div class="status"><span>9:41</span>
+  <svg width="68" height="13" viewBox="0 0 68 13"><g fill="#e8ebff"><rect x="0" y="8" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="7" rx="1"/><rect x="10" y="3.5" width="3" height="9.5" rx="1"/><rect x="15" y="1" width="3" height="12" rx="1"/></g><path d="M25 5.2a9 9 0 0 1 12 0M27.4 7.8a5.4 5.4 0 0 1 7.2 0" stroke="#e8ebff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="31" cy="10.6" r="1.6" fill="#e8ebff"/><rect x="42" y="1" width="22" height="11" rx="3" stroke="#e8ebff" stroke-opacity=".5" fill="none"/><rect x="44" y="3" width="15" height="7" rx="1.5" fill="#e8ebff"/><rect x="65" y="4.5" width="2" height="4" rx="1" fill="#e8ebff" fill-opacity=".5"/></svg>
+ </div>
+ <div class="hdr"><div class="logo"></div><div><div class="t">나의 우주</div><div class="s">오늘의 대화 · 10월 3일 금요일</div></div><div class="more">⋯</div></div>
+
+ <div class="chat">
+  <div class="b bot" id="m1">오늘 하루는 어떤 날이었어요? 한 단어로만 말해도 괜찮아요.</div>
+  <div class="b me">음… 좀 지친 날?</div>
+  <div class="b bot" id="m3">지친 날이었군요. 무엇이 가장 힘을 많이 쓰게 했어요?</div>
+  <div class="b me">인턴 면접 봤는데 질문 하나에 대답을 제대로 못 했어.</div>
+  <div class="b bot" id="m5">그 순간 마음이 철렁했겠어요. 그래도 첫 면접을 끝까지 치른 건 오늘 한 일이에요. <span class="mem" id="mem">지난주 ‘작은 팀에서 배우고 싶다’고 쓰셨는데</span>, 오늘 면접 본 곳도 그런 곳이었어요?</div>
+  <div class="b me">응, 작은 스타트업이었어.</div>
+  <div class="b bot" id="m7">그럼 오늘은 원하던 방향으로 한 걸음 간 날이기도 하네요. 다음 면접 전에 오늘 막힌 질문 하나만 적어 둘까요?</div>
+ </div>
+
+ <div class="foot">
+  <div class="endrow"><span class="endbtn"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5" stroke="#ddd2ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>대화 마치고 정리하기</span></div>
+  <div class="inbar" id="inbar"><span class="ph">말로 이야기하거나 적어 보세요</span>
+   <span class="ic mic" id="mic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
+   <span class="ic send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b1230" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
+  </div>
+  <div class="home"></div>
+ </div>
+</div></div>
+
+<div class="co l" id="c4" style="top:240px" data-t="#m3"><div class="n">4</div><div><b>진단·평가·설교는 하지 않아요</b><span>판단 대신 오늘 있었던 일을 물어요</span></div></div>
+<div class="co l" id="c1" style="top:650px" data-t="#inbar"><div class="n">1</div><div><b>글을 쓰지 않아도<br>대화로 일기가 쌓여요</b><span>말로 해도, 적어도 돼요</span></div></div>
+<div class="co r" id="c2" style="top:380px" data-t="#mem" data-x="#m5"><div class="n">2</div><div><b>지난 기록을 기억하고<br>이어서 물어요</b><span>지난주 ‘작은 팀’ 생각</span></div></div>
+<div class="co r" id="c3" style="top:580px" data-t="#m7"><div class="n">3</div><div><b>있는 그대로 인정 →<br>작은 다음 걸음을 질문으로</b></div></div>
+
+<svg id="lines" width="1200" height="860"></svg>
+<script>
+let seed=11;const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+const st=document.getElementById('stars');
+for(let i=0;i<180;i++){const z=rnd()<.1?2.6:.6+rnd()*1.5,e=document.createElement('i');e.className='star';
+ e.style.cssText=`left:${rnd()*1200}px;top:${rnd()*860}px;width:${z}px;height:${z}px;opacity:${(.2+rnd()*.8).toFixed(2)}`+(z>2?';box-shadow:0 0 8px rgba(255,255,255,.9)':'');st.appendChild(e)}
+function draw(){
+ const ph=document.querySelector('.phone').getBoundingClientRect();let o='';
+ document.querySelectorAll('.co[data-t]').forEach(c=>{
+  const cr=c.getBoundingClientRect(),t=document.querySelector(c.dataset.t).getBoundingClientRect();
+  const xr=c.dataset.x?document.querySelector(c.dataset.x).getBoundingClientRect():t;
+  const L=cr.right<ph.left,sx=L?cr.right:cr.left,sy=cr.top+cr.height/2;
+  const ty=t.top+t.height/2,tx=L?xr.left+5:xr.right-5,ex=L?ph.left-16:ph.right+16,mx=(sx+ex)/2;
+  o+=`<polyline points="${sx},${sy} ${mx},${sy} ${ex},${ty} ${tx},${ty}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6"/>`+
+     `<circle cx="${sx}" cy="${sy}" r="3" fill="#fff"/><circle cx="${tx}" cy="${ty}" r="9" fill="rgba(167,139,250,.35)"/><circle cx="${tx}" cy="${ty}" r="4.5" fill="#fff"/>`;
+ });
+ document.getElementById('lines').innerHTML=o;
+}
+document.fonts.ready.then(draw);
+</script>
+</body></html>

@@ -1,7 +1,7 @@
 # 🌌 나의 우주
 
 **내가 쓴 글에서 지켜 온 생각, 바뀐 생각, 아직 풀지 못한 긴장을 근거와 함께 보여 주는 서비스.**
-글 한 편은 별, 주제는 성운, 생각 사이의 관계는 별자리로 그립니다. 전남대 생성형 AI 트랙 LLMOps 1차 프로젝트 · 4조.
+**말을 거는 일기장**입니다. 대화(목업) · 글 · 손글씨 사진으로 쓴 일기를 정리해 쌓고, 글 한 편은 별, 삶의 영역은 행성, 생각 사이의 관계는 별자리로 그립니다. 전남대 생성형 AI 트랙 LLMOps 1차 프로젝트 · 5조.
 
 - 입력: 직접 쓴 글, MD·TXT 파일, 인스타그램 "내 정보 다운로드" ZIP
 - Studio 에이전트 2개: **기록 Agent**(글 → 생각 구조화), **관측 Agent**(오늘 생각 vs 과거 생각 → 관계 판정)
@@ -15,6 +15,18 @@
 일기는 남는데 그 일기로 지금의 나를 이해하지 못합니다. 생각이 어떻게 바뀌었는지 알려면 지난 글을 직접 찾아 대조해야 하고, 처음 쓰는 사람은 쓸 거리가 막연해 기록이 쌓이지 않습니다.
 나의 우주는 사람을 판정하지 않고 **관측**합니다. 원문에 적힌 생각만 별로 띄우고, 원문으로 확인되는 관계는 실선, AI 추정은 점선으로 그리며, 모르는 것은 질문으로 남깁니다.
 
+| 대화로 쓰기 (목업) | 요약 확인 (목업) | 한마디 (목업) |
+| --- | --- | --- |
+| ![대화](docs/images/chat-1-conversation.png) | ![요약 확인](docs/images/chat-2-confirm.png) | ![한마디](docs/images/chat-3-encourage.png) |
+
+## 온톨로지 — 미리 정해 둔 표
+
+![온톨로지](docs/images/ontology.png)
+
+- **닫힌 목록(객관식):** AI가 정해 둔 보기 안에서만 고른다. 글 유형 4, 생각 종류 6, 확신 3, 가치 10, 관계 6, **삶의 영역 9**.
+- **열린 목록(주관식):** 세부 주제 · 긴장 축 · 역할은 글에서 나온 말을 쓰고 사용자가 확인한다.
+- **삶의 영역 9개**는 주관적 안녕감 척도 PWI(Personal Wellbeing Index, WHO · OECD 권고)의 7개 영역(삶의 성취 · 관계 · 공동체 · 건강 · 생활 수준 · 미래 안정 · 안전) + 선택 영역 영성·신앙, WHO 삶의 질 척도 WHOQOL의 여가에서 가져왔다. 세부 주제는 가장 가까운 영역 하나에 붙는다(`universe.py`의 `DOMAINS`).
+
 ## 전체 구조
 
 ![전체 구조](docs/images/architecture.png)
@@ -25,7 +37,7 @@
 | 서비스 | `service.py` | 글 한 편 → 관측 보고서 파이프라인, 세션 실행 한도 |
 | 코드 | `importer.py` | 출처와 무관한 공통 기록, 인스타 글자 깨짐 복원 · 이어진 게시물 묶기 · 제목 속 날짜 · 소제목, HTML 변환 |
 | | `gates.py` | 관문 G1 원문에 없는 인용 · G2 날짜 · G3 사람 단정 표현 · G4 실명 가리기 |
-| | `universe.py` | 주제 → 성운 연결, 관련 과거 생각 고르기, 관계 규칙, 별 자리 |
+| | `universe.py` | 세부 주제 → 삶의 영역 연결, 관련 과거 생각 고르기, 관계 규칙, 별 자리 |
 | | `observe_builder.py` | 관측 Agent에 보낼 비교 입력 HTML (오늘 생각 T1… · 과거 생각 P1…) |
 | | `embedder.py` | Solar Embedding (같은 이야기인가만 판단) |
 | 에이전트 | `agent_client.py`, `agent_configs/` | Studio 에이전트 실행(Files API + Jobs API, 재시도), Studio에서 내보낸 설정 |
@@ -45,7 +57,7 @@ HR 예시의 `Resume·JD Agent → matching_builder → Matching Agent`와 같�
 - 설정 파일: `agent_configs/Record Agent.json`, `agent_configs/Observe Agent.json` (Studio에서 내보낸 원본, config #1)
 - `tools/make_agent_configs.py`가 처음 가져오기(import)용 설정을 만들었습니다. Studio에서 고친 뒤에는 다시 내보내 `agent_configs/`를 바꿉니다.
 
-**코드가 하는 판단 (에이전트 밖)**: 원문에 없는 인용은 버림 · 실명은 ○○ · 이어짐/바뀜/긴장/해소/어긋남은 같은 성운끼리만 · 다짐 뒤 30일 안의 반성은 어긋남 · 바뀜은 7일 이상, 긴장은 30일 이내 · 목표 충돌은 14일 안의 다짐 둘 · 감정끼리 달라진 것은 바뀜이 아님 · 작성자가 직접 쓴 변화 · 정리만 실선.
+**코드가 하는 판단 (에이전트 밖)**: 원문에 없는 인용은 버림 · 실명은 ○○ · 이어짐/바뀜/긴장/해소/어긋남은 같은 삶의 영역끼리만 · 다짐 뒤 30일 안의 반성은 어긋남 · 바뀜은 7일 이상, 긴장은 30일 이내 · 목표 충돌은 14일 안의 다짐 둘 · 감정이 달라진 것은 바뀜 · 해소가 아님 · 다짐이 지켜지면 이어짐 · 작성자가 직접 쓴 변화 · 정리만 실선.
 
 ## 실행 방법
 
@@ -72,12 +84,21 @@ streamlit run streamlit_app.py
 | `MAX_IMPORT_POSTS` (선택, 기본 10) | 가져오기 한 번에 관측하는 글 수 |
 | `DISK_CACHE` (선택, 기본 0) | 1이면 추출 결과를 디스크에 캐시 (로컬 개발 전용) |
 
-### Railway 배포
+### 배포 (Streamlit Community Cloud)
 
-1. GitHub 저장소 연결 → 자동 빌드 (`requirements.txt`, `.python-version`)
-2. Variables에 위 환경변수 입력 (`DISK_CACHE`는 넣지 않거나 0)
-3. Start Command: `streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true` (`Procfile`과 같음)
-4. Public Domain 생성 → 접속하면 데모 우주(가상 인물 하늘)가 먼저 보입니다
+1. [share.streamlit.io](https://share.streamlit.io)에 GitHub 계정으로 로그인 → 이 저장소 접근 허용
+2. Create app → 저장소 `my-universe`, 브랜치 `master`, 파일 `streamlit_app.py`
+3. Advanced settings → Python 3.11, Secrets에 아래를 붙여 넣기 (최상위 값이 환경변수로 들어간다)
+
+```toml
+UPSTAGE_API_KEY = "..."
+RECORD_AGENT_ID = "agt_..."
+RECORD_CONFIG_ID = "1"
+OBSERVE_AGENT_ID = "agt_..."
+OBSERVE_CONFIG_ID = "1"
+```
+
+4. Deploy → 접속하면 데모 우주(가상 인물 하늘)가 먼저 보입니다. Railway에서도 `Procfile` 그대로 돌아갑니다.
 
 ## 평가와 운영(Ops)
 
@@ -125,7 +146,7 @@ streamlit run streamlit_app.py
 
 - 놓친 1개: 4/5 "혼자가 편하다" → 4/12 "함께해야 성장한다, 어느 쪽이 진짜 나일까"를 긴장이 아니라 바뀜(작성자가 직접 씀)으로 읽었습니다. 두 해석 모두 가능한 글입니다.
 - 설계 밖에서 찾은 관계 31개를 눈으로 보니 약 3분의 2는 그럴듯하고 약 3분의 1은 약하거나 틀렸습니다(예: 리더십 질문 → 독서노트 사이의 바뀜). 다음 평가 루프에서 관측 Agent 설명을 고칠 대상입니다.
-- 관계 규칙 4개(같은 두 글 사이 관계 하나, 질문 → 신념은 해소, 실선은 스스로 쓴 변화가 있을 때만, 주제 성운은 중심 보정 유사도 0.35)는 이 가상 데이터를 보고 PRD 규칙을 코드로 옮긴 것이라, 같은 데이터로 잰 위 숫자는 낙관적입니다. 팀원 둘이 따로 쓴 글로 다시 잽니다(E7).
+- 관계 규칙 4개(같은 두 글 사이 관계 하나, 질문 → 신념은 해소, 실선은 스스로 쓴 변화가 있을 때만, 주제는 PWI · WHOQOL 기반 삶의 영역 9개에 붙임)는 이 가상 데이터를 보고 PRD 규칙을 코드로 옮긴 것이라, 같은 데이터로 잰 위 숫자는 낙관적입니다. 팀원 둘이 따로 쓴 글로 다시 잽니다(E7).
 - 주제 낱말은 Solar Embedding 2로 그대로 비교하면 어떤 쌍이든 0.70~0.87이 나와서(실측), 흔한 주제 낱말 50개의 평균 벡터를 빼고 비교합니다.
 
 | 우주 화면 | 관측 보고서 |

@@ -31,7 +31,9 @@ def _payload(state, selected=None):
         h = state["hubs"][hid]
         count = len({t["record_id"] for t in th.values() if t["hub"] == hid})
         x, y = hub_xy(i)
-        hubs.append({"id": hid, "name": h["name"], "x": x, "y": y, "count": count})
+        topics = sorted((h.get("topics") or {}).items(), key=lambda kv: -kv[1])
+        hubs.append({"id": hid, "name": h["name"], "x": x, "y": y, "count": count,
+                     "topics": [{"name": mk(n), "count": c} for n, c in topics]})
 
     for rid in state["order"]:
         rec = state["records"][rid]
@@ -127,7 +129,8 @@ function draw(){svg.innerHTML="";svg.setAttribute("viewBox",view.join(" "));
  // 성운
  for(const h of D.hubs){const R=48+16*Math.sqrt(h.count);el("circle",{cx:h.x,cy:h.y,r:R,fill:"url(#neb)"});
   const t=el("text",{x:h.x,y:h.y+4,"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#d9dcff",opacity:.92});t.textContent=h.name;
-  const c=el("text",{x:h.x,y:h.y+19,"text-anchor":"middle","font-size":10,fill:"#9aa3c7"});c.textContent=h.count+"편"}
+  const c=el("text",{x:h.x,y:h.y+19,"text-anchor":"middle","font-size":10,fill:"#9aa3c7"});c.textContent=h.count?h.count+"편":"아직 관측 안 됨";
+  const tp=(h.topics||[]).slice(0,3).map(t=>t.name).join(" · ");if(tp){const u=el("text",{x:h.x,y:h.y+32,"text-anchor":"middle","font-size":9,fill:"#7f88b0"});u.textContent=tp}}
  const on=sel?new Set([sel,...D.rels.filter(r=>r.a===sel||r.b===sel).flatMap(r=>[r.a,r.b])]):null;
  // 글 → 주제 선 (생각이 올라가는 선)
  for(const s of D.stars){const dim=on&&!on.has(s.id)?.18:1;

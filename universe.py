@@ -2,7 +2,7 @@
 universe.py
 
 우주 상태(= 정리된 기록 파일)와 코드가 하는 판단:
-주제 → 성운 연결, 관련 과거 생각 고르기, 관계 규칙(시간 · 감정 · 실선/점선), 별 자리 정하기.
+세부 주제 → 삶의 영역 연결, 관련 과거 생각 고르기, 관계 규칙(시간 · 감정 · 실선/점선), 별 자리 정하기.
 """
 
 import hashlib
@@ -18,9 +18,33 @@ CONFLICT = {"긴장", "어긋남", "목표 충돌"}
 PRIORITY = ["해소", "바뀜", "어긋남", "목표 충돌", "긴장", "이어짐"]   # 같은 두 글 사이에 여러 관계가 나오면 앞의 것
 
 
+# 삶의 영역: 온톨로지의 위층(닫힌 목록). 글에서 나온 세부 주제(열린 목록)는 이 중 하나에 붙는다.
+# 근거: Personal Wellbeing Index(PWI, International Wellbeing Group)의 삶의 영역 7개 + 선택 영역 "영성·종교",
+#       WHOQOL-100(WHO)의 환경 영역에 있는 "여가" 측면. 마음(감정)은 영역이 아니라 생각의 종류 "감정"으로 담는다.
+DOMAINS = [
+    ("삶의 성취", ["성취", "진로", "일", "직장", "취업", "커리어", "인턴", "면접", "배움", "공부", "학업", "시험", "독서", "기록"]),
+    ("관계", ["관계", "인간관계", "가족", "부모", "부모님", "친구", "우정", "연애", "동생"]),
+    ("공동체", ["공동체", "동아리", "리더십", "봉사", "모임", "교회", "지역"]),
+    ("건강", ["건강", "운동", "습관", "자기관리", "수면", "걷기", "마음", "감정", "스트레스"]),
+    ("생활 수준", ["생활", "돈", "소비", "살림", "집", "일상"]),
+    ("미래 안정", ["미래", "불안", "노후", "준비"]),
+    ("안전", ["안전", "위험", "사고"]),
+    ("영성·신앙", ["영성", "신앙", "종교", "묵상", "기도", "믿음", "의미", "삶", "가치관"]),
+    ("여가", ["여가", "취미", "여행", "휴식", "창작", "놀이"]),
+]
+_alias_embs = None
+
+
 def new_state(owner=""):
-    return {"version": 1, "owner": owner, "records": {}, "order": [], "thoughts": {},
-            "hubs": {}, "relations": [], "reports": {}, "names": [], "layout": {}}
+    state = {"version": 2, "owner": owner, "records": {}, "order": [], "thoughts": {},
+             "hubs": {}, "relations": [], "reports": {}, "names": [], "layout": {}}
+    ensure_domains(state)
+    return state
+
+
+def ensure_domains(state):
+    for i, (name, _) in enumerate(DOMAINS):
+        state["hubs"].setdefault(f"D{i + 1}", {"id": f"D{i + 1}", "name": name, "topics": {}})
 
 
 def _days(a, b):
@@ -32,28 +56,43 @@ def _h(s, mod):
 
 
 ##################################################
-# 주제 → 성운
+# 세부 주제 → 삶의 영역
 ##################################################
 
+def _aliases():
+    """영역마다 대표 낱말의 임베딩 (한 번만 계산해 data/ops에 둔다)."""
+    global _alias_embs
+    if _alias_embs is None:
+        import json
+        import embedder
+        f = config.DATA_DIR / "ops" / f"domain_aliases_{config.EMBEDDING_MODEL}.json"
+        words = [w for _, ws in DOMAINS for w in ws]
+        cached = json.loads(f.read_text()) if f.exists() else {}
+        if set(words) - set(cached):
+            vecs = embedder.embed(words)
+            cached = dict(zip(words, vecs))
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(json.dumps(cached))
+        _alias_embs = [(f"D{i + 1}", [cached[w] for w in ws]) for i, (_, ws) in enumerate(DOMAINS)]
+    return _alias_embs
+
+
+def domain_of(vec, sim=None):
+    sim = sim or topic_cos
+    return max(_aliases(), key=lambda d: max(sim(vec, a) for a in d[1]))[0]
+
+
 def link_hub(state, topic, topic_emb):
-    """같은 이름이거나 (중심 보정) 유사도 θ₂ 이상인 성운에 붙이고, 아니면 새 성운을 만든다."""
-    for h in state["hubs"].values():
-        if h["name"] == topic or topic in h.get("aliases", []):
-            return h["id"]
-    for h in state["hubs"].values():   # "관계"와 "인간관계"처럼 한쪽이 다른 쪽을 품으면 같은 성운
-        if len(h["name"]) >= 2 and len(topic) >= 2 and (h["name"] in topic or topic in h["name"]):
-            h.setdefault("aliases", []).append(topic)
-            return h["id"]
-    best, best_sim = None, -1.0
-    for h in state["hubs"].values():
-        s = topic_cos(topic_emb, h["emb"])
-        if s > best_sim:
-            best, best_sim = h, s
-    if best and best_sim >= config.NEW_HUB_THETA:
-        best.setdefault("aliases", []).append(topic)
-        return best["id"]
-    hid = f"H{len(state['hubs']) + 1}"
-    state["hubs"][hid] = {"id": hid, "name": topic, "emb": topic_emb, "aliases": []}
+    """세부 주제를 삶의 영역 하나에 붙인다. 이름이 맞으면 그 영역, 아니면 (중심 보정) 임베딩이 가장 가까운 영역."""
+    ensure_domains(state)
+    hid = None
+    for i, (_, words) in enumerate(DOMAINS):
+        if topic in words or any(len(w) >= 2 and w in topic for w in words):
+            hid = f"D{i + 1}"
+            break
+    hid = hid or domain_of(topic_emb)
+    topics = state["hubs"][hid].setdefault("topics", {})
+    topics[topic] = topics.get(topic, 0) + 1
     return hid
 
 
@@ -63,6 +102,7 @@ def link_hub(state, topic, topic_emb):
 
 def pick_past(state, today_thoughts, record_id):
     hubs_today = {t["hub"] for t in today_thoughts}
+    topics_today = {t["topic"] for t in today_thoughts}
     scored = []
     for p in state["thoughts"].values():
         if p["record_id"] == record_id:
@@ -70,7 +110,8 @@ def pick_past(state, today_thoughts, record_id):
         sim = max((cos(t["emb"], p["emb"]) for t in today_thoughts), default=0.0)
         same_hub = p["hub"] in hubs_today
         if same_hub or sim >= config.SAME_STORY_THETA:
-            scored.append((sim + (0.15 if same_hub else 0.0), p))
+            # 같은 세부 주제가 먼저, 그다음 같은 영역 (영역이 넓어도 비교 대상이 흐려지지 않게)
+            scored.append((sim + (0.15 if p["topic"] in topics_today else 0.0) + (0.05 if same_hub else 0.0), p))
     scored.sort(key=lambda x: -x[0])
     return sorted([p for _, p in scored[:config.PAST_LIMIT]], key=lambda p: p["day"])
 
@@ -95,11 +136,14 @@ def apply_rules(state, raw, ids, record_id):
         if pa["kind"] == "다짐" and pb["kind"] == "반성" and same_hub and gap <= config.VOW_WINDOW_DAYS and rtype != "어긋남":
             notes.append(f"{rtype}→어긋남(다짐 뒤 {gap}일 안의 반성)")
             rtype = "어긋남"
+        if pa["kind"] == "다짐" and rtype == "해소":
+            notes.append("해소→이어짐(다짐은 풀리는 것이 아니라 지켜지는 것)")
+            rtype = "이어짐"
         if pa["kind"] == "질문" and pb["kind"] == "신념·원칙" and same_hub and rtype in ("바뀜", "이어짐"):
             notes.append(f"{rtype}→해소(질문이 신념이 됨)")
             rtype = "해소"
-        if rtype == "바뀜" and "감정" in (pa["kind"], pb["kind"]):
-            notes.append("버림(감정이 달라진 것은 바뀜이 아님)")
+        if rtype in ("바뀜", "해소") and "감정" in (pa["kind"], pb["kind"]):
+            notes.append(f"버림(감정이 달라진 것은 {rtype}이 아님)")
             continue
         if rtype in ("이어짐", "바뀜", "긴장", "해소", "어긋남") and not same_hub:
             notes.append(f"버림({rtype}인데 다른 성운)")
@@ -149,8 +193,9 @@ def apply_rules(state, raw, ids, record_id):
 ##################################################
 
 def hub_xy(i):
-    a = math.radians(i * 137.508)
-    r = 120 + 70 * math.sqrt(i)
+    """삶의 영역을 고리 모양으로 고정 배치한다."""
+    a = math.radians(-90 + i * 360 / len(DOMAINS))
+    r = 330 if i < len(DOMAINS) else 330 + 90 * (1 + (i - len(DOMAINS)) // 10)
     return round(r * math.cos(a), 1), round(r * math.sin(a), 1)
 
 
@@ -162,10 +207,10 @@ def place(state, rid, summary_emb=None):
     for t in state["thoughts"].values():
         if t["record_id"] == rid:
             weights[t["hub"]] = weights.get(t["hub"], 0) + 1
-    if not weights and summary_emb is not None and state["hubs"]:   # 생각 없는 글: 요약과 가장 가까운 성운 곁에
-        best = max(state["hubs"].values(), key=lambda h: cos(summary_emb, h["emb"]))
-        weights = {best["id"]: 1}
-        state["records"][rid]["near_hub"] = best["id"]
+    if not weights and summary_emb is not None:   # 생각 없는 글: 요약과 가장 가까운 영역 곁에
+        best = domain_of(summary_emb, sim=cos)
+        weights = {best: 1}
+        state["records"][rid]["near_hub"] = best
     if weights:
         tot = sum(weights.values())
         x = sum(hub_xy(hubs.index(h))[0] * w for h, w in weights.items()) / tot

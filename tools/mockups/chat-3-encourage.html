@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>기록 뒤 한마디</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1200px;height:860px;overflow:hidden}
+body{font-family:Pretendard,'Apple SD Gothic Neo',sans-serif;color:#e8ebff;background:linear-gradient(180deg,#00133a 0%,#063a8f 62%,#1f5cc4 100%);position:relative;word-break:keep-all;-webkit-font-smoothing:antialiased}
+/* backdrop */
+.aurora{position:absolute;inset:0;filter:blur(14px);background:
+ radial-gradient(ellipse 560px 240px at 20% 30%,rgba(130,178,246,.30),transparent 70%),
+ radial-gradient(ellipse 520px 220px at 82% 58%,rgba(104,214,154,.22),transparent 70%),
+ radial-gradient(ellipse 700px 200px at 50% 100%,rgba(130,178,246,.25),transparent 70%)}
+#stars{position:absolute;inset:0}
+.star{position:absolute;border-radius:50%;background:#fff}
+.planet{position:absolute;border-radius:50%}
+.p1{width:360px;height:360px;right:-150px;bottom:-180px;background:radial-gradient(circle at 32% 28%,#d6e4ff 0%,#86a9ef 13%,#3f66c8 40%,#1b3079 72%,#0b1748 100%);box-shadow:0 0 80px rgba(130,178,246,.5),inset -40px -50px 80px rgba(0,8,40,.55)}
+.p2{width:64px;height:64px;right:70px;top:38px;background:radial-gradient(circle at 34% 30%,#e9fff5 0%,#8eecc4 22%,#3fae86 58%,#16533f 100%);box-shadow:0 0 30px rgba(104,214,154,.55),inset -8px -10px 16px rgba(0,30,20,.5)}
+.p2::after{content:"";position:absolute;left:-22px;top:24px;width:108px;height:18px;border-radius:50%;border:2px solid rgba(200,255,230,.55);transform:rotate(-16deg)}
+/* title + callouts */
+.title{position:absolute;left:36px;top:44px;width:300px}
+.eyebrow{font-size:15px;font-weight:600;color:#6ee7b7;letter-spacing:.04em;margin-bottom:10px}
+.title h1{font-size:34px;line-height:1.25;font-weight:800;color:#fff}
+.co{position:absolute;width:320px;padding:16px 18px 16px 16px;border-radius:16px;background:rgba(8,18,58,.66);border:1px solid rgba(255,255,255,.20);box-shadow:0 10px 30px rgba(0,5,30,.35);display:flex;gap:12px}
+.co.l{left:32px}.co.r{left:848px}
+.n{flex:none;width:28px;height:28px;border-radius:50%;background:#a78bfa;color:#0b1230;font-weight:800;font-size:15px;display:grid;place-items:center;margin-top:1px}
+.co b{display:block;font-size:19px;line-height:1.4;font-weight:700;color:#fff}
+.co span{display:block;font-size:15px;line-height:1.45;color:#c9d3f5;margin-top:4px}
+#lines{position:absolute;inset:0;z-index:10;pointer-events:none}
+/* phone */
+.phone{position:absolute;left:395px;top:30px;width:410px;height:800px;border-radius:54px;background:#03061a;padding:9px;border:1.5px solid rgba(255,255,255,.30);box-shadow:0 30px 90px rgba(0,5,30,.65)}
+.screen{width:390px;height:780px;border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:radial-gradient(ellipse 380px 220px at 50% 0%,rgba(167,139,250,.14),transparent 70%),#0b1230}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:34px;border-radius:20px;background:#000;z-index:5}
+.status{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:600}
+.status svg{display:block}
+.hdr{flex:none;display:flex;align-items:center;gap:16px;padding:6px 18px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo{width:34px;height:34px;border-radius:50%;position:relative;flex:none;background:radial-gradient(circle at 34% 30%,#f1ebff 0%,#b9a2ff 22%,#7a5ce6 60%,#33237a 100%);box-shadow:0 0 14px rgba(167,139,250,.6)}
+.logo::after{content:"";position:absolute;left:-5px;top:13px;width:44px;height:9px;border-radius:50%;border:1.5px solid rgba(225,215,255,.75);transform:rotate(-18deg)}
+.hdr .t{font-size:18px;font-weight:800;color:#fff}
+.hdr .s{font-size:13px;color:#9aa3c7;margin-top:2px}
+.hdr .more{margin-left:auto;color:#9aa3c7;font-size:22px;letter-spacing:1px}
+.body{flex:1;display:flex;flex-direction:column;padding:12px 14px 0;overflow:hidden}
+.up{display:flex;gap:14px;align-items:center;background:#121a3d;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:11px 12px}
+.thumb{flex:none;width:64px;height:80px;border-radius:5px;background:linear-gradient(170deg,#f4ead6,#e6d8bc);transform:rotate(-4deg);box-shadow:0 4px 12px rgba(0,0,0,.45);position:relative}
+.thumb::before{content:"";position:absolute;left:20px;top:-6px;width:26px;height:11px;background:rgba(255,255,255,.45);transform:rotate(3deg)}
+.up .lb{font-size:16px;font-weight:700;color:#fff}
+.up .sb{font-size:12.5px;color:#9aa3c7;margin:3px 0 7px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#c9d3f5;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 9px}
+.done{display:flex;gap:10px;align-items:center;margin-top:10px;padding:9px 12px;border-radius:14px;background:rgba(110,231,183,.08);border:1px solid rgba(110,231,183,.28)}
+.ck{flex:none;width:24px;height:24px;border-radius:50%;background:#6ee7b7;display:grid;place-items:center}
+.done .d{font-size:13.5px;line-height:1.4;color:#c9d3f5}.done .d b{color:#6ee7b7;font-weight:700;margin-right:4px}
+.who{display:flex;align-items:center;gap:8px;margin:12px 0 7px;font-size:13px;font-weight:700;color:#ffd2c2}
+.who .logo{width:22px;height:22px;box-shadow:0 0 10px rgba(167,139,250,.6)}.who .logo::after{left:-4px;top:8px;width:30px;height:6px;border-width:1px}
+.enc{font-size:18px;line-height:1.66;color:#fff6f1;padding:14px 18px;border-radius:22px;border-bottom-left-radius:8px;background:linear-gradient(140deg,rgba(251,138,107,.24),rgba(167,139,250,.22));border:1px solid rgba(255,180,150,.45);box-shadow:0 0 34px rgba(251,138,107,.22)}
+.hl-a{background:rgba(110,231,183,.20);border-bottom:2px solid #6ee7b7;border-radius:3px;padding:0 1px}
+.hl-g{background:rgba(251,138,107,.20);border-bottom:2px solid #fb8a6b;border-radius:3px;padding:0 1px}
+.oth{margin-top:12px}
+.oh{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:700;color:#9aa3c7;margin-bottom:6px}
+.oh span{font-weight:500;font-size:11.5px}
+.oc{background:#121a3d;border-radius:12px;padding:7px 12px;margin-bottom:6px;border:1px solid rgba(255,255,255,.06)}
+.oc .dt{font-size:11px;color:#7c86b0;margin-bottom:2px}
+.oc .tx{font-size:14px;line-height:1.45;color:#b8c0e0}
+.acts{display:flex;gap:8px;margin-top:auto;padding-top:8px}.acts div{height:48px;border-radius:16px;display:grid;place-items:center;font-size:15px;font-weight:700}.acts .p{flex:1;background:linear-gradient(135deg,#b9a2ff,#8b6cf6);color:#0b1230}.acts .s{flex:none;padding:0 16px;border:1px solid rgba(255,255,255,.22);color:#e8ebff;font-weight:600}
+.home{width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);margin:8px auto 8px;flex:none}
+</style></head>
+<body>
+<div class="aurora"></div><div id="stars"></div>
+<div class="planet p1"></div><div class="planet p2"></div>
+
+<div class="title"><div class="eyebrow">나의 우주 · 화면 3</div><h1>글·사진으로 올린 뒤<br>건네는 한마디</h1></div>
+
+<div class="phone"><div class="screen">
+ <div class="island"></div>
+ <div class="status"><span>9:41</span>
+  <svg width="68" height="13" viewBox="0 0 68 13"><g fill="#e8ebff"><rect x="0" y="8" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="7" rx="1"/><rect x="10" y="3.5" width="3" height="9.5" rx="1"/><rect x="15" y="1" width="3" height="12" rx="1"/></g><path d="M25 5.2a9 9 0 0 1 12 0M27.4 7.8a5.4 5.4 0 0 1 7.2 0" stroke="#e8ebff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="31" cy="10.6" r="1.6" fill="#e8ebff"/><rect x="42" y="1" width="22" height="11" rx="3" stroke="#e8ebff" stroke-opacity=".5" fill="none"/><rect x="44" y="3" width="15" height="7" rx="1.5" fill="#e8ebff"/><rect x="65" y="4.5" width="2" height="4" rx="1" fill="#e8ebff" fill-opacity=".5"/></svg>
+ </div>
+ <div class="hdr"><div class="logo"></div><div><div class="t">나의 우주</div><div class="s">기록 올리기 · 방금 정리됨</div></div><div class="more">⋯</div></div>
+
+ <div class="body">
+  <div class="up" id="up">
+   <div class="thumb"><svg width="64" height="80" viewBox="0 0 64 80" fill="none" stroke="#6f6658" stroke-opacity=".75" stroke-width="1.5" stroke-linecap="round">
+    <path d="M8 14c4-2 7 1 10-1s6 1 9-1 5 2 9 0 6 1 9-1"/>
+    <path d="M8 24c3 2 6-2 9 0s5-1 8 1 6-2 10 0 7-1 11 0 5-1 8 0"/>
+    <path d="M8 34c4-1 6 2 10 0s5 1 9-1 6 2 10 0 5 1 9-1"/>
+    <path d="M8 44c3 1 6-2 9 0s6-1 9 1 5-2 9 0"/>
+    <path d="M8 54c4-2 6 1 10-1s6 2 9 0 6 1 10-1 5 1 8 0"/>
+    <path d="M8 64c3 1 5-1 9 0s6-1 8 1"/></svg></div>
+   <div><div class="lb">손글씨 일기 · 4월 8일</div><div class="sb">사진 1장 · 방금 올림</div>
+    <span class="pill"><svg width="12" height="13" viewBox="0 0 12 14" fill="none" stroke="#c9d3f5" stroke-width="1.4"><path d="M2 1h5l3 3v9H2z"/><path d="M4 7h4M4 10h4"/></svg>텍스트 일기도 같은 방식</span></div>
+  </div>
+
+  <div class="done" id="done"><span class="ck"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5" stroke="#0b1230" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+   <div class="d"><b>정리 완료</b>생각 2개 · 건강 영역 · 3월 20일 다짐과 이어짐</div></div>
+
+  <div class="who"><span class="logo"></span>우주가 건네는 한마디</div>
+  <div class="enc" id="enc">걷기를 또 못 했다고 적으셨네요. <span class="hl-a" id="ack">사흘이라도 걸었던 건 분명히 남아 있어요.</span> <span id="ok">못 한 날도 있는 그대로 괜찮아요.</span> <span class="hl-g" id="go">그래도 여기서 멈추진 말아요</span> — 내일은 집 앞까지 10분만 나가 볼까요?</div>
+
+  <div class="oth" id="oth">
+   <div class="oh">다른 날의 한마디<span>같은 말은 다시 쓰지 않아요</span></div>
+   <div class="oc"><div class="dt">10월 3일</div><div class="tx">마음이 무거운 날엔 무거운 채로 있어도 괜찮아요. 첫 면접을 끝까지 치른 것도 오늘 한 일이에요.</div></div>
+   <div class="oc" id="oc2"><div class="dt">4월 22일</div><div class="tx">3월에는 사흘 만에 멈췄던 걷기를 2주째 이어 가고 있어요. 그 꾸준함이 오늘의 당신이에요.</div></div>
+  </div>
+  <div class="acts"><div class="p">우주에서 보기</div><div class="s">또 올리기</div></div>
+ </div>
+ <div class="home"></div>
+</div></div>
+
+<div class="co l" style="top:215px" data-t="#up"><div class="n">1</div><div><b>글·사진으로 올리면<br>확인 없이 바로 정리돼요</b><span>손글씨 사진도, 텍스트 파일도</span></div></div>
+<div class="co l" style="top:440px" data-t="#ack" data-x="#enc"><div class="n">3</div><div><b>기록에 있는 행동<br>+ 감성적인 위로</b><span>‘사흘 걸었다’는 실제 기록에서</span></div></div>
+<div class="co r" style="top:380px" data-t="#go" data-x="#enc"><div class="n">2</div><div><b>있는 그대로 인정하고,<br>멈춰 두지 않아요</b><span>작은 다음 걸음 하나를 권해요</span></div></div>
+<div class="co r" style="top:600px" data-t="#oth" data-x="#oth"><div class="n">4</div><div><b>같은 말을<br>반복하지 않아요</b><span>날마다 그날의 기록으로 새로 써요</span></div></div>
+
+<svg id="lines" width="1200" height="860"></svg>
+<script>
+let seed=11;const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+const st=document.getElementById('stars');
+for(let i=0;i<180;i++){const z=rnd()<.1?2.6:.6+rnd()*1.5,e=document.createElement('i');e.className='star';
+ e.style.cssText=`left:${rnd()*1200}px;top:${rnd()*860}px;width:${z}px;height:${z}px;opacity:${(.2+rnd()*.8).toFixed(2)}`+(z>2?';box-shadow:0 0 8px rgba(255,255,255,.9)':'');st.appendChild(e)}
+function draw(){
+ const ph=document.querySelector('.phone').getBoundingClientRect();let o='';
+ document.querySelectorAll('.co[data-t]').forEach(c=>{
+  const cr=c.getBoundingClientRect(),t=document.querySelector(c.dataset.t).getBoundingClientRect();
+  const xr=c.dataset.x?document.querySelector(c.dataset.x).getBoundingClientRect():t;
+  const L=cr.right<ph.left,sx=L?cr.right:cr.left,sy=cr.top+cr.height/2;
+  const ty=t.top+t.height/2,tx=L?xr.left+5:xr.right-5,ex=L?ph.left-16:ph.right+16,mx=(sx+ex)/2;
+  o+=`<polyline points="${sx},${sy} ${mx},${sy} ${ex},${ty} ${tx},${ty}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6"/>`+
+     `<circle cx="${sx}" cy="${sy}" r="3" fill="#fff"/><circle cx="${tx}" cy="${ty}" r="9" fill="rgba(167,139,250,.35)"/><circle cx="${tx}" cy="${ty}" r="4.5" fill="#fff"/>`;
+ });
+ document.getElementById('lines').innerHTML=o;
+}
+document.fonts.ready.then(draw);
+</script>
+</body></html>
