@@ -257,7 +257,7 @@ canvas.addEventListener("pointerup",e=>{if(!down)return;const m=Math.hypot(e.cli
  const h=rel(e);if(h&&h.k==="star"){select(h.id);card(h.id)}else if(h&&h.k==="hub"){focusHub(h.id)}else{select(null);card(null);flyTo(HOME.pos,HOME.tgt)}});
 function flyTo(p,t){fl={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:p.clone(),t1:t.clone()}}
 // 해(삶의 영역)를 누르면 그 태양계가 화면 가운데 오도록 다가간다
-function focusHub(id){const o=hubObj[id],a=wrap.clientWidth/Math.max(1,wrap.clientHeight),d=o.R/Math.sin(FOV*Math.PI/360)*.62*Math.max(1,1.3/a);flyTo(o.pos.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(d)),o.pos)}
+function focusHub(id){const o=hubObj[id],a=wrap.clientWidth/Math.max(1,wrap.clientHeight),d=o.R/Math.sin(FOV*Math.PI/360)*.82*Math.max(1,1.4/a);flyTo(o.pos.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(d)),o.pos)}
 
 /* ---------- 카드 (2D 화면과 같은 내용) ---------- */
 function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");cardOn=!!c;voT=c&&W>620?Math.min(330,W-20)/2:0;if(!c){box.style.display="none";hint.style.display="";return}box.style.display="block";hint.style.display="none";
