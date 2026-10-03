@@ -80,7 +80,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;",
 const VAL={"자율":"#7dd3fc","도전":"#f472b6","즐거움":"#fde047","성취":"#fb923c","영향력":"#c084fc","안정":"#94a3b8","규범":"#a3e635","전통·신앙":"#fcd34d","배려":"#5eead4","공익":"#60a5fa"};
 const CONF=new Set(["긴장","어긋남","목표 충돌"]);
 const PAL=["#8fb8f6","#7ee2a6","#6fd3c4","#b3c6fb","#a6e8c4","#7cc4ee","#c8d6ff","#62c99a","#9ad7f2","#b9e9d6"];
-function fail(){$("msg").style.display="flex"}
+function fail(){$("msg").style.display="flex";for(const id of ["bar","legend","hint"])$(id).style.display="none"}
 if(typeof THREE==="undefined"||!THREE.OrbitControls){fail();return}
 try{init()}catch(e){fail();throw e}
 
@@ -123,7 +123,7 @@ scene.background=cv(1024,640,(g,w,h)=>{
  g.filter="none";g.globalCompositeOperation="source-over";
  const r=rng(3);for(let i=0;i<320;i++){g.globalAlpha=.08+r()*.32;g.fillStyle="#f2f7ff";g.beginPath();g.arc(r()*w,r()*h,.4+r()*.8,0,6.283);g.fill()}g.globalAlpha=1});
 
-function sprite(tex,color,scale,op,add){const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color,transparent:true,opacity:op,depthWrite:false,blending:add?THREE.AdditiveBlending:THREE.NormalBlending}));m.scale.setScalar(scale);m.userData.op=op;return m}
+function sprite(tex,color,scale,op,add){const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color,transparent:true,opacity:op,depthWrite:false,blending:add?THREE.AdditiveBlending:THREE.NormalBlending,fog:!add}));m.scale.setScalar(scale);m.userData.op=op;return m}
 function tubeC(curve,rad,color,op,dash,seg){const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false});
  if(dash){const t=DASH.clone();t.needsUpdate=true;t.repeat.set(Math.max(1,curve.getLength()/11),1);mat.alphaMap=t}
  const m=new THREE.Mesh(new THREE.TubeGeometry(curve,seg,rad,6,false),mat);m.userData.op=op;scene.add(m);return m}
@@ -131,7 +131,7 @@ function label(cls,html){const e=document.createElement("div");e.className=cls;e
 
 /* 먼 별가루: 돌릴 때 하늘과 어긋나 움직이며 깊이감을 준다 */
 function dust(n,size,op,seed,soft){const r=rng(seed),p=new Float32Array(n*3);for(let i=0;i<n;i++){const R=2600+r()*1800,t=r()*Math.PI*2,u=r()*2-1,q=Math.sqrt(1-u*u);p[i*3]=R*q*Math.cos(t);p[i*3+1]=R*u;p[i*3+2]=R*q*Math.sin(t)-300}
- const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xf2f7ff,size,sizeAttenuation:false,transparent:true,opacity:op,depthWrite:false,map:soft?SOFT:null})))}
+ const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xf2f7ff,size,sizeAttenuation:false,transparent:true,opacity:op,depthWrite:false,fog:false,map:soft?SOFT:null})))}
 dust(1300,1.3,.5,7,false);dust(240,3.4,.75,11,true);
 
 /* ---------- 시간 → 깊이 ---------- */
@@ -176,7 +176,7 @@ const links=[];
 for(const id in starObj){const o=starObj[id],s=o.s,ls=(s.links||[]).filter(l=>hubObj[l.hub]);
  const to=H=>new THREE.LineCurve3(o.p.clone(),new THREE.Vector3(H.pos.x,H.pos.y,o.p.z));
  if(!ls.length&&s.near_hub&&hubObj[s.near_hub]){links.push({id,mesh:tubeC(to(hubObj[s.near_hub]),.3,0x9aa3c7,.2,false,1),base:0x9aa3c7,op:.2,vals:[]})}
- for(const l of ls){const c=s.inner_tension?0xfb8a6b:0x9d8cf5,op=.3+.06*Math.min(l.n||1,4);links.push({id,mesh:tubeC(to(hubObj[l.hub]),.32+.14*Math.min(l.n||1,4),c,op,false,1),base:c,op,vals:l.values||[]})}}
+ for(const l of ls){const c=s.inner_tension?0xfb8a6b:0x9d8cf5,op=.3+.06*Math.min(l.n||1,4);links.push({id,mesh:tubeC(to(hubObj[l.hub]),.4+.16*Math.min(l.n||1,4),c,op,false,1),base:c,op,vals:l.values||[]})}}
 
 /* ---------- 별자리 (관계) ---------- */
 const relObjs=[],UP=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),CONE=new THREE.ConeGeometry(2.6,7,12);
@@ -208,7 +208,9 @@ const selLab=label("sl","");selLab.style.display="none";
 
 /* ---------- 카메라 ---------- */
 const C=bb.getCenter(new THREE.Vector3()),rad=bb.getSize(new THREE.Vector3()).length()/2;
-const dist=rad/Math.sin(FOV*Math.PI/360)*.8;
+const asp=wrap.clientWidth/Math.max(1,wrap.clientHeight),dist=rad/Math.sin(FOV*Math.PI/360)*.74*Math.max(1,1.4/asp);  // 좁은 화면이면 조금 물러선다
+// 옅은 안개: 먼(오래된) 선과 행성이 하늘색으로 조금 가라앉아 깊이가 읽힌다
+scene.fog=new THREE.Fog(0x063a8f,dist*.7,dist*2.6);
 const HOME={pos:C.clone().add(new THREE.Vector3(-.5,.25,1).normalize().multiplyScalar(dist)),tgt:C.clone()};
 camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);controls.minDistance=dist*.12;controls.maxDistance=dist*2.6;
 controls.autoRotate=!reduce;controls.autoRotateSpeed=.3;
@@ -229,16 +231,16 @@ function placeLabels(){
  for(const id in hubObj){const o=hubObj[id],s=scr(o.pos);put(o.lab,s.x,s.y-pxr(o.pos,o.r)*1.08-4,s.ok)}
  for(const id in starObj){const o=starObj[id];if(!o.q)continue;const s=scr(o.p),pr=pxr(o.p,o.R);put(o.q,s.x+pr*1.5+5,s.y-pr*1.5-5,s.ok)}
  for(const m of months){const s=scr(m.p);put(m.e,s.x,s.y,s.ok)}
- if(sel){const o=starObj[sel],s=scr(o.p);put(selLab,s.x+pxr(o.p,o.R)*2.6+8,s.y,s.ok)}}
+ if(sel&&!cardOn){const o=starObj[sel],s=scr(o.p);put(selLab,s.x+pxr(o.p,o.R)*2.6+8,s.y,s.ok)}}
 
 /* ---------- 고르기 · 흐리게 ---------- */
-let sel=null,mode="base";
+let sel=null,mode="base",cardOn=false;
 const relOn=o=>!sel||o.r.a===sel||o.r.b===sel;
 function applyLook(){
  const on=sel?new Set([sel]):null;if(sel)for(const r of D.rels)if(r.a===sel||r.b===sel){on.add(r.a);on.add(r.b)}
  for(const id in starObj){const o=starObj[id],f=on&&!on.has(id)?.16:1;for(const m of o.list)m.material.opacity=m.userData.op*f;o.sel.material.opacity=id===sel?.9:0;if(o.q)o.q.style.opacity=f}
- for(const L of links){const f=on&&!on.has(L.id)?.25:1;let c=L.base,op=L.op;if(mode==="value"){const v=L.vals.find(v=>VAL[v]);c=v?VAL[v]:0x9aa3c7;op=v?.9:.25}L.mesh.material.color.set(c);L.mesh.material.opacity=op*f}
- for(const o of relObjs){const f=(sel?(relOn(o)?1.2:.07):1)*(mode==="value"?.45:1);for(const m of o.meshes)m.material.opacity=Math.min(1,m.userData.op*f)}
+ for(const L of links){const f=on&&!on.has(L.id)?.25:1;let c=L.base,op=L.op;if(mode==="value"){const v=L.vals.find(v=>VAL[v]);c=v?VAL[v]:0x9aa3c7;op=v?.95:.25}L.mesh.material.color.set(c);L.mesh.material.opacity=op*f}
+ for(const o of relObjs){const f=(sel?(relOn(o)?1.2:.07):1)*(mode==="value"?.3:1);for(const m of o.meshes)m.material.opacity=Math.min(1,m.userData.op*f)}
  if(sel){const s=starObj[sel].s;selLab.innerHTML=esc(s.day)+" · "+esc(s.title)}else selLab.style.display="none"}
 function select(id){sel=id&&starObj[id]?id:null;applyLook()}
 document.querySelectorAll("#bar button[data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll("#bar button[data-m]").forEach(x=>x.classList.toggle("on",x===b));$("vleg").style.display=mode==="value"?"":"none";applyLook()});
@@ -270,7 +272,7 @@ canvas.addEventListener("pointerup",e=>{if(!down)return;const m=Math.hypot(e.cli
  const h=rel(e);if(h&&h.k==="star"){select(h.id);card(h.id)}else{select(null);card(null)}});
 
 /* ---------- 카드 (2D 화면과 같은 내용) ---------- */
-function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");voT=c&&W>620?Math.min(330,W-20)/2:0;if(!c){box.style.display="none";hint.style.display="";return}box.style.display="block";hint.style.display="none";
+function card(id){const c=id&&D.cards[id],box=$("card"),hint=$("hint");cardOn=!!c;voT=c&&W>620?Math.min(330,W-20)/2:0;if(!c){box.style.display="none";hint.style.display="";return}box.style.display="block";hint.style.display="none";
  const rels=D.rels.filter(r=>r.a===id||r.b===id);
  let h='<span class=x title="닫기">✕</span><h3>'+esc(c.title)+'</h3><div class=sub>'+esc(c.day)+' ('+esc(c.basis)+') · '+esc(c.type)+(c.state?' · 관측: '+esc(c.state):'')+'</div>';
  if(c.summary)h+='<div>'+esc(c.summary)+'</div>';
