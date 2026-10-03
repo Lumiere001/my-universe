@@ -2,14 +2,15 @@
 universe_view3d.py
 
 3D 우주 화면. 2D 화면(universe_view.py)과 같은 데이터(_payload)를 Three.js 로 띄운다.
-글 = 별, 주제 = 행성(성운), 관계 = 별자리. 깊이 = 시간(카메라에 가까울수록 최근 글).
+글 = 별, 주제 = 행성(성운), 관계 = 별자리.
+시간은 원반의 반지름이다: 첫 기록이 가운데, 최근 글일수록 바깥(첫 기억에서 퍼져 나가는 우주).
+삶의 영역(D1..D9)마다 부채꼴 하나를 갖고, 별은 자기 영역 부채꼴 안에 놓인다.
 
 기호 규칙은 2D 와 같다.
 - 색은 두 뜻: 보라 = 이어지는 관계(이어짐 · 바뀜 · 해소), 주황 = 충돌(긴장 · 어긋남 · 목표 충돌)
 - 실선 = 원문으로 확인, 점선 = AI 추정
 - 별 크기 = 생각 수, 밝기 = 확신, 금색 고리 = 다짐(지켜지면 두껍게 채움), "?" = 질문
-행성은 연결된 글들이 걸친 시간의 가운데 깊이에 놓고, 그 시간 범위를 희미한 "시간 기둥"으로 잇는다.
-별 → 행성 선은 같은 깊이의 시간 기둥 지점으로 잇는다(선이 시간을 가로지르지 않게).
+행성은 자기 부채꼴의 바깥 끝(가장 최근 고리 너머)에 놓는다. 달마다 희미한 고리를 그린다.
 
 Three.js(r128)를 CDN 에서 읽는다. 못 읽으면 "평면 보기"로 돌아가라는 안내를 띄운다.
 """
@@ -36,8 +37,8 @@ html,body{margin:0;height:100%;background:transparent;color:var(--ink);font-fami
 .hl{position:absolute;transform:translate(-50%,-100%);text-align:center;white-space:nowrap;font-weight:700;font-size:13px;line-height:1.15;color:#f4f7ff;text-shadow:0 1px 2px #00113a,0 0 8px #00133a,0 0 14px #00133a99}
 .hl small{display:block;font-weight:500;font-size:10.5px;color:#c3d3f6}.hl small.tp{font-size:9.5px;color:#9fb3e0}.hl.dim{opacity:.7}
 .ql{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:800;color:#ddd3ff;text-shadow:0 0 4px #2b1d86,0 0 8px #00133a}
-.mon{position:absolute;transform:translate(-100%,-50%);padding-right:6px;font-size:11px;color:#d3e0fb;white-space:nowrap;text-shadow:0 0 6px #00133a}
-.mon.end{color:#9fb3e0;font-size:10.5px}
+.mon{position:absolute;transform:translate(-50%,-50%);padding:0 5px;border-radius:6px;background:#03163f99;font-size:11px;color:#d3e0fb;white-space:nowrap;text-shadow:0 0 6px #00133a}
+.mon.end{color:#fff;font-weight:700}.mon.c{font-size:12.5px;font-weight:800;color:#fff;background:#03163fcc}
 .sl{position:absolute;transform:translate(0,-50%);font-size:11.5px;white-space:nowrap;color:#fff;background:#071a46d9;border:1px solid #3a5aa8;border-radius:7px;padding:2px 7px}
 #card{position:absolute;right:10px;top:10px;bottom:10px;width:min(330px,calc(100% - 20px));background:#0a1636f2;border:1px solid var(--line);border-radius:12px;overflow:auto;padding:16px 16px 24px;font-size:13px;line-height:1.55;display:none;box-shadow:0 8px 30px #0008}
 #card .x{position:absolute;right:10px;top:8px;cursor:pointer;color:var(--mute);font-size:18px}
@@ -66,7 +67,7 @@ html,body{margin:0;height:100%;background:transparent;color:var(--ink);font-fami
 <div><i style="border-color:var(--coral)"></i>긴장(쌍성) · 어긋남 · 목표 충돌</div>
 <div><i style="border-color:#e3e9ff"></i>실선 = 원문으로 확인 &nbsp; <i style="border-color:#e3e9ff;border-top-style:dashed"></i>점선 = AI 추정</div>
 <div>별 크기 = 생각 수 · 밝기 = 확신 · <span style="color:var(--gold)">◯</span> 다짐(채움 = 지킴) · <span style="color:#ddd3ff;font-weight:800">?</span> 질문</div>
-<div>행성 = 주제 · 깊이 = 시간 (가까울수록 최근)</div><div id="vleg" style="display:none"></div></div>
+<div>행성 = 삶의 영역 · 중심 = 처음 기록, 바깥 = 최근</div><div id="vleg" style="display:none"></div></div>
 <div id="tip"></div><div id="hint">별을 누르면 그 글의 카드가 열립니다 · 끌어서 돌리기 · 휠로 확대</div>
 <div id="card"></div>
 <div id="msg">3D 화면을 불러오지 못했습니다. 위의 '평면 보기'를 눌러 주세요.</div></div>
@@ -134,18 +135,23 @@ function dust(n,size,op,seed,soft){const r=rng(seed),p=new Float32Array(n*3);for
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xf2f7ff,size,sizeAttenuation:false,transparent:true,opacity:op,depthWrite:false,fog:false,map:soft?SOFT:null})))}
 dust(1300,1.3,.5,7,false);dust(240,3.4,.75,11,true);
 
-/* ---------- 시간 → 깊이 ---------- */
-const DEPTH=600;
+/* ---------- 시간 → 반지름 (첫 기록 = 가운데, 최근일수록 바깥) · 영역 → 부채꼴 ---------- */
+const R0=50,R1=330,NH=Math.max(1,D.hubs.length),SEC=Math.PI*2/NH;
 const dn=d=>{const t=Date.parse(String(d)+"T00:00:00Z");return isNaN(t)?null:Math.round(t/864e5)};
 const ds=D.stars.map(s=>dn(s.day)).filter(v=>v!=null);
 const d0=ds.length?Math.min(...ds):0,d1=ds.length?Math.max(...ds):0;
-const zD=v=>d1>d0?-(d1-Math.min(Math.max(v,d0),d1))/(d1-d0)*DEPTH:0;
-const zOf=d=>{const v=dn(d);return zD(v==null?d0:v)};
+const rD=v=>d1>d0?R0+(R1-R0)*(Math.min(Math.max(v,d0),d1)-d0)/(d1-d0):(R0+R1)/2;
+const rOf=d=>{const v=dn(d);return rD(v==null?d0:v)};
+const ang=i=>-Math.PI/2+i*SEC;  // 2D 화면과 같은 순서: D1 이 위(먼 쪽)
+const onDisc=(r,a,y)=>new THREE.Vector3(r*Math.cos(a),y,r*Math.sin(a));
+const hubIdx={};D.hubs.forEach((h,i)=>hubIdx[h.id]=i);
+const jr=rng(5);
 
 /* ---------- 별 (글) ---------- */
 const starObj={};
 for(const s of D.stars){
- const p=new THREE.Vector3(+s.x||0,-(+s.y||0),zOf(s.day)),n=s.n||0,b=+s.bright||.35,R=n?Math.min(3+n*1.05,8.4):2;
+ const top=(s.links||[]).slice().sort((a,b)=>(b.n||0)-(a.n||0))[0],hi=hubIdx[top?top.hub:s.near_hub];
+ const a=hi==null?jr()*Math.PI*2:ang(hi)+(jr()-.5)*SEC*.72,p=onDisc(rOf(s.day),a,(jr()-.5)*36),n=s.n||0,b=+s.bright||.35,R=n?Math.min(3+n*1.05,8.4):2;
  const g=new THREE.Group();g.position.copy(p);scene.add(g);
  const o={s,p,R,g,list:[]},add=m=>{g.add(m);o.list.push(m);return m};
  add(sprite(SOFT,0xd6e6ff,R*(n?7:5),n?.16+.36*b:.12,true));
@@ -156,25 +162,21 @@ for(const s of D.stars){
  if(s.question)o.q=label("ql","?");
  starObj[s.id]=o}
 
-/* ---------- 행성 (주제) + 시간 기둥 ---------- */
+/* ---------- 행성 (삶의 영역) — 자기 부채꼴 바깥 끝 ---------- */
 const hubObj={};
 D.hubs.forEach((h,i)=>{
- const zs=D.stars.filter(s=>(s.links||[]).some(l=>l.hub===h.id)||(!(s.links||[]).length&&s.near_hub===h.id)).map(s=>starObj[s.id].p.z);
- const z0=zs.length?Math.min(...zs):-DEPTH/2,z1=zs.length?Math.max(...zs):-DEPTH/2;
- const cnt=h.count||0,r=cnt?9+5*Math.sqrt(cnt):6,col=new THREE.Color(PAL[i%PAL.length]),pos=new THREE.Vector3(+h.x||0,-(+h.y||0),(z0+z1)/2);
+ const cnt=h.count||0,r=cnt?9+5*Math.sqrt(cnt):6,col=new THREE.Color(PAL[i%PAL.length]),pos=onDisc(R1+70,ang(i),0);
  const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,48,32),new THREE.MeshPhongMaterial({color:col,emissive:col.clone().multiplyScalar(.14),specular:0x5a6a80,shininess:26}));
  mesh.position.copy(pos);scene.add(mesh);
  const atm=sprite(ATM,col,r*3.2,.8,true);atm.position.copy(pos);scene.add(atm);
  if(cnt){const neb=sprite(SOFT,0x82b2f6,r*9,.14,true);neb.position.copy(pos);scene.add(neb)}else{mesh.material.transparent=true;mesh.material.opacity=.55}
- if(z1-z0>4){tubeC(new THREE.LineCurve3(new THREE.Vector3(pos.x,pos.y,z0-14),new THREE.Vector3(pos.x,pos.y,z1+14)),.7,col,.3,false,1);
-  for(let z=z0;z<=z1;z+=36){const hz=sprite(SOFT,0x82b2f6,r*3.4,.07,true);hz.position.set(pos.x,pos.y,z);scene.add(hz)}}
  const tp=(h.topics||[]).slice(0,3).map(t=>esc(t.name)).join(" · ");
  hubObj[h.id]={h,pos,r,lab:label("hl"+(cnt?"":" dim"),esc(h.name)+"<small>"+(cnt?esc(cnt)+"편":"아직 관측 안 됨")+"</small>"+(tp?"<small class=tp>"+tp+"</small>":""))}});
 
-/* ---------- 별 → 행성 선 (같은 깊이의 시간 기둥 지점으로) ---------- */
+/* ---------- 별 → 행성 선 ---------- */
 const links=[];
 for(const id in starObj){const o=starObj[id],s=o.s,ls=(s.links||[]).filter(l=>hubObj[l.hub]);
- const to=H=>new THREE.LineCurve3(o.p.clone(),new THREE.Vector3(H.pos.x,H.pos.y,o.p.z));
+ const to=H=>new THREE.LineCurve3(o.p.clone(),H.pos.clone());
  if(!ls.length&&s.near_hub&&hubObj[s.near_hub]){links.push({id,mesh:tubeC(to(hubObj[s.near_hub]),.3,0x9aa3c7,.2,false,1),base:0x9aa3c7,op:.2,vals:[]})}
  for(const l of ls){const c=s.inner_tension?0xfb8a6b:0x9d8cf5,op=.3+.06*Math.min(l.n||1,4);links.push({id,mesh:tubeC(to(hubObj[l.hub]),.4+.16*Math.min(l.n||1,4),c,op,false,1),base:c,op,vals:l.values||[]})}}
 
@@ -184,7 +186,7 @@ for(const r of D.rels){const A=starObj[r.a],B=starObj[r.b];if(!A||!B)continue;
  const ab=B.p.clone().sub(A.p),L=ab.length();if(L<1)continue;const dir=ab.clone().divideScalar(L);
  const col=CONF.has(r.type)?0xfb8a6b:0xa78bfa,dash=r.line==="점선",op=dash?.78:.97,rad=(r.type==="이어짐"?.75:1)*(dash?1:1.25);
  const o={r,meshes:[],pts:[]};
- if(r.type==="긴장"){let pp=new THREE.Vector3().crossVectors(ab,ZA);if(pp.length()<1e-3)pp.crossVectors(ab,UP);pp.normalize();
+ if(r.type==="긴장"){let pp=new THREE.Vector3().crossVectors(ab,UP);if(pp.length()<1e-3)pp.crossVectors(ab,ZA);pp.normalize();
   const k=Math.min(.22*L,46),mid=A.p.clone().add(B.p).multiplyScalar(.5);
   for(const sg of [1,-1]){const cu=new THREE.QuadraticBezierCurve3(A.p.clone(),mid.clone().addScaledVector(pp,k*sg),B.p.clone());o.meshes.push(tubeC(cu,rad,col,op,dash,32));o.pts.push(cu.getPoints(24))}}
  else{const arrow=r.type==="바뀜"||r.type==="해소";
@@ -194,16 +196,16 @@ for(const r of D.rels){const A=starObj[r.a],B=starObj[r.b];if(!A||!B)continue;
   if(r.type==="해소"){const ring=sprite(RING1,col,B.R*5.6,.65,false);ring.position.copy(B.p);scene.add(ring);o.meshes.push(ring)}}
  relObjs.push(o)}
 
-/* ---------- 시간 레일 (왼쪽) ---------- */
+/* ---------- 시간 고리 (기록이 있는 달마다 하나, 가운데 = 처음) ---------- */
 const pts=[...Object.values(starObj).map(o=>o.p),...Object.values(hubObj).map(o=>o.pos)];
 const bb=new THREE.Box3().setFromPoints(pts.length?pts:[new THREE.Vector3()]);
-const RX=bb.min.x-80,RY=(bb.min.y+bb.max.y)/2,months=[];
-tubeC(new THREE.LineCurve3(new THREE.Vector3(RX,RY,-DEPTH-12),new THREE.Vector3(RX,RY,12)),.6,0xdbe6ff,.42,false,1);
-if(d1>d0){const st=new Date(d0*864e5),multiYear=new Date(d1*864e5).getUTCFullYear()!==st.getUTCFullYear();
- for(let y=st.getUTCFullYear(),m=st.getUTCMonth(),k=0;k<240;k++,m++){if(m>11){m=0;y++}const first=Date.UTC(y,m,1)/864e5;if(first>d1)break;
-  const z=zD(Math.max(first,d0));tubeC(new THREE.LineCurve3(new THREE.Vector3(RX-7,RY,z),new THREE.Vector3(RX+7,RY,z)),.5,0xdbe6ff,.5,false,1);
-  months.push({e:label("mon",(multiYear&&(m===0||!months.length)?y+"년 ":"")+(m+1)+"월"),p:new THREE.Vector3(RX-8,RY,z)})}}
-months.push({e:label("mon end","최근"),p:new THREE.Vector3(RX-8,RY,34)});
+const months=[],LA=ang(Math.floor(NH*.72))+SEC/2;  // 달 글자는 두 영역 사이 빈 틈에 세운다
+function orbit(r,op){const m=new THREE.Mesh(new THREE.RingGeometry(r-.8,r+.8,160),new THREE.MeshBasicMaterial({color:0xdbe6ff,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;scene.add(m)}
+if(d1>d0){const yms=[...new Set(D.stars.map(s=>String(s.day).slice(0,7)))].filter(k=>/^\d{4}-\d\d$/.test(k)).sort(),multiYear=yms.length&&yms[0].slice(0,4)!==yms[yms.length-1].slice(0,4);
+ for(const ym of yms){const y=+ym.slice(0,4),m=+ym.slice(5)-1,r=rD(Math.max(Date.UTC(y,m,1)/864e5,d0));orbit(r,.26);
+  months.push({e:label("mon",(multiYear&&(m===0||!months.length)?y+"년 ":"")+(m+1)+"월"),p:onDisc(r,LA,0)})}
+ orbit(R1,.45);months.push({e:label("mon end","최근"),p:onDisc(R1,LA-SEC*.3,0)})}
+months.push({e:label("mon c","처음"),p:new THREE.Vector3()});
 const selLab=label("sl","");selLab.style.display="none";
 
 /* ---------- 카메라 ---------- */
@@ -211,10 +213,10 @@ const C=bb.getCenter(new THREE.Vector3()),rad=bb.getSize(new THREE.Vector3()).le
 const asp=wrap.clientWidth/Math.max(1,wrap.clientHeight),dist=rad/Math.sin(FOV*Math.PI/360)*.74*Math.max(1,1.4/asp);  // 좁은 화면이면 조금 물러선다
 // 옅은 안개: 먼(오래된) 선과 행성이 하늘색으로 조금 가라앉아 깊이가 읽힌다
 scene.fog=new THREE.Fog(0x063a8f,dist*.7,dist*2.6);
-const HOME={pos:C.clone().add(new THREE.Vector3(-.5,.25,1).normalize().multiplyScalar(dist)),tgt:C.clone()};
+const HOME={pos:C.clone().add(new THREE.Vector3(0,Math.cos(.7),Math.sin(.7)).multiplyScalar(dist)),tgt:C.clone()};  // 위에서 40° 기울여 원반 전체
 camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);controls.minDistance=dist*.12;controls.maxDistance=dist*2.6;
 controls.autoRotate=!reduce;controls.autoRotateSpeed=.3;
-let fl=null,AZ0=null;
+let fl=null;
 controls.addEventListener("start",()=>{controls.autoRotate=false;fl=null});
 $("home").onclick=()=>{fl={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:HOME.pos.clone(),t1:HOME.tgt.clone()}};
 
@@ -294,10 +296,8 @@ window.openStar=id=>{select(id);card(id)};
 select(D.selected);
 (function loop(){requestAnimationFrame(loop);
  if(fl){fl.t=Math.min(1,fl.t+.035);const e=1-Math.pow(1-fl.t,3);camera.position.lerpVectors(fl.p0,fl.p1,e);controls.target.lerpVectors(fl.t0,fl.t1,e);if(fl.t>=1)fl=null}
- // 천천히 좌우로만 흔든다 (뒤에서 보면 시간이 거꾸로 보이므로 한 바퀴 돌지 않는다)
- if(controls.autoRotate&&AZ0!=null){const az=controls.getAzimuthalAngle();if(az>AZ0+.3)controls.autoRotateSpeed=.3;else if(az<AZ0-.3)controls.autoRotateSpeed=-.3}
  if(vo!==voT){vo=Math.abs(voT-vo)>.5?vo+(voT-vo)*.18:voT;applyVO()}
- controls.update();if(AZ0==null)AZ0=controls.getAzimuthalAngle();
+ controls.update();
  camera.updateMatrixWorld();placeLabels();renderer.render(scene,camera)})();
 }
 })();
