@@ -15,7 +15,7 @@ load_dotenv(BASE_DIR / ".env")
 # Upstage (Solar Chat · Embedding · Studio)
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY", "")
 UPSTAGE_BASE_URL = os.getenv("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1")
-CHAT_MODEL = os.getenv("SOLAR_CHAT_MODEL", "solar-pro2")
+CHAT_MODEL = os.getenv("SOLAR_CHAT_MODEL", "solar-pro4")
 EMBED_PASSAGE_MODEL = os.getenv("EMBEDDING_MODEL", "solar-embedding-2-passage")
 EMBED_QUERY_MODEL = os.getenv("EMBEDDING_QUERY_MODEL", EMBED_PASSAGE_MODEL.replace("-passage", "-query"))
 
