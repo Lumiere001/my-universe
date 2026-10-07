@@ -57,7 +57,7 @@ docker compose -p v8check down -v --rmi local
 
 로컬 개발(Docker 없이 코드 직접): `scripts/start.sh`(Supabase 로컬 스택 · `my-universe-chroma` 컨테이너 · 백엔드 8001 `--reload` · 화면 3000) / `scripts/stop.sh`.
 
-**로컬 포트 노출(보안 검토 M10)**: compose 의 세 포트는 `127.0.0.1`에만 묶었다(같은 와이파이의 다른 기기에서 열 수 없음). 한계: 로컬 Supabase 스택(54321 API · 54322 DB · 54323 Studio …)은 Supabase CLI(v2.75)에 바인드 주소 설정이 없어 모든 인터페이스에 열리고, DB 비밀번호는 공개된 기본값이다. `scripts/dev_up.sh`의 `my-universe-chroma`도 `-p 8000:8000`이다(이 브랜치 밖 파일). 그래서 **실제 일기는 로컬 스택에 넣지 않는다**(가상 인물 데이터만). 학교 · 카페 와이파이에서는 `supabase stop`으로 꺼 두거나 macOS 방화벽(설정 → 네트워크 → 방화벽)을 켠다.
+**로컬 포트 노출(보안 검토 M10)**: compose 의 세 포트는 `127.0.0.1`에만 묶었다(같은 와이파이의 다른 기기에서 열 수 없음). 한계: 로컬 Supabase 스택(54321 API · 54322 DB · 54323 Studio …)은 Supabase CLI(v2.75)에 바인드 주소 설정이 없어 모든 인터페이스에 열리고, DB 비밀번호는 공개된 기본값이다. 로컬 개발용 `my-universe-chroma`(`scripts/dev_up.sh` · `scripts/start.sh`)도 `127.0.0.1:8000`에만 연다. 그래도 Supabase 스택이 열려 있으므로 **실제 일기는 로컬 스택에 넣지 않는다**(가상 인물 데이터만). 학교 · 카페 와이파이에서는 `supabase stop`으로 꺼 두거나 macOS 방화벽(설정 → 네트워크 → 방화벽)을 켠다.
 
 **DB 권한(보안 검토 H1)**: 마이그레이션 `20261009000000_v8_security.sql`이 anon · authenticated 의 표 · 시퀀스 · 함수 권한을 모두 거두고(앞으로 만들 표도 기본 권한 없음), 백엔드는 PostgREST 가 모르는 역할 `app_user`로 `set local role` 한다. 화면은 Supabase 를 로그인에만 쓰므로 영향이 없다. 로컬 스택은 `supabase migration up --local`, 클라우드는 `supabase db push`로 같이 적용된다. 새 표를 만들면 `app_user`용 RLS 정책(`own_app`)도 같이 만든다.
 
@@ -68,21 +68,21 @@ docker compose -p v8check down -v --rmi local
 - 남기는 것: 시각, 기록 id, 단계(`safety` … `save`), 걸린 시간, 상태, 오류 코드(영문), 설정 번호, 추정 비용, 개수.
 - 남기지 않는 것: 일기 글 · 제목 · 인용 · 요약 · 사람 이름 · 되고 싶은 모습 문장 · 토큰 · 키. 예외 메시지는 원문이 섞일 수 있으니 **예외 종류(클래스 이름)와 우리 오류 코드만** 남긴다.
 - Vercel은 표준 출력(보관 1시간), Docker · 로컬은 `logs/agent_flow_YYYYMMDD.log`(`LOG_TO_FILE=1`).
-- 리허설 날 Vercel Logs에서 실제로 원문이 안 보이는지 눈으로 확인한다(MORNING ⑥).
+- 배포 확인 · 리허설 날 Vercel Logs에서 실제로 원문이 안 보이는지 눈으로 확인한다(MORNING ⑥ · ⑦).
 
 ### 비용 한도
 
 | 어디 | 누가 | 무엇 |
 | --- | --- | --- |
 | Upstage 콘솔 | 동규 | Billing에서 한도 · 알림 메뉴가 있으면 월 한도를 건다(공개 문서에서 확인 못 함 — 콘솔에서 확인). 없으면 리허설 다음 날 · 매주 잔액을 본다. Studio 크레딧 승인 범위 $50 |
-| 앱(백엔드) | WS5 | 사용자당 하루 일기 수 상한 `DAILY_ENTRY_LIMIT`(기본 10), 이달 추정 비용 상한 `MONTHLY_COST_CAP_USD`(기본 5달러). 넘으면 새 일기 처리 멈추고 안내. 이달 추정 비용은 `/stats`에서 본다 |
+| 앱(백엔드) | WS5 | 사용자당 하루 일기 수 상한 `DAILY_ENTRY_LIMIT`(기본 10), 이달 추정 비용 상한 `MONTHLY_COST_CAP_USD`(기본 5달러), 기록당 이어 하기 `RESUME_LIMIT`(기본 3번). 넘으면 처리 멈추고 안내(429). 쓸 수 있는 계정은 `ALLOWED_EMAILS`로 묶어 전체 비용도 묶인다. 이달 추정 비용은 `/stats`에서 본다 |
 | Vercel | — | Hobby는 청구 없음. 한도를 넘으면 함수가 멈춘다 |
 | Supabase | — | Free 플랜은 청구 없음(500MB DB). 일주일 안 쓰면 일시 정지되니 매일 쓰면 문제 없음 |
 | Chroma Cloud | 동규 | Starter $0 + 사용량, 무료 크레딧 $5. 콘솔 Billing에서 사용량 확인 |
 
 ### 오류 알림 (추천 하나): GitHub Actions 하루 한 번 `/health`
 
-`deploy/health.yml`을 `.github/workflows/health.yml`로 두고(push 뒤), 저장소 Settings → Secrets and variables → Actions → **Variables**에 `API_URL`(백엔드 주소) · `WEB_URL`(화면 주소)을 넣으면 켜진다. 변수가 없으면 아무것도 하지 않는다. 매일 09:00(KST)에 두 주소를 부르고, 실패하면 GitHub이 **예약 실행 실패 메일**을 보낸다(일정을 마지막으로 바꾼 사람에게). 추가 계정 · 비용 없음.
+`deploy/health.yml`을 `.github/workflows/health.yml`로 복사해 push 하고(MORNING ①), 저장소 Settings → Secrets and variables → Actions → **Variables**에 `API_URL`(백엔드 주소) · `WEB_URL`(화면 주소)을 넣으면 켜진다. 변수가 없으면 아무것도 하지 않는다. 매일 09:00(KST)에 두 주소를 부르고, 실패하면 GitHub이 **예약 실행 실패 메일**을 보낸다(일정을 마지막으로 바꾼 사람에게). 추가 계정 · 비용 없음.
 
 - 이게 잡는 것: 배포 깨짐, 환경변수 빠짐, 서버 다운. 못 잡는 것: 일기 처리 중 Studio 오류 → 그건 화면의 오류 이벤트와 피드백("불편한 점 한 줄"), `/stats`로 본다.
 - Vercel 자체 알림(Observability Alerts)은 Pro 이상이라 쓰지 않는다.
@@ -96,14 +96,14 @@ docker compose -p v8check down -v --rmi local
 | `UPSTAGE_API_KEY` | Upstage 콘솔 키 |
 | `RECORD_AGENT_ID`, `OBSERVE_AGENT_ID` | Studio 에이전트 ID(1차와 같음) |
 | `V8_RECORD_CONFIG_ID`, `V8_OBSERVE_CONFIG_ID` | `2` (1판 `RECORD_CONFIG_ID=1`은 Streamlit 데모용으로 그대로) |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Supabase Project Settings → API |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Supabase Project Settings → API Keys(**Legacy** `anon`, `eyJ…` 모양) |
 | `DATABASE_URL` | Supabase Connect → **Transaction pooler**(포트 6543) 주소. 서버리스라 직접 연결 대신 풀러 |
-| `DIARY_ENC_KEY` | 일기 암호화 키(32바이트 base64, MORNING ⑤의 명령으로 만듦) |
+| `DIARY_ENC_KEY` | 일기 암호화 키(32바이트 base64, MORNING ⑤의 명령으로 만듦). Vercel과 비밀번호 관리자 두 곳에만 둔다(잃으면 저장된 글을 못 염) |
 | `CHROMA_API_KEY`, `CHROMA_TENANT`, `CHROMA_DATABASE` | Chroma Cloud(이 이름은 Chroma `CloudClient`가 그대로 읽는 이름) |
 | `FRONTEND_ORIGIN` | 화면 주소 `https://<화면>.vercel.app` (CORS) |
 | `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD`, `RESUME_LIMIT` | 넣지 않으면 `10` · `5` · `3` (§4) |
 | `ALLOWED_EMAILS` | 쓸 수 있는 구글 계정 이메일(쉼표 목록, 동규 · 현호). 목록 밖은 403 `not_allowed` |
-| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키. 백엔드에만, 화면에는 넣지 않음 |
+| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키(**Legacy** `service_role`, `eyJ…` 모양 — 코드가 `Authorization: Bearer`로 보내서 새 형식 `sb_secret_…`은 맞지 않음). 백엔드에만, 화면에는 넣지 않음 |
 | 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `API_DOCS`(없으면 `/docs` 꺼짐), `DEV_TEST_PASSWORD`(로컬 시험 전용) |
 
 화면(`my-universe`): `NEXT_PUBLIC_API_BASE`(백엔드 주소), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_DEV_LOGIN=0`, `NEXT_PUBLIC_MOCK=0` (`infra/frontend/.env.example`과 같음).
