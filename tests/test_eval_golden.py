@@ -17,7 +17,7 @@ METHOD_PLACE = ["약을", "수면제", "번개탄", "투신", "옥상", "한강"
 
 
 def test_files_and_personas():
-    assert {p.stem for p in GOLDEN.glob("*.json")} == set(CATEGORIES) | {"personas"}
+    assert {p.stem for p in GOLDEN.glob("*.json")} == set(CATEGORIES) | {"personas", "crisis_heldout"}
     assert len(PERSONAS) >= 6 and all(p["fictional"] for p in PERSONAS.values())
     for k in ("age", "job", "habit"):
         assert len({p[k] for p in PERSONAS.values()}) == len(PERSONAS), f"인물마다 {k}가 달라야 함"
@@ -66,3 +66,14 @@ def test_crisis_cases_have_no_method_or_place():
         if c["category"] == "crisis" or c["input"].get("check") == "care":
             text = json.dumps(c["input"], ensure_ascii=False)
             assert [w for w in METHOD_PLACE if w in text] == [], c["id"]
+
+
+def test_crisis_heldout():
+    """골든셋 밖 위기 문장(측정용, 관문 아님): 위기 20개+, 위기 아님 15개+, 방법 · 장소 없음, 골든셋과 겹치지 않음."""
+    cases = json.loads((GOLDEN / "crisis_heldout.json").read_text(encoding="utf-8"))
+    assert sum(c["expected"]["crisis"] for c in cases) >= 20 and sum(not c["expected"]["crisis"] for c in cases) >= 15
+    assert all(c["persona"] in PERSONAS and c["kind"] for c in cases) and len({c["id"] for c in cases}) == len(cases)
+    blob = json.dumps(cases, ensure_ascii=False)
+    assert [w for w in METHOD_PLACE if w in blob] == [] and REAL_INFO.findall(blob) == []
+    golden = {c["input"].get("text") for c in CASES}
+    assert [c["id"] for c in cases if c["input"]["text"] in golden] == []

@@ -12,10 +12,17 @@ TEXT = "지난주에 팀 세 곳을 찾아보기로 했는데 바쁘다는 핑�
 
 @pytest.fixture
 def fake(monkeypatch):
-    """답을 차례로 돌려주는 가짜 chat. calls 에 받은 messages 가 쌓인다."""
-    st = {"answers": [], "calls": []}
+    """답을 차례로 돌려주는 가짜 chat. calls 에 받은 messages 가 쌓인다.
+    팩폭 넘지 않는 선 판정(checks.LINE_JUDGE)은 judge_calls 에 따로 쌓고 judge 답(기본: 위반 없음)을 차례로 준다."""
+    st = {"answers": [], "calls": [], "judge": [{"violation": False, "line": 0, "reason": ""}], "judge_calls": []}
 
     def chat(messages, **kw):
+        if messages[0]["content"] == checks.LINE_JUDGE:
+            st["judge_calls"].append(messages)
+            a = st["judge"].pop(0) if len(st["judge"]) > 1 else st["judge"][0]
+            if isinstance(a, Exception):
+                raise a
+            return json.dumps(a, ensure_ascii=False) if isinstance(a, dict) else a
         st["calls"].append(messages)
         a = st["answers"].pop(0) if len(st["answers"]) > 1 else st["answers"][0]
         return json.dumps(a, ensure_ascii=False) if isinstance(a, dict) else a
@@ -43,8 +50,8 @@ def test_fact_bomb_hits_behavior_ok(fake):
     fake["answers"] = [{"message": "야, 팀 찾기 또 미뤘다. '바쁘다는 핑계'만 반복이고. 오늘 한 곳, 메일 하나 보내.",
                         "next_question": ""}]
     r = voice.generate(ctx())
-    assert r["message"].startswith("야,") and r["checks"] == [{"attempt": 1, "problems": []}]
-    assert len(fake["calls"]) == 1
+    assert r["message"].startswith("야,") and r["checks"] == [{"attempt": 1, "problems": [], "llm_line": "통과"}]
+    assert len(fake["calls"]) == 1 and len(fake["judge_calls"]) == 1
 
 
 @pytest.mark.parametrize("bad", [
@@ -358,3 +365,43 @@ def test_loss_cue_from_sources():
     msg = "언제까지 그러고 있을 거야? 정신 차려."
     assert _probs(msg, ["오늘 아빠 기일이었다. 하루 종일 울었다."])
     assert _probs(msg, ["보고서 또 미뤘다."]) == []                 # 상실이 없으면 미루기를 짚는 말로 본다
+
+
+# --- 팩폭: 넘지 않는 선 LLM 판정(코드 검사를 지난 뒤) ---
+
+def test_llm_line_violation_retries(fake):
+    first = {"message": "회의에서 아이디어 뺏긴 건 네가 말을 못 해서야.", "next_question": ""}
+    good = {"message": "핑계 그만. '또 미뤘다'가 오늘 글이야. 오늘 한 곳 찾아.", "next_question": ""}
+    fake["answers"] = [first, good]
+    fake["judge"] = ['{"violation": true, "line": 2, "reason": "말을 못 해서"는 남이 한 일 탓}',   # 깨진 JSON 도 읽는다
+                     {"violation": False, "line": 0, "reason": ""}]
+    r = voice.generate(ctx())
+    assert r["message"] == good["message"]
+    assert r["checks"][0]["llm_line"] == "위반" and "넘지 않는 선(LLM)" in r["checks"][0]["problems"][0]
+    assert r["checks"][1]["llm_line"] == "통과" and "고칠 것" in sys_prompt(fake, 1)
+    judged_in = fake["judge_calls"][0][1]["content"]
+    assert TEXT in judged_in and first["message"] in judged_in   # 판정에는 (가명 처리된) 오늘 글 + 한마디만
+
+
+def test_llm_line_twice_falls_back(fake):
+    fake["answers"] = [{"message": "또 미뤘네. 오늘 한 곳 찾아.", "next_question": ""}]
+    fake["judge"] = [{"violation": True, "line": 1, "reason": "x"}]
+    r = voice.generate(ctx(settings={"gentle": True}))
+    assert r["message"] == voice.SAFE[("팩폭", False)] and r["checks"][-1]["attempt"] == "기본 문장"
+
+
+@pytest.mark.parametrize("bad", [RuntimeError("network"), "판정 못 함", {"line": 0}])
+def test_llm_line_error_is_a_problem(fake, bad):
+    fake["answers"] = [{"message": "또 미뤘네. 오늘 한 곳 찾아.", "next_question": ""}]
+    fake["judge"] = [bad]
+    r = voice.generate(ctx())
+    assert r["checks"][0]["llm_line"] == "판정 실패" and r["message"] == voice.SAFE[("팩폭", False)]
+
+
+def test_llm_line_only_for_fact_bomb_and_after_rules(fake):
+    fake["answers"] = [{"message": "오늘 기록 잘 받았어요.", "next_question": ""}]
+    r = voice.generate(ctx(tone="담백하게"))
+    assert fake["judge_calls"] == [] and "llm_line" not in r["checks"][0]
+    fake["answers"] = [{"message": "넌 글렀어.", "next_question": ""}]
+    voice.generate(ctx())
+    assert fake["judge_calls"] == []                     # 코드 검사에서 걸리면 LLM 판정은 부르지 않는다

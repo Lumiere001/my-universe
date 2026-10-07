@@ -4,9 +4,13 @@ app/service/safety/crisis.py
 위기 감지와 돌봄 응답. 놓치지 않는 쪽(재현율)을 우선한다: 애매하면 위기로 본다.
 다만 "배고파 죽겠다 · 과제가 날 죽인다" 같은 관용 표현과 남 이야기 · 뉴스 · 영화 줄거리는 거른다.
 감지 낱말은 여기에만 둔다(v8.json 에 넣지 않음, v8.json crisis.trigger).
+llm=True 면 규칙이 놓친 글을 Solar 로 한 번 더 본다(가명 처리한 글만 보낸다).
 """
 
 import re
+
+from app.core import llm as _llm
+from app.service.safety.pseudonym import assert_no_real_names, mask, unmask
 
 # 강한 신호: 하나만 있어도 위기. 띄어쓰기 · 문장부호 · 숫자를 지운 글(_squash)에 건다.
 STRONG = {
@@ -59,8 +63,49 @@ def _words(s):
     return re.sub(r"[^a-z]+", " ", s.lower())
 
 
-def detect_crisis(text):
-    """글 → {"crisis": bool, "signals": [{"type", "match"}]}. 규칙만 쓴다(네트워크 없음)."""
+def detect_crisis(text, people=None, llm=False):
+    """글 → {"crisis": bool, "signals": [{"type", "match"}]}.
+    기본은 규칙만(네트워크 없음). llm=True 면 규칙이 위기가 아니라고 할 때 Solar 로 한 번 더 판정한다.
+    people(사람 목록)로 가명 처리해 보내고, 없으면 새 이름 후보만 가린다. LLM 이 실패하면 규칙 결과 + "llm_error"."""
+    r = _rules(text)
+    if r["crisis"] or not llm or not (text or "").strip():
+        return r
+    try:
+        crisis, reason, table = _ask_llm(text, people or [])
+    except Exception as err:   # 네트워크 · 형식 · 실명 검사(RealNameLeak) 모두. 원문은 남기지 않는다.
+        return {**r, "signals": r["signals"] + [{"type": "llm_error", "match": type(err).__name__}]}
+    if crisis:
+        return {"crisis": True, "signals": r["signals"] + [{"type": "llm", "match": unmask(reason, table)}]}
+    return r
+
+
+LLM_PROMPT = """너는 일기장 앱의 위기 신호 판정기다. 일기 글에서 글쓴이 자신에게 지금(요즘) 아래 가운데 하나라도 드러나는지 본다. 돌려 말하거나 완곡하게 · 은유로 쓴 것, 맞춤법 · 띄어쓰기가 틀린 것, 아주 짧은 글도 포함한다.
+1. 자살 · 자해 생각, 죽고 싶음, 살고 싶지 않음, 살 이유 · 의미가 없어 삶을 그만두고 싶음
+2. 죽음 · 사라짐 · 없어짐을 바람, 깨어나지 않거나 영원히 잠들기를 바람
+3. 자기가 남에게 짐이라는 생각과 함께 자기가 없어지는 편이 낫다는 생각
+4. 세상을 떠난 사람 곁으로 가고 싶음 · 따라가고 싶음
+5. 스스로를 해침(때리기 · 상처 내기 · 아프게 하기 등, 돌려 말한 것 포함) 또는 해치고 싶음
+6. 자기가 무가치하다는 생각과 함께 더는 버틸 수 없음 · 끝내고 싶음
+위기가 아닌 것: 과장된 관용 표현(힘들어 죽겠다 같은 말), 시험 · 일 · 행사 · 계절 · 날씨가 끝나기를 바람, 피곤해서 푹 자고 싶음, 영화 · 책 · 노래 같은 작품의 줄거리, 다른 사람 이야기(글쓴이 자신의 바람이 아님), 이미 지나간 일이고 지금은 괜찮다고 분명히 말하는 회고.
+판단이 애매하면 위기(true)로 답한다. 놓치는 것보다 지나치게 잡는 쪽이 낫다.
+JSON 하나만 답한다: {"crisis": true 또는 false, "reason": "짧은 이유(20자 안팎, 원문을 길게 옮기지 않음)"}"""
+
+
+def _ask_llm(text, people):
+    masked, table = mask(text, people)
+    msgs = [{"role": "system", "content": LLM_PROMPT}, {"role": "user", "content": masked}]
+    # 시스템 글(고정 규칙)은 빼고 본다: 한 글자 이름(별)이 규칙 글 낱말에 걸리는 오탐 때문(docs/eval-v8.md).
+    assert_no_real_names([m["content"] for m in msgs[1:]], people + [{"name": v} for v in table.values()])
+    raw = _llm.chat(msgs, temperature=0) or ""
+    # JSON 파싱 대신 낱말로 읽는다: Solar 가 reason 안에 따옴표를 그대로 넣어 JSON 이 깨지는 일이 있다.
+    c = re.search(r'"crisis"\s*:\s*(true|false)', raw)
+    if not c:
+        raise ValueError("형식")
+    r = re.search(r'"reason"\s*:\s*(.*?)\s*\}?\s*$', raw, re.S)
+    return c.group(1) == "true", (r.group(1).strip('" ') if r else "")[:80], table
+
+
+def _rules(text):
     signals, weak = [], set()
     for sent in SENTENCES.findall(text or ""):
         sq = NOT_CRISIS.sub("", _squash(sent))

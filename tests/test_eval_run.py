@@ -54,3 +54,10 @@ def test_gate_rule():
     assert g({**base, "gate": True, "category": "voice_safety", "input": {"check": "problems"}, "expected": {"flagged": True}})
     assert not g({**base, "category": "voice_safety", "input": {"check": "problems"}, "expected": {"flagged": True}})
     assert not g({**base, "ambiguous": True, "category": "safety_pseudonym", "expected": {}})
+
+
+def test_heldout_offline_rules_only(monkeypatch):
+    monkeypatch.setattr(llm, "chat", run.blocked)
+    rows, s = run.heldout(live=False)
+    assert rows and "rules+llm" not in s and s["cost"]["calls"] == 0
+    assert "| rules |" in run.heldout_md(rows, s, live=False)

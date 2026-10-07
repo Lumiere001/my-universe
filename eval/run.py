@@ -2,6 +2,7 @@
 eval/run.py — 골든셋 실행기(WS8)
 
     uv run --frozen python eval/run.py [--category X] [--live] [--set-baseline]
+    uv run --frozen python eval/run.py --heldout [--live]   # 골든셋 밖 위기 문장: 규칙만 / 규칙 + LLM 재현율 · 오탐
 
 기본: 외부 호출 없이 안전 · 위기 · 규칙 판정만(llm.chat · embed 를 막아 둔다).
 --live: 말 걸기 생성 사례에 Solar(app.core.llm)를 써서 한마디를 만들고 판정한다. 보내는 글은 가상 인물 글을
@@ -34,6 +35,7 @@ PRICE_IN, PRICE_OUT, CAP_USD = 1.0 / 1e6, 4.0 / 1e6, 1.0
 COST = {"calls": 0, "in": 0, "out": 0}
 SENDING = {"people": []}   # 지금 사례의 사람 목록(보내기 전 실명 검사용)
 MARK = ("<!-- results:start -->", "<!-- results:end -->")
+HELDOUT_MARK = ("<!-- heldout:start -->", "<!-- heldout:end -->")
 
 
 def usd():
@@ -328,13 +330,75 @@ def report_md(rows, s, live):
     return "\n".join(L)
 
 
+##################################################
+# 골든셋 밖 위기 문장(일반화 측정, 관문 아님)
+##################################################
+
+def heldout(live=False):
+    """crisis_heldout.json 을 규칙만 / 규칙 + LLM(live 일 때만)으로 잰다 → (사례별, 요약)."""
+    ps = personas()
+    rows = []
+    for c in json.loads((GOLDEN / "crisis_heldout.json").read_text(encoding="utf-8")):
+        text, people = c["input"]["text"], c["input"].get("people") or ps[c["persona"]]["people"]
+        SENDING["people"] = people
+        row = {"id": c["id"], "kind": c["kind"], "text": text, "want": c["expected"]["crisis"],
+               "rules": safety.detect_crisis(text)["crisis"]}
+        if live:
+            r = safety.detect_crisis(text, people=people, llm=True)
+            row["llm"], row["signals"] = r["crisis"], r["signals"]
+        rows.append(row)
+
+    def score(mode):
+        pos, neg = [r for r in rows if r["want"]], [r for r in rows if not r["want"]]
+        return {"recall": f"{sum(r[mode] for r in pos)}/{len(pos)}", "false_pos": f"{sum(r[mode] for r in neg)}/{len(neg)}",
+                "missed": [r["id"] for r in pos if not r[mode]], "fp": [r["id"] for r in neg if r[mode]]}
+    s = {"rules": score("rules"), "cost": {**COST, "est_usd": round(usd(), 4)}}
+    if live:
+        s["rules+llm"] = score("llm")
+        s["llm_error"] = [r["id"] for r in rows if any(x["type"] == "llm_error" for x in r["signals"])]
+    return rows, s
+
+
+def heldout_md(rows, s, live):
+    by = {r["id"]: r for r in rows}
+    L = [f"_마지막 실행: {date.today().isoformat()} · {'--live(Solar ' + config.CHAT_MODEL + ')' if live else '외부 호출 없음(규칙만)'} · "
+         f"Solar 호출 {s['cost']['calls']}번, 추정 ${s['cost']['est_usd']}_", "",
+         "| 방식 | 위기 재현율 | 위기 아님 오탐 |", "| --- | --- | --- |"]
+    for mode in ("rules", "rules+llm"):
+        if mode in s:
+            L.append(f"| {mode} | {s[mode]['recall']} | {s[mode]['false_pos']} |")
+    for mode in ("rules", "rules+llm"):
+        if mode not in s:
+            continue
+        L += ["", f"**{mode} 놓침:** " + (", ".join(f"`{i}` {by[i]['text']}" for i in s[mode]["missed"]) or "없음"),
+              "", f"**{mode} 오탐:** " + (", ".join(f"`{i}` {by[i]['text']}" for i in s[mode]["fp"]) or "없음")]
+    if s.get("llm_error"):
+        L += ["", "**LLM 오류(규칙 결과로 대신함):** " + ", ".join(s["llm_error"])]
+    return "\n".join(L)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="나의 우주 골든셋 실행기")
     ap.add_argument("--category", choices=CATEGORIES)
     ap.add_argument("--live", action="store_true", help="Solar 로 한마디를 만들어 판정(유료)")
     ap.add_argument("--set-baseline", action="store_true", help="이번 통과 사례를 기준선으로 저장")
+    ap.add_argument("--heldout", action="store_true", help="골든셋 밖 위기 문장만(규칙만 / --live 면 규칙 + LLM)")
     a = ap.parse_args(argv)
     llm.chat, llm.embed = (live_chat, blocked) if a.live else (blocked, blocked)
+    if a.heldout:
+        rows, s = heldout(a.live)
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        name = f"{date.today().isoformat()}-crisis_heldout{'-live' if a.live else ''}.json"
+        (RESULTS / name).write_text(json.dumps({"summary": s, "cases": rows}, ensure_ascii=False, indent=1), encoding="utf-8")
+        doc = DOC.read_text(encoding="utf-8") if DOC.exists() else ""
+        i, j = doc.find(HELDOUT_MARK[0]), doc.find(HELDOUT_MARK[1])
+        if i >= 0 and j > i:
+            DOC.write_text(doc[:i + len(HELDOUT_MARK[0])] + "\n" + heldout_md(rows, s, a.live) + "\n" + doc[j:], encoding="utf-8")
+        for mode in ("rules", "rules+llm"):
+            if mode in s:
+                print(f"{mode:10} 재현율 {s[mode]['recall']}  오탐 {s[mode]['false_pos']}  놓침 {s[mode]['missed']}  오탐 {s[mode]['fp']}")
+        print(f"호출 {COST['calls']} · ${s['cost']['est_usd']} → {name}")
+        return s
     cats = [a.category] if a.category else CATEGORIES
     rows = run(cats, a.live)
     bpath = RESULTS / "baseline.json"

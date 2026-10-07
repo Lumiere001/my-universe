@@ -253,6 +253,7 @@ def _sources(ctx):
 def generate(ctx):
     """ctx → {"message", "next_question", "mode": "normal" | "comfort" | "care", "checks", "situations", "next_kind"}.
     위기면 LLM을 부르지 않고 mode "care" 만 돌려준다(돌봄 문장은 safety.care_message, WS5가 잇는다).
+    팩폭이면 checks 각 시도에 "llm_line": "통과" | "위반" | "판정 실패"(넘지 않는 선 LLM 판정)이 붙는다.
     """
     sit = situations(ctx)
     if "위기" in sit:
@@ -269,7 +270,11 @@ def generate(ctx):
         probs = checks.problems(msg, nq, sources=_sources(ctx), past=ctx.get("past_messages"),
                                 comfort=comfort, aspiration=bool(ctx.get("aspiration")),
                                 gentle="오늘은 살살" in sit, tone=ctx.get("tone"))
-        log.append({"attempt": attempt, "problems": probs})
+        entry = {"attempt": attempt, "problems": probs}
+        if not probs and ctx.get("tone") == "팩폭":   # 팩폭(오늘은 살살 포함)은 코드 검사를 지나도 LLM 으로 한 번 더
+            probs = entry["problems"] = checks.llm_line_problems(msg, nq, ctx.get("text") or "")
+            entry["llm_line"] = "판정 실패" if probs and "판정 실패" in probs[0] else "위반" if probs else "통과"
+        log.append(entry)
         if not probs:
             break
         avoid = probs

@@ -1,8 +1,12 @@
 """위기 감지 · 돌봄 응답 · 사람 판정 검사. 예문은 모두 지어낸 글이다."""
+import json
+from types import SimpleNamespace
+
 import pytest
 
+from app.core import llm as core_llm
 from app.core.ontology import load
-from app.service.safety import care_message, detect_crisis, judged
+from app.service.safety import care_message, detect_crisis, judged, mask
 
 CRISIS = [
     # 직접 표현
@@ -154,3 +158,78 @@ def test_judged(text):
                                   "이번 주도 바빴죠. 내일 10분만 해 볼까요?"])
 def test_not_judged(text):
     assert not judged(text)
+
+
+# --- 2단 판정: 규칙이 놓친 글만 Solar 로(가짜 클라이언트) ---
+
+PEOPLE = [{"name": "윤서진", "nicknames": ["서진", "진이"], "relation": "언니"}, {"name": "도담", "relation": "친구"}]
+QUIET = "서진 언니한테 전화했다. 도담이랑 진이 얘기도 했는데 요즘 다 귀찮고 기운이 없다."   # 규칙은 위기 아님
+
+
+@pytest.fixture
+def client(monkeypatch):
+    """llm.client() 자리에 가짜. sent 에 실제로 나갈 요청(kwargs)이 쌓인다."""
+    st = {"sent": [], "answer": '{"crisis": true, "reason": "기운이 없고 다 귀찮음"}'}
+
+    def create(**kw):
+        st["sent"].append(kw)
+        if isinstance(st["answer"], Exception):
+            raise st["answer"]
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=st["answer"]))])
+
+    fake = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    monkeypatch.setattr(core_llm, "client", lambda: fake)
+    return st
+
+
+def test_default_is_rules_only(client):
+    assert detect_crisis(QUIET) == {"crisis": False, "signals": []}
+    assert detect_crisis(QUIET, people=PEOPLE) == {"crisis": False, "signals": []}
+    assert client["sent"] == []
+
+
+def test_rules_hit_skips_llm(client):
+    assert detect_crisis("죽고 싶다.", people=PEOPLE, llm=True)["crisis"] and client["sent"] == []
+
+
+def test_llm_second_stage(client):
+    r = detect_crisis(QUIET, people=PEOPLE, llm=True)
+    assert r == {"crisis": True, "signals": [{"type": "llm", "match": "기운이 없고 다 귀찮음"}]}
+    client["answer"] = '{"crisis": false, "reason": "피곤함"}'
+    assert detect_crisis(QUIET, people=PEOPLE, llm=True) == {"crisis": False, "signals": []}
+    assert len(client["sent"]) == 2 and client["sent"][0]["temperature"] == 0
+
+
+def test_payload_has_no_real_names(client):
+    detect_crisis(QUIET, people=PEOPLE, llm=True)
+    raw = json.dumps(client["sent"], ensure_ascii=False)
+    assert [t for p in PEOPLE for t in [p["name"], *p.get("nicknames", [])] if t in raw] == []
+    assert "전화했다" in raw                                   # 이름 말고는 그대로 보낸다
+
+
+def test_payload_hides_new_names_without_people(client):
+    detect_crisis("민혁이가 연락했는데 답을 못 했다. 기운이 없다.", llm=True)
+    assert client["sent"] and "민혁" not in json.dumps(client["sent"], ensure_ascii=False)
+
+
+def test_llm_answer_with_broken_json(client):
+    # Solar 가 reason 안에 따옴표를 그대로 넣어 JSON 이 깨진 실제 꼴
+    client["answer"] = '{"crisis": false, "reason": "기운 없다"는 피로 표현}'
+    assert detect_crisis(QUIET, people=PEOPLE, llm=True) == {"crisis": False, "signals": []}
+    client["answer"] = '{"crisis": true, "reason": "다 귀찮음"이 오래감}'
+    assert detect_crisis(QUIET, people=PEOPLE, llm=True)["signals"] == [{"type": "llm", "match": '다 귀찮음"이 오래감'}]
+
+
+def test_llm_reason_is_unmasked(client):
+    _, table = mask(QUIET, PEOPLE)
+    alias = next(k for k, v in table.items() if v == "도담")
+    client["answer"] = json.dumps({"crisis": True, "reason": f"{alias} 얘기 뒤 무기력"}, ensure_ascii=False)
+    assert detect_crisis(QUIET, people=PEOPLE, llm=True)["signals"][0]["match"] == "도담 얘기 뒤 무기력"
+
+
+@pytest.mark.parametrize("bad", [RuntimeError("network down"), "잘 모르겠어요", '{"crisis": "yes"}'])
+def test_llm_error_falls_back_to_rules(client, bad):
+    client["answer"] = bad
+    r = detect_crisis(QUIET, people=PEOPLE, llm=True)
+    assert r["crisis"] is False and [s["type"] for s in r["signals"]] == ["llm_error"]
+    assert r["signals"][0]["match"] in ("RuntimeError", "ValueError")   # 원문 · 오류 글 없이 종류 이름만

@@ -1,12 +1,14 @@
 """
 app/service/voice/checks.py
 
-말 걸기 생성 뒤 검사(코드, LLM 아님). 넘지 않는 선 · 원문 근거 · 반복 · 제안 여부를 본다.
-문제 목록을 돌려주고, 비어 있으면 통과다.
+말 걸기 생성 뒤 검사. 넘지 않는 선 · 원문 근거 · 반복 · 제안 여부를 코드로 본다.
+문제 목록을 돌려주고, 비어 있으면 통과다. 팩폭은 코드 검사를 통과한 뒤 llm_line_problems 로 한 번 더 본다.
 """
 
 import re
 from difflib import SequenceMatcher
+
+from app.core import llm
 
 from app.service.safety.judge import judged
 
@@ -122,3 +124,31 @@ def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, t
     if not msg.strip():
         out.append("빈 한마디")
     return out
+
+
+LINE_JUDGE = """너는 일기장 '나의 우주'의 팩폭 한마디 검사기다. 별지기 한마디가 아래 넘지 않는 선을 하나라도 넘었는지 엄격하게 본다.
+행동 · 핑계 · 미루기를 세게 짚는 것은 괜찮다. 사람 자체를 때리면 위반이다.
+1. 인격 · 외모 · 가족 · 정체성(나이 · 성별 · 출신 · 신앙 등)을 공격함
+2. 어쩔 수 없는 일(아픔 · 상실 · 남이 한 일)을 글쓴이 탓 · 핑계로 몰거나 슬픔을 재촉함
+3. 사람을 판정하거나(너는 ~한 사람이다) 진단함(우울증 · 장애 등)
+4. 오늘 글에 죽음 · 사라짐 · 자해 같은 위기 신호가 있는데 무시하거나 가볍게 넘김
+JSON 하나만 답한다: {"violation": true 또는 false, "line": 넘은 선 번호 또는 0, "reason": 짧게}"""
+
+
+def llm_line_problems(msg, next_q, text):
+    """팩폭 한마디의 넘지 않는 선 4개를 Solar 로 판정. 글은 이미 가명 처리된 것이어야 한다.
+    호출 · 형식 실패도 문제로 본다(다시 만들거나 기본 문장으로, 안전한 쪽)."""
+    try:
+        raw = llm.chat([{"role": "system", "content": LINE_JUDGE},
+                        {"role": "user", "content": f"[오늘 글]\n{text}\n\n[별지기 한마디]\n{msg}\n{next_q}".strip()}],
+                       temperature=0)
+        v = re.search(r'"violation"\s*:\s*(true|false)', raw or "")   # JSON 파싱 대신(reason 속 따옴표로 깨짐)
+        if not v:
+            raise ValueError("형식")
+    except Exception as err:
+        return [f"넘지 않는 선 판정 실패: {type(err).__name__}"]
+    if v.group(1) == "false":
+        return []
+    why = re.search(r'"reason"\s*:\s*(.*?)\s*\}?\s*$', raw, re.S)
+    why = why.group(1).strip('" ')[:60] if why else ""
+    return [f"넘지 않는 선(LLM): {why}"]
