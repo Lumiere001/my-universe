@@ -1,0 +1,9 @@
+[
+  {"id": "p_student", "fictional": true, "label": "대학생 도담", "age": 22, "job": "컴퓨터공학과 3학년", "habit": "반말 · ㅋㅋ · 줄임말, 과제 끝난 새벽에 길게 쓴다", "people": [{"name": "윤재", "nicknames": ["재재"], "relation": "룸메이트"}, {"name": "하늘", "nicknames": [], "relation": "동아리 친구"}]},
+  {"id": "p_office", "fictional": true, "label": "직장인 서강", "age": 31, "job": "식품 회사 마케터", "habit": "할 일 목록과 숫자로 정리, 존댓말 · 반말이 섞인다", "people": [{"name": "고민석", "nicknames": ["민석"], "relation": "팀장"}, {"name": "보람", "nicknames": [], "relation": "입사 동기"}]},
+  {"id": "p_parent", "fictional": true, "label": "육아 중인 부모 라온", "age": 38, "job": "두 아이를 키우는 시간제 회계 담당", "habit": "아이 재운 뒤 짧은 틈에 쓰고, 아이 이야기가 절반이다", "people": [{"name": "단우", "nicknames": ["단단이"], "relation": "첫째"}, {"name": "솔", "nicknames": [], "relation": "둘째"}, {"name": "지원", "nicknames": [], "relation": "배우자"}]},
+  {"id": "p_prayer", "fictional": true, "label": "신앙 일기를 쓰는 교사 은총", "age": 45, "job": "중학교 과학 교사", "habit": "'주님,'으로 시작하는 기도문으로 하루를 정리한다", "people": [{"name": "예린", "nicknames": [], "relation": "제자"}, {"name": "지원", "nicknames": [], "relation": "같은 교회 집사"}]},
+  {"id": "p_letter", "fictional": true, "label": "떠난 어머니에게 편지를 쓰는 미르", "age": 52, "job": "동네 꽃집 운영", "habit": "'엄마,'로 시작하는 편지체, 계절과 꽃 이야기", "people": [{"name": "옥분", "nicknames": ["우리 엄마"], "relation": "어머니(돌아가심)"}, {"name": "태경", "nicknames": [], "relation": "남동생"}]},
+  {"id": "p_short", "fictional": true, "label": "짧게 쓰는 프리랜서 이음", "age": 27, "job": "프리랜서 그래픽 디자이너", "habit": "한두 줄, 마침표 대신 줄바꿈, 기분은 거의 안 적는다", "people": [{"name": "별", "nicknames": [], "relation": "고양이"}, {"name": "현서", "nicknames": [], "relation": "클라이언트"}]},
+  {"id": "p_retired", "fictional": true, "label": "은퇴 후 텃밭을 가꾸는 한결", "age": 67, "job": "은퇴한 버스 기사", "habit": "날씨와 텃밭 이야기로 시작해 옛일을 떠올린다", "people": [{"name": "정순", "nicknames": ["집사람"], "relation": "아내"}, {"name": "봄", "nicknames": [], "relation": "손녀"}]}
+]
