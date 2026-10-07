@@ -118,7 +118,10 @@ def node(name, progress=None):
 
 @node("safety", "safety")
 def safety(state, ctx):
-    found = detect_crisis(f"{state.get('title', '')}\n{state['text']}")
+    # 규칙이 놓친 돌려 말하기는 Solar 가 한 번 더 본다(가명 처리 · 실명 검사는 detect_crisis 안에서)
+    with ctx.repo.session(ctx.uid) as s:
+        people = diary.people(s)
+    found = detect_crisis(f"{state.get('title', '')}\n{state['text']}", people=people, llm=True)
     return {"crisis": found["crisis"]}
 
 

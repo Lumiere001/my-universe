@@ -186,7 +186,9 @@ def test_real_name_leak_blocks_external_call(env, monkeypatch):
     with pytest.raises(Exception) as e:
         graph.run(env.repo, U1, eid)
     assert graph.error_code(e.value) == "real_name_leak"
-    assert env.fake.sent == [] and env.fake.calls["record"] == 0   # 보내기 전에 막음
+    assert env.fake.calls["record"] == 0                           # 기록 Agent 로 보내기 전에 막음
+    # 앞서 나간 위기 2차 판정은 detect_crisis 가 스스로 가명 처리한다
+    assert not [n for p in env.fake.sent for n in NAMES if n in p]
 
 
 def test_logs_have_no_raw_text(env):
