@@ -49,16 +49,17 @@ PAST_IN_PROMPT = 10
 FIRST_QUESTIONS = ["오늘 하루를 한 단어로 하면요?", "오늘 가장 오래 머문 장소는 어디예요?"]
 INVITE = "요즘 써 온 글을 보다가 궁금해졌어요. 되고 싶은 모습에 대해 잠깐 이야기해 볼까요? (넘어가도 괜찮아요)"
 
-# 두 번 실패하면 쓰는 안전한 기본 문장 (말투 · 위로만 여부별)
+# 두 번 실패하면 쓰는 안전한 기본 문장 (말투 · 위로만 여부별). 지난 한마디와 겹치지 않는 첫 문장을 쓴다(vs-34).
 SAFE = {
-    ("다정하게", False): "오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요.",
-    ("다정하게", True): "오늘 마음이 무거웠겠어요. 무거운 채로 있어도 괜찮아요. 적어 둔 것만으로 충분해요.",
-    ("담백하게", False): "오늘 기록, 잘 받았어요.",
-    ("담백하게", True): "오늘 기록 잘 받았어요. 오늘은 그대로 두어도 괜찮아요.",
-    ("고양이처럼", False): "오늘도 기록해 줘서 고맙다냥. 잘 읽었다냥.",
-    ("고양이처럼", True): "오늘은 마음이 무거웠겠다냥. 옆에 가만히 있을게냥.",
-    ("팩폭", False): "오늘 쓴 거 잘 봤어. 기록한 건 너야. 오늘은 여기까지.",
-    ("팩폭", True): "오늘은 따질 날 아니야. 쓴 걸로 충분해. 푹 쉬어.",
+    ("다정하게", False): ["오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요.", "여기까지 써 준 것만으로 반가워요. 차근차근 읽었어요."],
+    ("다정하게", True): ["오늘 마음이 무거웠겠어요. 무거운 채로 있어도 괜찮아요. 적어 둔 것만으로 충분해요.",
+                         "많이 지친 하루였겠어요. 지금은 쉬어도 괜찮아요."],
+    ("담백하게", False): ["오늘 기록, 잘 받았어요.", "적어 둔 글, 차분히 읽었어요."],
+    ("담백하게", True): ["오늘 기록 잘 받았어요. 오늘은 그대로 두어도 괜찮아요.", "적어 둔 마음, 그대로 두어도 괜찮아요."],
+    ("고양이처럼", False): ["오늘도 기록해 줘서 고맙다냥. 잘 읽었다냥.", "적어 둔 글, 꼼꼼히 봤다냥."],
+    ("고양이처럼", True): ["오늘은 마음이 무거웠겠다냥. 옆에 가만히 있을게냥.", "지친 하루였겠다냥. 같이 쉬자냥."],
+    ("팩폭", False): ["오늘 쓴 거 잘 봤어. 기록한 건 너야. 오늘은 여기까지.", "적어 둔 거 다 읽었어. 쓴 걸로 할 만큼 했어."],
+    ("팩폭", True): ["오늘은 따질 날 아니야. 쓴 걸로 충분해. 푹 쉬어.", "지금은 몰아칠 때 아니야. 그냥 쉬어."],
 }
 
 
@@ -280,7 +281,9 @@ def generate(ctx):
         avoid = probs
     else:
         tone = ctx.get("tone") if (ctx.get("tone"), comfort) in SAFE else "다정하게"
-        msg, nq = SAFE[(tone, comfort)], "" if comfort or not kind else base_question(kind, ctx)
+        opts = SAFE[(tone, comfort)]
+        msg = next((m for m in opts if not checks.repeat_problems(m, ctx.get("past_messages"))), opts[0])
+        nq = "" if comfort or not kind else base_question(kind, ctx)
         log.append({"attempt": "기본 문장", "problems": []})
     return {"message": msg, "next_question": nq, "mode": "comfort" if comfort else "normal",
             "checks": log, "situations": sit, "next_kind": kind}

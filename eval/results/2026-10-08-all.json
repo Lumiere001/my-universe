@@ -167,12 +167,10 @@
    "judge": "machine",
    "gate": false,
    "ambiguous": true,
-   "status": "fail",
-   "problems": [
-    "가려지지 않음: 도경"
-   ],
+   "status": "pass",
+   "problems": [],
    "detail": {
-    "masked": "점심에 도경 만나서 이직 얘기함."
+    "masked": "점심에 도윤 만나서 이직 얘기함."
    }
   },
   {
@@ -372,7 +370,10 @@
       "type": "사라지고 싶음",
       "match": "사라지고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -390,7 +391,10 @@
       "type": "삶을 끝내고 싶음",
       "match": "살고싶지않"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -412,7 +416,10 @@
       "type": "겹친 약한 신호",
       "match": "내가없어지면"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -430,7 +437,10 @@
       "type": "사라지고 싶음",
       "match": "저를데려가"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -448,7 +458,10 @@
       "type": "떠난 사람 곁으로",
       "match": "곁으로가고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -466,7 +479,10 @@
       "type": "직접 표현",
       "match": "죽고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -488,7 +504,10 @@
       "type": "겹친 약한 신호",
       "match": "버틸힘이없"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -506,7 +525,10 @@
       "type": "수동적 죽음 바람",
       "match": "그만눈을감고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -524,7 +546,10 @@
       "type": "수동적 죽음 바람",
       "match": "안깼으면좋"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -546,7 +571,10 @@
       "type": "삶을 끝내고 싶음",
       "match": "다끝났으면좋"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -564,7 +592,10 @@
       "type": "영어",
       "match": "want to disappear"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -582,7 +613,10 @@
       "type": "자해",
       "match": "나를해쳤"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -600,7 +634,10 @@
       "type": "직접 표현",
       "match": "죽고십"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -618,7 +655,10 @@
       "type": "삶을 끝내고 싶음",
       "match": "다끝내고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -636,7 +676,10 @@
       "type": "직접 표현",
       "match": "생을마감"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -654,7 +697,10 @@
       "type": "사라지고 싶음",
       "match": "태어나지않았으면"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": true
    }
   },
   {
@@ -667,7 +713,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -680,7 +729,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -693,7 +745,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -706,7 +761,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -719,7 +777,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -732,7 +793,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -752,7 +816,10 @@
       "type": "직접 표현",
       "match": "죽고싶"
      }
-    ]
+    ],
+    "crisis": true,
+    "rules": true,
+    "want": false
    }
   },
   {
@@ -765,7 +832,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -778,7 +848,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -791,7 +864,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -804,7 +880,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -817,7 +896,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -830,7 +912,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -843,7 +928,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -856,7 +944,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -869,7 +960,10 @@
    "status": "pass",
    "problems": [],
    "detail": {
-    "signals": []
+    "signals": [],
+    "crisis": false,
+    "rules": false,
+    "want": false
    }
   },
   {
@@ -1612,7 +1706,7 @@
       "type": "바뀜",
       "line": "점선",
       "cross_domain": false,
-      "needs_confirm": false,
+      "needs_confirm": true,
       "notes": []
      }
     ],
@@ -1688,7 +1782,7 @@
       "type": "해소",
       "line": "점선",
       "cross_domain": false,
-      "needs_confirm": false,
+      "needs_confirm": true,
       "notes": []
      }
     ],
@@ -1712,7 +1806,7 @@
       "type": "이어짐",
       "line": "점선",
       "cross_domain": false,
-      "needs_confirm": false,
+      "needs_confirm": true,
       "notes": [
        "해소→이어짐(다짐은 풀리는 것이 아니라 지켜지는 것)"
       ]
@@ -1752,7 +1846,7 @@
       "type": "어긋남",
       "line": "점선",
       "cross_domain": false,
-      "needs_confirm": false,
+      "needs_confirm": true,
       "notes": [
        "이어짐→어긋남(열린 다짐 뒤 같은 주제의 반성)"
       ]
@@ -1800,7 +1894,7 @@
       "type": "해소",
       "line": "점선",
       "cross_domain": false,
-      "needs_confirm": false,
+      "needs_confirm": true,
       "notes": [
        "이어짐→해소(열린 질문이 같은 주제의 단정으로 정리됨)"
       ]
