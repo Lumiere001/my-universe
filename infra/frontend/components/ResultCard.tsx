@@ -8,6 +8,8 @@ import { useKindName } from "@/lib/use";
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
+// 인용에 따옴표가 이미 붙어 오면 떼고 화면에서 한 번만 감싼다(“"…"” 방지)
+export const unquote = (s: string) => s.trim().replace(/^["“'‘](.*)["”'’]$/s, "$1");
 
 // 한 묶음의 피드백 버튼. 하나를 누르면 그 묶음은 닫힌다.
 export function FeedbackButtons({ label, target, targetId, values, onDone }:
@@ -96,7 +98,7 @@ export default function ResultCard({ r }: { r: EntryResult }) {
       {r.reached.map((x) => (
         <section key={x.aspiration_id + x.quote} className="card" aria-label="되고 싶은 모습에 닿은 순간">
           <span className="badge g">북극성에 닿은 순간</span>
-          <p className="quote" style={{ borderColor: "var(--gold)" }}>“{x.quote}”</p>
+          <p className="quote" style={{ borderColor: "var(--gold)" }}>“{unquote(x.quote)}”</p>
           <p style={{ margin: 0 }}>{x.message}</p>
         </section>
       ))}
@@ -123,7 +125,7 @@ export default function ResultCard({ r }: { r: EntryResult }) {
                 <span className="badge">{t.topic}</span>
               </div>
               <p style={{ margin: "6px 0 0" }}>{t.text}</p>
-              <p className="quote">“{t.quote}”</p>
+              <p className="quote">“{unquote(t.quote)}”</p>
               {t.self_change && <p className="sub" style={{ margin: 0 }}>스스로 쓴 변화: {t.self_change}</p>}
               {t.state?.type === "다짐" && (
                 <div className="stack" style={{ marginTop: 8 }}>
@@ -151,8 +153,8 @@ export default function ResultCard({ r }: { r: EntryResult }) {
                   <span className="badge">{rel.line === "실선" ? "실선 · 글에 직접 씀" : "점선 · AI 추정"}</span>
                   {rel.cross_domain && <span className="badge">다른 영역</span>}
                 </div>
-                {p && <p className={"quote" + (c ? " o" : "")}>그때 {day(p.written_at)}: “{rel.quote ?? p.text}”</p>}
-                {t && <p className={"quote" + (c ? " o" : "")}>지금: “{t.quote}”</p>}
+                {p && <p className={"quote" + (c ? " o" : "")}>그때 {day(p.written_at)}: “{unquote(rel.quote ?? p.text)}”</p>}
+                {t && <p className={"quote" + (c ? " o" : "")}>지금: “{unquote(t.quote)}”</p>}
                 <p className="sub">{rel.explanation}</p>
                 {rel.line === "점선" && rel.needs_confirm && (
                   <FeedbackButtons label="이 연결이 맞나요" target="relation" targetId={rel.id} values={["맞아요", "아니에요"]} />

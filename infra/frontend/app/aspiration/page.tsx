@@ -1,6 +1,7 @@
 "use client";
 // (마) 되고 싶은 모습: 허락을 구한 뒤 대화하듯 4단계(요즘의 나 → 되고 싶은 나 → 걸리는 것 → 그때 해 볼 것). 이력 보존.
 import { useState } from "react";
+import { unquote } from "@/components/ResultCard";
 import { declineAspiration, getAspiration, saveAspiration, type Aspiration } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
@@ -16,7 +17,7 @@ function AspirationCard({ a, title }: { a: Aspiration; title: string }) {
       {a.reached.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <b>닿은 순간</b>
-          {a.reached.map((r) => <p key={r.entry_id + r.quote} className="quote" style={{ borderColor: "var(--gold)" }}>{r.at.slice(0, 10)} · “{r.quote}”</p>)}
+          {a.reached.map((r) => <p key={r.entry_id + r.quote} className="quote" style={{ borderColor: "var(--gold)" }}>{r.at.slice(0, 10)} · “{unquote(r.quote)}”</p>)}
         </div>
       )}
     </section>
