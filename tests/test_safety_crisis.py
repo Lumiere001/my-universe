@@ -140,6 +140,16 @@ def test_care_message(tone):
     assert m == care_message()
 
 
+def test_care_message_without_resources_keeps_care_drops_details():
+    """API 결과의 care.message: 109 · 마들랜 자세한 안내는 아래 단추(care.resources)와 겹쳐 빼고, 단추를 가리키는 한 줄만."""
+    full, short = care_message(), care_message("팩폭", resources=False)
+    assert care_message(resources=True) == full and "카카오톡" in full and "문자를 보내도" in full
+    assert "카카오톡" not in short and "문자를 보내도" not in short and "365일" not in short
+    assert "안전" in short and "?" in short and "119" in short and "아래 단추" in short   # 안전 질문 · 긴급 번호는 남는다
+    assert [w for w in METHOD_PLACE if w in short] == []
+    assert short.count("\n") == full.count("\n") - 1
+
+
 def test_care_message_matches_ontology_resources():
     m = care_message()
     for r in load()["crisis"]["resources"]:

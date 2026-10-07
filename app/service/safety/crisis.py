@@ -135,6 +135,13 @@ CARE = (
 )
 
 
-def care_message(tone=None):
-    """위기면 말투와 상관없이(팩폭이어도) 평소 틀을 멈추고 이 글로 바꾼다. tone 은 일부러 쓰지 않는다."""
-    return CARE
+SHORT = "· 아래 단추로 109 · 마들랜에 바로 이어질 수 있어요(24시간)."
+
+
+def care_message(tone=None, resources=True):
+    """위기면 말투와 상관없이(팩폭이어도) 평소 틀을 멈추고 이 글로 바꾼다. tone 은 일부러 쓰지 않는다.
+    resources=False: 화면이 109 · 마들랜 단추(care.resources)를 따로 보여 줄 때. 자세한 안내 두 줄을 단추를 가리키는 한 줄로."""
+    if resources:
+        return CARE
+    lines = [x for x in CARE.split("\n") if not x.startswith("· ")]
+    return "\n".join(lines[:3] + [SHORT] + lines[3:])

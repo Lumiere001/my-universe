@@ -17,7 +17,7 @@ METHOD_PLACE = ["약을", "수면제", "번개탄", "투신", "옥상", "한강"
 
 
 def test_files_and_personas():
-    assert {p.stem for p in GOLDEN.glob("*.json")} == set(CATEGORIES) | {"personas", "crisis_heldout"}
+    assert {p.stem for p in GOLDEN.glob("*.json")} == set(CATEGORIES) | {"personas", "crisis_heldout", "pseudonym_heldout"}
     assert len(PERSONAS) >= 6 and all(p["fictional"] for p in PERSONAS.values())
     for k in ("age", "job", "habit"):
         assert len({p[k] for p in PERSONAS.values()}) == len(PERSONAS), f"인물마다 {k}가 달라야 함"
@@ -77,3 +77,14 @@ def test_crisis_heldout():
     assert [w for w in METHOD_PLACE if w in blob] == [] and REAL_INFO.findall(blob) == []
     golden = {c["input"].get("text") for c in CASES}
     assert [c["id"] for c in cases if c["input"]["text"] in golden] == []
+
+
+def test_pseudonym_heldout():
+    """골든셋 밖 이름 문장(측정용, 관문 아님): 30개+, 이름 있는 문장 · 이름처럼 보이는 낱말만 있는 문장 둘 다, 이름은 글에 있음."""
+    cases = json.loads((GOLDEN / "pseudonym_heldout.json").read_text(encoding="utf-8"))
+    assert len(cases) >= 30 and len({c["id"] for c in cases}) == len(cases)
+    assert sum(bool(c["names"]) for c in cases) >= 15 and sum(not c["names"] for c in cases) >= 15
+    assert all(n in c["text"] for c in cases for n in c["names"])
+    assert REAL_INFO.findall(json.dumps(cases, ensure_ascii=False)) == []
+    golden = {c["input"].get("text") for c in CASES}
+    assert [c["id"] for c in cases if c["text"] in golden] == []

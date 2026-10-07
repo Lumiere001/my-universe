@@ -18,7 +18,8 @@ PREFIX = ["", "백", "소", "편", "석", "탁", "봉", "견", "옥", "빈"]  # 
 SURNAME = ["한", "윤", "오", "남", "강", "임", "장", "신", "권", "유", "문", "배"]   # 성 붙은 이름의 가명 성
 
 HONOR = "선생님|형님|형|누나|오빠|언니|선배|후배|씨|쌤"
-SUFFIX = "이가|이랑|이는|이한테|이도|이를|이와|이네|이의|이에게|이처럼|이하고"   # 받침 있는 이름 뒤에 붙는 '이' + 조사
+SUFFIX = "이가|이는|이한테|이도|이를|이와|이의|이에게|이처럼|이하고"   # 받침 있는 이름 뒤에만 붙는 '이' + 조사(기간이가 ✗)
+AMBI = "이랑|이네"   # 받침 있는 보통 낱말의 조사와 꼴이 같다(기간이랑 · 일정이네) → 이름다울 때만 자동 등록
 # 호칭 · 조사 앞에 와도 이름이 아닌 말. 1차 gates.NOT_NAMES + 소속 · 장소 말.
 # ponytail: 낱말 목록이라 빠진 말은 새 이름 후보로 잡힌다(그래도 가명으로 가려 안전한 쪽).
 NOT_NAMES = {"사람", "마음", "우리", "친구", "동생", "부모", "가족", "선배", "후배", "모두", "다들", "누구",
@@ -31,7 +32,7 @@ ENDINGS = set("에의을를는한던된와과서로고면며게")   # "오후에
 WORDY = {"하늘", "봄", "별", "바다", "솔", "나래", "은하", "사랑", "보람", "슬기", "기쁨", "다솜", "한결", "소망",
          "진주", "구슬", "여름", "가을", "겨울", "노을", "새벽", "빛나", "이슬", "초롱", "마루", "누리", "송이",
          "단비", "나비", "햇살", "온유", "믿음", "샛별", "아름"}
-CAND = re.compile(rf"(?<![가-힣])([가-힣]{{2,3}})(?:(?P<h>\s?(?:{HONOR}))|(?:{SUFFIX})(?![가-힣]))")
+CAND = re.compile(rf"(?<![가-힣])([가-힣]{{2,3}})(?:(?P<h>\s?(?:{HONOR}))|(?P<a>{AMBI})(?![가-힣])|(?:{SUFFIX})(?![가-힣]))")
 # 받침 없는 이름 + 조사(지우가 · 지우는)는 "나무가 · 버스는"과 꼴이 같다. 같은 문장에 사람과 함께 쓰는 말이 있을 때만,
 # 흔한 낱말을 빼고 "이름인지 낱말인지" 물을 후보로 올린다(가명으로는 가린다, 결정 3: 확실하지 않으면 가명).
 # ponytail: 낱말 목록 · 동사 목록이라 빠진 말은 오탐(가명으로 가려짐)이 난다. 오탐이 거슬리면 COMMON 에 더한다.
@@ -43,7 +44,22 @@ COMMON = set("""아이 애기 아기 아내 여보 이모 고모 조카 부부 �
 아저씨 아줌마 할매 할배 고양이 강아지 냥이 오후 오전 어제 모레 요새 하루 과제 회의 휴가 나도 너도 저도 그녀 그대 얘기 이야기
 소리 노래 커피 버스 기차 택시 문자 전화 메시지 부탁 사과 서로 아무 그게 이게 저게 거기 여기 저기 그거 이거 저거 나머지
 차라리 혹시 제발 대리 교수 매니저 시누 그애 다시 바로 우선 그때 이때 처음 오래 자주 가끔 나중 이제 아마 정말 진짜 너무 조금
-그냥 동료 상사 가게 남자 여자 먼저 많이 카페 서류 메모 리더 파트너 크루 스터디 파티 데이트 투어 우유 두유 고구마 과자 피자 쿠키 케이크 치즈 주스 바나나 토마토""".split())
+그냥 동료 상사 가게 남자 여자 먼저 많이 카페 서류 메모 리더 파트너 크루 스터디 파티 데이트 투어 우유 두유 고구마 과자 피자 쿠키 케이크 치즈 주스 바나나 토마토 지금""".split())
+# 이름다움: 흔한 이름 글자(GIVEN) 두 개, 또는 성 + 그 두 글자. 보통 낱말에 잘 쓰는 글자(간 · 학 · 실 · 화 · 제 …)는 뺐다.
+# ponytail: 글자 목록이라 드문 이름 글자는 놓친다(그 이름은 호칭 · '이가'꼴 · 행동 낱말 조사로만 잡힘). 놓치면 GIVEN 에 더한다.
+GIVEN = set("가건겸경결규균근금길나남다단담대덕도동두라란람랑려련령로록루류륜률리린림만명무문미민범별병보봄봉비빈빛산상새샘"
+            "서석선설섭성세소솔송수숙순슬승시신아안애양언연열영예옥온완우욱웅원월위유윤율은음인재정조종주준중지진찬창채천철"
+            "청초춘충태하한해헌혁현형혜호홍환효후훈휘희흠")
+SURNAMES = set("김이박최정강조윤장임한오서신권황안송류유전홍고문양손배백허남심노하곽성차주우구민진나지엄채원천방공현함변염여"
+               "추도소석선설마길연위표명기반라왕금옥육인맹제모탁국어은편용예경봉사부")
+# 조사 없이 이름 바로 뒤에 오는 사람 행동 낱말(오늘 철수 만났다 · 영희 생일)
+ACT_NEAR = r"\s(?:만나|만났|생일|연락|전화|카톡|문자|말했|말해|얘기|이야기|답장)"
+BARE = re.compile(rf"(?<![가-힣A-Za-z])([가-힣]{{2,3}})(?={ACT_NEAR})")
+# 받침 있는 이름 + 보통 조사(수빈과 · 도현한테). 한테 · 에게는 사람에게만 쓰니 행동 낱말이 없어도 본다.
+LOOSE_B = re.compile(r"(?<![가-힣])([가-힣]{2,3})(과|하고|한테|에게|의)(?![가-힣])")
+# 영문 이름: 대문자로 시작하는 낱말 + 사람에게 붙는 조사 · 호칭, 또는 보통 조사 + 행동 낱말, 또는 바로 뒤 행동 낱말
+EN = re.compile(rf"(?<![A-Za-z])([A-Z][a-z]{{1,14}})(?![A-Za-z])(?:(?P<p>이랑|랑|한테|에게|하고|이가|이는|이도|이네|\s?(?:{HONOR}|님))"
+                rf"|(?P<g>[가는와과도를을의이은])(?![가-힣])|(?P<n>{ACT_NEAR}))?")
 
 # 조사 짝: (원래 글에 나올 수 있는 꼴, 받침 있는 말 뒤, 받침 없는 말 뒤). 이름 뒤 '이'(민준이가)도 함께 뗀다.
 JOSA = [
@@ -76,16 +92,34 @@ def _alt(words):
 # 새 이름 찾기
 ##################################################
 
+def _name_like(w):
+    if w[-1] in ENDINGS | set("가다지요해"):   # 하다가 · 고민을 · 대해: 낱말 끝(조사 · 어미)
+        return False
+    if len(w) == 3:
+        return w[0] in SURNAMES and _name_like(w[1:])
+    return len(w) == 2 and w[0] in GIVEN and w[1] in GIVEN and w not in NOT_NAMES | COMMON
+
+
+def _sentence(text, i):
+    a = max(text.rfind(c, 0, i) for c in ".!?。\n") + 1
+    b = min([j for j in (text.find(c, i) for c in ".!?。\n") if j >= 0] or [len(text)])
+    return text[a:b]
+
+
 def _candidates(text, known=()):
+    """→ {이름: 확실한가}. 확실하면 자동 등록, 아니면 물어볼 것(가명으로는 가린다)."""
+    text = text or ""
     if known:   # 이미 목록에 있는 말(곰돌이가 → 곰돌 ✗)은 지우고 찾는다
         text = re.sub(_alt(known), "·", text)
-    out = []
-    for m in CAND.finditer(text or ""):
+    out = {}
+    for m in CAND.finditer(text):
         n = m.group(1)
         if n in NOT_NAMES or n[-1] in ENDINGS or (not m.group("h") and _cls(n) == "none"):
             continue   # '이가 · 이랑'꼴은 받침 있는 이름만(서아이가 ✗)
-        if n not in out:
-            out.append(n)
+        sure = _name_like(n) or not (m.group("h") or m.group("a"))
+        if not sure and m.group("a") and n not in WORDY and not PERSON_ACT.search(_sentence(text, m.start())):
+            continue   # 기간이랑 · 일정이네: 이름답지 않고 사람 행동 낱말도 없으면 낱말
+        out[n] = out.get(n, False) or sure
     return out
 
 
@@ -93,15 +127,31 @@ def _loose(text, known=()):
     if known:
         text = re.sub(_alt(known), "·", text)
     out = []
+
+    def add(n):
+        if n not in out and n not in NOT_NAMES | COMMON:
+            out.append(n)
+
     for sent in re.split(r"[.!?。\n]", text or ""):
-        if not PERSON_ACT.search(sent):
-            continue
+        act = bool(PERSON_ACT.search(sent))
         for m in LOOSE.finditer(sent):
             n = m.group(1)
             if n.endswith("이") and _cls(n[:-1]) != "none":
                 continue   # 받침 있는 이름 + '이'(서윤이가)는 CAND 가 맡는다
-            if _cls(n) == "none" and n not in NOT_NAMES | COMMON and n[-1] not in ENDINGS | set("다요죠") and n not in out:
-                out.append(n)
+            if not (act or (m.group(0)[len(n):] in ("한테", "에게") and _name_like(n))):
+                continue   # 행동 낱말이 없으면 사람에게만 쓰는 조사(한테 · 에게) + 이름다운 말만
+            if _cls(n) == "none" and n[-1] not in ENDINGS | set("다요죠") and (len(n) == 2 or _name_like(n)):
+                add(n)
+        for m in LOOSE_B.finditer(sent):
+            n, j = m.groups()
+            if _cls(n) != "none" and _name_like(n) and (act or j in ("한테", "에게")):
+                add(n)
+        for m in BARE.finditer(sent):
+            if _name_like(m.group(1)) and not PERSON_ACT.search(m.group(1)):
+                add(m.group(1))
+        for m in EN.finditer(sent):
+            if m.group("p") or m.group("n") or (m.group("g") and act):
+                add(m.group(1))
     return out
 
 
@@ -112,11 +162,11 @@ def find_new_names(text, people):
     names = [p.get("name") for p in people]
     ask = [{"name": n, "reason": "동명이인"} for n in sorted({n for n in names if n and names.count(n) > 1 and n in text})]
     auto = []
-    for c in _candidates(text, known):
+    for c, sure in _candidates(text, known).items():
         base = c[:-1] if c.endswith("이") else c
         if c in known:
             continue
-        if c in WORDY:
+        if c in WORDY or not sure:
             ask.append({"name": c, "reason": "이름인지 낱말인지"})
         elif any(base in k or k in c for k in known):
             ask.append({"name": c, "reason": "별명"})

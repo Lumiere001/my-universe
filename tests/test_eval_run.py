@@ -61,3 +61,28 @@ def test_heldout_offline_rules_only(monkeypatch):
     rows, s = run.heldout(live=False)
     assert rows and "rules+llm" not in s and s["cost"]["calls"] == 0
     assert "| rules |" in run.heldout_md(rows, s, live=False)
+
+
+def test_crisis_llm_mode_records_both(monkeypatch):
+    """--crisis-llm: 서비스처럼 detect_crisis(llm=True)로 판정하고, 규칙만 결과도 같이 센다(가짜 판정기, 외부 호출 없음)."""
+    calls = []
+
+    def fake(text, people=None, llm=False):
+        calls.append(llm)
+        return {"crisis": llm, "signals": []}
+
+    monkeypatch.setattr(run.safety, "detect_crisis", fake)
+    monkeypatch.setitem(run.MODE, "crisis_llm", True)
+    rows = run.run(["crisis"], live=True)
+    m = run.crisis_modes(rows)
+    pos = sum(c["expected"]["crisis"] for c in run.load_cases(["crisis"]) if not c["ambiguous"])
+    assert m["rules"]["recall"] == f"0/{pos}" and m["rules+llm"]["recall"] == f"{pos}/{pos}"
+    assert True in calls and False in calls
+    s = {**run.summarize(rows), "crisis_modes": m}
+    assert "규칙 + LLM 재현율" in run.report_md(rows, s, live=True)
+
+
+def test_pseudonym_heldout_offline(monkeypatch):
+    monkeypatch.setattr(llm, "chat", run.blocked)
+    rows, s = run.pseudonym_heldout()
+    assert len(rows) >= 30 and s["recall"].endswith("/22") and "놓침" in run.pseudonym_heldout_md(rows, s)

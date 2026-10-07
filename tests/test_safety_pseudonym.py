@@ -228,3 +228,35 @@ def test_loose_new_name_with_particle_is_hidden():
                                   "나무가 예뻐서 엄마한테 보냈다. 엄마가 웃었다."])
 def test_loose_skips_common_words(text):
     assert find_new_names(text, PEOPLE) == {"auto": [], "ask": []}
+
+
+##################################################
+# 등록 안 된 이름(M1): 과 · 영문 · 조사 없이 행동 낱말 앞. 골든셋 · heldout 과 다른 가상 문장
+##################################################
+
+@pytest.mark.parametrize("text,name", [
+    ("지훈과 저녁에 통화하다가 웃었다.", "지훈"),
+    ("지난주 서준 만났다.", "서준"),
+    ("한유진 생일이라 꽃을 샀다.", "한유진"),
+    ("수아 카톡이 늦게 왔다.", "수아"),
+    ("Lucas랑 점심 먹었다.", "Lucas"),
+    ("Olivia 생일 선물을 샀다.", "Olivia"),
+    ("Noah를 만나서 얘기했다.", "Noah"),
+    ("은호한테 우산을 빌렸다.", "은호"),
+])
+def test_unregistered_names_are_hidden(text, name):
+    masked, table = mask(text, [])
+    assert name not in masked and unmask(masked, table) == text
+    assert name in [a["name"] for a in find_new_names(text, [])["ask"]]
+
+
+@pytest.mark.parametrize("text", ["시험 기간이랑 겹쳐서 힘들었다.", "공원이랑 시장을 걸었다.", "Youtube에서 강의를 봤다.",
+                                  "그 문제에 대해 이야기했다.", "숙제 하다가 연락했다.", "버스 정류장 근처 카페에 갔다."])
+def test_common_words_are_not_new_names(text):
+    assert find_new_names(text, []) == {"auto": [], "ask": []}
+
+
+def test_ambiguous_particle_registers_only_name_like_words():
+    assert find_new_names("준혁이랑 밥 먹었다.", [])["auto"] == ["준혁"]
+    r = find_new_names("학원이랑 연락이 안 됐다.", [])   # 이름답지 않은 말 + 행동 낱말 → 묻기만(자동 등록 ✗)
+    assert r["auto"] == [] and [a["name"] for a in r["ask"]] == ["학원"]

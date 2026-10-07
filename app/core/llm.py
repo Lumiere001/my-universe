@@ -10,14 +10,18 @@ guard 밖(도구 · 평가 스크립트의 가상 인물 데이터)은 검사 �
 """
 
 import contextvars
+import re
 from contextlib import contextmanager
 
 from openai import OpenAI
 
 from app.core import config, logger
-from app.service.safety import assert_no_real_names
+from app.service.safety.pseudonym import _strings, assert_no_real_names
 
 _client = None
+# 코드가 쓴 고정 라벨(Studio 입력 머리말 '기존 작은 별' · 판정 라벨 '[별지기 한마디]'). 한 글자 이름(별)이 여기에 걸리는
+# 오탐을 막으려고 검사 전에 뺀다. 사용자 글은 mask 가 그 이름을 이미 모두 가명으로 바꿨으니 남은 라벨 속 글자는 코드가 쓴 것이다.
+FIXED = re.compile(r"별지기|작은 별")
 _guard = contextvars.ContextVar("llm_guard", default=None)
 
 
@@ -37,7 +41,7 @@ class Meter:
     def check(self, payload, what):
         """보내기 직전 검사. 실명이 있으면 RealNameLeak(기록에는 이름 없이 남김)."""
         try:
-            assert_no_real_names(payload, self.people)
+            assert_no_real_names([FIXED.sub("·", x) for x in _strings(payload)], self.people)
         except Exception:
             logger.log("guard", what=what, ok=False, code="real_name_leak")
             raise
@@ -66,7 +70,7 @@ def current():
 def chat(messages, model=None, **kw):
     """messages: [{"role": ..., "content": ...}] → 답 글."""
     m = _guard.get()
-    if m:   # 시스템 프롬프트는 v8.json 규칙 글이라 사용자 입력(user) 부분만 본다
+    if m:   # 시스템 프롬프트는 코드가 쓴 v8.json 규칙 글이라 사용자 · 도구 입력(user · assistant · tool)만 본다
         m.check([x["content"] for x in messages if x.get("role") != "system"], "solar_chat")
     r = client().chat.completions.create(model=model or config.CHAT_MODEL, messages=messages, **kw)
     if m:
