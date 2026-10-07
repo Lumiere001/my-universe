@@ -51,4 +51,6 @@ def test_gate_rule():
     assert not g({**base, "category": "fact_bomb", "input": {"check": "line"}, "expected": {"flagged": False}})
     assert g({**base, "category": "fact_bomb", "input": {"check": "care"}, "expected": {"mode": "care"}})
     assert not g({**base, "category": "relations", "expected": {}})
+    assert g({**base, "gate": True, "category": "voice_safety", "input": {"check": "problems"}, "expected": {"flagged": True}})
+    assert not g({**base, "category": "voice_safety", "input": {"check": "problems"}, "expected": {"flagged": True}})
     assert not g({**base, "ambiguous": True, "category": "safety_pseudonym", "expected": {}})
