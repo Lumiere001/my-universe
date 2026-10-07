@@ -16,7 +16,7 @@ fi
 
 # 2) ChromaDB 컨테이너(이름 my-universe-chroma). 있으면 켜고, 없으면 만든다.
 docker start my-universe-chroma >/dev/null 2>&1 \
-  || docker run -d --name my-universe-chroma -p 8000:8000 -v my-universe-chroma:/data chromadb/chroma:1.5.9 >/dev/null
+  || docker run -d --name my-universe-chroma -p 127.0.0.1:8000:8000 -v my-universe-chroma:/data chromadb/chroma:1.5.9 >/dev/null
 echo "ChromaDB   http://localhost:8000"
 
 # 3) 백엔드(FastAPI). 출력은 logs/ (원문을 남기지 않는 것은 앱 규칙).

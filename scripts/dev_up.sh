@@ -10,7 +10,7 @@ docker info >/dev/null 2>&1 || { echo "Docker 가 꺼져 있어요: open -a Dock
 echo "1/5 로컬 Supabase"
 supabase start >/dev/null 2>&1 || supabase start 2>&1 | grep -iv "key\|secret\|jwt" | tail -5
 echo "2/5 ChromaDB(8000)"
-docker start my-universe-chroma >/dev/null 2>&1 || docker run -d --name my-universe-chroma -p 8000:8000 chromadb/chroma >/dev/null
+docker start my-universe-chroma >/dev/null 2>&1 || docker run -d --name my-universe-chroma -p 127.0.0.1:8000:8000 -v my-universe-chroma:/data chromadb/chroma:1.5.9 >/dev/null
 echo "3/5 .env.local"
 uv sync --frozen -q
 uv run --frozen python -m app.core.seed env
