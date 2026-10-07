@@ -1,0 +1,336 @@
+{
+ "summary": {
+  "rules": {
+   "recall": "2/25",
+   "false_pos": "0/17",
+   "missed": [
+    "ho-01",
+    "ho-03",
+    "ho-04",
+    "ho-05",
+    "ho-06",
+    "ho-07",
+    "ho-09",
+    "ho-10",
+    "ho-11",
+    "ho-12",
+    "ho-13",
+    "ho-14",
+    "ho-15",
+    "ho-16",
+    "ho-17",
+    "ho-18",
+    "ho-19",
+    "ho-20",
+    "ho-21",
+    "ho-22",
+    "ho-23",
+    "ho-24",
+    "ho-25"
+   ],
+   "fp": []
+  },
+  "cost": {
+   "calls": 0,
+   "in": 0,
+   "out": 0,
+   "est_usd": 0.0
+  }
+ },
+ "cases": [
+  {
+   "id": "ho-01",
+   "kind": "사라짐",
+   "text": "요즘은 그냥 사라져 버리고 싶다는 생각만 든다",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-02",
+   "kind": "짧은 글 · 반말",
+   "text": "이제 그만 살고 싶어",
+   "want": true,
+   "rules": true
+  },
+  {
+   "id": "ho-03",
+   "kind": "돌려 말하기",
+   "text": "다 놓아 버리고 영영 잠들고 싶다",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-04",
+   "kind": "짐",
+   "text": "내가 없어지면 다들 편해지겠지",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-05",
+   "kind": "따라감 · 존댓말",
+   "text": "할머니 계신 데로 따라가고 싶어요",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-06",
+   "kind": "자해",
+   "text": "오늘도 스스로를 아프게 했다",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-07",
+   "kind": "무가치 + 끝",
+   "text": "살아서 뭐하나 싶다",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-08",
+   "kind": "무가치 + 끝",
+   "text": "더는 버틸 자신이 없다 끝내고 싶다",
+   "want": true,
+   "rules": true
+  },
+  {
+   "id": "ho-09",
+   "kind": "짐 · 이름 가명",
+   "text": "단우랑 솔이는 나 없이도 잘 클 거야. 괜히 붙어 있는 짐 같다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-10",
+   "kind": "사라짐",
+   "text": "아무도 모르게 조용히 없어져 버렸으면.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-11",
+   "kind": "돌려 말하기",
+   "text": "눈 감으면 그대로 다 멈춰 버렸으면 좋겠다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-12",
+   "kind": "따라감 · 이름 가명",
+   "text": "우리 엄마 있는 데로 나도 가고 싶다. 여기 더 있을 이유가 없어.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-13",
+   "kind": "자해",
+   "text": "나한테 벌주듯이 또 몸을 상하게 했다. 그래야 좀 숨이 쉬어진다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-14",
+   "kind": "무가치 + 끝",
+   "text": "난 아무 쓸모도 없고, 이렇게 계속 사는 게 무슨 소용인가 싶다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-15",
+   "kind": "돌려 말하기",
+   "text": "이번 생은 여기까지만 하고 싶다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-16",
+   "kind": "돌려 말하기",
+   "text": "내일이 오는 게 무섭다. 차라리 오늘로 다 멈췄으면.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-17",
+   "kind": "띄어쓰기 틀림",
+   "text": "그냥다없어져버리고싶다",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-18",
+   "kind": "돌려 말하기 · 존댓말",
+   "text": "솔직히 요즘은 숨 쉬는 것도 지쳐서 그만 쉬고 싶어요. 영원히요.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-19",
+   "kind": "짧은 글 · 반말",
+   "text": "나 그냥 없어질래",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-20",
+   "kind": "짧은 글",
+   "text": "끝내고 싶다. 전부.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-21",
+   "kind": "사라짐",
+   "text": "아무도 나 안 찾았으면. 그대로 사라지게.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-22",
+   "kind": "따라감 · 존댓말",
+   "text": "할아버지, 저도 데리러 와 주시면 안 돼요?",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-23",
+   "kind": "무가치 + 끝",
+   "text": "이렇게 살 바엔 안 사는 게 낫지",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-24",
+   "kind": "따라감 · 기도",
+   "text": "주님, 이제 저를 그만 거두어 주세요.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "ho-25",
+   "kind": "짐 · 사라짐",
+   "text": "나 하나 사라져도 세상은 멀쩡히 돌아가겠지. 그게 낫겠다.",
+   "want": true,
+   "rules": false
+  },
+  {
+   "id": "hn-01",
+   "kind": "시험 · 잠",
+   "text": "시험 끝나면 푹 잠들고 싶다",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-02",
+   "kind": "관용 표현",
+   "text": "배고파서 쓰러질 것 같다",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-03",
+   "kind": "작품",
+   "text": "그 영화 결말에서 주인공이 죽는다",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-04",
+   "kind": "관용 표현",
+   "text": "웃겨서 죽는 줄",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-05",
+   "kind": "일",
+   "text": "이 일이 빨리 끝났으면 좋겠다",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-06",
+   "kind": "남 이야기",
+   "text": "친구 할머니가 돌아가셨다",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-07",
+   "kind": "날씨",
+   "text": "이번 장마 언제 끝나냐. 비 좀 그만 왔으면.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-08",
+   "kind": "잠",
+   "text": "주말엔 알람 다 끄고 하루 종일 자고 싶다 ㅋㅋ",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-09",
+   "kind": "분명한 과거 극복담",
+   "text": "몇 해 전엔 정말 다 그만두고 싶을 만큼 힘들었는데, 지금은 상담도 받고 많이 괜찮아졌다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-10",
+   "kind": "작품",
+   "text": "소설 속 주인공은 끝내 아무 말 없이 마을을 떠나 사라진다. 여운이 길다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-11",
+   "kind": "남 이야기",
+   "text": "태경이가 요즘 힘들다고 해서 밤새 같이 얘기했다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-12",
+   "kind": "일 · 관용 표현",
+   "text": "민석 팀장님 잔소리에 귀가 닳겠다. 진짜 도망가고 싶다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-13",
+   "kind": "날씨",
+   "text": "이 더위 빨리 끝났으면 좋겠다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-14",
+   "kind": "잠",
+   "text": "애들 재우고 침대에 누우니 그대로 녹아 버릴 것 같다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-15",
+   "kind": "휴가",
+   "text": "일 다 내려놓고 한 달만 조용한 섬에 가서 쉬고 싶다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-16",
+   "kind": "상실(위기 아님)",
+   "text": "엄마 기일이라 꽃을 들고 다녀왔다. 보고 싶다.",
+   "want": false,
+   "rules": false
+  },
+  {
+   "id": "hn-17",
+   "kind": "게임",
+   "text": "게임에서 또 져서 현타 온다. 오늘은 그만해야겠다.",
+   "want": false,
+   "rules": false
+  }
+ ]
+}
