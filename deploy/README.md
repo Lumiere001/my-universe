@@ -57,6 +57,10 @@ docker compose -p v8check down -v --rmi local
 
 로컬 개발(Docker 없이 코드 직접): `scripts/start.sh`(Supabase 로컬 스택 · `my-universe-chroma` 컨테이너 · 백엔드 8001 `--reload` · 화면 3000) / `scripts/stop.sh`.
 
+**로컬 포트 노출(보안 검토 M10)**: compose 의 세 포트는 `127.0.0.1`에만 묶었다(같은 와이파이의 다른 기기에서 열 수 없음). 한계: 로컬 Supabase 스택(54321 API · 54322 DB · 54323 Studio …)은 Supabase CLI(v2.75)에 바인드 주소 설정이 없어 모든 인터페이스에 열리고, DB 비밀번호는 공개된 기본값이다. `scripts/dev_up.sh`의 `my-universe-chroma`도 `-p 8000:8000`이다(이 브랜치 밖 파일). 그래서 **실제 일기는 로컬 스택에 넣지 않는다**(가상 인물 데이터만). 학교 · 카페 와이파이에서는 `supabase stop`으로 꺼 두거나 macOS 방화벽(설정 → 네트워크 → 방화벽)을 켠다.
+
+**DB 권한(보안 검토 H1)**: 마이그레이션 `20261009000000_v8_security.sql`이 anon · authenticated 의 표 · 시퀀스 · 함수 권한을 모두 거두고(앞으로 만들 표도 기본 권한 없음), 백엔드는 PostgREST 가 모르는 역할 `app_user`로 `set local role` 한다. 화면은 Supabase 를 로그인에만 쓰므로 영향이 없다. 로컬 스택은 `supabase migration up --local`, 클라우드는 `supabase db push`로 같이 적용된다. 새 표를 만들면 `app_user`용 RLS 정책(`own_app`)도 같이 만든다.
+
 ## 4. 운영 규칙
 
 ### 원문 없는 로그
@@ -97,8 +101,10 @@ docker compose -p v8check down -v --rmi local
 | `DIARY_ENC_KEY` | 일기 암호화 키(32바이트 base64, MORNING ⑤의 명령으로 만듦) |
 | `CHROMA_API_KEY`, `CHROMA_TENANT`, `CHROMA_DATABASE` | Chroma Cloud(이 이름은 Chroma `CloudClient`가 그대로 읽는 이름) |
 | `FRONTEND_ORIGIN` | 화면 주소 `https://<화면>.vercel.app` (CORS) |
-| `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD` | 넣지 않으면 `10` · `5` (§4) |
-| 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `SUPABASE_SERVICE_ROLE_KEY` · `DEV_TEST_PASSWORD`(로컬 시험 전용) |
+| `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD`, `RESUME_LIMIT` | 넣지 않으면 `10` · `5` · `3` (§4) |
+| `ALLOWED_EMAILS` | 쓸 수 있는 구글 계정 이메일(쉼표 목록, 동규 · 현호). 목록 밖은 403 `not_allowed` |
+| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키. 백엔드에만, 화면에는 넣지 않음 |
+| 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `API_DOCS`(없으면 `/docs` 꺼짐), `DEV_TEST_PASSWORD`(로컬 시험 전용) |
 
 화면(`my-universe`): `NEXT_PUBLIC_API_BASE`(백엔드 주소), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_DEV_LOGIN=0`, `NEXT_PUBLIC_MOCK=0` (`infra/frontend/.env.example`과 같음).
 

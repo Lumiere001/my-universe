@@ -77,7 +77,7 @@ def entry_result(s, eid):
     reached = [{"aspiration_id": x["aspiration_id"], **diary.unseal(s, "aspiration_reached", x["id"], x["enc"])}
                for x in s.rows("aspiration_reached", entry_id=eid)]
     m = s.rows("messages", entry_id=eid)
-    msg = diary.unseal(s, "messages", m[0]["id"], m[0]["enc"]) if m else {}
+    msg = diary.message(s, m[0]) if m else {}
     qs = [{"id": q["id"], "name": q["name"], "question": QUESTION[q["reason"]].format(n=q["name"]), "options": OPTIONS[q["reason"]]}
           for q in diary.questions(s, entry_id=eid) if not q["answer"]]
     return {**base,
@@ -88,7 +88,7 @@ def entry_result(s, eid):
             "past": past,
             "reached": [{"aspiration_id": r["aspiration_id"], "quote": r.get("quote", ""), "message": r.get("note", "")}
                         for r in reached],
-            "message": {"text": msg.get("text", ""), "tone": m[0]["tone"], "mode": m[0]["mode"]} if m else None,
+            "message": {"text": msg.get("text", ""), "tone": m[0]["tone"], "mode": msg["mode"]} if m else None,
             "next_question": {"kind": NEXT_KIND.get(m[0]["next_kind"], "free"), "text": msg.get("next_question", "")} if m else None,
             "people_questions": qs}
 
@@ -103,7 +103,7 @@ def entry_list(s, limit=20, before=None):
 
 
 def universe(s):
-    entries = {e["id"]: e for e in diary.entries(s, status="done", crisis=False)}
+    entries = {e["id"]: e for e in diary.entries(s, status="done") if not e["crisis"]}
     suns = diary.suns(s)
     sun_name = {x["id"]: x["name"] for x in suns}
     stars = diary.stars(s)
@@ -203,7 +203,7 @@ def aspiration_state(s):
 
 def stats(s):
     entries = diary.entries(s)
-    fb = Counter(r["value"] for r in s.rows("feedback"))
+    fb = diary.feedback_counts(s)
     yes, no = fb.get("맞아요", 0), fb.get("아니에요", 0)
     return {"entries": len(entries), "entries_done": sum(e["status"] == "done" for e in entries),
             "days_written": len({diary.local_day(e["written_at"]) for e in entries}),

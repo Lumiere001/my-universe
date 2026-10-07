@@ -27,7 +27,8 @@ class FakeUpstage:
     def __init__(self):
         self.sent, self.store, self.calls = [], {}, {"record": 0, "observe": 0, "chat": 0, "embed": 0}
         self.fail_observe = 0
-        self.files = _o(create=self._file)
+        self.deleted = []
+        self.files = _o(create=self._file, delete=self.deleted.append)
         self.responses = _o(create=self._run, retrieve=None)
         self.chat = _o(completions=_o(create=self._chat))
         self.embeddings = _o(create=self._embed)
@@ -206,3 +207,36 @@ def test_other_user_cannot_read(env):
     e1, _, _ = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
     with env.repo.session("22222222-2222-2222-2222-222222222222") as s:
         assert views.entry_result(s, e1) is None and diary.people(s) == []
+
+
+def test_studio_files_deleted_after_success_and_failure(env):
+    env.fake.fail_observe = 2
+    eid = diary.new_id("e")
+    with env.repo.session(U1) as s:
+        diary.create_entry(s, eid, diary.parse_dt("2026-10-01T22:00:00+09:00"), None, *DAY1)
+    with pytest.raises(studio.StudioError):
+        graph.run(env.repo, U1, eid)
+    graph.run(env.repo, U1, eid)
+    assert env.fake.store and sorted(env.fake.deleted) == sorted(env.fake.store)   # 올린 파일 = 지운 파일(실패한 실행 포함)
+
+
+def test_studio_file_delete_failure_only_logged(env, monkeypatch):
+    def boom(fid):
+        raise RuntimeError("x")
+    monkeypatch.setattr(env.fake.files, "delete", boom)
+    _, steps, r = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    assert r["status"] == "done"
+    text = "".join(p.read_text() for p in env.logs.glob("agent_flow_*.log"))
+    assert '"what": "studio_file_delete"' in text and '"code": "RuntimeError"' in text
+
+
+def test_mood_marks_only_inside_enc(env):
+    _, _, r = write(env, U1, *CRISIS, "2026-10-02T23:30:00+09:00")
+    assert r["crisis"] is True and r["message"]["mode"] == "care"
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    t = env.repo.store.tables
+    assert all("crisis" not in e for e in t["entries"]) and all("mode" not in m for m in t["messages"])
+    assert all(set(r["meta"]) <= {"checks"} and isinstance(r["meta"].get("checks", 0), int) for r in t["runs"])
+    with env.repo.session(U1) as s:
+        assert [e["crisis"] for e in diary.entries(s)].count(True) == 1
+        assert {views.entry_result(s, e["id"])["message"]["mode"] for e in diary.entries(s)} == {"care", "normal"}

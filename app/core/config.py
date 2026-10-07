@@ -48,6 +48,9 @@ STUDIO_TIMEOUT_S = _int("STUDIO_TIMEOUT_S", 180)
 # Supabase(로그인 · 관계형 DB). 백엔드는 DATABASE_URL 로 붙고 요청마다 그 사용자로 RLS 를 건다.
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")   # 계정 지우기(DELETE /me)에서만 쓴다
+# 쉼표 목록. 있으면 목록 밖 계정은 403 not_allowed(팀원 전용). 없으면 로그인한 누구나.
+ALLOWED_EMAILS = {e.strip().lower() for e in os.getenv("ALLOWED_EMAILS", "").split(",") if e.strip()}
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 DIARY_ENC_KEY = os.getenv("DIARY_ENC_KEY", "")      # base64 32바이트. 사용자별 키는 HKDF(이 값, user_id)
 
@@ -63,12 +66,15 @@ CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "thoughts")
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
 LOG_TO_FILE = os.getenv("LOG_TO_FILE", "0") == "1"     # 로컬 · Docker 는 1(logs/agent_flow_YYYYMMDD.log), Vercel 은 0(표준 출력)
 LOG_DIR = Path(os.getenv("LOG_DIR") or BASE_DIR / "logs")
+API_DOCS = os.getenv("API_DOCS", "0") == "1"           # /docs · /openapi.json. 로컬만 1(배포는 끔)
 
 # 운영 한도(연구 근거 아님, 크레딧을 지키는 값)
 MAX_TEXT_CHARS = _int("MAX_TEXT_CHARS", 8000)
 MAX_TITLE_CHARS = _int("MAX_TITLE_CHARS", 120)
 DAILY_ENTRY_LIMIT = _int("DAILY_ENTRY_LIMIT", 10)          # 사용자별 하루 글 수
 MONTHLY_COST_CAP_USD = _float("MONTHLY_COST_CAP_USD", 5.0)  # 사용자별 이번 달 추정 비용 상한
+RESUME_LIMIT = _int("RESUME_LIMIT", 3)                     # 기록 하나당 '이어서 하기' 횟수
+RUN_LOCK_S = _int("RUN_LOCK_S", 600)                       # 실행 잠금(노드가 끝날 때마다 늘림). 서버가 죽으면 이만큼 뒤 '멈춤'
 TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
 
 # 비용 추정(요금표 기준 어림값, 크게 잡음)

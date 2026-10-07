@@ -11,7 +11,7 @@ import re
 from functools import lru_cache
 
 from app.agents import studio
-from app.core import config, llm
+from app.core import config, llm, logger
 from app.core.ontology import load
 from app.repository import diary
 from app.service import studio_format as sf
@@ -100,7 +100,8 @@ def sun_vectors():
     try:
         alias = json.loads((ops / f"domain_aliases_{model}.json").read_text(encoding="utf-8"))
         center = json.loads((ops / f"topic_center_{model}.json").read_text(encoding="utf-8"))
-    except FileNotFoundError:
+    except FileNotFoundError:   # 해를 못 정한 주제가 모두 '삶의 성취'로 간다 → 시작할 때 경고(main.py)
+        logger.log("error", what="sun_vectors", code="sun_vectors_missing")
         return {}, None
     vecs = {d["name"]: [alias[w] for w in [d["name"], *d["keywords"]] if w in alias] for d in load()["domains"]}
     return {k: v for k, v in vecs.items() if v}, center

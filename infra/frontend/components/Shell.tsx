@@ -1,9 +1,10 @@
 "use client";
 // 위 막대(휴대폰은 아래 막대) + 로그인 문. 가짜 데이터 모드에서는 로그인을 건너뛴다.
+// 초대 목록(백엔드 ALLOWED_EMAILS) 밖 계정이면 403 not_allowed → 안내와 로그아웃만 보인다.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DEV_LOGIN, MOCK, supabase } from "@/lib/api";
+import { ApiError, DEV_LOGIN, getMe, MOCK, supabase } from "@/lib/api";
 
 const NAV = [
   ["/", "쓰기"], ["/universe", "우주"], ["/history", "지난 기록"], ["/people", "사람"], ["/aspiration", "되고 싶은 나"], ["/settings", "설정"],
@@ -11,15 +12,18 @@ const NAV = [
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const [state, setState] = useState<"loading" | "in" | "out">(MOCK ? "in" : "loading");
+  const [state, setState] = useState<"loading" | "in" | "out" | "not_allowed">(MOCK ? "in" : "loading");
   // 화면을 옮기면 맨 위부터(위 막대에 가려 시작하지 않게)
   useEffect(() => { window.scrollTo(0, 0); }, [path]);
 
   useEffect(() => {
     const sb = supabase();
     if (MOCK || !sb) { if (!MOCK) setState("out"); return; }
-    sb.auth.getSession().then(({ data }) => setState(data.session ? "in" : "out"));
-    const { data } = sb.auth.onAuthStateChange((_e, s) => setState(s ? "in" : "out"));
+    const signedIn = () => getMe().then(() => setState("in"),
+      (e) => setState(e instanceof ApiError && e.code === "not_allowed" ? "not_allowed" : "in"));
+    sb.auth.getSession().then(({ data }) => (data.session ? signedIn() : setState("out")));
+    // 콜백 안에서 supabase 를 다시 부르면 멈출 수 있어(supabase-js 안내) 한 박자 뒤에 /me 를 본다
+    const { data } = sb.auth.onAuthStateChange((_e, s) => { if (s) setTimeout(signedIn, 0); else setState("out"); });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -35,7 +39,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      {state === "in" ? children : state === "out" ? <Login /> : <main><p className="sub">불러오는 중…</p></main>}
+      {state === "in" ? children : state === "out" ? <Login /> : state === "not_allowed" ? (
+        <main><div className="card stack" role="alert">
+          <h1>초대된 사람만 쓸 수 있어요</h1>
+          <p className="sub">이 계정은 아직 초대 목록에 없어요. 운영자에게 알려 주세요.</p>
+          <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>
+        </div></main>
+      ) : <main><p className="sub">불러오는 중…</p></main>}
     </>
   );
 }

@@ -2,12 +2,12 @@
 app/repository/tables.py
 
 표 하나하나에 대한 아주 작은 읽기 · 쓰기. 모든 호출에 그 사용자의 user_id 가 붙는다.
-- PgSession: Supabase Postgres. 연결 하나 = 트랜잭션 하나, 시작할 때 `authenticated` 역할 + 그 사용자의 JWT claim 을 걸어
-  RLS(user_id = auth.uid())가 백엔드 쿼리에도 걸린다(코드가 user_id 를 빠뜨려도 다른 사람 행은 안 보임).
+- PgSession: Supabase Postgres. 연결 하나 = 트랜잭션 하나, 시작할 때 백엔드 전용 역할 `app_user`(PostgREST 가 모르는 역할)
+  + 그 사용자 id(app.user_id)를 걸어 RLS 가 백엔드 쿼리에도 걸린다(코드가 user_id 를 빠뜨려도 다른 사람 행은 안 보임).
+  anon · authenticated 는 표 권한이 없어 Data API(/rest/v1)로는 못 쓴다(supabase/migrations/20261009000000_v8_security.sql).
 - MemSession: 시험용 메모리 가짜(같은 모양).
 """
 
-import json
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -71,9 +71,9 @@ class PgSession:
             args.append(int(limit))
         return self.conn.execute(q, args).fetchall()
 
-    def update(self, table, values, **eq):
+    def update(self, table, values, lt=None, **eq):
         values = _adapt(values)
-        w, args = _where(self.uid, eq, None)
+        w, args = _where(self.uid, eq, lt)
         q = sql.SQL("update {} set {} where ").format(
             sql.Identifier(table), sql.SQL(", ").join(sql.SQL("{} = %s").format(sql.Identifier(k)) for k in values)) + w
         return self.conn.execute(q, list(values.values()) + args).rowcount
@@ -89,9 +89,8 @@ def pg_session(database_url, uid):
     # ponytail: 요청마다 연결을 새로 연다(로컬 수 ms). 동시 사용자가 늘면 psycopg_pool 로 바꾼다.
     # prepare_threshold=None: Supabase 연결 풀러(트랜잭션 모드)는 미리 준비한 쿼리를 못 쓴다
     with psycopg.connect(database_url, row_factory=dict_row, prepare_threshold=None) as conn:
-        conn.execute("set local role authenticated")
-        conn.execute("select set_config('request.jwt.claims', %s, true)",
-                     [json.dumps({"sub": str(uid), "role": "authenticated"})])
+        conn.execute("set local role app_user")
+        conn.execute("select set_config('app.user_id', %s, true)", [str(uid)])
         yield PgSession(conn, uid)
 
 
@@ -147,9 +146,9 @@ class MemSession:
             out.sort(key=lambda r: r.get(col), reverse=bool(desc))
         return out[:limit] if limit else out
 
-    def update(self, table, values, **eq):
+    def update(self, table, values, lt=None, **eq):
         with self.store.lock:
-            hit = [r for r in self._t(table) if self._match(r, eq)]
+            hit = [r for r in self._t(table) if self._match(r, eq, lt)]
             for r in hit:
                 r.update(values)
             return len(hit)

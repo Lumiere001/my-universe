@@ -4,14 +4,16 @@ app/api/diary.py
 일기 쓰기(SSE) · 읽기 · 지우기 · 이어 하기.
 그래프는 백그라운드 스레드에서 돌고, 응답은 그 진행을 SSE 로 흘린다(event: progress/result/error, 약 10초마다 ': keep-alive').
 손님이 끊어도 스레드는 끝까지 간다(로컬 · Docker). 끊긴 뒤에는 GET /diary/{id} → POST /diary/{id}/resume/stream.
+같은 기록을 두 번 돌리지 않게 DB 잠금(entries.locked_until, 조건부 update)을 쓴다 — 인스턴스가 여러 개여도 하나만 돈다.
 """
 
 import json
 import queue
 import threading
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Path, Query, Response
 from fastapi.responses import StreamingResponse
 
 from app.agents import graph
@@ -23,7 +25,7 @@ from app.repository import diary, views
 
 router = APIRouter(tags=["일기"])
 KEEPALIVE_S = 10
-_running, _lock = set(), threading.Lock()
+Id = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,80}$")]   # id 모양만(제어 문자 · 다른 글자는 422)
 MESSAGES = {
     "studio_timeout": "생각을 나누는 데 시간이 오래 걸리고 있어요. '이어서 하기'를 눌러 주세요.",
     "studio_failed": "생각을 나누다 멈췄어요. '이어서 하기'를 눌러 주세요.",
@@ -35,11 +37,7 @@ MESSAGES = {
 
 
 def _start(repo, uid, eid):
-    """그래프를 백그라운드로 돌리고 (사건, 값) 줄을 돌려준다. 같은 기록을 두 번 동시에 돌리지 않는다."""
-    with _lock:
-        if eid in _running:
-            raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
-        _running.add(eid)
+    """그래프를 백그라운드로 돌리고 (사건, 값) 줄을 돌려준다. 부르기 전에 diary.lock 으로 잠금을 잡아 둔다(끝나면 풂)."""
     q = queue.Queue()
 
     def work():
@@ -52,9 +50,11 @@ def _start(repo, uid, eid):
             q.put(("error", {"entry_id": eid, "code": code, "message": MESSAGES.get(code, MESSAGES["internal"]),
                              "resumable": code != "real_name_leak"}))
         finally:
-            with _lock:
-                _running.discard(eid)
-            q.put(None)
+            try:
+                with repo.session(uid) as s:
+                    diary.unlock(s, eid)
+            finally:
+                q.put(None)
 
     threading.Thread(target=work, name=f"diary-{eid}", daemon=True).start()
     return q
@@ -78,18 +78,26 @@ def _stream(q):
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+def _limits(s, eid=None):
+    """하루 처리 글 수(오늘 시작 · 이어 한 기록 수) · 이번 달 추정 비용 상한. 이미 오늘 센 기록을 이어 하는 건 하루 수에 더하지 않는다."""
+    today = diary.processed_today(s)
+    if eid not in today and len(today) >= config.DAILY_ENTRY_LIMIT:
+        raise ApiError(429, "daily_limit", f"오늘은 글을 {config.DAILY_ENTRY_LIMIT}편까지 정리할 수 있어요. 내일 다시 써 주세요.")
+    if diary.month_cost(s) >= config.MONTHLY_COST_CAP_USD:
+        raise ApiError(429, "monthly_budget", "이번 달 정리 한도에 닿았어요. 운영자에게 알려 주세요.")
+
+
 def _create(repo, uid, body: DiaryIn):
     with repo.session(uid) as s:
         diary.profile(s)
-        if diary.entries_today(s) >= config.DAILY_ENTRY_LIMIT:
-            raise ApiError(429, "daily_limit", f"오늘은 글을 {config.DAILY_ENTRY_LIMIT}편까지 정리할 수 있어요. 내일 다시 써 주세요.")
-        if diary.month_cost(s) >= config.MONTHLY_COST_CAP_USD:
-            raise ApiError(429, "monthly_budget", "이번 달 정리 한도에 닿았어요. 운영자에게 알려 주세요.")
+        _limits(s)
         eid = diary.new_id("e")
         written = body.written_at or datetime.now(diary.TZ)
         if not written.tzinfo:
             written = written.replace(tzinfo=diary.TZ)
         diary.create_entry(s, eid, written, body.weather, body.title, body.text)
+        diary.lock(s, eid)
+        diary.add_run(s, eid, "start")
     return eid
 
 
@@ -113,10 +121,16 @@ def write(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
 
 
 @router.post("/diary/{eid}/resume/stream", summary="끊긴 기록 이어 하기(SSE, 끝난 단계는 건너뜀)")
-def resume(eid: str, user=Depends(get_user), repo=Depends(get_repo)):
+def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         if not s.rows("entries", id=eid):
             raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        _limits(s, eid)
+        if diary.resumes(s, eid) >= config.RESUME_LIMIT:
+            raise ApiError(429, "resume_limit", f"이 기록은 {config.RESUME_LIMIT}번까지 이어서 할 수 있어요. 운영자에게 알려 주세요.")
+        if not diary.lock(s, eid):
+            raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
+        diary.add_run(s, eid, "resume")
     return _stream(_start(repo, user["id"], eid))
 
 
@@ -128,21 +142,24 @@ def list_entries(limit: int = Query(20, ge=1, le=100), before: datetime | None =
 
 
 @router.get("/diary/{eid}", summary="기록 하나(EntryResult)")
-def get_entry(eid: str, user=Depends(get_user), repo=Depends(get_repo)):
+def get_entry(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         r = views.entry_result(s, eid)
+        row = s.rows("entries", id=eid)
     if not r:
         raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
-    if r["status"] == "processing" and eid not in _running:
-        r["status"] = "failed"   # 서버가 다시 켜져 멈춘 기록: 화면이 '이어서 하기'를 보이게
+    if r["status"] == "processing" and not diary.is_locked(row[0]):
+        r["status"] = "failed"   # 잠금이 풀렸거나 만료(서버가 멈춘 기록): 화면이 '이어서 하기'를 보이게
     return r
 
 
-@router.delete("/diary/{eid}", status_code=204, summary="기록 지우기(생각 · 관계 · 벡터까지)")
-def delete_entry(eid: str, user=Depends(get_user), repo=Depends(get_repo)):
-    if eid in _running:
-        raise ApiError(409, "already_running", "정리가 끝난 뒤에 지울 수 있어요.")
+@router.delete("/diary/{eid}", status_code=204, summary="기록 지우기(생각 · 관계 · 피드백 · 벡터까지)")
+def delete_entry(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
-        if not diary.delete_entry(s, repo.vectors, eid):
+        row = s.rows("entries", id=eid)
+        if not row:
             raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        if diary.is_locked(row[0]):
+            raise ApiError(409, "already_running", "정리가 끝난 뒤에 지울 수 있어요.")
+        diary.delete_entry(s, repo.vectors, eid)
     return Response(status_code=204)
