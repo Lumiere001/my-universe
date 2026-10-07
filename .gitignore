@@ -8,3 +8,4 @@ runs/
 .DS_Store
 tools/diagrams/out/
 tools/preview3d/
+.claude/worktrees/
