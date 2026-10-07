@@ -72,7 +72,7 @@ def test_fact_bomb_attack_filtered_then_retry(fake, bad):
 def test_attack_twice_falls_back_to_safe(fake):
     fake["answers"] = [{"message": "넌 글렀어.", "next_question": ""}]
     r = voice.generate(ctx())
-    assert r["message"] == voice.SAFE[("팩폭", False)]
+    assert r["message"] == voice.SAFE[("팩폭", False)][0]
     assert len(fake["calls"]) == 2 and r["checks"][-1]["attempt"] == "기본 문장"
     assert checks.line_problems(r["message"]) == []
 
@@ -125,7 +125,7 @@ def test_heavy_always_suggesting_falls_back(fake):
     fake["answers"] = [{"message": "내일 한 번만 해 볼까요?", "next_question": ""}]
     for tone in ["다정하게", "담백하게", "고양이처럼", "팩폭"]:
         r = voice.generate(ctx(tone=tone, heavy=True))
-        assert r["message"] == voice.SAFE[(tone, True)] and not checks.has_suggestion(r["message"])
+        assert r["message"] == voice.SAFE[(tone, True)][0] and not checks.has_suggestion(r["message"])
 
 
 def test_comfort_only_button(fake):
@@ -387,7 +387,7 @@ def test_llm_line_twice_falls_back(fake):
     fake["answers"] = [{"message": "또 미뤘네. 오늘 한 곳 찾아.", "next_question": ""}]
     fake["judge"] = [{"violation": True, "line": 1, "reason": "x"}]
     r = voice.generate(ctx(settings={"gentle": True}))
-    assert r["message"] == voice.SAFE[("팩폭", False)] and r["checks"][-1]["attempt"] == "기본 문장"
+    assert r["message"] == voice.SAFE[("팩폭", False)][0] and r["checks"][-1]["attempt"] == "기본 문장"
 
 
 @pytest.mark.parametrize("bad", [RuntimeError("network"), "판정 못 함", {"line": 0}])
@@ -395,7 +395,7 @@ def test_llm_line_error_is_a_problem(fake, bad):
     fake["answers"] = [{"message": "또 미뤘네. 오늘 한 곳 찾아.", "next_question": ""}]
     fake["judge"] = [bad]
     r = voice.generate(ctx())
-    assert r["checks"][0]["llm_line"] == "판정 실패" and r["message"] == voice.SAFE[("팩폭", False)]
+    assert r["checks"][0]["llm_line"] == "판정 실패" and r["message"] == voice.SAFE[("팩폭", False)][0]
 
 
 def test_llm_line_only_for_fact_bomb_and_after_rules(fake):
@@ -405,3 +405,16 @@ def test_llm_line_only_for_fact_bomb_and_after_rules(fake):
     fake["answers"] = [{"message": "넌 글렀어.", "next_question": ""}]
     voice.generate(ctx())
     assert fake["judge_calls"] == []                     # 코드 검사에서 걸리면 LLM 판정은 부르지 않는다
+
+
+def test_safe_line_skips_past_repeat(fake):
+    """vs-34: 기본 문장이 지난 한마디와 겹치면 겹치지 않는 다른 기본 문장을 쓴다."""
+    for (tone, comfort), opts in voice.SAFE.items():
+        assert len(opts) >= 2 and not checks.repeat_problems(opts[1], [opts[0]]), (tone, comfort)
+        for m in opts:
+            assert not checks.line_problems(m) and not (comfort and checks.has_suggestion(m)), m
+    past = ["세 번째 수정이면 손이 많이 갔겠어요. 오늘 기록 잘 받았어요."]
+    fake["answers"] = [{"message": past[0], "next_question": ""}]   # 두 번 다 반복 → 기본 문장
+    r = voice.generate(ctx(tone="담백하게", past_messages=past))
+    assert r["checks"][-1]["attempt"] == "기본 문장"
+    assert r["message"] == voice.SAFE[("담백하게", False)][1] and not checks.repeat_problems(r["message"], past)

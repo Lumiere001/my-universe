@@ -56,7 +56,7 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
 export function CareCard({ r }: { r: EntryResult }) {
   return (
     <section className="care stack" aria-label="돌봄" data-testid="care">
-      <div className="voice"><span className="who" aria-hidden>별</span><div className="bubble"><p>{r.care?.message}</p></div></div>
+      <div className="voice"><span className="who" aria-hidden>별</span><div className="bubble"><p style={{ whiteSpace: "pre-line" }}>{r.care?.message}</p></div></div>
       {r.care?.resources.map((x) => (
         <div key={x.name}>
           {/^\d+$/.test(x.contact)
@@ -64,7 +64,8 @@ export function CareCard({ r }: { r: EntryResult }) {
             : <p><b>{x.name}</b><br />{x.contact}{x.hours ? ` (${x.hours})` : ""}</p>}
         </div>
       ))}
-      <p className="sub">지금 위험하다면 112 · 119로도 바로 연락할 수 있어요.</p>
+      {/* 돌봄 문장에 이미 119 · 112 가 있으면 겹쳐 쓰지 않는다 */}
+      {!/11[29]/.test(r.care?.message ?? "") && <p className="sub">지금 위험하다면 112 · 119로도 바로 연락할 수 있어요.</p>}
     </section>
   );
 }
