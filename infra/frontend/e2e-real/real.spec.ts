@@ -7,7 +7,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../../..");
-const OUT = path.join(ROOT, "docs/images/v8-real");
+const OUT = path.join(ROOT, process.env.REAL_OUT || "docs/images/v8-real");
+// REAL_SHOTS="mobile-10-result,pc-02-universe": 이 캡처만 파일로 남긴다(검사는 그대로). REAL_DIARY=mobile: 그 기기만 유료 일기를 쓴다
+const KEEP = process.env.REAL_SHOTS?.split(",");
 const env = (f: string) => Object.fromEntries(fs.readFileSync(f, "utf8").split("\n").filter((l) => /^[A-Z_]+=/.test(l))
   .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]));
 const FE = env(path.join(__dirname, "../.env.local"));
@@ -66,6 +68,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
   const shot = async (name: string, full = false) => {
     await clean(page);
     // 파일을 작게: CSS 픽셀 크기로. 전체 캡처에서는 고정 막대가 가운데 찍히지 않게 감춘다
+    if (KEEP && !KEEP.includes(`${dev}-${name}`)) return;
     await page.screenshot({ path: `${OUT}/${dev}-${name}.png`, fullPage: full, scale: "css",
       style: full ? ".top { position: static !important; } .top .nav { visibility: hidden; }" : undefined });
   };
@@ -120,13 +123,19 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     await card.getByRole("button", { name: "닫기" }).click();
   });
 
-  await test.step("사람 고르기", async () => {
-    const who = page.getByRole("group", { name: "사람 고르기" }).getByRole("button").first();
-    await who.click();
-    await expect(who).toHaveAttribute("aria-pressed", "true");
-    await page.waitForTimeout(300);
-    await shot("04-person");
-    await who.click();
+  await test.step("사람 고르기 → 그 사람이 나온 행성이 빛남", async () => {
+    const group = page.getByRole("group", { name: "사람 고르기" });
+    for (const p of uni.people as { name: string; planets: string[] }[]) {
+      const who = group.getByRole("button", { name: new RegExp(`^${p.name}`) });
+      await who.click();
+      await expect(who).toHaveAttribute("aria-pressed", "true");
+      expect(p.planets.length, `${p.name} 이 나온 행성`).toBeGreaterThan(0);
+      await expect(group.getByText("이 사람이 나온 기록이 아직 없어요")).toHaveCount(0);
+      await page.waitForTimeout(300);
+      if (p === uni.people[0]) await shot("04-person");
+      log(dev, "사람", p.name, "빛나는 행성", p.planets.length);
+      await who.click();
+    }
   });
 
   await test.step("지난 기록", async () => {
@@ -142,7 +151,8 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
   });
 
   let entryId = "";
-  await test.step("새 일기 → 진행 단계가 실제로 바뀜", async () => {
+  const diary = !process.env.REAL_DIARY || process.env.REAL_DIARY === dev;
+  if (diary) await test.step("새 일기 → 진행 단계가 실제로 바뀜", async () => {
     await nav("쓰기");
     await page.getByLabel(/마음껏 적어/).fill(DIARY);
     await shot("07-write");
@@ -171,7 +181,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     log(dev, "결과까지", Math.round((Date.now() - t0) / 1000) + "초", "끝난 단계", await steps.allInnerTexts().catch(() => []));
   });
 
-  await test.step("결과 카드", async () => {
+  if (diary) await test.step("결과 카드", async () => {
     const r = page.getByTestId("result");
     await expect(r.getByRole("region", { name: "별지기 한마디" })).toBeVisible();
     await expect(r.getByRole("region", { name: "생각 목록" })).toBeVisible();
@@ -181,10 +191,12 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
       다짐: e.thoughts.filter((t: { state: { type: string } | null }) => t.state?.type === "다짐").length, 닿은순간: e.reached.length,
       이름질문: e.people_questions.length, 다음질문: e.next_question?.kind, 말투: e.message?.tone });
     if (e.relations.length) await expect(r.getByRole("region", { name: "이어진 지난 생각" })).toBeVisible();
+    // 점선(needs_confirm=true)마다 맞아요/아니에요가 떠야 한다
+    await expect(r.getByRole("group", { name: "이 연결이 맞나요" })).toHaveCount(e.relations.filter((x: { needs_confirm: boolean }) => x.needs_confirm).length);
     await shot("10-result", true);
   });
 
-  await test.step("피드백 · 버튼 → 저장 확인", async () => {
+  if (diary) await test.step("피드백 · 버튼 → 저장 확인", async () => {
     const r = page.getByTestId("result");
     await r.getByRole("group", { name: "한마디 피드백" }).getByRole("button", { name: "좋아요" }).click();
     await expect(r.getByRole("group", { name: "한마디 피드백" }).getByText("고마워요")).toBeVisible();
@@ -227,6 +239,10 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     const calls = sql(`select coalesce(sum(calls), 0) from runs where entry_id = '${id}'`);
     log(dev, "위기 글 외부 호출", calls);
     expect(calls).toBe("0");
+    const careText = await care.innerText();
+    const lines = careText.split("\n").map((x) => x.trim()).filter(Boolean);
+    expect(lines.length, "돌봄 문장 겹침").toBe(new Set(lines).size);
+    expect(careText.match(/119/g)?.length, "119 · 112 안내는 한 번").toBe(1);
     await shot("13-care");
   });
 
@@ -282,7 +298,11 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     await page.reload();
     await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("fact-bomb-warning")).toHaveCount(0);
-    await shot("19-settings-kept");
+    // 계정 지우기 단추는 보이기만 확인(누르지 않는다 — tester@ 는 지우지 않는다)
+    const del = page.getByRole("region", { name: "계정 지우기" });
+    await expect(del.getByRole("button", { name: "계정과 모든 기록 지우기" })).toBeVisible();
+    await expect(del.getByRole("button", { name: "계정과 모든 기록 지우기" })).toBeDisabled();
+    await shot("19-settings-kept", true);
   });
 
   await test.step("로그아웃", async () => {
