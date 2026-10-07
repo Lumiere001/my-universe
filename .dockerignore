@@ -1,0 +1,24 @@
+# 두 이미지(Dockerfile · infra/frontend/Dockerfile) 모두 저장소 루트를 빌드 맥락으로 쓴다.
+# 비밀값 · 일기 데이터 · 실행 기록은 이미지에 들어가지 않게 뺀다.
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.venv
+.claude
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/.next
+infra/frontend/test-results
+infra/frontend/playwright-report
+data
+runs
+logs
+output
+result
+docs
+tests
+eval
+tools
+supabase

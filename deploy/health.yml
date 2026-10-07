@@ -1,0 +1,20 @@
+# 하루 한 번 배포 주소 확인. .github/workflows/health.yml 로 옮겨 두고,
+# 저장소 Variables 에 API_URL(백엔드) · WEB_URL(화면)을 넣으면 켜진다(없으면 건너뜀).
+# 실패하면 GitHub 이 예약 실행 실패 메일을 보낸다.
+name: health
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # 매일 09:00 KST
+  workflow_dispatch:
+
+jobs:
+  health:
+    if: vars.API_URL != ''
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ vars.API_URL }}
+      WEB_URL: ${{ vars.WEB_URL }}
+    steps:
+      - run: curl -fsS --max-time 60 "$API_URL/health"
+      - run: curl -fsS --max-time 60 -o /dev/null "$WEB_URL"
