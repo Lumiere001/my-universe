@@ -4,6 +4,7 @@ app/agents/studio.py
 Upstage Studio 기록 · 관측 Agent 실행(1차 agent_client.py 를 옮김). 1차 에이전트는 그대로 두고 도구로 감싸 부른다.
 Files 업로드 → responses.create(model=agent_id, include=["all"], extra_body={"config_id"}) → 끝날 때까지 조회 → 단계 결과.
 보내기 전 llm.guard 의 실명 검사를 반드시 거친다(guard 밖에서 부르면 오류). 캐시는 두지 않는다(원문이 디스크에 남음).
+올린 입력 파일은 실행이 끝나면(성공 · 실패 · 시간 초과 모두) 지운다.
 """
 
 import json
@@ -29,17 +30,29 @@ def client():
     return _client
 
 
+def _delete_file(fid):
+    """올린 입력 파일(가명 일기 HTML)을 지운다. 실패해도 일기 처리는 계속하고 오류 코드만 남긴다."""
+    try:
+        client().files.delete(fid)
+    except Exception as e:
+        logger.log("external", what="studio_file_delete", ok=False, code=type(e).__name__,
+                   http=getattr(e, "status_code", None))
+
+
 def _once(agent_id, config_id, html, timeout):
     t0 = time.time()
     up = client().files.create(file=("input.html", html.encode("utf-8"), "text/html"), purpose="user_data")
-    r = client().responses.create(model=agent_id, include=["all"],
-                                  input=[{"role": "user", "content": [{"type": "input_file", "file_id": up.id}]}],
-                                  extra_body={"config_id": str(config_id)})
-    while r.status in ("queued", "in_progress"):
-        if time.time() - t0 > timeout:
-            raise StudioError("studio_timeout", "Studio 응답이 늦어요")
-        time.sleep(1.5)
-        r = client().responses.retrieve(r.id, include=["all"])
+    try:
+        r = client().responses.create(model=agent_id, include=["all"],
+                                      input=[{"role": "user", "content": [{"type": "input_file", "file_id": up.id}]}],
+                                      extra_body={"config_id": str(config_id)})
+        while r.status in ("queued", "in_progress"):
+            if time.time() - t0 > timeout:
+                raise StudioError("studio_timeout", "Studio 응답이 늦어요")
+            time.sleep(1.5)
+            r = client().responses.retrieve(r.id, include=["all"])
+    finally:
+        _delete_file(up.id)
     if r.status != "completed":
         raise StudioError("studio_failed")
     steps = [o.content[0].text for o in r.output if getattr(o, "content", None)]

@@ -52,6 +52,7 @@ def env():
         "SUPABASE_SERVICE_ROLE_KEY": st["SERVICE_ROLE_KEY"],          # 로컬 계정 만들기 · 시험용(백엔드는 쓰지 않음)
         "DIARY_ENC_KEY": old.get("DIARY_ENC_KEY") or new_master_key(),
         "CHROMA_HOST": "localhost", "CHROMA_PORT": "8000", "FRONTEND_ORIGIN": "http://localhost:3000", "LOG_TO_FILE": "1",
+        "API_DOCS": "1",                                              # /docs 는 로컬만
         "DEV_TEST_PASSWORD": old.get("DEV_TEST_PASSWORD") or secrets.token_urlsafe(18),
     }
     _write(ENV_LOCAL, values, "로컬 전용(scripts/dev_up.sh 가 만듦, 커밋 금지). 로컬 Supabase 데모 키 · 시험용 비밀번호.")
@@ -110,14 +111,10 @@ def accounts():
     print(f"시험용 계정 {len(ACCOUNTS)}개 준비(비밀번호는 .env.local 의 DEV_TEST_PASSWORD).")
 
 
-WIPE = ("aspiration_reached", "messages", "relations", "thought_people", "people_questions", "thoughts", "states",
-        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles")
-
-
 def wipe(repo, uid):
+    from app.repository import diary
     with repo.session(uid) as s:
-        for t in WIPE:
-            s.delete(t)
+        diary.wipe(s)
     repo.vectors.delete(uid)
 
 
@@ -151,11 +148,15 @@ def demo(repo, uid):
                 row = {**t, "id": tid, "record_id": eid, "day": r["day"], "position": i, "star_id": stars[t["topic"]][0],
                        "sun_id": sun_id, "domain": sun,
                        "people": [p["id"] for p in people if p["name"] in t["people"]]}
-                diary.save_thought(s, eid, row)
                 ts[tid] = row
                 today.append(row)
                 vecs.append({"id": tid, "emb": a["emb"], "entry_id": eid, "star_id": row["star_id"],
                              "written_at": diary.iso(written), "kind": t["kind"]})
+            for p in people:   # 생각 글에는 없고 본문에만 나온 사람도 그 행성에 잇는다(첫 생각에)
+                if today and p["name"] in f"{r['title']}\n{r['body']}" and not any(p["id"] in x["people"] for x in today):
+                    today[0]["people"].append(p["id"])
+            for row in today:
+                diary.save_thought(s, eid, row)
             cands = [{"a": ids.get(x["from"]), "b": ids.get(x["to"]), "type": x["type"], "explanation": x.get("explanation", ""),
                       "axis": x.get("axis", ""), "topic": x.get("topic", ""), "quoted": True}
                      for x in d["relations"] if x["to_record"] == rid]

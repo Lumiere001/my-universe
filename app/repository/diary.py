@@ -6,7 +6,8 @@ app/repository/diary.py
 """
 
 import secrets
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.core import config, security
@@ -16,7 +17,10 @@ TZ = ZoneInfo(config.TIMEZONE)
 SETTINGS = {"tone": "다정하게", "fact_bomb_ack": False, "gentle_today": None, "comfort_only_today": None,
             "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True}
 ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
-ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions")
+ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
+              "feedback")
+MOOD_FEEDBACK = ("오늘은 위로만", "오늘은 살살")   # 마음 상태 버튼: 값은 enc 에만, 평문 칸에는 MOOD_LABEL
+MOOD_LABEL = "상태 버튼"
 
 
 def new_id(prefix):
@@ -76,17 +80,21 @@ def _map_strings(x, fn):
 ##################################################
 
 def profile(s):
+    """설정 · 첫 만남 상태. enc 에 둔다('오늘은 위로만' 날짜 같은 마음 상태가 들어 있음). 평문 칸은 예전 행 읽기용."""
     r = s.rows("profiles")
     if not r:
         s.insert("profiles", {"settings": {}, "onboarding": {}})
         r = [{"settings": {}, "onboarding": {}}]
-    return {**SETTINGS, **(r[0]["settings"] or {})}, {**ONBOARDING, **(r[0]["onboarding"] or {})}
+    d = unseal(s, "profiles", s.uid, r[0].get("enc"))
+    return ({**SETTINGS, **(r[0]["settings"] or {}), **d.get("settings", {})},
+            {**ONBOARDING, **(r[0]["onboarding"] or {}), **d.get("onboarding", {})})
 
 
 def save_profile(s, settings=None, onboarding=None):
     st, ob = profile(s)
     st, ob = {**st, **(settings or {})}, {**ob, **(onboarding or {})}
-    s.update("profiles", {"settings": st, "onboarding": ob})
+    s.update("profiles", {"settings": {}, "onboarding": {},
+                          "enc": seal(s, "profiles", s.uid, {"settings": st, "onboarding": ob})})
     return st, ob
 
 
@@ -117,11 +125,23 @@ def update_person(s, pid, name=None, nicknames=None, relation=None):
 
 
 def delete_person(s, pid):
-    """지우기 = 저장된 글 속 이름 · 별명을 관계 말로 바꾸고 문장은 남긴다. 바꾼 행 수를 돌려준다."""
+    """지우기 = 저장된 글 속 이름 · 별명을 관계 말로 바꾸고 문장은 남긴다(끊긴 기록의 단계 저장값 · 피드백 글 포함).
+    그 이름을 묻던 질문은 지운다. 벡터는 가명 글로 만들어 이름이 없다. 바꾼 행 수를 돌려준다."""
     p = next((p for p in people(s) if p["id"] == pid), None)
     if not p:
         return None
+    names = {p["name"], *p["nicknames"]}
+    for q in questions(s):
+        if q["name"] in names:
+            s.delete("people_questions", id=q["id"])
     replaced = 0
+    for r in s.rows("entries"):
+        if r.get("steps_enc"):
+            data = unseal(s, "entries.steps", r["id"], r["steps_enc"])
+            new = _map_strings(data, lambda t: forget(t, p))
+            if new != data:
+                replaced += 1
+                s.update("entries", {"steps_enc": seal(s, "entries.steps", r["id"], new)}, id=r["id"])
     for table in ENC_TABLES + ("states",):
         for r in s.rows(table):
             rid = _rid(table, r)
@@ -179,7 +199,7 @@ def add_star(s, sid, name, sun_id):
 
 def create_entry(s, eid, written_at, weather, title, text):
     s.insert("entries", {"id": eid, "written_at": written_at, "weather": weather, "status": "processing", "step": None,
-                         "crisis": False, "addressee": None, "star_id": None, "sun_id": None, "steps_enc": None,
+                         "addressee": None, "star_id": None, "sun_id": None, "steps_enc": None,
                          "error_code": None, "enc": seal(s, "entries", eid, {"title": title, "text": text}),
                          "updated_at": now()})
 
@@ -190,12 +210,31 @@ def entry(s, eid):
         return None
     r = r[0]
     r["data"] = unseal(s, "entries", eid, r["enc"])
+    r["crisis"] = bool(r["data"].get("crisis"))   # 위기 표시는 enc 안에만
     r["steps"] = unseal(s, "entries.steps", eid, r["steps_enc"]) if r.get("steps_enc") else {}
     return r
 
 
 def checkpoint(s, eid, step, steps):
     s.update("entries", {"step": step, "steps_enc": seal(s, "entries.steps", eid, steps), "updated_at": now()}, id=eid)
+    until = now() + timedelta(seconds=config.RUN_LOCK_S)
+    s.update("entries", {"locked_until": until}, lt={"locked_until": until}, id=eid)   # 잡혀 있는 잠금만 늘린다
+
+
+def lock(s, eid):
+    """실행 잠금: 잠금이 없거나 만료됐을 때만 잡는다(DB 조건부 update 라 인스턴스가 여러 개여도 하나만 잡음)."""
+    t = now()
+    until = t + timedelta(seconds=config.RUN_LOCK_S)
+    return bool(s.update("entries", {"locked_until": until}, id=eid, locked_until=None)
+                or s.update("entries", {"locked_until": until}, lt={"locked_until": t}, id=eid))
+
+
+def unlock(s, eid):
+    s.update("entries", {"locked_until": None}, id=eid)
+
+
+def is_locked(row):
+    return bool(row.get("locked_until") and row["locked_until"] > now())
 
 
 def set_status(s, eid, status, code=None):
@@ -203,15 +242,21 @@ def set_status(s, eid, status, code=None):
 
 
 def entries(s, limit=None, before=None, **eq):
-    return [{**r, "data": unseal(s, "entries", r["id"], r["enc"])}
-            for r in s.rows("entries", order="written_at desc", limit=limit, lt={"written_at": before} if before else None, **eq)]
+    out = [{**r, "data": unseal(s, "entries", r["id"], r["enc"])}
+           for r in s.rows("entries", order="written_at desc", limit=limit, lt={"written_at": before} if before else None, **eq)]
+    for e in out:
+        e["crisis"] = bool(e["data"].get("crisis"))
+    return out
 
 
 def delete_entry(s, vectors, eid):
-    """기록과 그 생각 · 관계 · 한마디 · 벡터까지. 메모리 가짜에는 FK cascade 가 없어 직접 지운다."""
+    """기록과 그 생각 · 관계 · 한마디 · 피드백 · 벡터까지. 메모리 가짜에는 FK cascade 가 없어 직접 지운다.
+    남은 기록이 모두 끝난 상태면 이 기록에만 쓰인 작은 별 · 자동 등록 사람도 정리한다
+    (끊긴 기록의 단계 저장값이 그 id 를 들고 있을 수 있어 그때는 남긴다)."""
     if not s.rows("entries", id=eid):
         return False
     tids = [t["id"] for t in s.rows("thoughts", entry_id=eid)]
+    rids = [r["id"] for r in s.rows("relations", from_thought=tids) + s.rows("relations", to_thought=tids)] if tids else []
     for table, col in (("thought_people", "thought_id"), ("aspiration_reached", "thought_id")):
         s.delete(table, **{col: tids})
     s.delete("relations", from_thought=tids)
@@ -221,9 +266,31 @@ def delete_entry(s, vectors, eid):
             s.delete("states", key=st["key"])
     for table in ("thoughts", "messages", "aspiration_reached", "people_questions"):
         s.delete(table, entry_id=eid)
+    s.delete("feedback", target_id=[eid, *tids, *rids])
     s.delete("entries", id=eid)
+    rest = entries(s)
+    if all(e["status"] == "done" for e in rest):
+        used = {t["star_id"] for t in s.rows("thoughts")} | {e["star_id"] for e in rest}
+        for st in s.rows("stars"):
+            if st["id"] not in used:
+                s.delete("stars", id=st["id"])
+        linked = {tp["person_id"] for tp in s.rows("thought_people")}
+        texts = "\n".join(f"{e['data'].get('title', '')}\n{e['data'].get('text', '')}" for e in rest)
+        for p in people(s):
+            if p["auto"] and p["id"] not in linked and not any(n in texts for n in [p["name"], *p["nicknames"]]):
+                s.delete("people", id=p["id"])
     vectors.delete(s.uid, entry_id=eid)
     return True
+
+
+WIPE = ("aspiration_reached", "messages", "relations", "thought_people", "people_questions", "thoughts", "states",
+        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles")
+
+
+def wipe(s):
+    """이 사용자의 모든 행(FK 순서). 계정 지우기 · 시드에서 쓴다."""
+    for t in WIPE:
+        s.delete(t)
 
 
 def thoughts(s, **eq):
@@ -281,6 +348,11 @@ def save_states(s, new, old):
         s.delete("states", key=k)
 
 
+def message(s, row):
+    """messages 행 → {text, next_question, mode}. 돌봄 · 위로 모드는 enc 안에만."""
+    return {"mode": "normal", **unseal(s, "messages", row["id"], row["enc"])}
+
+
 def past_messages(s):
     return [unseal(s, "messages", r["id"], r["enc"]).get("text", "") for r in s.rows("messages", order="created_at")]
 
@@ -308,8 +380,15 @@ def add_aspiration(s, now_text, said, obstacle, if_then, values):
 
 def add_feedback(s, target, target_id, value, text=None):
     fid = new_id("f")
-    s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": value,
-                          "enc": seal(s, "feedback", fid, {"text": text}) if text else None})
+    mood = value in MOOD_FEEDBACK
+    data = {k: v for k, v in {"text": text, "value": value if mood else None}.items() if v}
+    s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": MOOD_LABEL if mood else value,
+                          "enc": seal(s, "feedback", fid, data) if data else None})
+
+
+def feedback_counts(s):
+    return Counter(unseal(s, "feedback", r["id"], r["enc"]).get("value", r["value"]) if r["value"] == MOOD_LABEL
+                   else r["value"] for r in s.rows("feedback"))
 
 
 def add_run(s, entry_id, step, ms=0, calls=0, est_usd=0.0, code=None, meta=None):
@@ -322,6 +401,11 @@ def month_cost(s):
     return float(sum(r["est_usd"] or 0 for r in s.rows("runs") if r["created_at"] >= start))
 
 
-def entries_today(s):
+def processed_today(s):
+    """오늘 처리를 시작한(또는 이어 한) 기록 id. 남은 행 수가 아니라 runs 로 세서 지워도 줄지 않고, 시드한 글은 세지 않는다."""
     start = datetime.now(TZ).replace(hour=0, minute=0, second=0, microsecond=0)
-    return sum(r["created_at"] >= start for r in s.rows("entries"))
+    return {r["entry_id"] for r in s.rows("runs", step=["start", "resume"]) if r["created_at"] >= start}
+
+
+def resumes(s, eid):
+    return len(s.rows("runs", entry_id=eid, step="resume"))

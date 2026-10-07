@@ -225,3 +225,7 @@ export async function getMe(): Promise<Me> {
 export async function patchSettings(s: Partial<Settings>): Promise<Settings> {
   return MOCK ? (await mock()).patchSettings(s) : json("PATCH", "/settings", s);
 }
+// 계정과 모든 기록 지우기(되돌릴 수 없음). 끝나면 화면이 로그아웃한다.
+export async function deleteMe(): Promise<void> {
+  if (!MOCK) await json("DELETE", "/me");
+}

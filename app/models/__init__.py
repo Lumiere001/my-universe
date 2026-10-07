@@ -4,6 +4,7 @@ app/models
 요청 본문 검사(신뢰 경계). 글 길이 상한, 보기 값은 v8.json 에서 읽는다. 모르는 칸은 거부한다.
 """
 
+import re
 from datetime import datetime
 from typing import Literal, Optional
 
@@ -13,8 +14,16 @@ from app.core import config
 from app.core.ontology import choices
 
 
+CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")   # NUL 등 제어 문자(줄바꿈 · 탭은 남김). NUL 은 Postgres 가 거부해 500
+
+
 class In(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _no_control(cls, v):
+        return CONTROL.sub("", v) if isinstance(v, str) else v
 
 
 def _one_of(name, v, allow_none=True):

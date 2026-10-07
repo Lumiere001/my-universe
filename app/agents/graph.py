@@ -98,7 +98,7 @@ def node(name, progress=None):
                         diary.add_run(s, ctx.entry_id, name, (time.time() - t0) * 1000, m.calls, m.usd, code)
                     raise
             done = state.get("done", []) + [name]
-            meta = {k: out.pop(f"_{k}") for k in ("situations", "checks") if f"_{k}" in out}
+            meta = {"checks": out.pop("_checks")} if "_checks" in out else {}   # 문제 개수만(상황 · 문제 이름은 남기지 않음)
             ms = (time.time() - t0) * 1000
             with ctx.repo.session(ctx.uid) as s:
                 if name != "save":
@@ -296,7 +296,7 @@ def speak(state, ctx):
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
     return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind")}, "tone": settings["tone"]},
-            "_situations": out["situations"], "_checks": checks}
+            "_checks": len(checks)}
 
 
 @node("save", "save")
@@ -307,9 +307,10 @@ def save(state, ctx):
             settings, _ = diary.profile(s)
             s.delete("messages", entry_id=eid)
             mid = diary.new_id("m")   # 돌봄 글은 고정이라 저장하지 않는다
-            s.insert("messages", {"id": mid, "entry_id": eid, "tone": settings["tone"], "mode": "care", "next_kind": "",
+            s.insert("messages", {"id": mid, "entry_id": eid, "tone": settings["tone"], "next_kind": "",
                                   "enc": diary.seal(s, "messages", mid, {"text": "", "next_question": ""})})
-            s.update("entries", {"status": "done", "step": "save", "crisis": True, "steps_enc": None,
+            data = {**diary.entry(s, eid)["data"], "crisis": True}   # 위기 표시는 enc 안에만
+            s.update("entries", {"status": "done", "step": "save", "enc": diary.seal(s, "entries", eid, data), "steps_enc": None,
                                  "updated_at": diary.now()}, id=eid)
             return {}
         e = diary.entry(s, eid)
@@ -338,8 +339,9 @@ def save(state, ctx):
                                                                                                "note": r.get("explanation", "")})})
         v = state["voice"]
         mid = diary.new_id("m")
-        s.insert("messages", {"id": mid, "entry_id": eid, "tone": v["tone"], "mode": v["mode"], "next_kind": v["next_kind"],
-                              "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"]})})
+        s.insert("messages", {"id": mid, "entry_id": eid, "tone": v["tone"], "next_kind": v["next_kind"],
+                              "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"],
+                                                                     "mode": v["mode"]})})
         stars = Counter(t["star_id"] for t in state["today"])
         star = max(stars, key=lambda k: (stars[k], -[t["star_id"] for t in state["today"]].index(k))) if stars else None
         sun = next((t["sun_id"] for t in state["today"] if t["star_id"] == star), None)

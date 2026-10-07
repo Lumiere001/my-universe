@@ -1,8 +1,10 @@
 # 나의 우주 v8 API 약속 (WS5 백엔드 ↔ WS6 화면)
 
-작성 2026-10-08 밤(오케스트레이터). WS5와 WS6이 동시에 개발할 수 있게 먼저 정한 모양이다. 고칠 때는 두 쪽을 함께 고친다. 실제 문서는 FastAPI가 만드는 `/docs`(OpenAPI)가 최종이다.
+작성 2026-10-08 밤(오케스트레이터). WS5와 WS6이 동시에 개발할 수 있게 먼저 정한 모양이다. 고칠 때는 두 쪽을 함께 고친다. 실제 문서는 FastAPI가 만드는 `/docs`(OpenAPI)가 최종이다(로컬에서 `API_DOCS=1`일 때만 열림, 배포는 꺼 둠).
 
 **WS5 구현에서 바뀐 점(2026-10-08):** 아래 본문에 반영했다. 요약은 맨 끝 "§7 WS5 구현 메모".
+
+**보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음.
 
 ## 0. 공통
 
@@ -10,7 +12,10 @@
 - 로그인: Supabase Auth. 화면이 받은 access token을 모든 요청에 `Authorization: Bearer <token>`으로 보낸다(`/health` · `/ontology` 제외). 백엔드는 토큰을 Supabase(`/auth/v1/user`)로 확인해 user id를 얻는다.
   - 배포: 구글 로그인(`supabase.auth.signInWithOAuth({ provider: "google" })`). 구글 OAuth 키는 동규가 아침에 넣는다.
   - 로컬: `NEXT_PUBLIC_DEV_LOGIN=1`일 때만 시험용 계정(이메일 · 비밀번호, 로컬 Supabase에만 있음) 로그인 칸을 보인다.
-- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음) · `not_found`(404) · `already_running`(409) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 글 수 `DAILY_ENTRY_LIMIT`) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`) · `auth_unavailable` · `db_unconfigured`(503) · `internal`(500).
+  - 초대 목록: 백엔드 환경변수 `ALLOWED_EMAILS`(쉼표 목록)가 있으면 목록 밖 계정은 모든 로그인 요청이 403 `not_allowed`("초대된 사람만 쓸 수 있어요"). 화면은 이때 안내와 로그아웃만 보인다. 없으면 로그인한 누구나.
+  - 화면(supabase-js)은 로그인에만 쓴다. Supabase Data API(`/rest/v1` · GraphQL)로는 표를 읽고 쓸 수 없다(anon · authenticated 권한 없음). 데이터는 모두 이 API로.
+- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
+- 입력 글의 NUL 등 제어 문자(줄바꿈 · 탭 제외)는 받을 때 지운다.
 - 시각은 ISO 8601(+09:00). id는 문자열.
 - 원문(일기 글 · 인용 · 사람 이름)은 실행 기록 · 오류 메시지 · `/stats`에 절대 넣지 않는다.
 
@@ -38,7 +43,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - step 순서: `safety`(위기 확인) → `names`(사람 · 가명) → `record`(기록 Agent) → `past`(지난 생각 고르기) → `observe`(관측 Agent) → `voice`(한마디) → `save`. 위기면 `safety` 다음 바로 `result`(care).
 - 끊기면: `GET /diary/{id}`로 상태를 보고, `status`가 `failed`이거나 멈춰 있으면 `POST /diary/{id}/resume/stream`(같은 이벤트, 끝난 단계는 건너뜀 — 건너뛴 단계도 progress 는 다시 보낸다). 화면이 끊겨도 서버(로컬 · Docker)는 끝까지 처리한다. 서버가 다시 켜져 멈춘 기록은 `GET /diary/{id}`가 `failed`로 알려 준다.
 - `error` 이벤트의 `resumable`: 실명 검사에 걸린 경우(`real_name_leak`, 밖으로 보내지 않음)만 `false`. 그 밖의 코드: `studio_timeout` · `studio_failed` · `studio_bad_output` · `llm_failed` · `internal`.
-- 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`).
+- 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`). 잠금은 DB(`entries.locked_until`, 조건부 update)라 서버 인스턴스가 여러 개여도 하나만 돈다. 노드가 끝날 때마다 잠금을 `RUN_LOCK_S`(기본 600초)만큼 늘리고, 끝나면 푼다. 서버가 멈춰 잠금이 만료되면 `GET /diary/{id}`가 `failed`로 알려 준다.
+- 이어 하기도 이번 달 비용 상한(`monthly_budget`)과 하루 수를 본다. 하루 수 = 오늘 처리를 시작하거나 이어 한 기록 수(오늘 이미 센 기록을 다시 이어 하는 건 더하지 않음, 지운 글도 그대로 셈, 시드한 글은 안 셈). 기록 하나당 이어 하기는 `RESUME_LIMIT`(기본 3)번까지(429 `resume_limit`).
 - 시험 · curl용으로 같은 본문의 `POST /diary`(스트림 없이 EntryResult 한 번)도 둔다.
 
 ### EntryResult
@@ -78,7 +84,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 - `GET /diary?limit=20&before=<written_at>` → `{"entries": [{"id", "written_at", "title", "summary", "weather", "status", "sun", "star"}]}`
 - `GET /diary/{id}` → EntryResult
-- `DELETE /diary/{id}` → 204 (생각 · 관계 · 벡터까지)
+- `DELETE /diary/{id}` → 204 (생각 · 관계 · 한마디 · 그 기록 · 생각 · 관계를 가리킨 피드백 · 벡터까지. 남은 기록이 모두 끝난 상태면 이 기록에만 쓰인 작은 별 · 자동 등록 사람도 정리). 정리 중이면 409.
 - `GET /universe` → 아래 Universe
 - `GET /ontology` → `app/core/ontology/v8.json` 그대로(범례 · 보기 목록은 화면이 여기서 읽는다)
 
@@ -134,6 +140,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `PATCH /settings`(일부만) → Settings
   - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true}`
   - 팩폭은 `fact_bomb_ack: true`(경고 확인) 뒤에만 고를 수 있다(아니면 409 `fact_bomb_ack_required`). 경고 확인을 거두면 말투는 다정하게로.
+- `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
 - `GET /health` → `{"status": "ok", "version": "0.8.0"}`
 - `GET /stats` → 원문 없는 운영 숫자(본인 것만): `{"entries", "entries_done", "days_written", "suns_with_entries", "feedback": {값: 수}, "yes_ratio": 맞아요/(맞아요+아니에요) 또는 null, "month_cost_usd"}`.
 
@@ -142,8 +149,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - 코드: `main.py`(FastAPI) · `app/api`(diary.py = 일기 · SSE, routes.py = 나머지) · `app/agents`(graph.py = Super Graph, tools.py, studio.py) · `app/repository`(Postgres · Chroma · 메모리 가짜, 암호화) · `app/core`(config · security · auth · logger · seed · llm).
 - 그래프: `safety → names → record(하위 그래프: record_input → record_agent → record_clean) → observer(하위 그래프: past → observe → rules) → voice → save`. 위기면 `safety → save`. 노드마다 상태를 `entries.steps_enc`(암호화)에 남기고, 이어 하기는 끝난 노드를 건너뛴다. 끝나면 단계별 저장값은 지운다.
 - 외부로 보내는 글은 호출마다 한 번에 가명 처리(`tools.mask_obj`: 한 요청 안에서는 같은 사람 = 같은 가명) → 보내기 바로 전 `assert_no_real_names`(`llm.guard`, 실명이면 보내지 않고 `real_name_leak`) → 받은 답을 그 요청의 표로 되돌림.
-- 저장: 원문(본문 · 제목 · 요약 · 생각 · 인용 · 변화 · 작은 별 이름 · 사람 이름 · 관계 설명 · 상태 이력 · 한마디 · 되고 싶은 모습)은 `enc`(AES-256-GCM, 사용자별 키 HKDF(DIARY_ENC_KEY, user_id), aad `표:행 id`)에만. 백엔드는 요청마다 `authenticated` 역할 + 그 사용자의 JWT claim 으로 트랜잭션을 열어 RLS 가 백엔드 쿼리에도 걸린다.
+- 저장: 원문(본문 · 제목 · 요약 · 생각 · 인용 · 변화 · 작은 별 이름 · 사람 이름 · 관계 설명 · 상태 이력 · 한마디 · 되고 싶은 모습)은 `enc`(AES-256-GCM, 사용자별 키 HKDF(DIARY_ENC_KEY, user_id), aad `표:행 id`)에만. 위기 표시(`crisis`) · 한마디 모드(`care` · `comfort`) · 설정(오늘은 위로만 · 살살 날짜 포함) · 마음 상태 버튼 값도 enc 안에. 백엔드는 요청마다 백엔드 전용 역할 `app_user`(PostgREST 가 모르는 역할) + `app.user_id` 로 트랜잭션을 열어 RLS 가 백엔드 쿼리에도 걸린다. anon · authenticated 는 표 권한이 없다(supabase/migrations/20261009000000_v8_security.sql).
 - 벡터: Chroma 컬렉션 `thoughts`(문서 없음, 메타 user_id · entry_id · star_id · written_at · kind). 벡터는 가명 글의 임베딩.
-- 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice checks/situations 이름만. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 계산).
+- 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice 검사 문제 개수만(상황 이름 · 돌봄 모드는 남기지 않음). 시각 · 파일 날짜는 KST. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 · 하루 수 계산, `est_usd >= 0` check).
 - 로컬: `scripts/dev_up.sh`(로컬 Supabase · ChromaDB · `.env.local` · 시험용 계정 tester@ · e2e@my-universe.test · 하늘 데모 우주) → `uv run --frozen uvicorn main:app --port 8001`. e2e 결과: `docs/ws5-e2e.md`.
 - id 모양: 기록 `e_<hex>`, 생각 `<기록 id>-tNN`(글 속 순서), 관계 `<옛 생각 id>><새 생각 id>`, 사람 `p_` · 작은 별 `s_` · 해 `d_` · 되고 싶은 모습 `a_` · 이름 질문 `q_`. 화면은 모양에 기대지 말고 문자열로만 다룬다.

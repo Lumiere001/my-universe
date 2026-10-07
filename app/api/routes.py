@@ -1,12 +1,14 @@
 """
 app/api/routes.py
 
-우주 · 온톨로지 · 피드백 · 사람 · 되고 싶은 모습 · 나 · 설정 · 운영(/health · /stats).
+우주 · 온톨로지 · 피드백 · 사람 · 되고 싶은 모습 · 나 · 설정 · 계정 지우기 · 운영(/health · /stats).
 """
 
-from fastapi import APIRouter, Depends
+from typing import Annotated
 
-from app.core import config
+from fastapi import APIRouter, Depends, Path, Response
+
+from app.core import auth, config, logger
 from app.core.ontology import load
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
@@ -15,6 +17,7 @@ from app.repository import diary, views
 from app.service.rules import press
 
 router = APIRouter()
+Id = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,80}$")]   # id 모양만(제어 문자 · 다른 글자는 422)
 
 
 @router.get("/health", tags=["운영"])
@@ -98,7 +101,7 @@ def add_person(body: PersonIn, user=Depends(get_user), repo=Depends(get_repo)):
 
 
 @router.patch("/people/{pid}", tags=["사람"])
-def update_person(pid: str, body: PersonPatch, user=Depends(get_user), repo=Depends(get_repo)):
+def update_person(body: PersonPatch, pid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         p = diary.update_person(s, pid, body.name, None if body.nickname is None else _nicks(body.nickname), body.relation)
     if not p:
@@ -107,7 +110,7 @@ def update_person(pid: str, body: PersonPatch, user=Depends(get_user), repo=Depe
 
 
 @router.delete("/people/{pid}", tags=["사람"], summary="지우기 = 저장된 글 속 이름을 관계 말로 바꾸고 문장은 남김")
-def delete_person(pid: str, user=Depends(get_user), repo=Depends(get_repo)):
+def delete_person(pid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         n = diary.delete_person(s, pid)
     if n is None:
@@ -116,7 +119,7 @@ def delete_person(pid: str, user=Depends(get_user), repo=Depends(get_repo)):
 
 
 @router.post("/people/questions/{qid}", tags=["사람"])
-def answer_question(qid: str, body: AnswerIn, user=Depends(get_user), repo=Depends(get_repo)):
+def answer_question(body: AnswerIn, qid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         q = next(iter(diary.questions(s, id=qid)), None)
         if not q:
@@ -170,6 +173,27 @@ def me(user=Depends(get_user), repo=Depends(get_repo)):
         n = len(s.rows("entries", status="done"))
     return {"user": user, "settings": st,
             "onboarding": {"entries": n, "aspiration": ob["aspiration"], "weather_asked": ob["weather_asked"]}}
+
+
+@router.delete("/me", tags=["나"], status_code=204, summary="계정과 모든 기록 지우기(되돌릴 수 없음)")
+def delete_me(user=Depends(get_user), repo=Depends(get_repo)):
+    """순서: 벡터(Chroma) → DB 의 모든 행 → auth 계정(관리 API, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 안 지우고 오류."""
+    uid = user["id"]
+    if not (config.SUPABASE_URL and config.SUPABASE_SERVICE_ROLE_KEY):
+        raise ApiError(503, "account_delete_unconfigured", "계정 지우기 설정이 아직 없어요. 운영자에게 알려 주세요.")
+    with repo.session(uid) as s:
+        if any(diary.is_locked(e) for e in s.rows("entries")):
+            raise ApiError(409, "already_running", "정리 중인 기록이 끝난 뒤에 지울 수 있어요.")
+    try:
+        repo.vectors.delete(uid)
+    except Exception as e:
+        logger.log("error", what="delete_me", code="vector_delete_failed", user_id=uid, status=type(e).__name__)
+        raise ApiError(503, "vector_delete_failed", "기록을 지우지 못했어요. 계정은 그대로예요. 잠시 뒤 다시 해 주세요.")
+    with repo.session(uid) as s:
+        diary.wipe(s)
+    auth.delete_account(uid)
+    logger.log("step", what="delete_me", user_id=uid, ok=True)
+    return Response(status_code=204)
 
 
 @router.patch("/settings", tags=["나"])

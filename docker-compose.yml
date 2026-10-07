@@ -9,7 +9,7 @@ name: my-universe
 services:
   chroma:
     image: chromadb/chroma:1.5.9
-    ports: ["${CHROMA_HOST_PORT:-8000}:8000"]
+    ports: ["127.0.0.1:${CHROMA_HOST_PORT:-8000}:8000"]   # 이 컴퓨터에서만(같은 와이파이에 열지 않음)
     volumes: [chroma-data:/data]
 
   backend:
@@ -25,7 +25,7 @@ services:
       CHROMA_API_KEY: ""
       LOG_TO_FILE: "1"
       FRONTEND_ORIGIN: http://localhost:${FRONTEND_HOST_PORT:-8002}
-    ports: ["${BACKEND_HOST_PORT:-8001}:8001"]
+    ports: ["127.0.0.1:${BACKEND_HOST_PORT:-8001}:8001"]
     volumes: [./logs:/srv/logs]
     extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on: [chroma]
@@ -41,7 +41,7 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
         NEXT_PUBLIC_DEV_LOGIN: ${NEXT_PUBLIC_DEV_LOGIN:-0}
         NEXT_PUBLIC_MOCK: ${NEXT_PUBLIC_MOCK:-0}
-    ports: ["${FRONTEND_HOST_PORT:-8002}:8002"]
+    ports: ["127.0.0.1:${FRONTEND_HOST_PORT:-8002}:8002"]
     depends_on: [backend]
 
 volumes:

@@ -44,12 +44,20 @@ git push origin master
 ```bash
 cd ~/Projects/my-universe
 supabase link --project-ref <ref>     # DB 비밀번호를 물어보면 2에서 만든 것
-supabase db push                      # supabase/migrations 의 표 · 권한(RLS)을 클라우드에 만든다
+supabase db push                      # supabase/migrations 의 표 · 권한(RLS)을 클라우드에 만든다(파일 2개, 아래 참고)
 ```
 
   4. 값 찾는 곳(⑤에서 Vercel에 바로 붙여 넣음, 다른 데 적지 않기):
-     - Project Settings → API: Project URL(`SUPABASE_URL`), `anon` `public` 키(`SUPABASE_ANON_KEY`). `service_role` 키는 쓰지 않는다.
+     - Project Settings → API: Project URL(`SUPABASE_URL`), `anon` `public` 키(`SUPABASE_ANON_KEY`), `service_role` 키(`SUPABASE_SERVICE_ROLE_KEY`, **백엔드에만** — 계정 지우기 `DELETE /me` 전용. 화면 프로젝트 · `NEXT_PUBLIC_*`에는 절대 넣지 않는다).
      - 위쪽 **Connect** 버튼 → Connection string → **Transaction pooler**(포트 6543) URI의 `[YOUR-PASSWORD]`를 DB 비밀번호로 바꾼 것(`DATABASE_URL`). Vercel은 서버리스라 직접 연결 대신 풀러를 쓴다.
+
+  5. `db push`는 `20261009000000_v8_security.sql`(보안 검토 H1)도 같이 적용한다: anon · authenticated 가 Data API(`/rest/v1`)로 표를 읽고 쓰지 못하게 권한을 거두고, 백엔드 전용 역할 `app_user`를 만든다. 확인(값은 ② anon 키):
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" "https://<ref>.supabase.co/rest/v1/runs?select=*" -H "apikey: <anon 키>"   # 401 이면 막힘
+```
+
+  6. Authentication → Sign In / Providers → **Email** → 끄기(Disable). 로그인은 구글 하나라 이메일 가입 길을 닫는다(전체 "Allow new users to sign up"은 켜 둔다 — 끄면 현호가 구글로 처음 들어올 수 없다).
 
 ## ③ 구글 로그인(OAuth)
 
@@ -110,11 +118,14 @@ python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)
 | `FRONTEND_ORIGIN` | `https://my-universe.vercel.app` |
 | `DAILY_ENTRY_LIMIT` | 사용자별 하루 일기 수. 넣지 않으면 `10` |
 | `MONTHLY_COST_CAP_USD` | 사용자별 이달 추정 비용 상한(달러). 넣지 않으면 `5` |
+| `ALLOWED_EMAILS` | **동규 · 현호 이메일**(구글 계정, 쉼표로: `a@gmail.com,b@gmail.com`). 목록 밖 계정은 "초대된 사람만 쓸 수 있어요"(403). 비우면 로그인한 누구나 쓸 수 있으니 꼭 넣는다 |
+| `SUPABASE_SERVICE_ROLE_KEY` | ② service_role 키(계정 지우기 전용. 없으면 설정 화면의 "계정과 모든 기록 지우기"가 503) |
+| `RESUME_LIMIT` | 기록 하나당 '이어서 하기' 횟수. 넣지 않으면 `3` |
 
-넣지 않는 것: `LOG_TO_FILE`(기본 `0` = 표준 출력 → Vercel Logs), `CHROMA_HOST` · `CHROMA_PORT`(`CHROMA_API_KEY`가 있으면 Chroma Cloud를 씀), `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차 Streamlit용), `SUPABASE_SERVICE_ROLE_KEY` · `DEV_TEST_PASSWORD`(로컬 시험 전용).
+넣지 않는 것: `LOG_TO_FILE`(기본 `0` = 표준 출력 → Vercel Logs), `CHROMA_HOST` · `CHROMA_PORT`(`CHROMA_API_KEY`가 있으면 Chroma Cloud를 씀), `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차 Streamlit용), `API_DOCS`(없으면 `/docs` · `/openapi.json`이 꺼짐 — 배포는 끈 채로), `DEV_TEST_PASSWORD`(로컬 시험 전용).
 
 4. Deploy → 빌드 로그에서 Python 함수가 `main.py`로 잡혔는지 본다(①의 `entrypoint = "main:app"`. `vercel.json`의 함수 키도 `main.py`라 다르게 잡히면 빌드가 실패해 드러난다).
-5. 확인: `curl https://my-universe-api.vercel.app/health` → `{"status":"ok","version":"0.8.0"}`.
+5. 확인: `curl https://my-universe-api.vercel.app/health` → `{"status":"ok","version":"0.8.0"}`. `curl -s -o /dev/null -w "%{http_code}\n" https://my-universe-api.vercel.app/docs` → `404`(문서 꺼짐).
 6. Settings → Functions에서 Region이 Seoul(icn1)인지 확인(`vercel.json`의 `regions`).
 
 ### 5-2. 화면 `my-universe`
@@ -160,6 +171,6 @@ GitHub 저장소 → Settings → Secrets and variables → Actions → Variable
 - 무슨 일: 현호가 10/17부터 실제로 쓰게 한다.
 - 왜: 동의 화면이 "테스트"라 등록한 사람만 로그인된다.
 - 할 일:
-  1. 현호 이메일(구글 계정)을 ③-2 테스트 사용자에 넣었는지 확인(없으면 추가).
+  1. 현호 이메일(구글 계정)을 ③-2 테스트 사용자와 백엔드 `ALLOWED_EMAILS`(⑤-1)에 넣었는지 확인(없으면 추가 → 백엔드 Redeploy).
   2. 현호에게 보내기: 주소 `https://my-universe.vercel.app`, 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 구글 로그인 때 "Google에서 확인하지 않은 앱" 경고가 나오면 "계속"(테스트 상태라 나오는 경고), 일기에 쓴 사람 이름은 외부 AI로 보낼 때 가명으로 바뀐다는 것, 불편한 점은 결과 카드의 "불편한 점 한 줄"로.
   3. 10/16 기술 설명 문서(WS10)와 같이 보낸다.

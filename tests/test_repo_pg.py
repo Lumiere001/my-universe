@@ -124,3 +124,78 @@ def test_api_with_real_tokens(repo, users, monkeypatch):
         assert c.get("/diary", headers=ha).json()["entries"] == []
     finally:
         main.app.dependency_overrides.clear()
+
+
+def test_data_api_blocked(users):
+    """H1: 화면이 공개하는 anon 키 + 사용자 토큰으로 Supabase Data API(/rest/v1)를 직접 불러도 표를 읽고 쓰지 못한다."""
+    token, uid = users["a"]
+    base = f"{config.SUPABASE_URL}/rest/v1"
+    user = {"apikey": config.SUPABASE_ANON_KEY, "Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    anon = {"apikey": config.SUPABASE_ANON_KEY, "Authorization": f"Bearer {config.SUPABASE_ANON_KEY}"}
+    tries = [
+        httpx.post(f"{base}/runs", headers=user, json={"user_id": uid, "step": "x", "est_usd": -100}),
+        httpx.get(f"{base}/runs", headers=user, params={"select": "*"}),
+        httpx.delete(f"{base}/runs", headers=user, params={"user_id": f"eq.{uid}"}),
+        httpx.patch(f"{base}/profiles", headers=user, params={"user_id": f"eq.{uid}"}, json={"settings": {"tone": "팩폭"}}),
+        httpx.get(f"{base}/entries", headers=user, params={"select": "id"}),
+        httpx.get(f"{base}/entries", headers=anon, params={"select": "id"}),
+    ]
+    assert [r.status_code for r in tries if r.status_code not in (401, 403)] == []
+    with psycopg.connect(config.DATABASE_URL) as c:
+        assert c.execute("select count(*) from runs where est_usd < 0 or step = 'x'").fetchone()[0] == 0
+
+
+def test_runs_check_and_lock_across_connections(repo, users):
+    """est_usd >= 0 check, 실행 잠금은 다른 연결(다른 인스턴스)에서 동시에 잡지 못한다."""
+    import threading
+    import time
+
+    from app.repository import diary
+    ua = users["a"][1]
+    with pytest.raises(psycopg.errors.CheckViolation):
+        with repo.session(ua) as s:
+            diary.add_run(s, None, "x", est_usd=-1)
+    with repo.session(ua) as s:
+        diary.create_entry(s, "e_lockit", diary.now(), None, "", "글")
+    got = {}
+    with repo.session(ua) as s1:
+        assert diary.lock(s1, "e_lockit")
+
+        def other():
+            with repo.session(ua) as s2:     # s1 이 커밋할 때까지 기다렸다가 조건을 다시 본다
+                got["b"] = diary.lock(s2, "e_lockit")
+        t = threading.Thread(target=other)
+        t.start()
+        time.sleep(0.3)
+    t.join(5)
+    assert got == {"b": False}
+
+
+def test_delete_me_real(repo):
+    """M3: 실제 Supabase · Chroma 로 DELETE /me → 모든 표 · 벡터 · auth 계정에서 그 user_id 가 0건."""
+    from fastapi.testclient import TestClient
+
+    import main
+    from app.core import seed
+    from app.deps import get_repo
+    from app.repository.diary import WIPE
+    pw = seed._read(seed.ENV_LOCAL)["DEV_TEST_PASSWORD"]
+    seed.admin_user("it-del@my-universe.test", pw)
+    token, uid = seed.token("it-del@my-universe.test", pw)
+    main.app.dependency_overrides[get_repo] = lambda: repo
+    try:
+        c = TestClient(main.app)
+        h = {"Authorization": f"Bearer {token}"}
+        r = c.post("/diary", headers=h, json={"title": DAY1[0], "text": DAY1[1]})
+        assert r.status_code == 200 and repo.vectors.get(uid)
+        c.post("/feedback", headers=h, json={"target": "message", "value": "오늘은 살살"})
+        assert c.delete("/me", headers=h).status_code == 204
+        assert c.get("/me", headers=h).status_code == 401
+    finally:
+        main.app.dependency_overrides.clear()
+    with psycopg.connect(config.DATABASE_URL) as conn:
+        left = {t: conn.execute(f"select count(*) from {t} where user_id = %s", [uid]).fetchone()[0] for t in WIPE}
+        assert sum(left.values()) == 0, left
+    assert repo.vectors.get(uid) == {}
+    with pytest.raises(httpx.HTTPStatusError):
+        seed.token("it-del@my-universe.test", pw)

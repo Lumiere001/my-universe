@@ -2,7 +2,7 @@
 // (바) 설정: 말투 4종 + 미리보기(v8.json 예문, LLM 호출 없음). 팩폭은 경고 확인 뒤에만. 제안 빈도 · 영역 넘는 선 · 날씨 묻기.
 import { useEffect, useState } from "react";
 import { OneLine } from "@/components/ResultCard";
-import { getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
+import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
 function Choice<T extends string>({ legend, options, value, onPick }: { legend: string; options: readonly T[]; value: T; onPick: (v: T) => void }) {
@@ -82,6 +82,29 @@ export default function SettingsPage() {
       </section>
 
       {!MOCK && <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>}
+      {!MOCK && <DeleteAccount />}
     </main>
+  );
+}
+
+// 맨 아래: 계정과 모든 기록 지우기. '지우기'를 직접 입력해야 버튼이 켜진다. 끝나면 로그아웃.
+function DeleteAccount() {
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const go = async () => {
+    setBusy(true); setErr("");
+    try { await deleteMe(); await supabase()?.auth.signOut(); }
+    catch (e) { setErr((e as Error).message); setBusy(false); }
+  };
+  return (
+    <section className="card stack" aria-label="계정 지우기" style={{ marginTop: 32 }}>
+      <h2>계정과 모든 기록 지우기</h2>
+      <p className="sub" style={{ margin: 0 }}>일기 · 생각 · 사람 · 되고 싶은 모습 · 설정과 계정이 모두 지워져요. <b>되돌릴 수 없어요.</b></p>
+      <div><label htmlFor="del-confirm">확인하려면 &apos;지우기&apos;를 입력해 주세요</label>
+        <input id="del-confirm" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" /></div>
+      <button className="danger" disabled={typed.trim() !== "지우기" || busy} onClick={go}>{busy ? "지우는 중…" : "계정과 모든 기록 지우기"}</button>
+      {err && <p className="err" role="alert">{err}</p>}
+    </section>
   );
 }
