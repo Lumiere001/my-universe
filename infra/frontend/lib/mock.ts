@@ -1,0 +1,283 @@
+// 가짜 데이터 모드(NEXT_PUBLIC_MOCK=1). 백엔드 없이 화면을 개발 · 캡처하기 위한 고정 데이터.
+// 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
+import ontology from "./ontology.json";
+import type {
+  Aspiration, AspirationState, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Settings,
+  StreamError, StreamHandlers, Tone, Universe,
+} from "./api";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const STEP_MS = 350;
+const STEPS: [string, string][] = [
+  ["safety", "글을 살펴보는 중"], ["names", "사람 이름을 가리는 중"], ["record", "생각을 나누는 중"],
+  ["past", "지난 생각을 찾는 중"], ["observe", "이어진 생각을 살피는 중"], ["voice", "별지기가 한마디를 고르는 중"],
+  ["save", "우주에 저장하는 중"],
+];
+// 위기 감지는 백엔드(app/service/safety) 몫. 여기서는 돌봄 화면을 보기 위한 흉내만 낸다.
+const CRISIS = ["죽고 싶", "사라지고 싶", "자해", "끝내고 싶"];
+
+/* ---------- 하늘의 우주 ---------- */
+const P = (id: string, star_id: string, sun_id: string, day: string, title: string, order: number,
+  extra: Partial<Universe["planets"][number]> = {}) =>
+  ({ id, star_id, sun_id, written_at: `${day}T22:00:00+09:00`, title, order, ring: false, people: [], weather: null, ...extra });
+
+const universe: Universe = {
+  suns: [
+    { id: "d1", name: "삶의 성취", custom: false, planet_count: 8 },
+    { id: "d2", name: "관계", custom: false, planet_count: 4 },
+    { id: "d3", name: "건강", custom: false, planet_count: 3 },
+    { id: "d4", name: "공동체", custom: false, planet_count: 2 },
+    { id: "d5", name: "영성·신앙", custom: false, planet_count: 1 },
+  ],
+  stars: [
+    { id: "s1", sun_id: "d1", name: "진로", planet_count: 5 },
+    { id: "s2", sun_id: "d1", name: "배움과 기록", planet_count: 2 },
+    { id: "s3", sun_id: "d2", name: "혼자와 함께", planet_count: 3 },
+    { id: "s4", sun_id: "d2", name: "가족", planet_count: 1 },
+    { id: "s5", sun_id: "d3", name: "아침 걷기", planet_count: 3 },
+    { id: "s6", sun_id: "d4", name: "동아리 · 순모임", planet_count: 2 },
+    { id: "s7", sun_id: "d5", name: "묵상", planet_count: 1 },
+  ],
+  planets: [
+    P("e01", "s2", "d1", "2026-03-08", "3/8 일요일 독서노트", 0, { ring: true }),
+    P("e02", "s1", "d1", "2026-03-14", "3/14 진로 상담", 0),
+    P("e03", "s5", "d3", "2026-03-20", "3/20 결심", 0, { ring: true }),
+    P("e04", "s3", "d2", "2026-03-27", "3/27 금요일 일기", 0, { people: ["p1"] }),
+    P("e05", "s3", "d2", "2026-04-05", "4/5 혼자 있는 시간", 1),
+    P("e06", "s5", "d3", "2026-04-08", "4/8 반성", 1, { weather: "흐림" }),
+    P("e07", "s6", "d4", "2026-04-12", "4/12 순모임 후", 0),
+    P("e08", "s6", "d4", "2026-05-15", "5/15 동아리 회의", 1, { ring: true }),
+    P("e09", "s1", "d1", "2026-05-30", "5/30 선배와 대화", 1, { people: ["p1"] }),
+    P("e10", "s7", "d5", "2026-06-07", "6/7 시편 23편 묵상", 0, { weather: "구름 조금" }),
+    P("e11", "s3", "d2", "2026-06-20", "6/20 혼자와 함께", 2),
+    P("e12", "s5", "d3", "2026-07-10", "7/10 걷기 2주째", 2, { weather: "맑음" }),
+    P("e13", "s4", "d2", "2026-07-18", "7/18 가족 여행 2일차", 0, { people: ["p2", "p3"], weather: "맑음" }),
+    P("e14", "s1", "d1", "2026-08-28", "8/28 막막함", 2, { weather: "안개" }),
+    P("e15", "s1", "d1", "2026-09-12", "9/12 작은 회사 탐방", 3),
+    P("e16", "s1", "d1", "2026-09-20", "9/20 토요일 일기", 4, { ring: true, people: ["p1"] }),
+    P("e17", "s2", "d1", "2026-08-08", "8/8 독서노트", 1),
+  ],
+  links: [
+    { id: "l1", from_planet: "e03", to_planet: "e06", type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: "매일 아침 걷기로 한 다짐 뒤에 사흘 만에 멈췄다는 반성이 왔어요." },
+    { id: "l2", from_planet: "e06", to_planet: "e12", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "멈췄던 걷기를 다시 시작해 2주째 이어 가고 있다고 직접 썼어요." },
+    { id: "l3", from_planet: "e01", to_planet: "e17", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "'기록할 때 내 것이 된다'는 생각이 다시 나왔어요." },
+    { id: "l4", from_planet: "e05", to_planet: "e11", type: "해소", line: "실선", cross_domain: false, needs_confirm: false, explanation: "혼자는 충전, 함께는 성장이라고 정리했어요." },
+    { id: "l5", from_planet: "e09", to_planet: "e15", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "선배에게 들은 작은 회사 이야기를 직접 보러 갔어요." },
+    { id: "l6", from_planet: "e14", to_planet: "e16", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "취업이 막막하다는 마음이 진로를 다시 생각하는 글로 이어졌어요." },
+    { id: "l7", from_planet: "e07", to_planet: "e11", type: "이어짐", line: "점선", cross_domain: true, needs_confirm: true, explanation: "순모임에서 털어놓은 경험이 '함께하는 시간은 성장'이라는 생각으로 이어졌어요." },
+    { id: "l8", from_planet: "e10", to_planet: "e14", type: "긴장", line: "점선", cross_domain: true, needs_confirm: true, explanation: "'이미 충분하다'는 고백과 '준비가 안 됐다'는 막막함이 맞서 있어요." },
+  ],
+  twins: [
+    { id: "w1", a_planet: "e04", b_planet: "e05", topic: "혼자 ↔ 함께", status: "해소" },
+    { id: "w2", a_planet: "e02", b_planet: "e15", topic: "안정 ↔ 배움", status: "열림" },
+  ],
+  blackholes: [{ id: "b1", star_id: "s1", label: "큰 회사냐 작은 팀이냐", size: 3, planets: ["e09", "e14", "e16"] }],
+  north_star: { text: "어디서든 배우며, 한 약속은 지키는 사람", values: ["성취", "규범"] },
+  people: [],
+};
+
+let people: Person[] = [
+  { id: "p1", name: "민수", nickname: "민수 형", relation: "선배", auto: true, planets: ["e04", "e09", "e16"] },
+  { id: "p2", name: "지은", nickname: "", relation: "동생", auto: true, planets: ["e13"] },
+  { id: "p3", name: "엄마", nickname: "", relation: "엄마", auto: false, planets: ["e13"] },
+];
+
+let settings: Settings = {
+  tone: "다정하게", fact_bomb_ack: false, gentle_today: null, comfort_only_today: null,
+  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true,
+};
+
+let aspiration: AspirationState = {
+  current: { id: "a2", said: "어디서든 배우며, 한 약속은 지키는 사람", values: ["성취", "규범"], obstacle: "바쁘면 미룬다",
+    if_then: "바쁘다는 생각이 들면 10분만 먼저 하겠다", said_at: "2026-09-21T21:00:00+09:00",
+    reached: [{ entry_id: "e12", quote: "걷기를 2주째 이어 가고 있다", at: "2026-07-10T22:00:00+09:00" }] },
+  history: [{ id: "a1", said: "큰 회사에 들어가 인정받는 사람", values: ["성취", "안정"], obstacle: "자신감이 없다",
+    if_then: "불안하면 공채 일정을 하나 확인하겠다", said_at: "2026-03-15T21:00:00+09:00", reached: [] }],
+  ask: { should_ask: false, step: 1 },
+};
+
+/* ---------- 오늘 쓴 글의 결과(하늘의 10/3 일기) ---------- */
+const MESSAGES: Record<Tone, string> = {
+  다정하게: "큰 회사만 답이라던 3월의 생각에서, 오늘은 '배우고 있다는 느낌'으로 기준이 옮겨 갔네요. 그 변화를 스스로 알아챈 것도 오늘 한 일이에요. 다음 주엔 메일 한 통만 먼저 보내 볼까요? 쉬어 가도 괜찮아요.",
+  담백하게: "기준이 '큰 회사'에서 '배우는 느낌'으로 바뀌었네요. 팀 찾기는 아직이고요. 다음 주에 메일 한 통, 어때요?",
+  고양이처럼: "큰 회사만 답이라더니, 이제는 배우는 게 더 좋다냥. 다음 주엔 메일 한 통만 먼저 보내 볼까냥?",
+  팩폭: "팀 세 곳 찾기로 해 놓고 0곳이다. '바빠서'는 핑계고. 기준은 이미 네가 정했잖아. 다음 주 월요일, 메일 하나. 그거부터 해.",
+};
+const COMFORT = "마음이 무거운 날엔 무거운 채로 있어도 괜찮아요. 오늘 생각을 이렇게 적어 둔 것만으로도 충분해요.";
+
+function result(id: string, input: DiaryInput): EntryResult {
+  const heavy = !!ontology.weather.find((w) => w.name === input.weather && "comfort_only" in w);
+  const comfort = heavy || settings.comfort_only_today === today();
+  return {
+    id, status: "done", step: "save", written_at: input.written_at ?? "2026-10-03T22:40:00+09:00",
+    title: input.title || "10/3 토요일 일기", weather: input.weather ?? null, crisis: false, care: null,
+    info: { summary: "관심 있는 팀 세 곳을 찾아보기로 했지만 한 곳도 못 찾아봤고, 대신 일하는 곳보다 배우는 느낌이 중요하다는 쪽으로 생각이 정리됐다.",
+      addressee: "나", addressee_person: null, events: ["팀 찾기를 미룸", "부모님께 아직 말하지 못함"] },
+    thoughts: [
+      { id: "t1", text: "바쁘다는 핑계로 팀 찾기를 또 미뤘다.", kind: "자기평가(부정)", grateful: false, certainty: "단정", value: "성취",
+        quote: "바쁘다는 핑계로 또 미뤘다.", self_change: null, topic: "진로", star_id: "s1", sun_id: "d1", people: [], other: null, state: null },
+      { id: "t2", text: "어디서 일하든 배우고 있다는 느낌이 더 중요하다.", kind: "신념·원칙", grateful: false, certainty: "단정", value: "자율",
+        quote: "이제는 어디서 일하든 내가 배우고 있다는 느낌이 더 중요하다는 걸 알겠다.",
+        self_change: "예전에는 큰 회사에 들어가야만 인정받는다고 생각했다", topic: "진로", star_id: "s1", sun_id: "d1", people: [], other: null,
+        state: { type: "바뀜", status: "확정", mistake: false } },
+      { id: "t3", text: "다음 주에 한 곳이라도 먼저 메일을 보낸다.", kind: "다짐", grateful: false, certainty: "고민 중", value: null,
+        quote: "다음 주에는 한 곳이라도 먼저 메일을 보내 보고 싶다.", self_change: null, topic: "진로", star_id: "s1", sun_id: "d1", people: [], other: null,
+        state: { type: "다짐", status: "열림", mistake: false } },
+      { id: "t4", text: "민수 형한테 물어보려다 말았다.", kind: "기타", grateful: false, certainty: "판단 보류", value: null,
+        quote: "저녁에 민수 형한테 연락할까 하다가 말았다.", self_change: null, topic: "진로", star_id: "s1", sun_id: "d1", people: ["p1"], other: "망설임", state: null },
+    ],
+    relations: [
+      { id: "r1", from: "t9", to: "t2", from_entry: "e02", to_entry: id, type: "바뀜", group: "판단형", line: "실선", cross_domain: false,
+        needs_confirm: false, explanation: "3월에는 큰 회사가 맞다고 했는데, 오늘은 배우는 느낌이 더 중요하다고 직접 썼어요.", quote: "큰 회사에 들어가는 게 맞다." },
+      { id: "r2", from: "t8", to: "t1", from_entry: "e16", to_entry: id, type: "어긋남", group: "판단형", line: "점선", cross_domain: false,
+        needs_confirm: true, explanation: "9/20에 팀 세 곳을 찾아보기로 한 다짐 뒤에, 오늘 한 곳도 못 찾았다는 반성이 왔어요.", quote: null },
+      { id: "r3", from: "t7", to: "t2", from_entry: "e09", to_entry: id, type: "이어짐", group: "영향형", line: "점선", cross_domain: false,
+        needs_confirm: true, explanation: "선배에게 들은 '작은 팀에서 빨리 배운다'는 이야기와 같은 방향이에요.", quote: null },
+    ],
+    past: [
+      { thought_id: "t9", entry_id: "e02", text: "큰 회사에 들어가는 게 맞다.", written_at: "2026-03-14T21:00:00+09:00" },
+      { thought_id: "t8", entry_id: "e16", text: "관심 있는 팀 세 곳을 직접 찾아보겠다.", written_at: "2026-09-20T22:00:00+09:00" },
+      { thought_id: "t7", entry_id: "e09", text: "작은 팀에서는 배우는 속도가 빠르다더라.", written_at: "2026-05-30T22:00:00+09:00" },
+    ],
+    reached: [{ aspiration_id: "a2", quote: "어디서 일하든 내가 배우고 있다는 느낌이 더 중요하다",
+      message: "'어디서든 배우는 사람'에 한 걸음 닿은 문장이에요." }],
+    message: { text: comfort ? COMFORT : MESSAGES[settings.tone], tone: settings.tone, mode: comfort ? "comfort" : "normal" },
+    next_question: { kind: "free", text: "부모님께는 어떤 말부터 꺼내고 싶어요?" },
+    people_questions: [{ id: "q1", name: "민수 형", question: "'민수 형'은 사람 목록의 선배 민수와 같은 사람인가요?",
+      options: ["같은 사람", "다른 사람", "사람 이름 아님"] }],
+  };
+}
+
+function care(id: string, input: DiaryInput): EntryResult {
+  return {
+    id, status: "done", step: "safety", written_at: "2026-10-03T23:40:00+09:00", title: input.title || "", weather: input.weather ?? null,
+    crisis: true,
+    care: { message: "많이 힘든 마음을 여기까지 적어 줘서 고마워요. 지금 안전한 곳에 있나요? 혼자 견디지 않아도 돼요. 지금 바로 이야기를 들어 줄 곳이 있어요.",
+      resources: ontology.crisis.resources },
+    info: null, thoughts: [], relations: [], past: [], reached: [], message: { text: "", tone: settings.tone, mode: "care" },
+    next_question: null, people_questions: [],
+  };
+}
+
+const entries = new Map<string, EntryResult>();
+const today = () => new Date().toISOString().slice(0, 10);
+
+/* ---------- API 흉내 ---------- */
+async function run(id: string, input: DiaryInput, from: number, h: StreamHandlers): Promise<EntryResult> {
+  const crisis = CRISIS.some((w) => input.text.includes(w));
+  for (let i = from; i < STEPS.length; i++) {
+    await sleep(STEP_MS);
+    // "[끊김]"이 든 글은 세 번째 단계에서 한 번 끊어 "이어서 하기"를 흉내 낸다
+    if (i === 3 && input.text.includes("[끊김]") && from === 0) {
+      entries.set(id, { ...result(id, input), status: "failed", step: STEPS[2][0] });
+      throw { entry_id: id, code: "disconnected", message: "연결이 끊겼어요.", resumable: true } as StreamError;
+    }
+    h.onProgress({ entry_id: id, step: STEPS[i][0], label: STEPS[i][1], done: i + 1, total: STEPS.length });
+    if (crisis) break;
+  }
+  const r = crisis ? care(id, input) : result(id, input);
+  entries.set(id, r);
+  if (!crisis && !universe.planets.find((p) => p.id === id)) {
+    universe.planets.push(P(id, "s1", "d1", "2026-10-03", r.title, universe.planets.filter((p) => p.star_id === "s1").length, { ring: true, people: ["p1"], weather: input.weather ?? null }));
+    universe.links.push(
+      { id: "r1", from_planet: "e02", to_planet: id, type: "바뀜", line: "실선", cross_domain: false, needs_confirm: false, explanation: r.relations[0].explanation },
+      { id: "r2", from_planet: "e16", to_planet: id, type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: r.relations[1].explanation });
+  }
+  return r;
+}
+const inputs = new Map<string, DiaryInput>();
+let seq = 18;
+export function writeDiary(input: DiaryInput, h: StreamHandlers) {
+  const id = "e" + seq++;
+  inputs.set(id, input);
+  return run(id, input, 0, h);
+}
+export function resumeDiary(id: string, h: StreamHandlers) {
+  return run(id, inputs.get(id) ?? { text: "" }, 3, h);
+}
+export async function getDiary(id: string): Promise<EntryResult> {
+  await sleep(120);
+  const e = entries.get(id);
+  if (e) return e;
+  const p = universe.planets.find((x) => x.id === id);
+  const base = result(id, { text: "", title: p?.title, written_at: p?.written_at, weather: p?.weather });
+  // 지난 기록은 요약만 보여 준다(가짜 데이터에는 지난 글의 생각 목록이 없다)
+  return { ...base, info: { ...base.info!, summary: SUMMARY[id] ?? base.info!.summary, events: [] },
+    thoughts: [], relations: [], past: [], people_questions: [], reached: [], next_question: null, message: null };
+}
+const SUMMARY: Record<string, string> = {
+  e01: "『배움의 기술』을 읽고 그날 바로 세 줄로 적어 보니 확실히 달랐다. 매주 일요일 독서노트를 쓰기로 했다.",
+  e02: "진로 상담 뒤, 직장은 안정이 제일이고 큰 회사에 들어가는 게 맞다고 정리했다.",
+  e03: "몸이 무거워 내일부터 매일 아침 30분씩 걷기로 했다.",
+  e04: "형이 먼저 안부를 물어봐 준 일이 큰 힘이 됐다.",
+  e05: "주말 내내 혼자 지내며 혼자 있는 시간이 가장 편하다고 느꼈다.",
+  e06: "걷기를 사흘 하다 멈춘 일을 돌아보며 핑계를 반성했다.",
+  e07: "순모임에서 처음으로 고민을 털어놓았다.",
+  e08: "축제 부스 준비를 맡았고 시험과 함께 해낼 수 있을지 걱정했다.",
+  e09: "졸업한 선배에게 작은 회사에서 빨리 배운다는 이야기를 들었다.",
+  e10: "'부족함이 없다'를 '이미 충분하다'는 고백으로 읽었다.",
+  e11: "혼자는 충전, 함께는 성장이라고 생각이 정리됐다.",
+  e12: "아침 걷기를 2주째 이어 가고 있다. 이번엔 습관이 된 것 같다.",
+  e13: "가족과 바다에 가고 저녁엔 노래방에 갔다.",
+  e14: "졸업을 한 학기 앞두고 취업을 생각하면 막막하다.",
+  e15: "작은 스타트업을 방문해 배우는 속도와 안정 사이를 비교했다.",
+  e16: "선배와 이야기한 뒤 큰 회사의 안정과 작은 팀의 배움 사이에서 진로를 다시 생각했다. 팀 세 곳을 찾아보기로 했다.",
+  e17: "『생각의 탄생』을 읽고 기록하는 사람이 결국 배운다는 말을 3월의 느낌과 이었다.",
+};
+export async function listDiary(): Promise<{ entries: EntrySummary[] }> {
+  await sleep(120);
+  const sun = (id: string) => universe.suns.find((s) => s.id === id)?.name ?? null;
+  const star = (id: string) => universe.stars.find((s) => s.id === id)?.name ?? null;
+  return { entries: [...universe.planets].sort((a, b) => b.written_at.localeCompare(a.written_at)).map((p) => ({
+    id: p.id, written_at: p.written_at, title: p.title, summary: entries.get(p.id)?.info?.summary ?? SUMMARY[p.id] ?? "",
+    weather: p.weather, status: "done", sun: sun(p.sun_id), star: star(p.star_id) })) };
+}
+export async function getUniverse(): Promise<Universe> {
+  await sleep(150);
+  return structuredClone({ ...universe, people: people.map(({ id, name, relation, planets }) => ({ id, name, relation, planets })) });
+}
+export async function sendFeedback(f: Feedback) {
+  await sleep(150);
+  if (f.value === "오늘은 살살") settings = { ...settings, gentle_today: today() };
+  if (f.value === "오늘은 위로만") settings = { ...settings, comfort_only_today: today() };
+  if (f.target === "relation" && f.target_id) {
+    const l = universe.links.find((x) => x.id === f.target_id);
+    if (l && f.value === "맞아요") Object.assign(l, { line: "실선", needs_confirm: false });
+    if (l && f.value === "아니에요") universe.links = universe.links.filter((x) => x !== l);
+  }
+  return { ok: true, state: null };
+}
+export async function listPeople() { await sleep(100); return { people: structuredClone(people) }; }
+export async function addPerson(p: { name: string; nickname: string; relation: string }) {
+  const n: Person = { id: "p" + (people.length + 10), ...p, auto: false, planets: [] };
+  people = [...people, n];
+  return n;
+}
+export async function updatePerson(id: string, p: Partial<Person>) {
+  people = people.map((x) => (x.id === id ? { ...x, ...p } : x));
+  return people.find((x) => x.id === id)!;
+}
+export async function deletePerson(id: string) {
+  const replaced = people.find((x) => x.id === id)?.planets.length ?? 0;
+  people = people.filter((x) => x.id !== id);
+  return { ok: true, replaced };
+}
+export async function getAspiration() { await sleep(100); return structuredClone(aspiration); }
+export async function saveAspiration(a: { now: string; want: string; obstacle: string; if_then: string; values: string[] }) {
+  const n: Aspiration = { id: "a" + (aspiration.history.length + 3), said: a.want, values: a.values, obstacle: a.obstacle,
+    if_then: a.if_then, said_at: new Date().toISOString(), reached: [] };
+  aspiration = { ...aspiration, current: n, history: aspiration.current ? [aspiration.current, ...aspiration.history] : aspiration.history };
+  universe.north_star = { text: n.said, values: n.values };
+  return n;
+}
+export async function getMe(): Promise<Me> {
+  await sleep(100);
+  return { user: { id: "mock", email: "haneul@example.com" }, settings: { ...settings },
+    onboarding: { entries: universe.planets.length, aspiration: "set", weather_asked: true } };
+}
+export async function patchSettings(s: Partial<Settings>) {
+  // 백엔드와 같은 규칙: 팩폭은 경고 확인 뒤에만
+  if (s.tone === "팩폭" && !(s.fact_bomb_ack ?? settings.fact_bomb_ack)) throw new Error("팩폭은 경고를 확인한 뒤에 고를 수 있어요.");
+  settings = { ...settings, ...s };
+  return { ...settings };
+}

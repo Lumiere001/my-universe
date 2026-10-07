@@ -1,0 +1,227 @@
+// API 층 하나. 모양은 docs/api-v8.md 를 따른다.
+// NEXT_PUBLIC_MOCK=1 이면 같은 함수가 lib/mock.ts 의 고정 데이터(가상 인물 하늘)를 돌려준다.
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+export const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
+export const DEV_LOGIN = process.env.NEXT_PUBLIC_DEV_LOGIN === "1";
+const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").replace(/\/$/, "");
+
+/* ---------- 타입 (docs/api-v8.md) ---------- */
+export type Weather = "맑음" | "구름 조금" | "흐림" | "비" | "천둥" | "안개";
+export type Tone = "다정하게" | "담백하게" | "고양이처럼" | "팩폭";
+export type Thought = {
+  id: string; text: string; kind: string; grateful: boolean; certainty: string; value: string | null;
+  quote: string; self_change: string | null; topic: string; star_id: string; sun_id: string; people: string[];
+  other: string | null; state: { type: string; status: string; mistake: boolean } | null;
+};
+export type Relation = {
+  id: string; from: string; to: string; from_entry: string; to_entry: string; type: string; group: string;
+  line: "실선" | "점선"; cross_domain: boolean; needs_confirm: boolean; explanation: string; quote: string | null;
+};
+export type Care = { message: string; resources: { name: string; contact: string; hours?: string }[] };
+export type EntryResult = {
+  id: string; status: "processing" | "done" | "failed"; step: string; written_at: string; title: string;
+  weather: Weather | null; crisis: boolean; care: Care | null;
+  info: { summary: string; addressee: string; addressee_person: string | null; events: string[] } | null;
+  thoughts: Thought[]; relations: Relation[];
+  past: { thought_id: string; entry_id: string; text: string; written_at: string }[];
+  reached: { aspiration_id: string; quote: string; message: string }[];
+  message: { text: string; tone: Tone; mode: "normal" | "comfort" | "care" } | null;
+  next_question: { kind: "weather" | "aspiration" | "free" | "none"; text: string } | null;
+  people_questions: { id: string; name: string; question: string; options: string[] }[];
+};
+export type Progress = { entry_id: string; step: string; label: string; done: number; total: number };
+export type StreamError = { entry_id: string | null; code: string; message: string; resumable: boolean };
+export type EntrySummary = {
+  id: string; written_at: string; title: string; summary: string; weather: Weather | null;
+  status: string; sun: string | null; star: string | null;
+};
+export type Universe = {
+  suns: { id: string; name: string; custom: boolean; planet_count: number }[];
+  stars: { id: string; sun_id: string; name: string; planet_count: number }[];
+  planets: { id: string; star_id: string; sun_id: string; written_at: string; title: string; order: number;
+    ring: boolean; people: string[]; weather: Weather | null }[];
+  links: { id: string; from_planet: string; to_planet: string; type: string; line: "실선" | "점선";
+    cross_domain: boolean; needs_confirm: boolean; explanation: string }[];
+  twins: { id: string; a_planet: string; b_planet: string; topic: string; status: string }[];
+  blackholes: { id: string; star_id: string; label: string; size: number; planets: string[] }[];
+  north_star: { text: string; values: string[] } | null;
+  people: { id: string; name: string; relation: string; planets: string[] }[];
+};
+export type Person = { id: string; name: string; nickname: string; relation: string; auto: boolean; planets: string[] };
+export type Aspiration = {
+  id: string; said: string; values: string[]; obstacle: string; if_then: string; said_at: string;
+  reached: { entry_id: string; quote: string; at: string }[];
+};
+export type AspirationState = { current: Aspiration | null; history: Aspiration[]; ask: { should_ask: boolean; step: number } };
+export type Settings = {
+  tone: Tone; fact_bomb_ack: boolean; gentle_today: string | null; comfort_only_today: string | null;
+  suggestions: "적게" | "보통" | "많이"; cross_links: "숨김" | "눌렀을 때" | "항상"; weather_ask: boolean;
+};
+export type Me = { user: { id: string; email: string }; settings: Settings;
+  onboarding: { entries: number; aspiration: string; weather_asked: boolean } };
+export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
+export type Ontology = typeof import("./ontology.json");
+export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null };
+
+export class ApiError extends Error {
+  constructor(public status: number, public code: string, message: string) { super(message); }
+}
+
+/* ---------- 로그인 (Supabase) ---------- */
+let sb: SupabaseClient | null = null;
+export function supabase(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return (sb ??= createClient(url, key));
+}
+async function token(): Promise<string | null> {
+  const c = supabase();
+  return c ? (await c.auth.getSession()).data.session?.access_token ?? null : null;
+}
+
+/* ---------- 요청 ---------- */
+async function req(method: string, path: string, body?: unknown): Promise<Response> {
+  const t = await token();
+  const res = await fetch(BASE + path, {
+    method,
+    headers: { ...(body !== undefined && { "Content-Type": "application/json" }), ...(t && { Authorization: `Bearer ${t}` }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);
+    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status, j?.error?.message ?? "잠시 뒤 다시 해 주세요.");
+  }
+  return res;
+}
+const json = async <T,>(method: string, path: string, body?: unknown): Promise<T> => {
+  const r = await req(method, path, body);
+  return (r.status === 204 ? null : await r.json()) as T;
+};
+const mock = () => import("./mock");
+
+/* ---------- SSE 읽기 ---------- */
+export type StreamHandlers = { onProgress: (p: Progress) => void };
+
+// "event: x\ndata: {...}\n\n" 덩어리를 하나씩 꺼낸다. ":" 로 시작하는 줄(keep-alive)은 무시한다.
+export function parseSSE(buf: string): { events: { event: string; data: string }[]; rest: string } {
+  const parts = buf.replace(/\r\n/g, "\n").split("\n\n");
+  const rest = parts.pop() ?? "";
+  const events = [];
+  for (const block of parts) {
+    let event = "message", data = "";
+    for (const line of block.split("\n")) {
+      if (!line || line.startsWith(":")) continue;
+      const i = line.indexOf(":"), k = i < 0 ? line : line.slice(0, i), v = i < 0 ? "" : line.slice(i + 1).replace(/^ /, "");
+      if (k === "event") event = v;
+      else if (k === "data") data += (data ? "\n" : "") + v;
+    }
+    if (data) events.push({ event, data });
+  }
+  return { events, rest };
+}
+
+// 스트림을 끝까지 읽어 EntryResult 를 돌려준다. error 이벤트나 끊김은 StreamError 로 던진다.
+async function readStream(res: Response, h: StreamHandlers): Promise<EntryResult> {
+  const reader = res.body!.getReader(), dec = new TextDecoder();
+  let buf = "", entryId: string | null = null;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const p = parseSSE(buf + dec.decode(value, { stream: true }));
+      buf = p.rest;
+      for (const e of p.events) {
+        const d = JSON.parse(e.data);
+        if (e.event === "progress") { entryId = d.entry_id; h.onProgress(d); }
+        else if (e.event === "result") return d as EntryResult;
+        else if (e.event === "error") throw { ...d, entry_id: d.entry_id ?? entryId } as StreamError;
+      }
+    }
+  } catch (e) {
+    if ((e as StreamError).code) throw e;
+    // 네트워크 끊김: 아래에서 이어서 하기로 처리
+  }
+  throw { entry_id: entryId, code: "disconnected", message: "연결이 끊겼어요.", resumable: !!entryId } as StreamError;
+}
+
+/* ---------- 일기 ---------- */
+export async function writeDiary(input: DiaryInput, h: StreamHandlers): Promise<EntryResult> {
+  if (MOCK) return (await mock()).writeDiary(input, h);
+  const t = await token();
+  let res: Response;
+  try {
+    res = await fetch(BASE + "/diary/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(t && { Authorization: `Bearer ${t}` }) },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw { entry_id: null, code: "network", message: "서버에 닿지 못했어요. 글은 화면에 그대로 있어요.", resumable: false } as StreamError;
+  }
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);
+    throw { entry_id: null, code: j?.error?.code ?? "http", message: j?.error?.message ?? "잠시 뒤 다시 해 주세요.", resumable: false } as StreamError;
+  }
+  return readStream(res, h);
+}
+export async function resumeDiary(id: string, h: StreamHandlers): Promise<EntryResult> {
+  if (MOCK) return (await mock()).resumeDiary(id, h);
+  return readStream(await req("POST", `/diary/${encodeURIComponent(id)}/resume/stream`), h);
+}
+export async function getDiary(id: string): Promise<EntryResult> {
+  return MOCK ? (await mock()).getDiary(id) : json("GET", `/diary/${encodeURIComponent(id)}`);
+}
+export async function listDiary(before?: string): Promise<{ entries: EntrySummary[] }> {
+  if (MOCK) return (await mock()).listDiary();
+  return json("GET", `/diary?limit=20${before ? "&before=" + encodeURIComponent(before) : ""}`);
+}
+
+/* ---------- 우주 · 온톨로지 ---------- */
+export async function getUniverse(): Promise<Universe> {
+  return MOCK ? (await mock()).getUniverse() : json("GET", "/universe");
+}
+export async function getOntology(): Promise<Ontology> {
+  return MOCK ? (await import("./ontology.json")).default : json("GET", "/ontology");
+}
+
+/* ---------- 피드백 ---------- */
+export async function sendFeedback(f: Feedback): Promise<{ ok: boolean; state: unknown }> {
+  return MOCK ? (await mock()).sendFeedback(f) : json("POST", "/feedback", f);
+}
+
+/* ---------- 사람 ---------- */
+export async function listPeople(): Promise<{ people: Person[] }> {
+  return MOCK ? (await mock()).listPeople() : json("GET", "/people");
+}
+export async function addPerson(p: { name: string; nickname: string; relation: string }): Promise<Person> {
+  return MOCK ? (await mock()).addPerson(p) : json("POST", "/people", p);
+}
+export async function updatePerson(id: string, p: Partial<Person>): Promise<Person> {
+  return MOCK ? (await mock()).updatePerson(id, p) : json("PATCH", `/people/${encodeURIComponent(id)}`, p);
+}
+export async function deletePerson(id: string): Promise<{ ok: boolean; replaced: number }> {
+  return MOCK ? (await mock()).deletePerson(id) : json("DELETE", `/people/${encodeURIComponent(id)}`);
+}
+export async function answerPersonQuestion(id: string, answer: string): Promise<{ ok: boolean }> {
+  return MOCK ? { ok: true } : json("POST", `/people/questions/${encodeURIComponent(id)}`, { answer });
+}
+
+/* ---------- 되고 싶은 모습 ---------- */
+export async function getAspiration(): Promise<AspirationState> {
+  return MOCK ? (await mock()).getAspiration() : json("GET", "/aspiration");
+}
+export async function saveAspiration(a: { now: string; want: string; obstacle: string; if_then: string; values: string[] }): Promise<Aspiration> {
+  return MOCK ? (await mock()).saveAspiration(a) : json("POST", "/aspiration", a);
+}
+export async function declineAspiration(mode: "skip" | "stop"): Promise<{ ok: boolean }> {
+  return MOCK ? { ok: true } : json("POST", "/aspiration/decline", { mode });
+}
+
+/* ---------- 나 · 설정 ---------- */
+export async function getMe(): Promise<Me> {
+  return MOCK ? (await mock()).getMe() : json("GET", "/me");
+}
+export async function patchSettings(s: Partial<Settings>): Promise<Settings> {
+  return MOCK ? (await mock()).patchSettings(s) : json("PATCH", "/settings", s);
+}
