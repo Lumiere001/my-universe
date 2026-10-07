@@ -12,21 +12,35 @@
 | DB · 로그인 (Supabase, 구글 로그인) | `supabase/` | 로컬 스택 54321 |
 
 ```bash
-cp .env.example .env                 # 키 채우기(키는 .env 에만)
-uv sync && uv run --frozen pytest -q # 테스트
+cp .env.example .env                 # Upstage 키 · Studio Agent ID 채우기(키는 .env 에만)
+uv sync
 
-scripts/dev_up.sh                    # 처음 한 번: 로컬 Supabase · .env.local · 시험용 계정 · 하늘 데모 우주
-scripts/start.sh                     # 로컬 개발: Supabase · ChromaDB · 백엔드 · 화면 → http://localhost:3000
-scripts/stop.sh
+scripts/dev_up.sh                    # 처음 한 번(Docker 켜 둔 채): 로컬 Supabase · ChromaDB · .env.local · 시험용 계정 · 하늘 데모 우주
+scripts/start.sh                     # 로컬 개발: Supabase · ChromaDB · 백엔드 8001 · 화면 → http://localhost:3000
+scripts/stop.sh                      # 끄기(데이터는 남김)
 
 scripts/start_docker.sh              # Docker 3개: ChromaDB 8000 · 백엔드 8001 · 화면 8002 → http://localhost:8002
 scripts/stop_docker.sh
 ```
 
-Docker 3개는 로컬 Supabase(dev_up.sh)에 붙고, `.env.local`에서 컨테이너용 `.env.docker.local`을 알아서 만든다. start.sh로 켠 백엔드(8001)가 있으면 그 프로세스만 먼저 끄거나 `BACKEND_HOST_PORT` 등으로 포트를 바꾼다. 2026-10-08 실제 백엔드로 확인한 결과: [docs/docker-verify.md](docs/docker-verify.md).
+- 로그인: 로컬은 시험용 계정(tester@my-universe.test, 비밀번호는 `.env.local`의 `DEV_TEST_PASSWORD`). API 문서 `http://localhost:8001/docs`는 로컬만 열린다(`.env.local`의 `API_DOCS=1`, 배포는 꺼짐).
+- 로컬 Supabase 를 보안 마이그레이션 전에 만들었다면 `supabase migration up --local`(통합 시험이 없으면 알려 준다).
+- Docker 3개는 로컬 Supabase(dev_up.sh)에 붙고, `.env.local`에서 컨테이너용 `.env.docker.local`을 알아서 만든다. start.sh로 켠 백엔드(8001)가 있으면 그 프로세스만 먼저 끄거나 `BACKEND_HOST_PORT` 등으로 포트를 바꾼다. 2026-10-08 실제 백엔드로 확인한 결과: [docs/docker-verify.md](docs/docker-verify.md).
+- 로컬 Supabase 스택은 같은 와이파이에 열려 있어 **가상 인물 데이터만** 넣는다(deploy/README §3).
 
-- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`). 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md).
-- 원칙: 일기 원문 · 인용 · 사람 이름은 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호가 있으면 평소 흐름을 멈추고 돌봄으로 바꾼다.
+시험:
+
+```bash
+uv run --frozen pytest -q                                 # 463개(로컬 Supabase 가 켜져 있으면 DB 통합 시험 포함)
+uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
+uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
+uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
+```
+
+결과와 합격 기준: [docs/eval-v8.md](docs/eval-v8.md), [docs/ws5-e2e.md](docs/ws5-e2e.md), 화면 실제 모드 e2e는 [docs/e2e-real.md](docs/e2e-real.md). 유료 실행은 `runs/cost_ledger.jsonl`에 한 줄씩 남긴다.
+
+- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 배포에는 `ALLOWED_EMAILS`(쓸 수 있는 계정)를 꼭 넣는다.
+- 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호가 있으면(규칙 + Solar 2단 판정) 평소 흐름을 멈추고 돌봄으로 바꾼다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
 
 ---
 
