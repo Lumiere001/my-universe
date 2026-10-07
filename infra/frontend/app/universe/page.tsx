@@ -47,6 +47,7 @@ export default function UniversePage() {
               {p.name} <span className="sub">{p.relation}</span>
             </button>
           ))}
+          {glow?.size === 0 && <span className="badge" role="status">이 사람이 나온 기록이 아직 없어요</span>}
         </div>
 
         {planet && (

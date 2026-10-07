@@ -47,12 +47,12 @@ export default function PeoplePage() {
           ) : del?.id === p.id ? (
             <div className="stack" role="alertdialog" aria-label={`${p.name} 지우기 확인`}>
               <p style={{ margin: 0 }}>
-                <b>{p.name}</b>을(를) 지우면, 저장된 글에서 이름 “{p.name}”을(를) 관계 말 “{p.relation}”(으)로 바꿔요.
+                <b>{p.name}</b>을(를) 지우면, 저장된 글에서 이름 “{p.name}”을(를) 관계 말 “{p.relation || "그 사람"}”(으)로 바꿔요.
                 문장 · 생각 · 이어진 선은 그대로 남아요.
               </p>
               <div className="row">
                 <button className="danger small" onClick={async () => {
-                  const r = await deletePerson(p.id); setDel(null); setMsg(`${p.name}을(를) 지웠어요. 글 ${r.replaced}곳의 이름을 “${p.relation}”(으)로 바꿨어요.`); reload();
+                  const r = await deletePerson(p.id); setDel(null); setMsg(`${p.name}을(를) 지웠어요. 글 ${r.replaced}곳의 이름을 “${p.relation || "그 사람"}”(으)로 바꿨어요.`); reload();
                 }}>지우기</button>
                 <button className="small" onClick={() => setDel(null)}>취소</button>
               </div>
@@ -60,7 +60,7 @@ export default function PeoplePage() {
           ) : (
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
-                <b>{p.name}</b>{p.nickname && <span className="sub"> · {p.nickname}</span>} <span className="badge">{p.relation}</span>
+                <b>{p.name}</b>{p.nickname && <span className="sub"> · {p.nickname}</span>} {p.relation ? <span className="badge">{p.relation}</span> : <span className="sub">관계 미정</span>}
                 {p.auto && <span className="sub"> · 글에서 찾음</span>}
                 <div className="sub">나온 기록 {p.planets.length}편</div>
               </div>
