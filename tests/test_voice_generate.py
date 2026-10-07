@@ -318,3 +318,43 @@ def test_gentle_line_only_in_fact_bomb_prompt(fake):
     fake["answers"] = [{"message": "오늘 기록 잘 받았어요.", "next_question": ""}]
     voice.generate(ctx(tone="담백하게"))
     assert "살살" not in sys_prompt(fake)
+
+
+# --- 넘지 않는 선 2 · 3(골든셋과 다른 예문) ---
+
+def _probs(msg, sources=None):
+    return checks.problems(msg, "", sources=sources or [msg], past=[], comfort=False, aspiration=False, tone="팩폭")
+
+
+@pytest.mark.parametrize("bad", [
+    "그 몸매로 수영복 걱정하는 거야?",                        # 외모
+    "네 가족이 원래 다 그렇잖아.",                             # 가족
+    "피는 못 속인다더니.",
+    "마흔 넘어서 아직 이러고 있냐.",                           # 나이
+    "나잇값 좀 해.",
+    "감기 걸렸다는 건 변명이야. 그냥 뛰어.",                   # 아픔
+    "아파도 했어야지.",
+    "할머니 장례 끝난 지가 언젠데 아직도 울고 있어?",          # 상실
+    "동기가 네 아이디어 가져간 건 네가 만만하니까.",           # 남이 한 일
+    "선배가 화낸 건 다 너 때문이야.",
+    "글을 보니 불안장애 같아요.",                              # 진단(safety.judged)
+])
+def test_line_three_and_identity_flagged(bad):
+    assert _probs(bad), bad
+
+
+@pytest.mark.parametrize("ok", [
+    "감기 탓이지 네 탓 아니다. 오늘은 푹 자.",
+    "야근 핑계는 그만. 오늘 30분만 써.",
+    "마감 넘긴 건 네가 미뤄서야. 오늘 첫 줄 써.",               # 자기 행동은 짚어도 된다
+    "엄마가 원래 작약을 좋아하셨지.",
+    "아픈 몸으로 여기까지 버텼네요.",
+])
+def test_line_three_not_flagged(ok):
+    assert _probs(ok) == [], ok
+
+
+def test_loss_cue_from_sources():
+    msg = "언제까지 그러고 있을 거야? 정신 차려."
+    assert _probs(msg, ["오늘 아빠 기일이었다. 하루 종일 울었다."])
+    assert _probs(msg, ["보고서 또 미뤘다."]) == []                 # 상실이 없으면 미루기를 짚는 말로 본다

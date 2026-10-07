@@ -15,6 +15,7 @@ POOL = {
     "other": ["도윤", "하준", "서진", "지안", "예준", "윤호", "은찬", "시온", "태민", "주원"],
 }
 PREFIX = ["", "백", "소", "편", "석", "탁", "봉", "견", "옥", "빈"]  # 모자라면 성을 붙인다(끝 글자가 같아 갈래 유지)
+SURNAME = ["한", "윤", "오", "남", "강", "임", "장", "신", "권", "유", "문", "배"]   # 성 붙은 이름의 가명 성
 
 HONOR = "선생님|형님|형|누나|오빠|언니|선배|후배|씨|쌤"
 SUFFIX = "이가|이랑|이는|이한테|이도|이를|이와|이네|이의|이에게|이처럼|이하고"   # 받침 있는 이름 뒤에 붙는 '이' + 조사
@@ -31,6 +32,18 @@ WORDY = {"하늘", "봄", "별", "바다", "솔", "나래", "은하", "사랑", 
          "진주", "구슬", "여름", "가을", "겨울", "노을", "새벽", "빛나", "이슬", "초롱", "마루", "누리", "송이",
          "단비", "나비", "햇살", "온유", "믿음", "샛별", "아름"}
 CAND = re.compile(rf"(?<![가-힣])([가-힣]{{2,3}})(?:(?P<h>\s?(?:{HONOR}))|(?:{SUFFIX})(?![가-힣]))")
+# 받침 없는 이름 + 조사(지우가 · 지우는)는 "나무가 · 버스는"과 꼴이 같다. 같은 문장에 사람과 함께 쓰는 말이 있을 때만,
+# 흔한 낱말을 빼고 "이름인지 낱말인지" 물을 후보로 올린다(가명으로는 가린다, 결정 3: 확실하지 않으면 가명).
+# ponytail: 낱말 목록 · 동사 목록이라 빠진 말은 오탐(가명으로 가려짐)이 난다. 오탐이 거슬리면 COMMON 에 더한다.
+LOOSE = re.compile(r"(?<![가-힣])([가-힣]{2,3})(?:가|는|랑|한테|에게|하고|도|를|와)(?![가-힣])")
+PERSON_ACT = re.compile(r"연락|말을?\s?걸|말했|말해|물어|물었|얘기|이야기|전화|문자|카톡|만나|만났|웃었|웃어|울었|놀았|놀자"
+                        r"|하자고|가자고|자고\s?했|싸웠|사과|고맙|고마워|고마운|미안|부탁|도와|챙겨|안아|칭찬|혼냈|화냈|약속|데리러|좋아해"
+                        r"|보고\s?싶|생일|축하|위로|기다려|기다렸|불렀|답장")
+COMMON = set("""아이 애기 아기 아내 여보 이모 고모 조카 부부 커플 기사 의사 교사 가수 배우 작가 기자 주부 아버지 어머니 할머니
+아저씨 아줌마 할매 할배 고양이 강아지 냥이 오후 오전 어제 모레 요새 하루 과제 회의 휴가 나도 너도 저도 그녀 그대 얘기 이야기
+소리 노래 커피 버스 기차 택시 문자 전화 메시지 부탁 사과 서로 아무 그게 이게 저게 거기 여기 저기 그거 이거 저거 나머지
+차라리 혹시 제발 대리 교수 매니저 시누 그애 다시 바로 우선 그때 이때 처음 오래 자주 가끔 나중 이제 아마 정말 진짜 너무 조금
+그냥 동료 상사 가게 남자 여자 먼저 많이 카페 서류 메모 리더 파트너 크루 스터디 파티 데이트 투어 우유 두유 고구마 과자 피자 쿠키 케이크 치즈 주스 바나나 토마토""".split())
 
 # 조사 짝: (원래 글에 나올 수 있는 꼴, 받침 있는 말 뒤, 받침 없는 말 뒤). 이름 뒤 '이'(민준이가)도 함께 뗀다.
 JOSA = [
@@ -76,6 +89,22 @@ def _candidates(text, known=()):
     return out
 
 
+def _loose(text, known=()):
+    if known:
+        text = re.sub(_alt(known), "·", text)
+    out = []
+    for sent in re.split(r"[.!?。\n]", text or ""):
+        if not PERSON_ACT.search(sent):
+            continue
+        for m in LOOSE.finditer(sent):
+            n = m.group(1)
+            if n.endswith("이") and _cls(n[:-1]) != "none":
+                continue   # 받침 있는 이름 + '이'(서윤이가)는 CAND 가 맡는다
+            if _cls(n) == "none" and n not in NOT_NAMES | COMMON and n[-1] not in ENDINGS | set("다요죠") and n not in out:
+                out.append(n)
+    return out
+
+
 def find_new_names(text, people):
     """사람 목록에 없는 이름 후보 → {"auto": [이름], "ask": [{"name", "reason"}]}.
     reason: 동명이인(목록에 같은 이름이 둘 이상) · 별명(이미 있는 이름과 겹침) · 이름인지 낱말인지."""
@@ -93,6 +122,8 @@ def find_new_names(text, people):
             ask.append({"name": c, "reason": "별명"})
         else:
             auto.append(c)
+    seen = set(auto) | {a["name"] for a in ask}
+    ask += [{"name": n, "reason": "이름인지 낱말인지"} for n in _loose(text, known) if n not in seen]
     return {"auto": auto, "ask": ask}
 
 
@@ -102,27 +133,27 @@ def find_new_names(text, people):
 
 def mask(text, people):
     """이름 · 별명 · 새 이름 후보를 가명으로 → (가명 글, 바꿈 표 {가명: 원래 말}).
-    한 사람의 같은 받침 갈래 말은 같은 가명을 쓴다. 호칭 · 조사가 붙어도 글자째 바꾼다."""
+    말 꼴마다 따로 가명을 줘서 되돌리면 글자째 같다(왕복 일치 우선). 받침 갈래는 원래 말과 같게(조사 유지).
+    성 붙은 이름은 '가명 성 + 이름 가명'(고민석 → 한도윤, 민석 → 도윤)으로 이어 보이게 한다."""
     text = text or ""
     found = find_new_names(text, people)
     persons = [_terms(p) for p in people] + [[c] for c in found["auto"] + [a["name"] for a in found["ask"]]]
     real = {t for ts in persons for t in ts}
     pools = {c: iter([pre + n for pre in PREFIX for n in POOL[c]]) for c in POOL}
-    table, sub = {}, {}
+    sub = {}
+
+    def fresh(cands):
+        return next(n for n in cands if n not in text and n not in sub.values() and not any(n in r or r in n for r in real))
+
     for terms in persons:
-        given = {}
-        for t in terms:
+        for t in sorted(terms, key=len):   # 짧은 말부터: 성 붙은 이름이 이름의 가명을 이어 받는다
             if t not in text or t in sub:
                 continue
-            c = _cls(t)
-            if c not in given:
-                given[c] = next(n for n in pools[c] if n not in text and not any(n in r or r in n for r in real))
-                # ponytail: 같은 사람의 이름과 별명이 한 글에 같이 나오면 되돌릴 때 먼저 나온 말(이름)로 맞춘다.
-                table[given[c]] = t
-            sub[t] = given[c]
+            base = next((b for b in terms if len(t) == len(b) + 1 and t.endswith(b) and b in sub), None)
+            sub[t] = fresh(f + sub[base] for f in SURNAME if f != t[0]) if base else fresh(pools[_cls(t)])
     if sub:
         text = re.sub(_alt(sub), lambda m: sub[m.group()], text)
-    return text, {p: t for p, t in table.items() if p in text}   # 다른 이름 속에만 있던 말(민준이 속 '준이')의 가명은 뺀다
+    return text, {p: t for t, p in sub.items() if p in text}   # 다른 이름 속에만 있던 말(민준이 속 '준이')의 가명은 뺀다
 
 
 def unmask(text, table):

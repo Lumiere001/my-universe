@@ -190,3 +190,41 @@ def test_mask_hides_ask_candidates():
 ])
 def test_forget(text, person, want):
     assert forget(text, person) == want
+
+
+##################################################
+# 왕복 일치 우선: 말 꼴마다 되돌릴 수 있는 가명(골든셋과 다른 인물 · 예문)
+##################################################
+
+@pytest.mark.parametrize("text,person", [
+    ("서진 선배가 도와줬다. 윤서진 선배 덕분이다.", {"name": "윤서진", "nicknames": ["서진"], "relation": "선배"}),
+    ("온온이가 웃었다. 다온을 꼭 안아 줬다.", {"name": "다온", "nicknames": ["온온이"], "relation": "딸"}),
+    ("유리 언니가 왔다. 꼬미가 반겼다. 유리는 꼬미를 안았다.", {"name": "유리", "nicknames": ["꼬미"], "relation": "언니"}),
+])
+def test_round_trip_name_and_nickname(text, person):
+    masked, table = mask(text, [person])
+    assert unmask(masked, table) == text
+    assert_no_real_names(masked, [person])
+
+
+def test_surname_pseudonym_follows_given_name():
+    person = {"name": "윤서진", "nicknames": ["서진"], "relation": "선배"}
+    masked, table = mask("윤서진 선배와 서진 선배.", [person])
+    inv = {v: k for k, v in table.items()}
+    assert len(inv["윤서진"]) == 3 and inv["윤서진"][1:] == inv["서진"] and inv["윤서진"][0] != "윤"
+    back = unmask(" / ".join(f"{k}에게 고마움" for k in table), table)   # 외부 AI가 가명으로 새 문장을 써도 되돌아온다
+    assert not any(k in back for k in table) and all(v in back for v in table.values())
+
+
+def test_loose_new_name_with_particle_is_hidden():
+    text = "유나가 같이 밥 먹자고 연락했다. 유나는 늘 다정하다. 세라한테 고맙다고 했다."
+    masked, table = mask(text, [])
+    assert "유나" not in masked and "세라" not in masked and unmask(masked, table) == text
+    assert {"유나", "세라"} <= {a["name"] for a in find_new_names(text, [])["ask"]}
+
+
+@pytest.mark.parametrize("text", ["버스가 늦게 와서 친구한테 연락했다.", "아무도 연락하지 않았다.", "이모가 전화했다.",
+                                  "커피는 식었고 동료랑 웃었다.", "우유가 떨어져서 사러 갔다가 이웃을 만났다.",
+                                  "나무가 예뻐서 엄마한테 보냈다. 엄마가 웃었다."])
+def test_loose_skips_common_words(text):
+    assert find_new_names(text, PEOPLE) == {"auto": [], "ask": []}
