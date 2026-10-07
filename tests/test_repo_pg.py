@@ -27,6 +27,13 @@ if config.DATABASE_URL and not _up():
 from tests.test_graph_flow import DAY1, DAY2, NAMES, FakeUpstage  # noqa: E402
 
 
+@pytest.fixture(scope="module", autouse=True)
+def migrated():
+    with psycopg.connect(config.DATABASE_URL) as c:
+        if not c.execute("select 1 from pg_roles where rolname = 'app_user'").fetchone():
+            pytest.fail("로컬 DB 에 보안 마이그레이션(20261009000000_v8_security)이 없어요: supabase migration up --local")
+
+
 @pytest.fixture(scope="module")
 def users():
     from app.core import seed
