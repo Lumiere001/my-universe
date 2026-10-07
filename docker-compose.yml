@@ -1,0 +1,48 @@
+# 나의 우주 3개 컨테이너: ChromaDB 8000 · 백엔드 8001 · 화면 8002 (2차 가이드 ⑥).
+#   scripts/start_docker.sh  (= docker compose up -d --build)
+#   scripts/stop_docker.sh   (= docker compose down)
+# 호스트 포트는 바꿀 수 있다: CHROMA_HOST_PORT · BACKEND_HOST_PORT · FRONTEND_HOST_PORT
+# Supabase 는 compose 밖(로컬 `supabase start` 스택 또는 클라우드). 주소는 .env 에서 읽고,
+# 컨테이너 안에서만 달라야 하는 값(예: 로컬 스택 → host.docker.internal)은 .env.docker.local 에 둔다.
+name: my-universe
+
+services:
+  chroma:
+    image: chromadb/chroma:1.5.9
+    ports: ["${CHROMA_HOST_PORT:-8000}:8000"]
+    volumes: [chroma-data:/data]
+
+  backend:
+    build: { context: ., dockerfile: Dockerfile }
+    env_file:
+      - path: .env
+      - path: .env.docker.local
+        required: false
+    environment:
+      # 컨테이너 안에서는 compose 의 chroma 에 붙는다(Chroma Cloud 키가 .env 에 있어도 쓰지 않음)
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      CHROMA_API_KEY: ""
+      LOG_TO_FILE: "1"
+      FRONTEND_ORIGIN: http://localhost:${FRONTEND_HOST_PORT:-8002}
+    ports: ["${BACKEND_HOST_PORT:-8001}:8001"]
+    volumes: [./logs:/srv/logs]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [chroma]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/frontend/Dockerfile
+      args:
+        # 브라우저가 부르는 주소라 호스트 포트를 쓴다
+        NEXT_PUBLIC_API_BASE: http://localhost:${BACKEND_HOST_PORT:-8001}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:54321}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_DEV_LOGIN: ${NEXT_PUBLIC_DEV_LOGIN:-0}
+        NEXT_PUBLIC_MOCK: ${NEXT_PUBLIC_MOCK:-0}
+    ports: ["${FRONTEND_HOST_PORT:-8002}:8002"]
+    depends_on: [backend]
+
+volumes:
+  chroma-data:

@@ -1,5 +1,34 @@
 # 🌌 나의 우주
 
+## v8 · 10/17 판
+
+일기를 생각 단위로 나눠 우주(해 = 삶의 영역, 해 곁의 작은 별 = 세부 주제, 행성 = 기록)로 보여 주고 말을 거는 일기장. 10/17부터 팀원이 실제 사용자로 휴대폰 · PC에서 매일 쓴다. 계획은 [docs/plan-v8-1017.md](docs/plan-v8-1017.md), API는 [docs/api-v8.md](docs/api-v8.md).
+
+| 부분 | 위치 | 포트 |
+| --- | --- | --- |
+| 화면 (Next.js) | `infra/frontend/` | 로컬 3000 · Docker 8002 |
+| 백엔드 (FastAPI + LangGraph, SSE) | `main.py`, `app/` | 8001 |
+| 벡터 저장 (ChromaDB) | 컨테이너 / 배포는 Chroma Cloud | 8000 |
+| DB · 로그인 (Supabase, 구글 로그인) | `supabase/` | 로컬 스택 54321 |
+
+```bash
+cp .env.example .env                 # 키 채우기(키는 .env 에만)
+uv sync && uv run --frozen pytest -q # 테스트
+
+scripts/start.sh                     # 로컬 개발: Supabase · ChromaDB · 백엔드 · 화면 → http://localhost:3000
+scripts/stop.sh
+
+scripts/start_docker.sh              # Docker 3개: ChromaDB 8000 · 백엔드 8001 · 화면 8002 → http://localhost:8002
+scripts/stop_docker.sh
+```
+
+- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`). 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md).
+- 원칙: 일기 원문 · 인용 · 사람 이름은 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호가 있으면 평소 흐름을 멈추고 돌봄으로 바꾼다.
+
+---
+
+아래는 1차 MVP(2026-10-03) 설명 그대로다. 1차 Streamlit 앱은 새 작업 없이 남겨 둔다.
+
 **내가 쓴 글에서 지켜 온 생각, 바뀐 생각, 아직 풀지 못한 긴장을 근거와 함께 보여 주는 서비스.**
 **말을 거는 일기장**입니다. 대화(목업) · 글 · 손글씨 사진으로 쓴 일기를 정리해 쌓고, 글 한 편은 별, 삶의 영역은 태양계, 세부 주제는 그 해를 도는 행성, 생각 사이의 관계는 별자리로 그립니다. 전남대 생성형 AI 트랙 LLMOps 1차 프로젝트 · 5조.
 
