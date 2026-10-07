@@ -15,12 +15,15 @@
 cp .env.example .env                 # 키 채우기(키는 .env 에만)
 uv sync && uv run --frozen pytest -q # 테스트
 
+scripts/dev_up.sh                    # 처음 한 번: 로컬 Supabase · .env.local · 시험용 계정 · 하늘 데모 우주
 scripts/start.sh                     # 로컬 개발: Supabase · ChromaDB · 백엔드 · 화면 → http://localhost:3000
 scripts/stop.sh
 
 scripts/start_docker.sh              # Docker 3개: ChromaDB 8000 · 백엔드 8001 · 화면 8002 → http://localhost:8002
 scripts/stop_docker.sh
 ```
+
+Docker 3개는 로컬 Supabase(dev_up.sh)에 붙고, `.env.local`에서 컨테이너용 `.env.docker.local`을 알아서 만든다. start.sh로 켠 백엔드(8001)가 있으면 그 프로세스만 먼저 끄거나 `BACKEND_HOST_PORT` 등으로 포트를 바꾼다. 2026-10-08 실제 백엔드로 확인한 결과: [docs/docker-verify.md](docs/docker-verify.md).
 
 - 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`). 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md).
 - 원칙: 일기 원문 · 인용 · 사람 이름은 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호가 있으면 평소 흐름을 멈추고 돌봄으로 바꾼다.

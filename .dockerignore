@@ -13,6 +13,9 @@
 infra/frontend/test-results
 infra/frontend/playwright-report
 data
+# 백엔드가 실행 중에 읽는 기준 축 벡터 파일(app/agents/tools.py sun_vectors)만 넣는다
+!data/ops/domain_aliases_*.json
+!data/ops/topic_center_*.json
 runs
 logs
 output

@@ -9,10 +9,14 @@ ENV PYTHONUNBUFFERED=1 UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy LOG_TO_FILE=1
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-# 실행에 필요한 것만. 1차 Streamlit 파일 · data/ · 테스트는 넣지 않는다.
+# 실행에 필요한 것만. 1차 Streamlit 파일 · 테스트 · 일기 데이터는 넣지 않는다.
+# data/ops 의 두 파일은 해 분류용 기준 축 벡터(app/agents/tools.py sun_vectors, 없으면 조용히 빈 값).
 COPY main.py ./
 COPY app ./app
+COPY data/ops/domain_aliases_*.json data/ops/topic_center_*.json ./data/ops/
 
 EXPOSE 8001
+# 로그 파일 이름 · 시각을 한국 시간으로(로컬과 같게). 하루 한도는 앱이 APP_TIMEZONE 으로 따로 센다.
+ENV TZ=Asia/Seoul
 # 로그는 /srv/logs (compose 가 ./logs 로 마운트). 원문은 로그에 남기지 않는다(앱 규칙).
 CMD ["/srv/.venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
