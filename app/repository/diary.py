@@ -1,0 +1,322 @@
+"""
+app/repository/diary.py
+
+나의 우주 데이터 읽기 · 쓰기. 원문은 여기서만 암호화 · 복호화한다(security.seal / unseal, aad = '표:행 id').
+세션 s 는 repo.session(user_id) 가 준 것(모든 쿼리에 그 사용자 id 가 붙고 RLS 가 걸림).
+"""
+
+import secrets
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+from app.core import config, security
+from app.service.safety import forget
+
+TZ = ZoneInfo(config.TIMEZONE)
+SETTINGS = {"tone": "다정하게", "fact_bomb_ack": False, "gentle_today": None, "comfort_only_today": None,
+            "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True}
+ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
+ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions")
+
+
+def new_id(prefix):
+    return f"{prefix}_{secrets.token_hex(6)}"
+
+
+def now():
+    return datetime.now(timezone.utc)
+
+
+def iso(dt):
+    return dt.astimezone(TZ).isoformat(timespec="seconds") if dt else None
+
+
+def local_day(dt):
+    return dt.astimezone(TZ).date().isoformat()
+
+
+def parse_dt(s):
+    dt = datetime.fromisoformat(s)
+    return dt if dt.tzinfo else dt.replace(tzinfo=TZ)
+
+
+def today():
+    return datetime.now(TZ).date().isoformat()
+
+
+def seal(s, table, rid, data):
+    return security.seal(s.uid, f"{table}:{rid}", data)
+
+
+def unseal(s, table, rid, blob):
+    return security.unseal(s.uid, f"{table}:{rid}", blob)
+
+
+def _rid(table, row):
+    return row["key"] if table == "states" else row["id"]
+
+
+def _map_strings(x, fn):
+    if isinstance(x, str):
+        return fn(x)
+    if isinstance(x, list):
+        return [_map_strings(v, fn) for v in x]
+    if isinstance(x, dict):
+        return {k: _map_strings(v, fn) for k, v in x.items()}
+    return x
+
+
+##################################################
+# 나 · 설정
+##################################################
+
+def profile(s):
+    r = s.rows("profiles")
+    if not r:
+        s.insert("profiles", {"settings": {}, "onboarding": {}})
+        r = [{"settings": {}, "onboarding": {}}]
+    return {**SETTINGS, **(r[0]["settings"] or {})}, {**ONBOARDING, **(r[0]["onboarding"] or {})}
+
+
+def save_profile(s, settings=None, onboarding=None):
+    st, ob = profile(s)
+    st, ob = {**st, **(settings or {})}, {**ob, **(onboarding or {})}
+    s.update("profiles", {"settings": st, "onboarding": ob})
+    return st, ob
+
+
+##################################################
+# 사람
+##################################################
+
+def people(s):
+    return [{"id": r["id"], **unseal(s, "people", r["id"], r["enc"]), "relation": r["relation"], "auto": r["auto"]}
+            for r in s.rows("people", order="created_at")]
+
+
+def add_person(s, name, nicknames=(), relation="", auto=False):
+    pid = new_id("p")
+    data = {"name": name, "nicknames": [n for n in nicknames if n]}
+    s.insert("people", {"id": pid, "relation": relation or "", "auto": auto, "enc": seal(s, "people", pid, data)})
+    return {"id": pid, **data, "relation": relation or "", "auto": auto}
+
+
+def update_person(s, pid, name=None, nicknames=None, relation=None):
+    p = next((p for p in people(s) if p["id"] == pid), None)
+    if not p:
+        return None
+    p = {**p, **{k: v for k, v in {"name": name, "nicknames": nicknames, "relation": relation}.items() if v is not None}}
+    s.update("people", {"relation": p["relation"], "auto": False,
+                        "enc": seal(s, "people", pid, {"name": p["name"], "nicknames": p["nicknames"]})}, id=pid)
+    return {**p, "auto": False}
+
+
+def delete_person(s, pid):
+    """지우기 = 저장된 글 속 이름 · 별명을 관계 말로 바꾸고 문장은 남긴다. 바꾼 행 수를 돌려준다."""
+    p = next((p for p in people(s) if p["id"] == pid), None)
+    if not p:
+        return None
+    replaced = 0
+    for table in ENC_TABLES + ("states",):
+        for r in s.rows(table):
+            rid = _rid(table, r)
+            data = unseal(s, table, rid, r["enc"])
+            new = _map_strings(data, lambda t: forget(t, p))
+            if new != data:
+                replaced += 1
+                s.update(table, {"enc": seal(s, table, rid, new)}, **({"key": rid} if table == "states" else {"id": rid}))
+    s.delete("thought_people", person_id=pid)
+    s.delete("people", id=pid)
+    return replaced
+
+
+def add_question(s, entry_id, name, reason):
+    qid = new_id("q")
+    s.insert("people_questions", {"id": qid, "entry_id": entry_id, "reason": reason, "answer": None,
+                                  "enc": seal(s, "people_questions", qid, {"name": name})})
+    return qid
+
+
+def questions(s, **eq):
+    return [{"id": r["id"], "entry_id": r["entry_id"], "reason": r["reason"], "answer": r["answer"],
+             **unseal(s, "people_questions", r["id"], r["enc"])} for r in s.rows("people_questions", order="created_at", **eq)]
+
+
+##################################################
+# 해 · 작은 별
+##################################################
+
+def suns(s):
+    return [{"id": r["id"], "name": r["name"], "custom": r["custom"]} for r in s.rows("suns", order="created_at")]
+
+
+def ensure_sun(s, name, custom=False):
+    hit = s.rows("suns", name=name)
+    if hit:
+        return hit[0]["id"]
+    sid = new_id("d")
+    s.insert("suns", {"id": sid, "name": name, "custom": custom})
+    return sid
+
+
+def stars(s):
+    return [{"id": r["id"], "sun_id": r["sun_id"], **unseal(s, "stars", r["id"], r["enc"])}
+            for r in s.rows("stars", order="created_at")]
+
+
+def add_star(s, sid, name, sun_id):
+    s.upsert("stars", {"id": sid, "sun_id": sun_id, "enc": seal(s, "stars", sid, {"name": name})})
+
+
+##################################################
+# 기록
+##################################################
+
+def create_entry(s, eid, written_at, weather, title, text):
+    s.insert("entries", {"id": eid, "written_at": written_at, "weather": weather, "status": "processing", "step": None,
+                         "crisis": False, "addressee": None, "star_id": None, "sun_id": None, "steps_enc": None,
+                         "error_code": None, "enc": seal(s, "entries", eid, {"title": title, "text": text}),
+                         "updated_at": now()})
+
+
+def entry(s, eid):
+    r = s.rows("entries", id=eid)
+    if not r:
+        return None
+    r = r[0]
+    r["data"] = unseal(s, "entries", eid, r["enc"])
+    r["steps"] = unseal(s, "entries.steps", eid, r["steps_enc"]) if r.get("steps_enc") else {}
+    return r
+
+
+def checkpoint(s, eid, step, steps):
+    s.update("entries", {"step": step, "steps_enc": seal(s, "entries.steps", eid, steps), "updated_at": now()}, id=eid)
+
+
+def set_status(s, eid, status, code=None):
+    s.update("entries", {"status": status, "error_code": code, "updated_at": now()}, id=eid)
+
+
+def entries(s, limit=None, before=None, **eq):
+    return [{**r, "data": unseal(s, "entries", r["id"], r["enc"])}
+            for r in s.rows("entries", order="written_at desc", limit=limit, lt={"written_at": before} if before else None, **eq)]
+
+
+def delete_entry(s, vectors, eid):
+    """기록과 그 생각 · 관계 · 한마디 · 벡터까지. 메모리 가짜에는 FK cascade 가 없어 직접 지운다."""
+    if not s.rows("entries", id=eid):
+        return False
+    tids = [t["id"] for t in s.rows("thoughts", entry_id=eid)]
+    for table, col in (("thought_people", "thought_id"), ("aspiration_reached", "thought_id")):
+        s.delete(table, **{col: tids})
+    s.delete("relations", from_thought=tids)
+    s.delete("relations", to_thought=tids)
+    for st in s.rows("states"):   # 이 기록의 생각 · 관계로 시작된 상태(키에 생각 id 가 들어 있음)
+        if any(t in st["key"] for t in tids):
+            s.delete("states", key=st["key"])
+    for table in ("thoughts", "messages", "aspiration_reached", "people_questions"):
+        s.delete(table, entry_id=eid)
+    s.delete("entries", id=eid)
+    vectors.delete(s.uid, entry_id=eid)
+    return True
+
+
+def thoughts(s, **eq):
+    out = []
+    for r in s.rows("thoughts", order="created_at", **eq):
+        d = unseal(s, "thoughts", r["id"], r["enc"])
+        out.append({k: r[k] for k in ("id", "entry_id", "star_id", "sun_id", "position", "kind", "certainty", "value", "grateful")}
+                   | d)
+    people_of = {}
+    for tp in s.rows("thought_people", thought_id=[t["id"] for t in out]) if out else []:
+        people_of.setdefault(tp["thought_id"], []).append(tp["person_id"])
+    for t in out:
+        t["people"] = people_of.get(t["id"], [])
+    return sorted(out, key=lambda t: (t["entry_id"], t["position"]))
+
+
+def save_thought(s, eid, t):
+    """t: 정리된 생각(graph 의 today 모양: id · thought · kind · certainty · value · quote · self_change · flags · original ·
+    topic · star_id · sun_id · position · people(사람 id))."""
+    s.insert("thoughts", {"id": t["id"], "entry_id": eid, "star_id": t["star_id"], "sun_id": t["sun_id"],
+                          "position": t["position"], "kind": t["kind"], "certainty": t["certainty"],
+                          "value": t["value"] or None, "grateful": "감사" in t["flags"],
+                          "enc": seal(s, "thoughts", t["id"], {"text": t["thought"], "quote": t["quote"],
+                                                               "self_change": t["self_change"] or None,
+                                                               "other": t["original"].get("kind"), "topic": t["topic"]})})
+    for pid in t["people"]:
+        s.insert("thought_people", {"thought_id": t["id"], "person_id": pid})
+
+
+def relations(s, **eq):
+    return [{"id": r["id"], "from": r["from_thought"], "to": r["to_thought"], "from_record": r["from_entry"],
+             "to_record": r["to_entry"], "type": r["type"], "group": r["grp"], "line": r["line"],
+             "cross_domain": r["cross_domain"], "needs_confirm": r["needs_confirm"], "vow_kept": r["vow_kept"],
+             **unseal(s, "relations", r["id"], r["enc"])} for r in s.rows("relations", order="created_at", **eq)]
+
+
+def save_relation(s, r):
+    s.upsert("relations", {"id": r["id"], "from_thought": r["from"], "to_thought": r["to"], "from_entry": r["from_record"],
+                           "to_entry": r["to_record"], "type": r["type"], "grp": r["group"], "line": r["line"],
+                           "cross_domain": r["cross_domain"], "needs_confirm": r["needs_confirm"],
+                           "vow_kept": r.get("vow_kept", False),
+                           "enc": seal(s, "relations", r["id"], {k: r.get(k) for k in ("explanation", "quote", "axis", "topic", "notes", "color")})})
+
+
+def states(s):
+    return {r["key"]: unseal(s, "states", r["key"], r["enc"]) for r in s.rows("states")}
+
+
+def save_states(s, new, old):
+    for k, v in new.items():
+        if old.get(k) != v:
+            s.upsert("states", {"key": k, "kind": v["kind"], "state": v.get("state"), "updated_at": now(),
+                                "enc": seal(s, "states", k, v)}, key=("user_id", "key"))
+    for k in set(old) - set(new):
+        s.delete("states", key=k)
+
+
+def past_messages(s):
+    return [unseal(s, "messages", r["id"], r["enc"]).get("text", "") for r in s.rows("messages", order="created_at")]
+
+
+def aspirations(s):
+    """판 순서(오래된 것 → 지금). 마지막이 지금 판."""
+    out = []
+    for r in s.rows("aspirations", order="version"):
+        reached = [{"entry_id": x["entry_id"], "thought_id": x["thought_id"], "at": x["at"],
+                    **unseal(s, "aspiration_reached", x["id"], x["enc"])}
+                   for x in s.rows("aspiration_reached", order="at", aspiration_id=r["id"])]
+        out.append({"id": r["id"], "version": r["version"], "values": list(r["values"] or []), "said_at": r["said_at"],
+                    **unseal(s, "aspirations", r["id"], r["enc"]), "reached": reached})
+    return out
+
+
+def add_aspiration(s, now_text, said, obstacle, if_then, values):
+    aid = new_id("a")
+    version = len(s.rows("aspirations")) + 1
+    s.insert("aspirations", {"id": aid, "version": version, "values": list(values), "said_at": now(),
+                             "enc": seal(s, "aspirations", aid, {"now": now_text, "said": said, "obstacle": obstacle,
+                                                                 "if_then": if_then})})
+    return aid
+
+
+def add_feedback(s, target, target_id, value, text=None):
+    fid = new_id("f")
+    s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": value,
+                          "enc": seal(s, "feedback", fid, {"text": text}) if text else None})
+
+
+def add_run(s, entry_id, step, ms=0, calls=0, est_usd=0.0, code=None, meta=None):
+    s.insert("runs", {"entry_id": entry_id, "step": step, "ms": int(ms), "calls": calls, "est_usd": round(est_usd, 5),
+                      "error_code": code, "meta": meta or {}})
+
+
+def month_cost(s):
+    start = datetime.now(TZ).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return float(sum(r["est_usd"] or 0 for r in s.rows("runs") if r["created_at"] >= start))
+
+
+def entries_today(s):
+    start = datetime.now(TZ).replace(hour=0, minute=0, second=0, microsecond=0)
+    return sum(r["created_at"] >= start for r in s.rows("entries"))

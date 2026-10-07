@@ -3,13 +3,22 @@ app/core/llm.py
 
 LLM 클라이언트: Solar Chat과 Solar Embedding (Upstage, OpenAI 호환 API).
 여기로 들어오는 글은 이미 가명 처리된 글이어야 한다(실명 금지, app/service/safety).
+
+백엔드는 외부 호출을 `with guard(people):` 안에서만 한다. guard 안에서는 보내기 바로 전에
+assert_no_real_names 로 사용자 입력 부분을 검사하고(실명이면 RealNameLeak, 보내지 않음), 호출 수 · 추정 비용을 센다.
+guard 밖(도구 · 평가 스크립트의 가상 인물 데이터)은 검사 없이 그대로 보낸다.
 """
+
+import contextvars
+from contextlib import contextmanager
 
 from openai import OpenAI
 
-from app.core import config
+from app.core import config, logger
+from app.service.safety import assert_no_real_names
 
 _client = None
+_guard = contextvars.ContextVar("llm_guard", default=None)
 
 
 def client():
@@ -19,9 +28,52 @@ def client():
     return _client
 
 
+class Meter:
+    """한 단계에서 나간 외부 호출 수 · 추정 비용 · 실명 검사 수."""
+
+    def __init__(self, people):
+        self.people, self.calls, self.usd, self.checked = people, 0, 0.0, 0
+
+    def check(self, payload, what):
+        """보내기 직전 검사. 실명이 있으면 RealNameLeak(기록에는 이름 없이 남김)."""
+        try:
+            assert_no_real_names(payload, self.people)
+        except Exception:
+            logger.log("guard", what=what, ok=False, code="real_name_leak")
+            raise
+        self.checked += 1
+        logger.log("guard", what=what, ok=True)
+
+    def add(self, usd):
+        self.calls += 1
+        self.usd += usd
+
+
+@contextmanager
+def guard(people):
+    m = Meter(people)
+    token = _guard.set(m)
+    try:
+        yield m
+    finally:
+        _guard.reset(token)
+
+
+def current():
+    return _guard.get()
+
+
 def chat(messages, model=None, **kw):
     """messages: [{"role": ..., "content": ...}] → 답 글."""
+    m = _guard.get()
+    if m:   # 시스템 프롬프트는 v8.json 규칙 글이라 사용자 입력(user) 부분만 본다
+        m.check([x["content"] for x in messages if x.get("role") != "system"], "solar_chat")
     r = client().chat.completions.create(model=model or config.CHAT_MODEL, messages=messages, **kw)
+    if m:
+        u = getattr(r, "usage", None)
+        tin, tout = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0) if u else (0, 0)
+        m.add((tin * config.PRICE_CHAT_IN_PER_M + tout * config.PRICE_CHAT_OUT_PER_M) / 1e6)
+        logger.log("external", what="solar_chat", tokens_in=tin, tokens_out=tout)
     return r.choices[0].message.content or ""
 
 
@@ -29,8 +81,14 @@ def embed(texts, query=False):
     """글 목록 → 벡터 목록. 검색어면 query=True."""
     model = config.EMBED_QUERY_MODEL if query else config.EMBED_PASSAGE_MODEL
     texts = [t if t.strip() else "(빈 글)" for t in texts]
+    m = _guard.get()
+    if m:
+        m.check(texts, "solar_embed")
     out = []
     for i in range(0, len(texts), 100):  # 한 번에 100개까지
         r = client().embeddings.create(model=model, input=texts[i:i + 100])
         out += [d.embedding for d in r.data]
+        if m:
+            u = getattr(r, "usage", None)
+            m.add((getattr(u, "total_tokens", 0) or 0) * config.PRICE_EMBED_PER_M / 1e6)
     return out
