@@ -26,6 +26,22 @@ def test_match_topic_forbids_sun_names():
     assert match_topic("통일 사역", {}, suns=["통일 사역"]) == ("통일 사역", "해 이름")
 
 
+def test_match_topic_flags_value_names_and_empty():
+    # 가치 이름(Schwartz 10개)은 주제가 아니다: 해 이름처럼 표시(고칠 근거가 없어 그대로)
+    assert match_topic("배려", {"부모님": "관계"}) == ("배려", "가치 이름")
+    assert match_topic(" 성취 ", {}) == ("성취", "가치 이름")
+    assert match_topic("", {}) == ("", "빈 주제") and match_topic(None, {}) == ("", "빈 주제")
+    # 가치 낱말이 든 구체적인 주제는 그대로
+    assert match_topic("친구 배려하기", {}) == ("친구 배려하기", None)
+
+
+def test_clean_record_marks_value_topic():
+    from app.service.rules import clean_record
+    r = clean_record({"thoughts": [{"thought": "먼저 챙기고 싶다", "kind": "소망", "certainty": "단정", "topic": ["배려"]},
+                                   {"thought": "잘 모르겠다", "kind": "질문", "certainty": "판단 보류", "topic": []}]})
+    assert [(t["topic"], t["problems"]) for t in r["thoughts"]] == [("배려", ["가치 이름"]), ("", ["빈 주제"])]
+
+
 def test_link_domain_mixed():
     assert link_domain("진로") == "삶의 성취"
     assert link_domain("부모님과 대화") == "관계"                     # 대표 낱말이 이름에 들어 있음

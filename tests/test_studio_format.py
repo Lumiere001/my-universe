@@ -144,6 +144,34 @@ def test_parse_observe_maps_ids_and_drops_unknown():
     assert o["dropped_unknown_id"] == 3
 
 
+def test_parse_record_strips_quote_marks():
+    quotes = ['"또 미뤘다"', "'또 미뤘다'", "“또 미뤘다”", "‘또 미뤘다’", "「또 미뤘다」", " 또 미뤘다 "]
+    r = sf.parse_record({"thoughts": [{"thought": "x", "quote": q} for q in quotes]})
+    assert [t["quote"] for t in r["thoughts"]] == ["또 미뤘다"] * len(quotes)
+    inner = sf.parse_record({"thoughts": [{"thought": "x", "quote": "엄마가 \"괜찮아\"라고 했다"},
+                                          {"thought": "x", "quote": "그건 '맞다'"}]})["thoughts"]
+    assert [t["quote"] for t in inner] == ["엄마가 \"괜찮아\"라고 했다", "그건 '맞다'"]   # 안쪽 따옴표는 원문 그대로
+
+
+def test_parse_observe_cleans_evidence_and_author_stated():
+    ids = {"T1": "R2-T1", "P1": "R1-T3"}
+    rel = lambda **kw: {"type": "이어짐", "today_id": "T1", "past_id": "P1", **kw}   # noqa: E731
+    o = sf.parse_observe({"relations": [rel(evidence=["“잠을 줄였다”"], author_stated=["예(직접 씀)"]),
+                                        rel(author_stated=True), rel(author_stated=["아니오"]), rel()]}, ids)
+    assert o["relations"][0]["evidence"] == "잠을 줄였다"
+    assert [r["author_stated"] for r in o["relations"]] == [True, True, False, False]
+
+
+def test_parse_observe_reached_dedup_and_limit():
+    ids = {"T1": "R2-T1", "T2": "R2-T2", "T3": "R2-T3"}
+    reached = [{"thought_id": "T1", "quote": "“메일을 보냈다”"}, {"thought_id": "T2", "quote": "메일을  보냈다"},   # 같은 인용
+               {"thought_id": "T2", "quote": ""},                                                            # 근거 없음
+               {"thought_id": "T2", "quote": "먼저 물어봤다"}, {"thought_id": "T3", "quote": "끝까지 들었다"}]   # 한도 밖
+    o = sf.parse_observe({"reached": reached}, ids)
+    assert [(r["thought"], r["evidence"]) for r in o["reached"]] == [("R2-T1", "메일을 보냈다"), ("R2-T2", "먼저 물어봤다")]
+    assert len(o["reached"]) == sf.REACHED_MAX == 2
+
+
 def test_parse_observe_empty():
     o = sf.parse_observe({}, {})
     assert o["relations"] == [] and o["reached"] == [] and o["state"] == ""

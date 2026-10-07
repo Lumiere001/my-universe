@@ -35,6 +35,15 @@ def test_solid_needs_both_agents():
     assert kept[0]["line"] == "점선"
 
 
+def test_dotted_always_needs_confirm_solid_never():
+    """점선 = AI 추정 → 맞아요/아니에요 단추(v8.json line_styles). 영역 안 점선도 확인을 받는다."""
+    a = T("a", "2026-03-14", "신념·원칙", "진로", "삶의 성취")
+    b = T("b", "2026-09-20", "신념·원칙", "진로", "삶의 성취", self_change="큰 회사 → 작은 팀")
+    for stated, line, confirm in (("예", "실선", False), ("아니오", "점선", True), (None, "점선", True)):
+        kept, _ = run([rel("a", "b", "바뀜", author_stated=stated)], a, b)
+        assert (kept[0]["line"], kept[0]["needs_confirm"], kept[0]["cross_domain"]) == (line, confirm, False)
+
+
 def test_emotions_are_not_change_or_resolution():
     a = T("a", "2026-05-02", "감정", "진로", "삶의 성취")
     b = T("b", "2026-08-28", "감정", "진로", "삶의 성취")

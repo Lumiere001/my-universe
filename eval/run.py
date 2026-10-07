@@ -36,6 +36,7 @@ COST = {"calls": 0, "in": 0, "out": 0}
 SENDING = {"people": []}   # 지금 사례의 사람 목록(보내기 전 실명 검사용)
 MARK = ("<!-- results:start -->", "<!-- results:end -->")
 HELDOUT_MARK = ("<!-- heldout:start -->", "<!-- heldout:end -->")
+PSEUDO_MARK = ("<!-- pseudonym-heldout:start -->", "<!-- pseudonym-heldout:end -->")
 
 
 def usd():
@@ -377,14 +378,59 @@ def heldout_md(rows, s, live):
     return "\n".join(L)
 
 
+##################################################
+# 골든셋 밖 이름 문장(등록 안 된 이름 가리기, 관문 아님)
+##################################################
+
+def pseudonym_heldout():
+    """pseudonym_heldout.json 을 mask(글, []) 로 잰다(외부 호출 없음) → (사례별, 요약).
+    재현율 = 가려진 이름 / 모든 이름, 오탐 = 이름이 아닌데 가려진 말."""
+    rows = []
+    for c in json.loads((GOLDEN / "pseudonym_heldout.json").read_text(encoding="utf-8")):
+        masked, table = safety.mask(c["text"], [])
+        auto = safety.find_new_names(c["text"], [])["auto"]
+        rows.append({"id": c["id"], "text": c["text"], "names": c["names"],
+                     "auto_fp": [w for w in auto if not any(w in n or n in w for n in c["names"])],
+                     "hidden": [n for n in c["names"] if n not in masked],
+                     "fp": [w for w in table.values() if not any(w in n or n in w for n in c["names"])]})
+    total = sum(len(r["names"]) for r in rows)
+    s = {"recall": f"{sum(len(r['hidden']) for r in rows)}/{total}",
+         "false_pos": f"{sum(len(r['fp']) for r in rows)}낱말 · {sum(bool(r['fp']) for r in rows)}/{len(rows)}문장",
+         "auto_fp": [w for r in rows for w in r["auto_fp"]],
+         "missed": [r["id"] for r in rows if len(r["hidden"]) < len(r["names"])], "fp": [r["id"] for r in rows if r["fp"]]}
+    return rows, s
+
+
+def pseudonym_heldout_md(rows, s):
+    by = {r["id"]: r for r in rows}
+    return "\n".join([f"_마지막 실행: {date.today().isoformat()} · 외부 호출 없음_", "",
+                      f"이름 재현율 **{s['recall']}**, 낱말 오탐(가명으로 가려짐) **{s['false_pos']}**, "
+                      f"그중 사람으로 자동 등록 **{len(s['auto_fp'])}** ({', '.join(s['auto_fp']) or '없음'})", "",
+                      "**놓침:** " + (", ".join(f"`{i}` {by[i]['text']}" for i in s["missed"]) or "없음"), "",
+                      "**오탐:** " + (", ".join(f"`{i}` {'·'.join(by[i]['fp'])}" for i in s["fp"]) or "없음")])
+
+
+def _write_between(mark, body):
+    doc = DOC.read_text(encoding="utf-8") if DOC.exists() else ""
+    i, j = doc.find(mark[0]), doc.find(mark[1])
+    if i >= 0 and j > i:
+        DOC.write_text(doc[:i + len(mark[0])] + "\n" + body + "\n" + doc[j:], encoding="utf-8")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="나의 우주 골든셋 실행기")
     ap.add_argument("--category", choices=CATEGORIES)
     ap.add_argument("--live", action="store_true", help="Solar 로 한마디를 만들어 판정(유료)")
     ap.add_argument("--set-baseline", action="store_true", help="이번 통과 사례를 기준선으로 저장")
     ap.add_argument("--heldout", action="store_true", help="골든셋 밖 위기 문장만(규칙만 / --live 면 규칙 + LLM)")
+    ap.add_argument("--pseudonym-heldout", action="store_true", help="골든셋 밖 이름 문장: 이름 재현율 · 낱말 오탐(외부 호출 없음)")
     a = ap.parse_args(argv)
     llm.chat, llm.embed = (live_chat, blocked) if a.live else (blocked, blocked)
+    if a.pseudonym_heldout:
+        rows, s = pseudonym_heldout()
+        _write_between(PSEUDO_MARK, pseudonym_heldout_md(rows, s))
+        print(f"이름 재현율 {s['recall']}  오탐 {s['false_pos']}  자동 등록 오탐 {s['auto_fp']}  놓침 {s['missed']}  오탐 {s['fp']}")
+        return s
     if a.heldout:
         rows, s = heldout(a.live)
         RESULTS.mkdir(parents=True, exist_ok=True)

@@ -14,6 +14,9 @@ from app.core.ontology import choices, load
 _PAGE = '<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>{t}</title></head><body>{b}</body></html>'
 _TAGGED = re.compile(r"^(.+?)\s*\((.+)\)$")   # '기타(성장)' · '감정(감사)'
 _CLOSED = ("kind", "certainty", "value", "addressee")
+_QUOTES = "\"'“”‘’「」『』"
+# ponytail: 운영 한도(연구 근거 아님). 한 글의 닿은 순간이 많으면 한마디가 칭찬 목록이 된다. Studio 가 낸 순서(관련 높은 순)대로 앞의 것만.
+REACHED_MAX = 2
 
 
 def _e(s):
@@ -25,6 +28,20 @@ def _first(v):
     if isinstance(v, list):
         v = v[0] if v else ""
     return (v or "").strip() if isinstance(v, str) else ""
+
+
+def _unquote(s):
+    """인용 앞뒤 따옴표(" ' “ ” ‘ ’ 「 」 『 』)를 뗀다. 원문 대조(tools.norm(인용) in 원문)가 따옴표 때문에 틀리지 않게."""
+    s = s.strip()
+    while len(s) >= 2 and s[0] in _QUOTES and s[-1] in _QUOTES:   # 앞뒤 둘 다일 때만("그건 '맞다'"는 그대로)
+        s = s[1:-1].strip()
+    return s
+
+
+def _yes(v):
+    if isinstance(v, list):
+        v = v[0] if v else ""
+    return v is True or (isinstance(v, str) and v.strip().startswith("예"))
 
 
 def _closed(key, raw):
@@ -59,7 +76,7 @@ def parse_record(data):
            "events": [e.strip() for e in data.get("events") or [] if isinstance(e, str) and e.strip()],
            "thoughts": []}
     for t in data.get("thoughts") or []:
-        row = {"thought": _first(t.get("thought")), "quote": _first(t.get("quote")),
+        row = {"thought": _first(t.get("thought")), "quote": _unquote(_first(t.get("quote"))),
                "self_change": _first(t.get("self_change")), "topic": _first(t.get("topic")),
                "people": [p.strip() for p in _first(t.get("people")).split(",") if p.strip()]}
         for k in ("kind", "certainty", "value"):
@@ -104,12 +121,18 @@ def parse_observe(data, ids):
             out["dropped_unknown_id"] += 1
             continue
         out["relations"].append({"type": _first(r.get("type")), "from": a, "to": b,
-                                 **{k: _first(r.get(k)) for k in ("same_target", "topic", "evidence", "explanation", "axis")},
-                                 "author_stated": _first(r.get("author_stated")) == "예"})
+                                 **{k: _first(r.get(k)) for k in ("same_target", "topic", "explanation", "axis")},
+                                 "evidence": _unquote(_first(r.get("evidence"))), "author_stated": _yes(r.get("author_stated"))})
+    seen = set()
     for r in data.get("reached") or []:
         local = _first(r.get("thought_id"))
         if not local.startswith("T") or local not in ids:   # 닿은 순간은 오늘 생각에만
             out["dropped_unknown_id"] += 1
             continue
-        out["reached"].append({"thought": ids[local], "evidence": _first(r.get("quote")), "explanation": _first(r.get("note"))})
+        quote = _unquote(_first(r.get("quote")))
+        k = re.sub(r"\s+", "", quote)
+        if not k or k in seen or len(out["reached"]) >= REACHED_MAX:   # 근거 없음 · 같은 인용 · 운영 한도
+            continue
+        seen.add(k)
+        out["reached"].append({"thought": ids[local], "evidence": quote, "explanation": _first(r.get("note"))})
     return out

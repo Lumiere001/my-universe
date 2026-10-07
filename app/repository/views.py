@@ -59,7 +59,7 @@ def entry_result(s, eid):
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
             "people_questions": []}
     if e["crisis"]:
-        return {**base, "care": {"message": care_message(), "resources": load()["crisis"]["resources"]},
+        return {**base, "care": {"message": care_message(resources=False), "resources": load()["crisis"]["resources"]},
                 "message": {"text": "", "tone": settings["tone"], "mode": "care"}}
     if e["status"] != "done":
         return base

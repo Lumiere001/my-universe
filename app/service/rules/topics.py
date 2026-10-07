@@ -13,6 +13,7 @@ from app.service.rules.normalize import key
 
 O = load()
 BASE = [d["name"] for d in O["domains"]]   # 기준 축 9개
+VALUES = {key(v["name"]) for v in O["values"]}   # 가치 10개(Schwartz): 생각의 가치 칸이지 주제가 아니다
 
 
 def cos(a, b, center=None):
@@ -37,14 +38,17 @@ def topic_input(topics):
 
 def match_topic(topic, topics=None, suns=(), aliases=None):
     """(주제, 문제 또는 None). 기존 이름(띄어쓰기 무시) · 사람이 정한 비슷한 말(aliases {말: 이름})이면 기존 이름으로.
-    해 이름이면 그 해의 다른 작은 별이 하나뿐일 때만 그것으로 고치고, 아니면 그대로 두고 "해 이름" 문제를 돌려준다."""
+    해 이름이면 그 해의 다른 작은 별이 하나뿐일 때만 그것으로 고치고, 아니면 그대로 두고 "해 이름" 문제를 돌려준다.
+    빈 주제는 ("", "빈 주제"), 가치 이름(배려 · 성취 …)은 그대로 두고 "가치 이름" 문제를 돌려준다(고칠 근거가 없음)."""
     topics = topics or {}
     t = " ".join((topic or "").split())
+    if not key(t):
+        return "", "빈 주제"
     by_key = {key(n): n for n in topics}
     t = by_key.get(key(t)) or {key(a): n for a, n in (aliases or {}).items()}.get(key(t)) or t
     sun_keys = {key(s): s for s in _sun_names(suns)}
     if key(t) not in sun_keys:
-        return t, None
+        return t, "가치 이름" if key(t) in VALUES else None
     sun = sun_keys[key(t)]
     others = [n for n, s in topics.items() if s == sun and key(n) not in sun_keys]
     return (others[0], None) if len(others) == 1 else (t, "해 이름")
