@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from ontology import choices, is_valid, load
+from app.core.ontology import choices, is_valid, load
 
 O = load()
 
