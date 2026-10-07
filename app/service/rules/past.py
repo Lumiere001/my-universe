@@ -1,0 +1,46 @@
+"""
+지난 생각 고르기(past_selection). 고정 문턱 · 가산점 없이 순위로 고른다.
+
+1. 같은 세부 주제의 지난 생각은 모두 후보로 둔다.
+2. 나머지는 중심 보정 유사도 순으로 줄 세워 가장 크게 떨어지는 지점에서 자른다.
+3. 주제 순위(같은 주제 먼저, 그 안은 유사도 순)와 유사도 순위를 순위 합으로 합쳐 관련 높은 것을 앞에 둔다.
+4. 개수 상한은 운영 한도(limits.past_thoughts_max)로만.
+"""
+
+from app.core.ontology import load
+from app.service.rules.topics import cos
+
+LIMIT = load()["limits"]["past_thoughts_max"]
+
+
+def cut_at_drop(sims):
+    """내림차순 유사도 목록에서 가장 크게 떨어지는 곳 앞까지의 개수. 떨어짐이 없으면 전부."""
+    if len(sims) < 2:
+        return len(sims)
+    gaps = [sims[i] - sims[i + 1] for i in range(len(sims) - 1)]
+    i = max(range(len(gaps)), key=lambda j: gaps[j])
+    return i + 1 if gaps[i] > 0 else len(sims)
+
+
+def pick_past(today, past, center=None, limit=LIMIT):
+    """today: 오늘 생각들 [{id, record_id, topic, emb}], past: 지난 생각들 [{id, record_id, topic, day, emb, …}].
+    돌려줌: 고른 지난 생각(관련 높은 순)에 sim · same_topic · rank 를 붙인 사본."""
+    vecs = [t["emb"] for t in today if t.get("emb")]
+    mine = {t["record_id"] for t in today}
+    past = [p for p in past if p["record_id"] not in mine and p.get("emb")]
+    if not vecs or not past:
+        return []
+    topics = {t.get("topic") for t in today}
+    sim = {p["id"]: max(cos(v, p["emb"], center) for v in vecs) for p in past}
+    by_sim = sorted(past, key=lambda p: (-sim[p["id"]], p["id"]))
+    same = [p for p in by_sim if p.get("topic") in topics]
+    rest = [p for p in by_sim if p.get("topic") not in topics]
+    rest = rest[:cut_at_drop([sim[p["id"]] for p in rest])]
+    by_topic = same + rest                                       # 주제 순위
+    keep = {p["id"] for p in by_topic}
+    by_sim = [p for p in by_sim if p["id"] in keep]              # 유사도 순위
+    r_topic = {p["id"]: i for i, p in enumerate(by_topic, 1)}
+    r_sim = {p["id"]: i for i, p in enumerate(by_sim, 1)}
+    fused = sorted(by_topic, key=lambda p: (r_topic[p["id"]] + r_sim[p["id"]], r_topic[p["id"]]))   # 순위 합
+    return [{**p, "sim": round(sim[p["id"]], 4), "same_topic": p.get("topic") in topics, "rank": i}
+            for i, p in enumerate(fused[:limit], 1)]

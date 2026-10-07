@@ -1,0 +1,54 @@
+"""주제 재사용 입력 · 해 이름 금지 · 합치기 후보 · 삶의 영역(혼합형)."""
+from app.service.rules import link_domain, match_topic, merge_candidates, sun_list, topic_input
+
+
+def test_topic_input_lists_existing_stars():
+    s = topic_input({"진로": "삶의 성취", "혼자와 함께": "관계"})
+    assert s.endswith("기존 작은 별: 진로, 혼자와 함께") and "다시 쓴다" in s
+    assert topic_input([]).endswith("없음")
+
+
+def test_match_topic_reuses_existing_names():
+    topics = {"혼자와 함께": "관계"}
+    assert match_topic("혼자와  함께", topics) == ("혼자와 함께", None)
+    assert match_topic("혼자와함께", topics) == ("혼자와 함께", None)
+    assert match_topic("혼자 vs 함께", topics, aliases={"혼자 vs 함께": "혼자와 함께"}) == ("혼자와 함께", None)
+    assert match_topic("부모님", topics) == ("부모님", None)   # 새 이름
+
+
+def test_match_topic_forbids_sun_names():
+    # 그 해의 작은 별이 하나뿐이면 그 이름으로 한 단계 구체적으로
+    assert match_topic("관계", {"혼자와 함께": "관계"}) == ("혼자와 함께", None)
+    # 둘 이상이거나 없으면 고치지 못하고 표시
+    assert match_topic("관계", {"혼자와 함께": "관계", "부모님": "관계"}) == ("관계", "해 이름")
+    assert match_topic("건강", {}) == ("건강", "해 이름")
+    # 사용자가 추가한 해 이름도 금지
+    assert match_topic("통일 사역", {}, suns=["통일 사역"]) == ("통일 사역", "해 이름")
+
+
+def test_link_domain_mixed():
+    assert link_domain("진로") == "삶의 성취"
+    assert link_domain("부모님과 대화") == "관계"                     # 대표 낱말이 이름에 들어 있음
+    assert link_domain("북한 이탈 청년", suns=[{"name": "통일 사역", "keywords": ["북한"]}]) == "통일 사역"
+    # 낱말로 안 되면 중심 보정 임베딩이 가장 가까운 해
+    center = [1.0, 1.0, 0.0]
+    vecs = {"건강": [[1.0, 2.0, 0.0]], "여가": [[1.0, 1.0, 1.0]]}
+    assert link_domain("새벽 수영", vec=[1.0, 1.0, 3.0], sun_vecs=vecs, center=center) == "여가"
+    assert link_domain("알 수 없는 말") is None
+
+
+def test_sun_list_hides_axes_without_writing():
+    ts = [{"domain": "관계"}, {"domain": "삶의 성취"}, {"domain": None}]
+    out = sun_list(ts, suns=["통일 사역"])
+    assert out["shown"] == ["삶의 성취", "관계", "통일 사역"]
+    assert "건강" in out["hidden"] and "관계" not in out["hidden"] and len(out["hidden"]) == 7
+
+
+def test_merge_candidates():
+    topics = {"혼자와 함께": "관계", "혼자와함께": "관계", "부모님": "관계", "엄마": "관계", "진로": "삶의 성취"}
+    vecs = {"부모님": [1, 0.1], "엄마": [1, 0.2], "혼자와 함께": [0, 1], "진로": [1, 0.15]}
+    got = merge_candidates(topics, vecs)
+    assert got[0]["why"] == "띄어쓰기만 다름"
+    pairs = {(g["a"], g["b"]) for g in got}
+    assert ("부모님", "엄마") in pairs
+    assert not any("진로" in p for p in pairs)   # 다른 해와는 합치지 않음
