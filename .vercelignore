@@ -5,7 +5,12 @@
 # 비밀값 · 실행 기록 · 일기 데이터
 /.env
 /.env.*
-/data
+/data/*
+# 백엔드가 실행 중에 읽는 기준 축 벡터 파일만 올린다(app/agents/tools.py sun_vectors)
+!/data/ops
+/data/ops/*
+!/data/ops/domain_aliases_*.json
+!/data/ops/topic_center_*.json
 /runs
 /logs
 /output

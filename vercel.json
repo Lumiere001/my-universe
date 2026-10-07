@@ -4,7 +4,7 @@
   "functions": {
     "main.py": {
       "maxDuration": 300,
-      "excludeFiles": "{infra/**,docs/**,data/**,runs/**,tests/**,eval/**,tools/**,supabase/**,agent_configs/**}"
+      "excludeFiles": "{infra/**,docs/**,runs/**,tests/**,eval/**,tools/**,supabase/**,agent_configs/**}"
     }
   }
 }

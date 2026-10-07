@@ -1,7 +1,7 @@
 # 아침 배포 순서 (동규용)
 
 밤에 에이전트는 배포 직전까지만 준비했다(설정 파일 · 스크립트 · 이 문서). 계정 · 클라우드 프로젝트 · 키 입력 · push · 배포는 동규만 한다.
-왜 이렇게 했는지는 [README.md](README.md). 환경변수 이름 중 **(WS5 확인)** 표시는 WS5(백엔드)가 합쳐진 뒤 오케스트레이터가 실제 이름과 맞춘다.
+왜 이렇게 했는지는 [README.md](README.md). 환경변수 이름은 실제 코드(`app/core/config.py`, `.env.example`)와 맞췄다. Docker 3개를 실제 백엔드로 띄워 본 결과는 [docs/docker-verify.md](../docs/docker-verify.md).
 
 미리 정할 것: 화면 프로젝트 이름 `my-universe`, 백엔드 프로젝트 이름 `my-universe-api`.
 → 주소가 `https://my-universe.vercel.app` · `https://my-universe-api.vercel.app`이 된다(이름이 이미 쓰이고 있으면 Vercel이 다른 주소를 준다. 그때는 아래에 나오는 주소를 실제 주소로 바꿔 넣는다).
@@ -15,8 +15,16 @@
 - 왜: Vercel이 GitHub 저장소에서 가져와 배포한다.
 - 할 일:
 
+먼저 `pyproject.toml` 맨 아래에 두 줄을 넣는다. Vercel이 진입점을 `main.py`의 `app`으로 확정한다(공식: https://vercel.com/docs/frameworks/backend/fastapi 의 `tool.vercel.entrypoint`). 없어도 `.vercelignore`가 1차 `app.py`를 빼서 `main.py`가 잡히지만, 적어 두면 헷갈릴 일이 없다.
+
+```toml
+[tool.vercel]
+entrypoint = "main:app"
+```
+
 ```bash
 cd ~/Projects/my-universe
+git add pyproject.toml && git commit -m "Vercel 진입점 main:app"
 git status                  # 깨끗한지
 git log --oneline -15       # 밤 작업 커밋 확인
 git push origin master
@@ -92,17 +100,20 @@ python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)
 | `UPSTAGE_API_KEY` | Upstage 콘솔 키 |
 | `RECORD_AGENT_ID` | 기록 Agent ID (로컬 `.env`와 같은 값) |
 | `OBSERVE_AGENT_ID` | 관측 Agent ID (로컬 `.env`와 같은 값) |
-| `V8_RECORD_CONFIG_ID` | `2` **(WS5 확인)** |
-| `V8_OBSERVE_CONFIG_ID` | `2` **(WS5 확인)** |
+| `V8_RECORD_CONFIG_ID` | `2` |
+| `V8_OBSERVE_CONFIG_ID` | `2` |
 | `SUPABASE_URL` | ② Project URL |
 | `SUPABASE_ANON_KEY` | ② anon public 키 |
 | `DATABASE_URL` | ② Transaction pooler URI |
-| `DIARY_ENC_KEY` | 위 명령 결과 **(WS5 확인)** |
+| `DIARY_ENC_KEY` | 위 명령 결과(로컬 `.env.local` 것과 다른 새 키. 잃거나 바꾸면 저장된 일기를 못 연다) |
 | `CHROMA_API_KEY` · `CHROMA_TENANT` · `CHROMA_DATABASE` | ④ |
 | `FRONTEND_ORIGIN` | `https://my-universe.vercel.app` |
-| 비용 한도 | 예: `MAX_ENTRIES_PER_DAY` · `MONTHLY_BUDGET_USD` **(WS5 확인, 이름 · 기본값)** |
+| `DAILY_ENTRY_LIMIT` | 사용자별 하루 일기 수. 넣지 않으면 `10` |
+| `MONTHLY_COST_CAP_USD` | 사용자별 이달 추정 비용 상한(달러). 넣지 않으면 `5` |
 
-4. Deploy → 빌드 로그에서 Python 함수가 `main.py`로 잡혔는지 본다(`vercel.json`이 `main.py`를 가리키므로 다르게 잡히면 빌드가 실패해 드러난다).
+넣지 않는 것: `LOG_TO_FILE`(기본 `0` = 표준 출력 → Vercel Logs), `CHROMA_HOST` · `CHROMA_PORT`(`CHROMA_API_KEY`가 있으면 Chroma Cloud를 씀), `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차 Streamlit용), `SUPABASE_SERVICE_ROLE_KEY` · `DEV_TEST_PASSWORD`(로컬 시험 전용).
+
+4. Deploy → 빌드 로그에서 Python 함수가 `main.py`로 잡혔는지 본다(①의 `entrypoint = "main:app"`. `vercel.json`의 함수 키도 `main.py`라 다르게 잡히면 빌드가 실패해 드러난다).
 5. 확인: `curl https://my-universe-api.vercel.app/health` → `{"status":"ok","version":"0.8.0"}`.
 6. Settings → Functions에서 Region이 Seoul(icn1)인지 확인(`vercel.json`의 `regions`).
 
