@@ -79,7 +79,7 @@ curl -s -w "\n%{http_code}\n" "https://<ref>.supabase.co/rest/v1/runs?select=*" 
   5. 값 찾는 곳(⑤에서 Vercel에 바로 붙여 넣음, 다른 데 적지 않기):
      - Project URL(`SUPABASE_URL`): Project Settings → Data API(또는 API) → Project URL. 모양은 `https://<ref>.supabase.co`.
      - Project Settings → API Keys → **Legacy API Keys** 탭: `anon` `public`(`SUPABASE_ANON_KEY`), `service_role`(`SUPABASE_SERVICE_ROLE_KEY`, **백엔드에만** — 계정 지우기 `DELETE /me` 전용. 화면 프로젝트 · `NEXT_PUBLIC_*`에는 절대 넣지 않는다). 둘 다 `eyJ`로 시작하는 긴 값이다.
-       - 왜 Legacy: 지금 코드는 service_role 키를 `Authorization: Bearer`로 보낸다. 새 형식 Secret key(`sb_secret_…`)는 Bearer로 못 쓴다고 Supabase 문서에 있다. 로컬 시험도 Legacy 모양 키로 했다. Legacy 탭이 없으면 여기서 멈추고 에이전트에게 알린다(코드를 고쳐야 함).
+       - 왜 Legacy: 로컬 시험을 Legacy 모양(JWT) 키로 했다. 코드는 두 형식을 다 받는다(2026-10-08 고침: `eyJ…` 키는 `apikey` + `Authorization: Bearer`, 새 `sb_secret_…` 키는 `apikey` 헤더로만). Legacy 탭이 없으면 새 Secret key를 넣고, 배포 확인(⑥)에서 시험 계정으로 계정 지우기가 되는지 꼭 본다(새 형식은 실제 Supabase에서 아직 시험하지 않음).
      - 위쪽 **Connect** 버튼 → Connection string → **Transaction pooler**(포트 6543) URI의 `[YOUR-PASSWORD]`를 DB 비밀번호로 바꾼 것(`DATABASE_URL`). Vercel은 서버리스라 직접 연결 대신 풀러를 쓴다(코드는 풀러용으로 `prepare_threshold=None`).
   6. Authentication → Sign In / Providers → **Email** → 끄기(Disable). 로그인은 구글 하나라 이메일 가입 길을 닫는다(전체 "Allow new users to sign up"은 켜 둔다 — 끄면 현호가 구글로 처음 들어올 수 없다. 누가 쓰는지는 ⑤의 `ALLOWED_EMAILS`와 ③의 테스트 사용자가 막는다).
 

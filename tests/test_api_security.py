@@ -88,6 +88,17 @@ def admin(monkeypatch):
     return calls
 
 
+@pytest.mark.parametrize("key, bearer", [("eyJhbGciOi.legacy", True), ("sb_secret_new", False)])
+def test_delete_account_key_headers(monkeypatch, key, bearer):
+    # 예전 service_role(JWT)은 Bearer 로도, 새 sb_secret_ 키는 apikey 헤더로만 보낸다
+    sent = {}
+    monkeypatch.setattr(config, "SUPABASE_URL", "http://supabase.test")
+    monkeypatch.setattr(config, "SUPABASE_SERVICE_ROLE_KEY", key)
+    monkeypatch.setattr(auth.httpx, "delete", lambda url, headers, timeout: sent.update(headers) or httpx.Response(204))
+    auth.delete_account("u1")
+    assert sent["apikey"] == key and ("Authorization" in sent) == bearer
+
+
 def test_delete_me_removes_everything(client, env, admin):  # noqa: F811
     write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     write(client, *CRISIS, "2026-10-02T23:30:00+09:00")

@@ -49,7 +49,7 @@ def env():
     fresh = "DIARY_ENC_KEY" not in old
     values = {
         "SUPABASE_URL": st["API_URL"], "SUPABASE_ANON_KEY": st["ANON_KEY"], "DATABASE_URL": st["DB_URL"],
-        "SUPABASE_SERVICE_ROLE_KEY": st["SERVICE_ROLE_KEY"],          # 로컬 계정 만들기 · 시험용(백엔드는 쓰지 않음)
+        "SUPABASE_SERVICE_ROLE_KEY": st["SERVICE_ROLE_KEY"],          # 로컬 계정 만들기 · 시험용, 백엔드는 DELETE /me 에서만 씀
         "DIARY_ENC_KEY": old.get("DIARY_ENC_KEY") or new_master_key(),
         "CHROMA_HOST": "localhost", "CHROMA_PORT": "8000", "FRONTEND_ORIGIN": "http://localhost:3000", "LOG_TO_FILE": "1",
         "API_DOCS": "1",                                              # /docs 는 로컬만

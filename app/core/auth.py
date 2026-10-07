@@ -71,9 +71,11 @@ def forget(uid):
 def delete_account(uid):
     """Supabase 관리 API 로 auth 계정을 지운다 → 모든 표가 FK cascade 로 지워진다. 서비스 키는 이 함수에서만 쓴다."""
     key = config.SUPABASE_SERVICE_ROLE_KEY
+    headers = {"apikey": key}
+    if key.startswith("eyJ"):   # 예전(Legacy) service_role 키는 JWT 라 Bearer 로도 보낸다. 새 sb_secret_ 키는 apikey 에만
+        headers["Authorization"] = f"Bearer {key}"
     try:
-        r = httpx.delete(f"{config.SUPABASE_URL}/auth/v1/admin/users/{uid}", timeout=10,
-                         headers={"apikey": key, "Authorization": f"Bearer {key}"})
+        r = httpx.delete(f"{config.SUPABASE_URL}/auth/v1/admin/users/{uid}", timeout=10, headers=headers)
     except httpx.HTTPError:
         r = None
     if r is None or r.status_code not in (200, 204, 404):
