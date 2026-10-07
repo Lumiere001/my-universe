@@ -20,7 +20,7 @@ from app.core import llm, logger
 from app.repository import diary
 from app.service.rules import advance, clean_record, filter_relations, link_domain
 from app.service.rules.normalize import key as norm_key
-from app.service.safety import RealNameLeak, care_message, detect_crisis, find_new_names
+from app.service.safety import RealNameLeak, detect_crisis, find_new_names
 from app.service.studio_format import parse_record
 
 STEPS = [("safety", "글을 살펴보는 중"), ("names", "사람 이름을 가리는 중"), ("record", "생각을 나누는 중"),
@@ -28,8 +28,6 @@ STEPS = [("safety", "글을 살펴보는 중"), ("names", "사람 이름을 가�
          ("save", "우주에 저장하는 중")]
 LABEL = dict(STEPS)
 ORDER = [s for s, _ in STEPS]
-QUESTION_OPTIONS = {"동명이인": ["같은 사람", "다른 사람", "사람 이름 아님"], "별명": ["같은 사람", "다른 사람", "사람 이름 아님"],
-                    "이름인지 낱말인지": ["사람 이름", "사람 이름 아님"]}
 
 
 class State(TypedDict, total=False):
@@ -200,7 +198,7 @@ def record_clean(state, ctx):
                 diary.add_star(s, stars[name], name, sun_id)
             today.append({**{k: t[k] for k in ("thought", "kind", "certainty", "value", "quote", "self_change", "flags",
                                                "original")},
-                          "topic": name, "domain": domain, "id": diary.new_id("t"), "record_id": ctx.entry_id,
+                          "topic": name, "domain": domain, "id": diary.thought_id(ctx.entry_id, i), "record_id": ctx.entry_id,
                           "day": state["day"], "written_at": state["written_at"], "position": i, "star_id": stars[name],
                           "sun_id": sun_id,   # 기록 Agent 의 사람 칸 + 생각 · 인용에 이름이 그대로 나온 사람
                           "people": sorted({people_id[n] for n in t["people"] if n in people_id}
@@ -410,7 +408,3 @@ def run(repo, uid, entry_id, emit=lambda *_: None):
         with repo.session(uid) as s:
             diary.set_status(s, entry_id, "failed", error_code(err))
         raise
-
-
-def care():
-    return care_message()

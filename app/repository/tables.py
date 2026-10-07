@@ -87,7 +87,8 @@ class PgSession:
 def pg_session(database_url, uid):
     """그 사용자로 RLS 를 건 트랜잭션 하나. 끝나면 커밋, 예외면 되돌림."""
     # ponytail: 요청마다 연결을 새로 연다(로컬 수 ms). 동시 사용자가 늘면 psycopg_pool 로 바꾼다.
-    with psycopg.connect(database_url, row_factory=dict_row) as conn:
+    # prepare_threshold=None: Supabase 연결 풀러(트랜잭션 모드)는 미리 준비한 쿼리를 못 쓴다
+    with psycopg.connect(database_url, row_factory=dict_row, prepare_threshold=None) as conn:
         conn.execute("set local role authenticated")
         conn.execute("select set_config('request.jwt.claims', %s, true)",
                      [json.dumps({"sub": str(uid), "role": "authenticated"})])

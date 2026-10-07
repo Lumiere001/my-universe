@@ -231,6 +231,19 @@ def test_plain_post_and_cors(client):
     assert "access-control-allow-origin" not in r.headers
 
 
+def test_client_disconnect_keeps_working(client):
+    import time
+    with client.stream("POST", "/diary/stream", headers=H1, json={"title": DAY1[0], "text": DAY1[1]}) as r:
+        lines = r.iter_lines()
+        assert next(lines) == "event: progress"
+        eid = json.loads(next(lines).removeprefix("data: "))["entry_id"]
+    for _ in range(100):   # 손님이 끊어도 서버 쪽 처리는 끝까지 간다
+        if client.get(f"/diary/{eid}", headers=H1).json()["status"] == "done":
+            break
+        time.sleep(0.05)
+    assert client.get(f"/diary/{eid}", headers=H1).json()["status"] == "done"
+
+
 def test_no_real_names_left_the_server(client, env):  # noqa: F811
     write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     write(client, *DAY2, "2026-10-03T22:00:00+09:00")

@@ -23,6 +23,11 @@ def new_id(prefix):
     return f"{prefix}_{secrets.token_hex(6)}"
 
 
+def thought_id(entry_id, position):
+    """생각 id = 기록 id + 순서. 같은 기록을 다시 돌려도 같은 id, id 순서 = 글 속 순서(rules 가 id 로 정렬함)."""
+    return f"{entry_id}-t{position:02d}"
+
+
 def now():
     return datetime.now(timezone.utc)
 

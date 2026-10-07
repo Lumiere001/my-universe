@@ -146,4 +146,4 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - 벡터: Chroma 컬렉션 `thoughts`(문서 없음, 메타 user_id · entry_id · star_id · written_at · kind). 벡터는 가명 글의 임베딩.
 - 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice checks/situations 이름만. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 계산).
 - 로컬: `scripts/dev_up.sh`(로컬 Supabase · ChromaDB · `.env.local` · 시험용 계정 tester@ · e2e@my-universe.test · 하늘 데모 우주) → `uv run --frozen uvicorn main:app --port 8001`. e2e 결과: `docs/ws5-e2e.md`.
-
+- id 모양: 기록 `e_<hex>`, 생각 `<기록 id>-tNN`(글 속 순서), 관계 `<옛 생각 id>><새 생각 id>`, 사람 `p_` · 작은 별 `s_` · 해 `d_` · 되고 싶은 모습 `a_` · 이름 질문 `q_`. 화면은 모양에 기대지 말고 문자열로만 다룬다.

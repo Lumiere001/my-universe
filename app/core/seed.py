@@ -147,7 +147,7 @@ def demo(repo, uid):
                 if t["topic"] not in stars:
                     stars[t["topic"]] = (diary.new_id("s"), sun)
                     diary.add_star(s, stars[t["topic"]][0], t["topic"], sun_id)
-                tid = ids[a["id"]] = diary.new_id("t")
+                tid = ids[a["id"]] = diary.thought_id(eid, i)
                 row = {**t, "id": tid, "record_id": eid, "day": r["day"], "position": i, "star_id": stars[t["topic"]][0],
                        "sun_id": sun_id, "domain": sun,
                        "people": [p["id"] for p in people if p["name"] in t["people"]]}
