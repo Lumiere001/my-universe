@@ -169,10 +169,10 @@ def universe(s):
 
 
 def people_list(s):
+    entry_of = {t["id"]: t["entry_id"] for t in s.rows("thoughts")}
     planets = {}
-    for t in diary.thoughts(s):
-        for pid in t["people"]:
-            planets.setdefault(pid, set()).add(t["entry_id"])
+    for tp in s.rows("thought_people"):
+        planets.setdefault(tp["person_id"], set()).add(entry_of.get(tp["thought_id"]))
     return [{"id": p["id"], "name": p["name"], "nickname": ", ".join(p.get("nicknames") or []), "relation": p["relation"],
              "auto": p["auto"], "planets": sorted(planets.get(p["id"], []))} for p in diary.people(s)]
 
