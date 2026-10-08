@@ -42,6 +42,26 @@ uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 �
 - 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 지금은 운영 상한 없이 구글 로그인한 누구나 쓴다(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` 같은 손잡이는 넣지 않음 — 실제 배포 · 수익화를 생각할 때 사용량을 보고 정함, [plan §2-9](docs/plan-v8-1017.md)).
 - 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호는 규칙 + Solar 2단으로 감지해 암호문 안에 남기고, 시험 단계(2026-10-08 동규 결정)에는 단체 연결 · 따로 뜨는 화면 없이 평소 결과에 위로 한마디 + 안부 한 줄을 준다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
 
+### GHCR 이미지
+
+master 에 push 하면 GitHub Actions(`.github/workflows/main.yml`, 이름 `ghcr`)가 이미지 3개를 만들어 GHCR 에 올린다. 인증은 GitHub 이 실행마다 주는 `GITHUB_TOKEN`만 쓴다(따로 만든 토큰 없음). 태그는 `latest` · `sha-<커밋 7자리>`. 문서(`*.md` · `docs/`)만 바뀐 push 는 건너뛴다.
+
+| 이미지 | Dockerfile |
+| --- | --- |
+| `ghcr.io/lumiere001/my-universe-backend` | `Dockerfile` |
+| `ghcr.io/lumiere001/my-universe-frontend` | `infra/frontend/Dockerfile` |
+| `ghcr.io/lumiere001/my-universe-chroma` | `infra/chroma/Dockerfile` (`chromadb/chroma:1.5.9` 그대로) |
+
+```bash
+docker login ghcr.io -u Lumiere001        # 비밀번호 칸에 읽기 토큰(아래)
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+scripts/stop_docker.sh                    # 끄기
+```
+
+- 패키지는 비공개라 받으려면 `docker login ghcr.io`가 필요하다. 토큰: GitHub Settings → Developer settings → Personal access tokens **(classic)** → `read:packages`만(GHCR 은 classic 토큰만 받는다).
+- 공개로 바꿀지는 동규가 정한다: `https://github.com/users/Lumiere001/packages/container/<이미지 이름>/settings` → Danger Zone → Change visibility. 공개하면 로그인 없이 받지만 **다시 비공개로 못 돌리고**, 백엔드 이미지 안의 코드(`main.py` · `app/`)를 누구나 받게 된다.
+- 화면 이미지는 빌드할 때 값이 박힌다. 저장소 Settings → Secrets and variables → Actions 에 변수 `DOCKER_API_BASE`(없으면 `http://localhost:8001`) · `SUPABASE_URL`, 비밀 `SUPABASE_ANON_KEY`. 비어 있어도 빌드는 되지만 화면이 "로그인 설정이 없어요"를 보인다. 넣은 뒤 Actions → ghcr → Run workflow 로 다시 만든다. 자세한 것: [deploy/README.md](deploy/README.md) §3.
+
 ---
 
 아래는 1차 MVP(2026-10-03) 설명 그대로다. 1차 Streamlit 앱은 새 작업 없이 남겨 둔다.

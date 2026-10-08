@@ -586,7 +586,7 @@ uv run --frozen python eval/run.py --pseudonym-heldout    # 골든셋 밖 이름
 ### 8.4 2차
 
 - Docker 이미지 · `docker-compose.yml`(화면 8002 · 백엔드 8001 · ChromaDB 8000), 실행 스크립트, README는 이미 끝났다.
-- GHCR(GitHub 컨테이너 저장소) 패키징. GitHub 토큰이 필요해 2차 마감 전에 동규와 같이 한다.
+- GHCR(GitHub 컨테이너 저장소) 패키징을 넣었다(2026-10-08): master에 push 하면 GitHub Actions가 GitHub이 주는 토큰으로 이미지 3개를 올린다. 받는 법은 README "GHCR 이미지".
 - 대화 Agent(Solar)와 대화 화면, 회귀 검사 자동화(GitHub Actions), 드리프트 지표.
 
 ---

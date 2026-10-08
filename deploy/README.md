@@ -49,7 +49,7 @@ docker compose -p v8check down -v --rmi local
 - `infra/frontend/Dockerfile`: node 22, `next build` → `next start -p 8002`. `NEXT_PUBLIC_*`는 빌드 인자(브라우저에 박히는 공개 값만).
 - `docker-compose.yml`: 백엔드는 `.env`를 읽고, 컨테이너 안에서는 `CHROMA_HOST=chroma`로 compose의 ChromaDB에 붙는다(Chroma Cloud 키는 비워 씀). Supabase는 compose 밖: 로컬 `supabase start` 스택을 쓰면 `.env.docker.local`(gitignore됨)에 `SUPABASE_URL=http://host.docker.internal:54321`처럼 컨테이너용 주소만 덮어쓴다. 클라우드면 `.env` 그대로.
 - 호스트 포트는 `CHROMA_HOST_PORT` · `BACKEND_HOST_PORT` · `FRONTEND_HOST_PORT`로 바꾼다(앱 설정 `CHROMA_PORT`와 이름이 겹치지 않게 따로 둠).
-- GHCR 패키징은 10/17 범위 밖(2차 마감 전 동규와).
+- 빌드 없이 GHCR 이미지로 띄우기는 아래 "GHCR 이미지".
 
 밤 시험(2026-10-08): 다른 project 이름(`ws9test`)과 호스트 포트 18000 · 18002로 화면 이미지 빌드 → 화면 200 응답 · ChromaDB heartbeat · `chromadb-client`로 컬렉션 만들기/넣기/지우기 확인. 백엔드 이미지는 `main.py`가 아직 없어 임시 `main.py`(/health만)로 Dockerfile 동작(uv sync · uvicorn · `LOG_TO_FILE=1`)만 확인했다. 시험 컨테이너 · 볼륨 · 이미지는 지웠다.
 
@@ -60,6 +60,38 @@ docker compose -p v8check down -v --rmi local
 **로컬 포트 노출(보안 검토 M10)**: compose 의 세 포트는 `127.0.0.1`에만 묶었다(같은 와이파이의 다른 기기에서 열 수 없음). 한계: 로컬 Supabase 스택(54321 API · 54322 DB · 54323 Studio …)은 Supabase CLI(v2.75)에 바인드 주소 설정이 없어 모든 인터페이스에 열리고, DB 비밀번호는 공개된 기본값이다. 로컬 개발용 `my-universe-chroma`(`scripts/dev_up.sh` · `scripts/start.sh`)도 `127.0.0.1:8000`에만 연다. 그래도 Supabase 스택이 열려 있으므로 **실제 일기는 로컬 스택에 넣지 않는다**(가상 인물 데이터만). 학교 · 카페 와이파이에서는 `supabase stop`으로 꺼 두거나 macOS 방화벽(설정 → 네트워크 → 방화벽)을 켠다.
 
 **DB 권한(보안 검토 H1)**: 마이그레이션 `20261009000000_v8_security.sql`이 anon · authenticated 의 표 · 시퀀스 · 함수 권한을 모두 거두고(앞으로 만들 표도 기본 권한 없음), 백엔드는 PostgREST 가 모르는 역할 `app_user`로 `set local role` 한다. 화면은 Supabase 를 로그인에만 쓰므로 영향이 없다. 로컬 스택은 `supabase migration up --local`, 클라우드는 `supabase db push`로 같이 적용된다. 새 표를 만들면 `app_user`용 RLS 정책(`own_app`)도 같이 만든다.
+
+### GHCR 이미지
+
+`.github/workflows/main.yml`(Actions 이름 `ghcr`, 2026-10-08)이 master push 와 수동 실행(Actions → ghcr → Run workflow) 때 이미지 3개를 만들어 GHCR 에 올린다. 문서(`*.md` · `docs/`)만 바뀐 push 는 건너뛰고, 연달아 push 하면 앞 실행을 멈춘다. 인증은 `GITHUB_TOKEN`(`contents: read` · `packages: write`)만 — PAT 없음. metadata-action 이 붙이는 `org.opencontainers.image.source` 라벨(이 저장소)로 패키지가 저장소에 연결되고 저장소 접근 권한을 따른다. 빌드 캐시는 GitHub Actions 캐시(`type=gha`, 이미지별).
+
+| 이미지 | Dockerfile | 태그 |
+| --- | --- | --- |
+| `ghcr.io/lumiere001/my-universe-backend` | `Dockerfile` | `latest` · `sha-<커밋 7자리>` |
+| `ghcr.io/lumiere001/my-universe-frontend` | `infra/frontend/Dockerfile` | 〃 |
+| `ghcr.io/lumiere001/my-universe-chroma` | `infra/chroma/Dockerfile`(`chromadb/chroma:1.5.9` + 라벨) | 〃 |
+
+```bash
+docker login ghcr.io -u Lumiere001     # 비밀번호 칸에 읽기 토큰(아래)
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+scripts/stop_docker.sh                 # 끄기(같은 project 이름이라 그대로 됨)
+```
+
+- `docker-compose.ghcr.yml`은 세 서비스의 `image`만 GHCR 것으로 바꾸고 `build`를 지운다(`!reset`). 받기에 실패하면 로컬 빌드로 넘어가지 않고 멈춘다. 기본(`scripts/start_docker.sh`)은 지금처럼 로컬 빌드. 화면 이미지가 부르는 백엔드 주소는 빌드 때 박히므로(`DOCKER_API_BASE`, 기본 `http://localhost:8001`) `BACKEND_HOST_PORT`는 바꾸지 않는다.
+- 이미지는 GitHub 러너(amd64)에서 만든다. Apple Silicon 맥은 `platform: linux/amd64`로 Docker Desktop 에뮬레이션에서 돈다(느릴 수 있음).
+- 비공개 패키지라 받으려면 `docker login ghcr.io`가 필요하다. 토큰: GitHub Settings → Developer settings → Personal access tokens **(classic)** → `read:packages`만(GHCR 은 classic 토큰만 받는다).
+- 공개로 바꿀지는 동규가 정한다: `https://github.com/users/Lumiere001/packages/container/<이미지 이름>/settings` → Danger Zone → Change visibility. 공개하면 로그인 없이 받지만 **다시 비공개로 못 돌리고**(GitHub 문서), 백엔드 이미지 안의 코드(`main.py` · `app/`)도 누구나 받게 된다. 화면 이미지의 anon 키는 원래 브라우저에 보이는 공개 값이다.
+- 화면 이미지는 빌드할 때 값이 박힌다. 저장소 Settings → Secrets and variables → Actions 에 넣는다(동규):
+
+| 이름 | 종류 | 화면 빌드 인자 | 없으면 |
+| --- | --- | --- | --- |
+| `DOCKER_API_BASE` | Variable | `NEXT_PUBLIC_API_BASE` | `http://localhost:8001` |
+| `SUPABASE_URL` | Variable | `NEXT_PUBLIC_SUPABASE_URL` | 비움 |
+| `SUPABASE_ANON_KEY` | Secret | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 비움 |
+
+비어 있어도 빌드는 되지만 화면이 "로그인 설정이 없어요"를 보인다(`NEXT_PUBLIC_DEV_LOGIN=0`이라 시험용 계정 칸도 없음). 백엔드(`.env`, 로컬 스택이면 `.env.docker.local`)도 같은 Supabase 를 가리켜야 로그인 토큰이 맞는다. 값을 넣거나 바꾼 뒤 Run workflow 로 다시 만든다.
+
+비용: 비공개 저장소라 실행마다 Actions 무료 분을 쓴다(작업 3개, 화면이 가장 김). GHCR 저장 · 전송은 지금 무료다(GitHub 문서, 바뀌면 한 달 전 알림). `sha-` 버전이 push 마다 쌓이니 가끔 패키지 페이지에서 지운다.
 
 ## 4. 운영 규칙
 
@@ -133,3 +165,6 @@ docker compose -p v8check down -v --rmi local
 - Chroma 클라이언트(`CloudClient`, `CHROMA_API_KEY` · `CHROMA_TENANT` · `CHROMA_DATABASE`): https://docs.trychroma.com/docs/run-chroma/clients
 - Google OAuth 게시 · 검증(게시하면 구글 계정 누구나, 비민감 범위만이면 앱 검증 필수 아님, 로고를 올리면 검증 · 미검증이면 도메인만 보임, 경고는 민감 · 제한 범위만): https://support.google.com/cloud/answer/15549945 · https://support.google.com/cloud/answer/13463073 · https://support.google.com/cloud/answer/15549049 · https://developers.google.com/identity/protocols/oauth2/production-readiness/overview
 - ChromaDB 이미지 태그 `chromadb/chroma:1.5.9`(= `chromadb-client` 1.5.9): https://hub.docker.com/r/chromadb/chroma
+- GHCR(`GITHUB_TOKEN`으로 올리면 저장소에 연결, `org.opencontainers.image.source` 라벨, classic 토큰만): https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+- 패키지 공개 전환(Danger Zone → Change visibility, 공개하면 다시 비공개 불가): https://docs.github.com/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
+- GHCR 저장 · 전송 지금 무료: https://docs.github.com/billing/concepts/product-billing/github-packages

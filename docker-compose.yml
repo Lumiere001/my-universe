@@ -1,6 +1,7 @@
 # 나의 우주 3개 컨테이너: ChromaDB 8000 · 백엔드 8001 · 화면 8002 (2차 가이드 ⑥).
 #   scripts/start_docker.sh  (= docker compose up -d --build)
 #   scripts/stop_docker.sh   (= docker compose down)
+#   빌드 없이 GHCR 이미지로: docker-compose.ghcr.yml 맨 위 명령
 # 호스트 포트는 바꿀 수 있다: CHROMA_HOST_PORT · BACKEND_HOST_PORT · FRONTEND_HOST_PORT
 # Supabase 는 compose 밖(로컬 `supabase start` 스택 또는 클라우드). 주소는 .env 에서 읽고,
 # 컨테이너 안에서만 달라야 하는 값(예: 로컬 스택 → host.docker.internal)은 .env.docker.local 에 둔다.
