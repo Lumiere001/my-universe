@@ -79,11 +79,13 @@ def _stream(q):
 
 
 def _limits(s, eid=None):
-    """하루 처리 글 수(오늘 시작 · 이어 한 기록 수) · 이번 달 추정 비용 상한. 이미 오늘 센 기록을 이어 하는 건 하루 수에 더하지 않는다."""
-    today = diary.processed_today(s)
-    if eid not in today and len(today) >= config.DAILY_ENTRY_LIMIT:
-        raise ApiError(429, "daily_limit", f"오늘은 글을 {config.DAILY_ENTRY_LIMIT}편까지 정리할 수 있어요. 내일 다시 써 주세요.")
-    if diary.month_cost(s) >= config.MONTHLY_COST_CAP_USD:
+    """하루 처리 글 수(오늘 시작 · 이어 한 기록 수) · 이번 달 추정 비용 상한. 0 이면 그 상한은 없다(기본).
+    이미 오늘 센 기록을 이어 하는 건 하루 수에 더하지 않는다."""
+    if config.DAILY_ENTRY_LIMIT > 0:
+        today = diary.processed_today(s)
+        if eid not in today and len(today) >= config.DAILY_ENTRY_LIMIT:
+            raise ApiError(429, "daily_limit", f"오늘은 글을 {config.DAILY_ENTRY_LIMIT}편까지 정리할 수 있어요. 내일 다시 써 주세요.")
+    if config.MONTHLY_COST_CAP_USD > 0 and diary.month_cost(s) >= config.MONTHLY_COST_CAP_USD:
         raise ApiError(429, "monthly_budget", "이번 달 정리 한도에 닿았어요. 운영자에게 알려 주세요.")
 
 
@@ -126,7 +128,7 @@ def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
         if not s.rows("entries", id=eid):
             raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
         _limits(s, eid)
-        if diary.resumes(s, eid) >= config.RESUME_LIMIT:
+        if config.RESUME_LIMIT > 0 and diary.resumes(s, eid) >= config.RESUME_LIMIT:
             raise ApiError(429, "resume_limit", f"이 기록은 {config.RESUME_LIMIT}번까지 이어서 할 수 있어요. 운영자에게 알려 주세요.")
         if not diary.lock(s, eid):
             raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")

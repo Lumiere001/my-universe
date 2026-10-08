@@ -11,7 +11,7 @@
 | 심각도 | 개수 | 핵심 |
 | --- | --- | --- |
 | 높음 | 1 | Supabase Data API(PostgREST)로 사용자가 자기 `runs` 행을 고치거나 지워 비용 상한을 없앨 수 있다 |
-| 중간 | 10 | 이름 가리기에서 빠지는 이름, Studio 업로드 파일 남음, 계정 삭제 없음, 로그아웃 없음, 평문 위기 표시, 아무나 가입 가능, 실제 일기가 git 에 있음, resume 비용, 인스턴스 여러 개 |
+| 중간 | 10 | 이름 가리기에서 빠지는 이름, Studio 업로드 파일 남음, 계정 삭제 없음, 로그아웃 없음, 평문 위기 표시, 아무나 가입 가능, 실제 일기가 git 에 있음(M7 — 가상 글로 확인, 조치 없음), resume 비용, 인스턴스 여러 개 |
 | 낮음 | 12 | 토큰 캐시 60초, FK 로 존재 여부 드러남, /docs 공개, NUL 입력 500, 로컬 포트, 문서 이름 불일치 등 |
 
 잘 된 것(재현함): 모든 사용자 엔드포인트가 `get_user` 를 거친다(/health · /ontology 만 공개). 다른 사용자의 entry · person · question · relation · thought(다짐) id 로 읽기 · 고치기 · 지우기 · 이어 하기 · 피드백을 보내면 모두 404/409 로 막히고, A 의 /universe · /people · /aspiration 은 그대로였다(34개 확인 중 예상 밖 0개). 모든 표 15개에 RLS(`using` + `with check`)가 있고 anon 은 거부된다. 백엔드는 요청마다 `set local role authenticated` + JWT claim 을 걸어 코드가 user_id 를 빠뜨려도 RLS 가 막는다. 422 응답이 원문을 되돌려 보내지 않는다. Chroma 메타에는 user_id · entry_id · star_id · written_at · kind 만 있고 문서는 비어 있다(tester 61개 확인). git 에 추적되는 파일 · 이력에 키 모양 문자열 없음, .env* 는 추적되지 않음.
@@ -56,11 +56,13 @@
 - 위치: `app/core/auth.py:23-45`(토큰만 확인, 허용 목록 없음), `supabase/config.toml:165,200`(로컬은 가입 허용)
 - 문제: 팀원 전용인데 주소를 아는 누구나 가입 → 사람마다 월 $5 · 하루 10편이라 전체 비용 상한이 없다.
 - 고치기: `ALLOWED_EMAILS`(쉼표 목록) 환경변수를 두고 `verify` 에서 이메일이 목록에 없으면 403. 클라우드 Supabase 는 Email 가입을 끈다.
+- 2026-10-08 동규 결정(plan §2-9): 지금은 허용 목록 · 운영 상한(M8 · L5 포함) 없이 연다. 코드 손잡이(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD` · `RESUME_LIMIT`)만 남김. Email 가입 끄기는 그대로.
 
-### M7. 동규의 실제 일기 파일이 git 에 들어 있다 — 코드(파일은 열지 않음)
+### M7. 동규의 실제 일기 파일이 git 에 들어 있다 — 코드(파일은 열지 않음) → 해결(가상 글)
 - 위치: `data/samples/2026-09-25-독서노트.md`, `data/samples/2026-10-01-일기.txt`(git ls-files · origin/master 에 있음, 저장소는 PRIVATE)
 - 문제: 저장소를 팀원 · 채점자에게 공유하거나 공개로 바꾸면 그대로 노출된다. 이력에도 남는다. (배포 번들 · Docker 이미지에서는 `.vercelignore` · `.dockerignore` 가 `data` 를 뺀다.)
 - 고치기: `git rm --cached` + `.gitignore` 에 추가, 이미 push 된 이력은 동규 판단으로 filter-repo(강제 push 필요 → 결정 필요).
+- 해결: 동규가 가상 글로 확인(2026-10-08), 조치 없음.
 
 ### M8. resume 은 비용 상한을 보지 않는다 — 코드
 - 위치: `app/api/diary.py:115-120`(상한 검사는 `_create` `:84-87` 에만)
@@ -148,4 +150,4 @@
 1. H1(Data API 막기 + est_usd check) — 배포 전 필수.
 2. M6(허용 이메일 목록), M4(로그아웃), M8(resume 상한), M2(Studio 파일 지우기).
 3. M3(DELETE /me), M5(crisis · mode 암호화), M1(이름 후보 넓히기).
-4. M7 은 동규 결정(이력 정리 여부).
+4. M7 은 동규 결정(이력 정리 여부) → 가상 글로 확인(2026-10-08), 조치 없음.

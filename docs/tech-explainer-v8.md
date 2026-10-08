@@ -57,7 +57,7 @@
 | 일기 원문 · 사람 이름은 **암호화해 저장**한다 | AES-256-GCM. 사용자마다 키가 다르고(마스터 키 + 사용자 id로 만듦), 행마다 묶여 있어 다른 사람 · 다른 행으로 옮기면 풀리지 않는다. 암호화 키는 DB 밖(서버 환경변수 `DIARY_ENC_KEY`)에 있다 | `app/core/security.py`, `app/repository/diary.py` |
 | 마음 상태도 암호문 안에 | 위기 글이었는지, 돌봄 · 위로 한마디였는지, "오늘은 위로만 · 오늘은 살살" 버튼, 말투 설정은 평문 칸에 두지 않는다 | `supabase/migrations/20261009000000_v8_security.sql` |
 | **내 글은 나만** | 모든 요청은 로그인 토큰을 확인하고, DB에서도 요청마다 "이 사용자 행만" 규칙(RLS)을 건다. 화면이나 다른 사람이 Supabase에 직접 붙어 표를 읽고 쓰는 길(Data API)은 막았다 | `app/repository/tables.py`, 같은 마이그레이션 |
-| **초대된 사람만** 쓴다 | 서버의 허용 목록(`ALLOWED_EMAILS`)에 있는 구글 계정만. 나머지는 "초대된 사람만 쓸 수 있어요" | `app/core/auth.py` |
+| **구글 로그인**으로만 들어온다 | 이메일 가입 길은 닫았다. 지금은 초대 목록 없이 구글 계정이면 누구나 쓸 수 있다(2026-10-08 동규 결정 — 실제 배포 · 수익화를 생각할 때 정함). 들어온 사람끼리도 서로의 글은 보이지 않는다(위 "내 글은 나만") | `app/core/auth.py` |
 | **외부 AI로는 가명만** 보낸다 | Studio · Solar로 보내기 전에 "민준" → "도윤"처럼 바꾸고, 보내기 직전 사람 목록의 실명이 남았는지 한 번 더 검사한다. 남았으면 보내지 않는다 | `app/service/safety/pseudonym.py`, `app/core/llm.py` |
 | **실행 기록에 원문이 없다** | 로그 · 오류 메시지 · `/stats`에는 글 · 인용 · 이름을 넣지 않는다. 받는 칸을 정해 두고 숫자 · 짧은 코드만 남긴다 | `app/core/logger.py` |
 | **사람 한 명 지우기** | 저장된 글 속 그 사람 이름을 관계 말("친구")로 바꾸고 문장 · 생각 · 선은 남긴다 | `DELETE /people/{id}` |
@@ -113,7 +113,7 @@ flowchart LR
 | --- | --- | --- |
 | `app/core/ontology/v8.json` | 온톨로지 한 파일. 목록 · 정의 · 예시 전부. 모든 코드가 여기서 읽는다 | 완성 |
 | `app/core/config.py` · `llm.py` | 설정(환경변수에서만), Solar 채팅 · 임베딩 클라이언트, 보내기 직전 실명 검사(`guard`) | 완성 |
-| `app/core/auth.py` · `security.py` · `logger.py` · `seed.py` | 로그인 확인 · 허용 목록 · 계정 지우기, 암호화, 원문 없는 실행 기록, 로컬 시험 계정 · 하늘 데모 | 완성 |
+| `app/core/auth.py` · `security.py` · `logger.py` · `seed.py` | 로그인 확인 · 허용 목록(설정할 때만) · 계정 지우기, 암호화, 원문 없는 실행 기록, 로컬 시험 계정 · 하늘 데모 | 완성 |
 | `app/service/safety/` | 위기 감지(`crisis.py`, 규칙 + Solar 2단), 가명(`pseudonym.py`), 사람 판정 검사(`judge.py`) | 완성 |
 | `app/service/rules/` | 목록 밖 값 · 주제 · 지난 생각 고르기 · 관계 규칙 · 상태 · 우주 배치 | 완성 |
 | `app/service/voice/` | 말 걸기 생성(`__init__.py`)과 생성 뒤 검사(`checks.py`) | 완성 |
@@ -124,7 +124,7 @@ flowchart LR
 | `supabase/migrations/` | 표 15개 · RLS(`20261008000000_v8_init.sql`), 보안(`20261009000000_v8_security.sql`) | 완성 |
 | `infra/frontend/` | 화면. 실제 백엔드에 붙어 돈다. `NEXT_PUBLIC_MOCK=1`이면 백엔드 없이 가짜 데이터로 | 완성(실제 모드 e2e 통과) |
 | `eval/` | 골든셋 152사례 · 골든셋 밖 측정 문장 84개 · 실행기(`eval/run.py`) | 완성(관문 통과) |
-| `tests/` | 테스트 463개(단위 + 로컬 Supabase 통합) | 전부 통과 |
+| `tests/` | 테스트 467개(단위 + 로컬 Supabase 통합) | 전부 통과 |
 | `Dockerfile` · `docker-compose.yml` · `scripts/` · `vercel.json` | Docker 3개, 실행 스크립트, Vercel 설정 | 완성(배포는 아직) |
 
 1차 파일(`app.py` · `service.py` · `universe.py` · `voice.py` 등 저장소 맨 위)은 Streamlit 데모가 계속 쓰므로 그대로 둔다.
@@ -177,7 +177,7 @@ data: {결과 전체}
 
 - 화면의 단계 이름은 7개다: `safety` → `names` → `record` → `past` → `observe` → `voice` → `save`. 규칙(6단계)은 `observe` 안에서 함께 돈다. 위기면 `safety` 다음 바로 돌봄 결과가 온다.
 - **끊기면(지하철, 화면 잠금 등):** 이미 끝난 단계는 서버에 암호문으로 남아 있다(`entries.steps_enc`). 화면이 "이어서 하기"를 보여 주고(새로고침해도), 누르면 `POST /diary/{id}/resume/stream`이 **끝난 단계는 건너뛰고** 남은 단계만 한다. 그래서 Studio 비용을 두 번 내지 않는다.
-- 이어 하기는 기록 하나에 3번까지(`RESUME_LIMIT`), 이달 비용 상한 · 하루 글 수도 처음 쓸 때와 똑같이 본다.
+- 이어 하기 횟수 · 이달 비용 · 하루 글 수 상한은 지금 없다(2026-10-08 동규 결정). 나중에 정해 환경변수(`RESUME_LIMIT` 등)로 넣으면 이어 하기도 처음 쓸 때와 똑같이 본다.
 - 같은 기록이 두 번 돌지 않게 DB에 **실행 잠금**(`entries.locked_until`)을 건다. 서버가 여러 대(Vercel)여도 한 대만 잡는다. 서버가 죽으면 잠금은 10분 뒤 풀리고 "멈춤"으로 보인다.
 - 같은 내용을 스트림 없이 한 번에 받는 `POST /diary`도 있다(시험 · curl용).
 
@@ -439,8 +439,8 @@ flowchart LR
 | 헷갈리는 이름은 묻기 | 동명이인 · 별명 · "하늘 · 봄"처럼 이름인지 낱말인지 | 결과 카드에 질문으로 띄우고, 답하기 전에는 가명으로 보낸다 | `pseudonym.find_new_names` |
 | 암호화 | DB가 새도 일기 · 이름이 읽히지 않게 | AES-256-GCM, 사용자 키 = HKDF(마스터 키, 사용자 id), 행마다 새 nonce, 행 주소(`표:id`)에 묶음. 암호문: 제목 · 본문 · 요약 · 사건, 생각 · 인용 · 스스로 쓴 변화 · 주제, 작은 별 이름, 사람 이름 · 별명, 관계 설명 · 근거, 상태 이력, 한마디 · 다음 질문 · 돌봄 여부, 되고 싶은 모습, 불편한 점 한 줄 · 마음 상태 버튼, 설정, 위기 표시, 끊긴 기록의 단계 저장값. 평문은 1.3 참고 | `core/security.py`, `repository/diary.py`, `tests/test_core_security.py` |
 | Data API 막기 | 화면에 공개된 anon 키 + 내 토큰으로 Supabase 표를 직접 고치기(비용 기록 지우기 등) | 마이그레이션이 anon · authenticated의 표 권한을 모두 거둔다. 백엔드는 Supabase API가 모르는 역할 `app_user`로 붙고, RLS도 그 역할에 건다. 비용 기록은 음수를 막는다(check) | `20261009000000_v8_security.sql`, `tests/test_repo_pg.py` |
-| 허용 목록 | 주소를 아는 아무나 가입해 비용을 쓰는 것 | `ALLOWED_EMAILS`에 없는 계정은 403. 구글 동의 화면도 "테스트"(등록한 사람만) | `core/auth.py`, `tests/test_api_security.py` |
-| 실행 잠금 · 상한 | 같은 기록이 두 번 돌아 비용이 두 배, 한 사람이 비용을 끝없이 키움 | DB 조건부 update로 잠금 하나만 잡음. 사용자마다 하루 10편(`DAILY_ENTRY_LIMIT`, 지워도 줄지 않게 실행 기록으로 셈), 이달 추정 $5(`MONTHLY_COST_CAP_USD`), 이어 하기 기록당 3번(`RESUME_LIMIT`), 글 8000자 · 제목 120자 | `api/diary.py`, `repository/diary.py` |
+| 허용 목록(지금은 끔) | 주소를 아는 아무나 가입해 비용을 쓰는 것 | 지금은 막지 않는다: 구글 로그인한 누구나 쓴다(구글 동의 화면도 게시, 2026-10-08 동규 결정 — 실제 배포 · 수익화를 생각할 때 정함). 손잡이 `ALLOWED_EMAILS`에 이메일을 넣으면 목록 밖 계정은 403 | `core/auth.py`, `tests/test_api_security.py` |
+| 실행 잠금 · 상한 | 같은 기록이 두 번 돌아 비용이 두 배, (상한을 켜면) 한 사람이 비용을 끝없이 키움 | DB 조건부 update로 잠금 하나만 잡음. 글 8000자 · 제목 120자. 사용자별 운영 상한(하루 글 수 `DAILY_ENTRY_LIMIT` — 지워도 줄지 않게 실행 기록으로 셈, 이달 추정 비용 `MONTHLY_COST_CAP_USD`, 이어 하기 `RESUME_LIMIT`)은 지금 없음(기본 0). 환경변수로 값을 넣으면 건다 | `api/diary.py`, `repository/diary.py` |
 | Studio 파일 지우기 | 가명 일기 HTML이 Upstage Files에 남는 것 | 실행이 끝나면(성공 · 실패 · 시간 초과 모두) 올린 입력 파일을 지운다 | `agents/studio.py` |
 | 원문 없는 로그 | 로그 · 오류 · 통계로 원문이 새는 것 | 받는 칸을 정해 두고(단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · 개수), 글자 값은 40자에서 자른다. 상황 이름("무거운 날") · 돌봄 모드도 남기지 않는다. 오류는 예외 종류 이름만. 로컬 · Docker는 `logs/agent_flow_YYYYMMDD.log`(`LOG_TO_FILE=1`), Vercel은 표준 출력(Logs, 1시간 보관) | `core/logger.py` |
 | 계정 · 기록 지우기 | 지운 뒤에도 벡터 · 행이 남는 것 | `DELETE /diary/{id}`(생각 · 관계 · 한마디 · 피드백 · 벡터까지), `DELETE /me`(벡터 → DB → 로그인 계정 순서, 벡터 실패면 멈춤) | `api/routes.py`, `tests/test_api_security.py` |
@@ -524,7 +524,7 @@ uv run --frozen python eval/run.py --pseudonym-heldout    # 골든셋 밖 이름
 - 현호가 하루 한 편이면 한 달 약 $3. 프로젝트 크레딧은 $60(11/21까지), 개발 · 시험 예산 상한은 $50이다.
 - 실행마다 추정 비용을 `runs/cost_ledger.jsonl`(로컬 원장, 저장소 밖)에 한 줄씩 적는다. 2026-10-08 밤 이 문서를 고칠 때 누적은 약 $3.92다(47줄, Studio 2판 확정 · 비교 실행, 로컬 e2e, 골든셋 `--live`, 위기 2단 측정 포함).
 - 실측: 하늘 29편을 2판으로 돌리니 Studio 54회 $2.70, 편당 약 $0.09, 편당 약 54초(기록 약 28초 + 관측 약 31초).
-- 끊겨서 이어 할 때 끝난 단계는 다시 부르지 않는다. 운영 한도(사용자별): 하루 10편, 이달 추정 $5, 이어 하기 기록당 3번, Studio 한 번 최대 3분, 지난 생각 최대 10개. 넘으면 "오늘은 …편까지" 같은 안내가 나오고 처리하지 않는다.
+- 끊겨서 이어 할 때 끝난 단계는 다시 부르지 않는다. 운영 한도: Studio 한 번 최대 3분, 지난 생각 최대 10개. 사용자별 하루 글 수 · 이달 비용 · 이어 하기 상한은 지금 없다(2026-10-08 동규 결정 — 사용량과 비즈니스 모델을 보고 나중에 정함). 정해서 환경변수로 넣으면 넘을 때 "오늘은 …편까지" 같은 안내가 나오고 처리하지 않는다.
 - Vercel · Supabase · Chroma Cloud는 무료 단계에서 시작한다(Chroma Cloud는 사용량 과금, 무료 크레딧 $5).
 
 ### 7.4 지표 (PRD §8.0 · §8.3)
@@ -564,7 +564,7 @@ uv run --frozen python eval/run.py --pseudonym-heldout    # 골든셋 밖 이름
 | Docker 3개 | 끝(`docs/docker-verify.md`) |
 | 배포(Vercel · Supabase 클라우드 · Chroma Cloud · 구글 로그인) | 준비만. 계정 · 키 · 배포는 동규가 직접(`deploy/MORNING.md`) |
 | 동규 하루 써 보기(리허설, 10/15) | 배포 뒤 |
-| 현호 이메일을 구글 로그인 테스트 사용자 · 허용 목록(`ALLOWED_EMAILS`)에 등록 | 동규 |
+| 현호에게 화면 주소 보내기(구글 로그인은 누구나 — 테스트 사용자 · 허용 목록 등록 없음) | 동규 |
 
 ### 8.2 알려진 한계
 
@@ -626,5 +626,5 @@ scripts/start.sh                   # http://localhost:3000 (끄기: scripts/stop
 
 ```bash
 uv sync
-uv run --frozen pytest -q          # 463개. 로컬 Supabase 가 켜져 있으면 DB 통합 시험까지
+uv run --frozen pytest -q          # 467개. 로컬 Supabase 가 켜져 있으면 DB 통합 시험까지
 ```

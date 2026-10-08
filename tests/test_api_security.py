@@ -1,7 +1,10 @@
 """보안 검토(docs/security-review-v8.md) 고침 시험: 허용 목록(M6) · 로그인 오류(L2) · 계정 지우기(M3) · 이어 하기 상한(M8) ·
-DB 잠금(M9 · L4) · 하루 글 수(L5) · /docs 끄기(L6) · 제어 문자(L7) · 지우기 범위(L8 · L9) · 마음 상태 enc(M5) · 로그 KST."""
+DB 잠금(M9 · L4) · 하루 글 수(L5) · 운영 상한 기본 없음 · /docs 끄기(L6) · 제어 문자(L7) · 지우기 범위(L8 · L9) · 마음 상태 enc(M5) · 로그 KST."""
 import importlib
 import json
+import os
+import subprocess
+import sys
 from datetime import timedelta
 
 import httpx
@@ -184,7 +187,7 @@ def test_resume_limits(client, env, monkeypatch):  # noqa: F811
     r = client.post(f"/diary/{eid}/resume/stream", headers=H1)
     assert r.status_code == 429 and r.json()["error"]["code"] == "resume_limit"
     monkeypatch.setattr(config, "RESUME_LIMIT", 9)
-    monkeypatch.setattr(config, "MONTHLY_COST_CAP_USD", 0.0)
+    monkeypatch.setattr(config, "MONTHLY_COST_CAP_USD", 0.01)   # 위에서 이미 Studio 비용이 쌓임
     r = client.post(f"/diary/{eid}/resume/stream", headers=H1)
     assert r.status_code == 429 and r.json()["error"]["code"] == "monthly_budget"
 
@@ -205,6 +208,21 @@ def test_daily_limit_counts_started_entries(client, env, monkeypatch):  # noqa: 
         s.update("runs", {"created_at": diary.now() - timedelta(days=2)}, entry_id="e_seed0")
     r = client.post("/diary/e_seed0/resume/stream", headers=H1)
     assert r.status_code == 429 and r.json()["error"]["code"] == "daily_limit"
+
+
+def test_caps_off_by_default(client, env, monkeypatch):  # noqa: F811
+    """운영 상한 기본값은 0 = 없음(2026-10-08 동규: 수익화를 생각할 때 정함). env 로 값을 줄 때만 건다."""
+    caps = ("DAILY_ENTRY_LIMIT", "MONTHLY_COST_CAP_USD", "RESUME_LIMIT")
+    code = "from app.core import config as c; print(c.DAILY_ENTRY_LIMIT, c.MONTHLY_COST_CAP_USD, c.RESUME_LIMIT)"
+    out = subprocess.run([sys.executable, "-c", code], env={**os.environ, **dict.fromkeys(caps, "")},  # 빈 값은 .env 도 못 덮음
+                         cwd=config.BASE_DIR, capture_output=True, text=True, check=True).stdout
+    assert out.split() == ["0", "0.0", "0"]
+    for k in caps:
+        monkeypatch.setattr(config, k, 0)
+    _, ev = write(client, *DAY1, "2026-10-01T22:00:00+09:00")   # 0 을 상한으로 읽으면 여기서 바로 429
+    assert ev[-1][0] == "result"
+    r = client.post(f"/diary/{ev[-1][1]['id']}/resume/stream", headers=H1)
+    assert r.status_code == 200 and events(r.text)[-1][0] == "result"
 
 
 ##################################################

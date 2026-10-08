@@ -31,7 +31,7 @@ scripts/stop_docker.sh
 시험:
 
 ```bash
-uv run --frozen pytest -q                                 # 463개(로컬 Supabase 가 켜져 있으면 DB 통합 시험 포함)
+uv run --frozen pytest -q                                 # 467개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 5개는 건너뜀)
 uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
 uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
 uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
@@ -39,7 +39,7 @@ uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 �
 
 결과와 합격 기준: [docs/eval-v8.md](docs/eval-v8.md), [docs/ws5-e2e.md](docs/ws5-e2e.md), 화면 실제 모드 e2e는 [docs/e2e-real.md](docs/e2e-real.md). 유료 실행은 `runs/cost_ledger.jsonl`에 한 줄씩 남긴다.
 
-- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 배포에는 `ALLOWED_EMAILS`(쓸 수 있는 계정)를 꼭 넣는다.
+- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 지금은 운영 상한 없이 구글 로그인한 누구나 쓴다(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` 같은 손잡이는 넣지 않음 — 실제 배포 · 수익화를 생각할 때 사용량을 보고 정함, [plan §2-9](docs/plan-v8-1017.md)).
 - 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호가 있으면(규칙 + Solar 2단 판정) 평소 흐름을 멈추고 돌봄으로 바꾼다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
 
 ---

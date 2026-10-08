@@ -49,7 +49,7 @@ STUDIO_TIMEOUT_S = _int("STUDIO_TIMEOUT_S", 180)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")   # 계정 지우기(DELETE /me)에서만 쓴다
-# 쉼표 목록. 있으면 목록 밖 계정은 403 not_allowed(팀원 전용). 없으면 로그인한 누구나.
+# 쉼표 목록. 있으면 목록 밖 계정은 403 not_allowed. 없으면 로그인한 누구나(지금 배포, 2026-10-08 동규).
 ALLOWED_EMAILS = {e.strip().lower() for e in os.getenv("ALLOWED_EMAILS", "").split(",") if e.strip()}
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 DIARY_ENC_KEY = os.getenv("DIARY_ENC_KEY", "")      # base64 32바이트. 사용자별 키는 HKDF(이 값, user_id)
@@ -71,9 +71,10 @@ API_DOCS = os.getenv("API_DOCS", "0") == "1"           # /docs · /openapi.json.
 # 운영 한도(연구 근거 아님, 크레딧을 지키는 값)
 MAX_TEXT_CHARS = _int("MAX_TEXT_CHARS", 8000)
 MAX_TITLE_CHARS = _int("MAX_TITLE_CHARS", 120)
-DAILY_ENTRY_LIMIT = _int("DAILY_ENTRY_LIMIT", 10)          # 사용자별 하루 글 수
-MONTHLY_COST_CAP_USD = _float("MONTHLY_COST_CAP_USD", 5.0)  # 사용자별 이번 달 추정 비용 상한
-RESUME_LIMIT = _int("RESUME_LIMIT", 3)                     # 기록 하나당 '이어서 하기' 횟수
+# 운영 상한: 0 = 없음(기본. 2026-10-08 동규 — 실제 배포 · 수익화를 생각할 때 사용량과 비즈니스 모델을 보고 정함). env 로 주면 건다.
+DAILY_ENTRY_LIMIT = _int("DAILY_ENTRY_LIMIT", 0)          # 사용자별 하루 글 수
+MONTHLY_COST_CAP_USD = _float("MONTHLY_COST_CAP_USD", 0)  # 사용자별 이번 달 추정 비용 상한(달러)
+RESUME_LIMIT = _int("RESUME_LIMIT", 0)                     # 기록 하나당 '이어서 하기' 횟수
 RUN_LOCK_S = _int("RUN_LOCK_S", 600)                       # 실행 잠금(노드가 끝날 때마다 늘림). 서버가 죽으면 이만큼 뒤 '멈춤'
 TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
 

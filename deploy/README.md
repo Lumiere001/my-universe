@@ -20,7 +20,7 @@
 
 | 항목 | 지금 Vercel | 우리 설정 |
 | --- | --- | --- |
-| 진입점 찾기 | 루트(또는 `src/` · `app/`)의 `app.py` · `index.py` · `server.py` · `main.py` · `wsgi.py` · `asgi.py` 에서 `app` 변수. 직접 지정은 `pyproject.toml`의 `[tool.vercel] entrypoint = "모듈:변수"`(예전 방식 `[project.scripts] app = ...`도 됨) | 루트에 1차 `app.py`(Streamlit 순차 스크립트)가 있어 먼저 잡힐 수 있다 → `.vercelignore`로 1차 파일을 올리지 않고, `vercel.json`의 함수 키를 `main.py`로 둔다(진입점이 다르게 잡히면 빌드가 실패해서 바로 드러남). `tool.vercel.entrypoint`는 공식 FastAPI 문서에 있는 설정(2026-10-08 다시 확인, §7 첫 줄). `pyproject.toml`은 공통 파일이라 밤에 고치지 않았고, **동규가 아침에 두 줄을 넣는다**(MORNING ①) |
+| 진입점 찾기 | 루트(또는 `src/` · `app/`)의 `app.py` · `index.py` · `server.py` · `main.py` · `wsgi.py` · `asgi.py` 에서 `app` 변수. 직접 지정은 `pyproject.toml`의 `[tool.vercel] entrypoint = "모듈:변수"`(예전 방식 `[project.scripts] app = ...`도 됨) | 루트에 1차 `app.py`(Streamlit 순차 스크립트)가 있어 먼저 잡힐 수 있다 → `.vercelignore`로 1차 파일을 올리지 않고, `vercel.json`의 함수 키를 `main.py`로 둔다(진입점이 다르게 잡히면 빌드가 실패해서 바로 드러남). `tool.vercel.entrypoint`는 공식 FastAPI 문서에 있는 설정(2026-10-08 다시 확인, §7 첫 줄). `pyproject.toml`에 두 줄을 넣었다(2026-10-08 아침, MORNING ①) |
 | Python 버전 | 3.12(기본) · 3.13 · 3.14. `pyproject.toml`의 `requires-python`, `.python-version`, `Pipfile.lock`에서 고름. 없거나 지원 안 하면 3.12 | 저장소 `.python-version`은 3.11(로컬 · Docker용, 2차 가이드). Vercel은 3.11을 지원하지 않으니 `.vercelignore`로 빼서 `requires-python = ">=3.11"`로 고르게 한다(→ 3.12대). 코드는 3.11 · 3.12 둘 다에서 돌아야 한다 |
 | 의존성 | `pyproject.toml`(uv.lock 있어도 없어도), `requirements.txt`, `Pipfile`. uv는 설정 없이 씀 | `requirements.txt`(1차 Streamlit용)는 `.vercelignore`로 빼서 `pyproject.toml + uv.lock`만 쓰게 한다 |
 | 최대 시간 | Fluid compute 기본. Hobby: 기본 = 최대 = **300초**. 스트리밍으로 보내는 시간도 포함 | `vercel.json` `functions["main.py"].maxDuration = 300`. 일기 한 편 약 70초라 한 번에 들어간다. 300초 넘으면 504 → 화면의 "이어서 하기"(`/diary/{id}/resume/stream`)로 잇는다 |
@@ -75,14 +75,14 @@ docker compose -p v8check down -v --rmi local
 | 어디 | 누가 | 무엇 |
 | --- | --- | --- |
 | Upstage 콘솔 | 동규 | Billing에서 한도 · 알림 메뉴가 있으면 월 한도를 건다(공개 문서에서 확인 못 함 — 콘솔에서 확인). 없으면 리허설 다음 날 · 매주 잔액을 본다. Studio 크레딧 승인 범위 $50 |
-| 앱(백엔드) | WS5 | 사용자당 하루 일기 수 상한 `DAILY_ENTRY_LIMIT`(기본 10), 이달 추정 비용 상한 `MONTHLY_COST_CAP_USD`(기본 5달러), 기록당 이어 하기 `RESUME_LIMIT`(기본 3번). 넘으면 처리 멈추고 안내(429). 쓸 수 있는 계정은 `ALLOWED_EMAILS`로 묶어 전체 비용도 묶인다. 이달 추정 비용은 `/stats`에서 본다 |
+| 앱(백엔드) | WS5 | **지금은 운영 상한 없음 · 가입은 구글 로그인한 누구나**(2026-10-08 동규: 실제 배포 · 수익화를 생각할 때 사용량과 비즈니스 모델을 보고 정함, plan §2-9). 손잡이만 남김: 사용자당 하루 일기 수 `DAILY_ENTRY_LIMIT`, 이달 추정 비용 `MONTHLY_COST_CAP_USD`(달러), 기록당 이어 하기 `RESUME_LIMIT` — 넣지 않거나 0이면 상한 없음, 넣으면 넘을 때 처리 멈추고 안내(429). `ALLOWED_EMAILS`를 넣으면 목록 밖 계정은 403. 그때까지 전체 비용은 Upstage 콘솔 · `/stats`(이달 추정 비용)로 본다 |
 | Vercel | — | Hobby는 청구 없음. 한도를 넘으면 함수가 멈춘다 |
 | Supabase | — | Free 플랜은 청구 없음(500MB DB). 일주일 안 쓰면 일시 정지되니 매일 쓰면 문제 없음 |
 | Chroma Cloud | 동규 | Starter $0 + 사용량, 무료 크레딧 $5. 콘솔 Billing에서 사용량 확인 |
 
 ### 오류 알림 (추천 하나): GitHub Actions 하루 한 번 `/health`
 
-`deploy/health.yml`을 `.github/workflows/health.yml`로 복사해 push 하고(MORNING ①), 저장소 Settings → Secrets and variables → Actions → **Variables**에 `API_URL`(백엔드 주소) · `WEB_URL`(화면 주소)을 넣으면 켜진다. 변수가 없으면 아무것도 하지 않는다. 매일 09:00(KST)에 두 주소를 부르고, 실패하면 GitHub이 **예약 실행 실패 메일**을 보낸다(일정을 마지막으로 바꾼 사람에게). 추가 계정 · 비용 없음.
+`.github/workflows/health.yml`(= `deploy/health.yml` 사본, 2026-10-08 넣음)을 push 하고(MORNING ①), 저장소 Settings → Secrets and variables → Actions → **Variables**에 `API_URL`(백엔드 주소) · `WEB_URL`(화면 주소)을 넣으면 켜진다. 변수가 없으면 아무것도 하지 않는다. 매일 09:00(KST)에 두 주소를 부르고, 실패하면 GitHub이 **예약 실행 실패 메일**을 보낸다(일정을 마지막으로 바꾼 사람에게). 추가 계정 · 비용 없음.
 
 - 이게 잡는 것: 배포 깨짐, 환경변수 빠짐, 서버 다운. 못 잡는 것: 일기 처리 중 Studio 오류 → 그건 화면의 오류 이벤트와 피드백("불편한 점 한 줄"), `/stats`로 본다.
 - Vercel 자체 알림(Observability Alerts)은 Pro 이상이라 쓰지 않는다.
@@ -101,9 +101,9 @@ docker compose -p v8check down -v --rmi local
 | `DIARY_ENC_KEY` | 일기 암호화 키(32바이트 base64, MORNING ⑤의 명령으로 만듦). Vercel과 비밀번호 관리자 두 곳에만 둔다(잃으면 저장된 글을 못 염) |
 | `CHROMA_API_KEY`, `CHROMA_TENANT`, `CHROMA_DATABASE` | Chroma Cloud(이 이름은 Chroma `CloudClient`가 그대로 읽는 이름) |
 | `FRONTEND_ORIGIN` | 화면 주소 `https://<화면>.vercel.app` (CORS) |
-| `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD`, `RESUME_LIMIT` | 넣지 않으면 `10` · `5` · `3` (§4) |
-| `ALLOWED_EMAILS` | 쓸 수 있는 구글 계정 이메일(쉼표 목록, 동규 · 현호). 목록 밖은 403 `not_allowed` |
-| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키(**Legacy** `service_role`, `eyJ…` 모양 — 코드가 `Authorization: Bearer`로 보내서 새 형식 `sb_secret_…`은 맞지 않음). 백엔드에만, 화면에는 넣지 않음 |
+| `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD`, `RESUME_LIMIT` | **넣지 않음** — 운영 상한은 나중에(넣지 않거나 `0`이면 상한 없음, §4) |
+| `ALLOWED_EMAILS` | **넣지 않음** — 구글 로그인한 누구나. 넣으면(쉼표 목록) 목록 밖은 403 `not_allowed` |
+| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키(**Legacy** `service_role`, `eyJ…` 모양. 코드는 새 형식 `sb_secret_…`도 받는다 — `apikey` 헤더로만 보냄, 2026-10-08 고침). 백엔드에만, 화면에는 넣지 않음 |
 | 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `API_DOCS`(없으면 `/docs` 꺼짐), `DEV_TEST_PASSWORD`(로컬 시험 전용) |
 
 화면(`my-universe`): `NEXT_PUBLIC_API_BASE`(백엔드 주소), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_DEV_LOGIN=0`, `NEXT_PUBLIC_MOCK=0` (`infra/frontend/.env.example`과 같음).
@@ -112,7 +112,7 @@ docker compose -p v8check down -v --rmi local
 
 ## 6. WS5 · 오케스트레이터에게 (이 브랜치 밖 파일)
 
-- `pyproject.toml`: `[tool.vercel]` `entrypoint = "main:app"` — 아직 없음. 동규가 아침에 넣는다(MORNING ①).
+- `pyproject.toml`: `[tool.vercel]` `entrypoint = "main:app"` — 넣음(2026-10-08 아침, MORNING ①).
 - `.env.example`: §5 이름 들어감(완료).
 - DB 연결: `app/repository/tables.py`가 `prepare_threshold=None`으로 연결(완료).
 - 실행 중에 읽는 데이터 파일: `data/ops/domain_aliases_*.json` · `topic_center_*.json`(`app/agents/tools.py` `sun_vectors`). `.dockerignore` · `Dockerfile` COPY · `.vercelignore` · `vercel.json excludeFiles`에 반영(완료). 새로 읽는 파일이 생기면 네 곳을 같이 고친다. 파일이 없으면 조용히 빈 값이 되니 주의.
@@ -131,4 +131,5 @@ docker compose -p v8check down -v --rmi local
 - vercel.json(`regions` · `functions`): https://vercel.com/docs/project-configuration/vercel-json
 - Runtime Logs(Hobby 1시간): https://vercel.com/docs/logs/runtime
 - Chroma 클라이언트(`CloudClient`, `CHROMA_API_KEY` · `CHROMA_TENANT` · `CHROMA_DATABASE`): https://docs.trychroma.com/docs/run-chroma/clients
+- Google OAuth 게시 · 검증(게시하면 구글 계정 누구나, 비민감 범위만이면 앱 검증 필수 아님, 로고를 올리면 검증 · 미검증이면 도메인만 보임, 경고는 민감 · 제한 범위만): https://support.google.com/cloud/answer/15549945 · https://support.google.com/cloud/answer/13463073 · https://support.google.com/cloud/answer/15549049 · https://developers.google.com/identity/protocols/oauth2/production-readiness/overview
 - ChromaDB 이미지 태그 `chromadb/chroma:1.5.9`(= `chromadb-client` 1.5.9): https://hub.docker.com/r/chromadb/chroma

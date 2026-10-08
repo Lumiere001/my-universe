@@ -128,7 +128,8 @@ def test_daily_limit(client, monkeypatch):
 
 
 def test_monthly_budget(client, monkeypatch):
-    monkeypatch.setattr(config, "MONTHLY_COST_CAP_USD", 0.0)
+    monkeypatch.setattr(config, "MONTHLY_COST_CAP_USD", 0.01)
+    write(client, *DAY1, "2026-10-01T22:00:00+09:00")   # Studio 한 번에 추정 $0.05
     r = client.post("/diary", headers=H1, json={"text": "글"})
     assert r.status_code == 429 and r.json()["error"]["code"] == "monthly_budget"
 

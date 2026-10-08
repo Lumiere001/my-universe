@@ -7,14 +7,14 @@
 
 | 순서 | 할 일 | 시간 |
 | --- | --- | --- |
-| ① | pyproject 두 줄 · health 워크플로 · push | 10분 |
+| ① | push(pyproject 두 줄 · health 워크플로는 끝남) | 5분 |
 | ② | Supabase 새 프로젝트 · db push · Data API 막힘 확인 · Email 끄기 | 20분 |
-| ③ | 구글 로그인(OAuth), 테스트 사용자에 현호 | 15분 |
+| ③ | 구글 로그인(OAuth), 앱 게시(누구나 로그인) | 15분 |
 | ④ | Chroma Cloud | 10분 |
 | ⑤ | Vercel 두 프로젝트(백엔드 · 화면) | 30분 |
 | ⑥ | 배포 확인 · 오류 알림 켜기 | 15분 |
 | ⑦ | 리허설(동규 하루 써 보기) | 하루(확인은 30분) |
-| ⑧ | 현호 초대 | 5분 |
+| ⑧ | 현호 초대(화면 주소 보내기) | 5분 |
 
 미리 정할 것: 화면 프로젝트 이름 `my-universe`, 백엔드 프로젝트 이름 `my-universe-api`.
 → 주소가 `https://my-universe.vercel.app` · `https://my-universe-api.vercel.app`이 된다(이름이 이미 쓰이고 있으면 Vercel이 다른 주소를 준다. 그때는 아래에 나오는 주소를 실제 주소로 바꿔 넣는다).
@@ -24,25 +24,16 @@
 
 ---
 
-## ① pyproject 두 줄 · health 워크플로 · push (10분)
+## ① pyproject 두 줄 · health 워크플로 · push (5분)
 
 - 무슨 일: Vercel 진입점을 적고, 오류 알림 워크플로를 제자리에 두고, 밤에 로컬 master에 합친 커밋을 GitHub에 올린다.
-- 왜: Vercel이 GitHub 저장소에서 가져와 배포한다. 진입점을 적어 두면 루트의 1차 `app.py`(Streamlit)와 헷갈릴 일이 없다(공식: https://vercel.com/docs/frameworks/backend/fastapi 의 `tool.vercel.entrypoint`, 2026-10-08 확인). 워크플로 파일은 `.github/workflows/`에 있어야 GitHub이 돌린다(지금은 `deploy/health.yml`에만 있음).
-- 할 일:
-
-`pyproject.toml` 맨 아래에 두 줄을 넣는다.
-
-```toml
-[tool.vercel]
-entrypoint = "main:app"
-```
+- 왜: Vercel이 GitHub 저장소에서 가져와 배포한다. 진입점을 적어 두면 루트의 1차 `app.py`(Streamlit)와 헷갈릴 일이 없다(공식: https://vercel.com/docs/frameworks/backend/fastapi 의 `tool.vercel.entrypoint`, 2026-10-08 확인). 워크플로 파일은 `.github/workflows/`에 있어야 GitHub이 돌린다(`deploy/health.yml`에서 복사해 둠).
+- **끝남(2026-10-08 오케스트레이터):** `pyproject.toml` 맨 아래 두 줄(`[tool.vercel]` · `entrypoint = "main:app"`, `uv.lock`은 바뀌지 않음)과 `.github/workflows/health.yml`(= `deploy/health.yml` 사본)을 master에 커밋했다.
+- 할 일(남은 것): 확인하고 push.
 
 ```bash
 cd ~/Projects/my-universe
-mkdir -p .github/workflows && cp deploy/health.yml .github/workflows/health.yml
-uv run --frozen pytest -q          # 463 passed 인지(로컬 Supabase 가 꺼져 있으면 DB 시험은 건너뜀)
-git add pyproject.toml .github/workflows/health.yml
-git commit -m "Vercel 진입점 main:app · 하루 한 번 health 확인"
+uv run --frozen pytest -q          # 462 passed, 5 skipped 인지(5개는 로컬 Supabase 가 꺼져 있을 때 건너뛰는 DB 시험. 켜져 있으면 467 passed)
 git status                         # 깨끗한지
 git log --oneline -15              # 밤 작업 커밋 확인
 git push origin master
@@ -81,17 +72,19 @@ curl -s -w "\n%{http_code}\n" "https://<ref>.supabase.co/rest/v1/runs?select=*" 
      - Project Settings → API Keys → **Legacy API Keys** 탭: `anon` `public`(`SUPABASE_ANON_KEY`), `service_role`(`SUPABASE_SERVICE_ROLE_KEY`, **백엔드에만** — 계정 지우기 `DELETE /me` 전용. 화면 프로젝트 · `NEXT_PUBLIC_*`에는 절대 넣지 않는다). 둘 다 `eyJ`로 시작하는 긴 값이다.
        - 왜 Legacy: 로컬 시험을 Legacy 모양(JWT) 키로 했다. 코드는 두 형식을 다 받는다(2026-10-08 고침: `eyJ…` 키는 `apikey` + `Authorization: Bearer`, 새 `sb_secret_…` 키는 `apikey` 헤더로만). Legacy 탭이 없으면 새 Secret key를 넣고, 배포 확인(⑥)에서 시험 계정으로 계정 지우기가 되는지 꼭 본다(새 형식은 실제 Supabase에서 아직 시험하지 않음).
      - 위쪽 **Connect** 버튼 → Connection string → **Transaction pooler**(포트 6543) URI의 `[YOUR-PASSWORD]`를 DB 비밀번호로 바꾼 것(`DATABASE_URL`). Vercel은 서버리스라 직접 연결 대신 풀러를 쓴다(코드는 풀러용으로 `prepare_threshold=None`).
-  6. Authentication → Sign In / Providers → **Email** → 끄기(Disable). 로그인은 구글 하나라 이메일 가입 길을 닫는다(전체 "Allow new users to sign up"은 켜 둔다 — 끄면 현호가 구글로 처음 들어올 수 없다. 누가 쓰는지는 ⑤의 `ALLOWED_EMAILS`와 ③의 테스트 사용자가 막는다).
+  6. Authentication → Sign In / Providers → **Email** → 끄기(Disable). 로그인은 구글 하나라 이메일 가입 길을 닫는다(전체 "Allow new users to sign up"은 켜 둔다 — 끄면 아무도 구글로 처음 들어올 수 없다. 지금은 구글 계정이면 누구나 쓴다: 허용 목록 없음, plan §2-9).
 
 ## ③ 구글 로그인(OAuth) (15분)
 
 - 무슨 일: Supabase 로그인에 구글을 연결한다.
-- 왜: v8 로그인은 구글 로그인 하나(WS0 결정 4). 동의 화면을 "테스트"로 두면 등록한 사람만 로그인할 수 있어 10/17엔 그게 맞다.
+- 왜: v8 로그인은 구글 로그인 하나(WS0 결정 4). 가입은 허용 목록 없이 구글 계정이면 누구나(2026-10-08 아침 동규 결정, plan §2-9) → 동의 화면을 외부(External)로 만들고 **게시**한다(테스트 사용자 등록 없음).
 - 할 일:
   1. https://console.cloud.google.com → 새 프로젝트 `my-universe`.
   2. Google Auth Platform(= OAuth 동의 화면) → 시작하기 → 앱 이름 `나의 우주`, 지원 이메일 = 동규 → 대상 **외부(External)** → 저장.
-     - 대상(Audience): 게시 상태 **테스트** 유지 → 테스트 사용자에 **동규 이메일 · 현호 이메일** 추가(현호 주소를 아직 모르면 ⑧에서 추가).
-     - 데이터 액세스(범위): 기본 `openid` · `email` · `profile`만. 다른 범위 추가하지 않기.
+     - 데이터 액세스(범위): 기본 정보 `email` · `profile` · `openid`만(모두 비민감 범위). 다른 범위 추가하지 않기.
+     - 브랜딩: **로고는 올리지 않는다**(게시한 외부 앱에 로고를 올리면 Google 검증을 거쳐야 한다).
+     - 대상(Audience) → **앱 게시(Publish app)** → 확인 → 게시 상태가 **프로덕션 단계(In production)**. 이러면 구글 계정이 있는 누구나 로그인한다.
+     - 검증 없이 되는 이유: 비민감 범위만 쓰는 앱은 앱 검증이 필수가 아니다. 브랜드 검증을 안 하면 구글 로그인 화면에 앱 이름 · 로고 대신 도메인만 보인다(정상). "확인되지 않은 앱" 경고는 민감 · 제한 범위를 쓸 때만 나온다. 공식 문서(2026-10-08 확인): https://support.google.com/cloud/answer/15549945 (게시 = 누구나) · https://support.google.com/cloud/answer/13463073 (비민감 범위는 검증 필수 아님) · https://support.google.com/cloud/answer/15549049 (로고 → 검증, 미검증이면 도메인만) · https://developers.google.com/identity/protocols/oauth2/production-readiness/overview (경고는 민감 · 제한 범위만).
   3. 클라이언트 → 클라이언트 만들기 → 유형 **웹 애플리케이션** →
      - 승인된 JavaScript 원본: `https://my-universe.vercel.app` (+ 로컬 시험용 `http://localhost:3000`)
      - 승인된 리디렉션 URI: `https://<ref>.supabase.co/auth/v1/callback`
@@ -141,14 +134,10 @@ python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)
 | `SUPABASE_SERVICE_ROLE_KEY` | ② Legacy `service_role` 키(계정 지우기 전용. 없으면 설정 화면의 "계정과 모든 기록 지우기"가 503) |
 | `DATABASE_URL` | ② Transaction pooler URI(비밀번호 넣은 것) |
 | `DIARY_ENC_KEY` | 위 명령 결과(비밀번호 관리자에도 보관) |
-| `ALLOWED_EMAILS` | **동규 · 현호 구글 이메일**(쉼표로: `a@gmail.com,b@gmail.com`). 목록 밖 계정은 "초대된 사람만 쓸 수 있어요"(403). 비우면 로그인한 누구나 쓸 수 있으니 꼭 넣는다 |
 | `CHROMA_API_KEY` · `CHROMA_TENANT` · `CHROMA_DATABASE` | ④ |
 | `FRONTEND_ORIGIN` | `https://my-universe.vercel.app` (끝에 `/` 없이) |
-| `DAILY_ENTRY_LIMIT` | (선택) 사용자별 하루 일기 수. 넣지 않으면 `10` |
-| `MONTHLY_COST_CAP_USD` | (선택) 사용자별 이달 추정 비용 상한(달러). 넣지 않으면 `5` |
-| `RESUME_LIMIT` | (선택) 기록 하나당 '이어서 하기' 횟수. 넣지 않으면 `3` |
 
-넣지 않는 것: `API_DOCS`(없으면 `/docs` · `/openapi.json`이 꺼짐 — 배포는 끈 채로), `LOG_TO_FILE`(기본 `0` = 표준 출력 → Vercel Logs), `CHROMA_HOST` · `CHROMA_PORT`(`CHROMA_API_KEY`가 있으면 Chroma Cloud를 씀), `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차 Streamlit용), `DEV_TEST_PASSWORD`(로컬 시험 전용), `SUPABASE_AUTH_EXTERNAL_GOOGLE_*`(로컬 Supabase 전용 — 클라우드는 ③-4 대시보드에 넣음).
+넣지 않는 것: `ALLOWED_EMAILS`(넣지 않음 — 구글 로그인한 누구나 쓴다. 나중에 가입 범위를 정할 때 쓰는 손잡이), `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD` · `RESUME_LIMIT`(넣지 않음 — 운영 상한은 나중에. 넣지 않으면 상한 없음. 둘 다 plan §2-9), `API_DOCS`(없으면 `/docs` · `/openapi.json`이 꺼짐 — 배포는 끈 채로), `LOG_TO_FILE`(기본 `0` = 표준 출력 → Vercel Logs), `CHROMA_HOST` · `CHROMA_PORT`(`CHROMA_API_KEY`가 있으면 Chroma Cloud를 씀), `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차 Streamlit용), `DEV_TEST_PASSWORD`(로컬 시험 전용), `SUPABASE_AUTH_EXTERNAL_GOOGLE_*`(로컬 Supabase 전용 — 클라우드는 ③-4 대시보드에 넣음).
 
 4. Deploy → 빌드 로그에서 Python 함수가 `main.py`로 잡혔는지 본다(①의 `entrypoint = "main:app"`. `vercel.json`의 함수 키도 `main.py`라 다르게 잡히면 빌드가 실패해 드러난다).
 5. Settings → Functions에서 Region이 Seoul(icn1)인지 확인(`vercel.json`의 `regions`).
@@ -186,8 +175,8 @@ curl -s -o /dev/null -w "%{http_code}\n" https://my-universe-api.vercel.app/me
 # 기대: 401 (로그인 없이는 못 씀)
 ```
 
-- [ ] `https://my-universe.vercel.app` → 구글 로그인 → 첫 화면이 뜬다(오류 문구 없이).
-- [ ] (가능하면) 목록 밖 다른 구글 계정으로 로그인 → "초대된 사람만 쓸 수 있어요"와 로그아웃만 보인다. 테스트 사용자가 아니면 구글 단계에서 먼저 막힌다(그것도 정상).
+- [ ] `https://my-universe.vercel.app` → 구글 로그인 → 첫 화면이 뜬다(오류 문구 없이. 구글 화면에 "나의 우주" 대신 도메인이 보여도 정상 — ③-2).
+- [ ] (가능하면) 다른 구글 계정으로 로그인 → 막히지 않고 첫 화면이 뜨고, 동규의 기록은 하나도 보이지 않는다.
 - [ ] 설정 → 로그아웃 → 다시 로그인 화면.
 - [ ] Vercel → `my-universe-api` → Logs: 한 줄짜리 JSON(`event` · `path` · `http` · `ms`)만 보이고 키 · 이름 · 글은 없다.
 
@@ -216,8 +205,7 @@ GitHub 저장소 → Settings → Secrets and variables → Actions → **Variab
 ## ⑧ 현호 초대 (5분)
 
 - 무슨 일: 현호가 10/17부터 실제로 쓰게 한다.
-- 왜: 동의 화면이 "테스트"이고 백엔드가 허용 목록을 보므로, 두 곳 모두에 등록한 사람만 쓸 수 있다.
+- 왜: 동의 화면을 게시했고 허용 목록이 없어서(③-2, plan §2-9) 화면 주소만 보내면 된다. 현호 이메일을 어디에 등록할 일은 없다.
 - 할 일:
-  1. 현호 이메일(구글 계정)을 ③-2 테스트 사용자와 백엔드 `ALLOWED_EMAILS`(⑤-1)에 넣었는지 확인(없으면 추가 → 백엔드 Redeploy).
-  2. 현호에게 보내기: 주소 `https://my-universe.vercel.app`, 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 구글 로그인 때 "Google에서 확인하지 않은 앱" 경고가 나오면 "계속"(테스트 상태라 나오는 경고), 불편한 점은 결과 카드의 "불편한 점 한 줄"로.
-  3. 기술 설명 문서 `docs/tech-explainer-v8.md`(10/16, WS10)를 같이 보낸다. 특히 1.3 "개인정보 약속"(가명 처리와 그 한계, 운영자가 기술적으로 풀 수 있다는 점)을 읽고 쓸지 정하게 한다.
+  1. 현호에게 보내기: 주소 `https://my-universe.vercel.app`, 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 구글 로그인 화면에 "나의 우주" 대신 도메인이 보여도 정상(로고 · 브랜드 검증을 하지 않아서), 불편한 점은 결과 카드의 "불편한 점 한 줄"로.
+  2. 기술 설명 문서 `docs/tech-explainer-v8.md`(10/16, WS10)를 같이 보낸다. 특히 1.3 "개인정보 약속"(가명 처리와 그 한계, 운영자가 기술적으로 풀 수 있다는 점)을 읽고 쓸지 정하게 한다.

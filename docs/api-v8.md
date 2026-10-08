@@ -4,7 +4,7 @@
 
 **WS5 구현에서 바뀐 점(2026-10-08):** 아래 본문에 반영했다. 요약은 맨 끝 "§7 WS5 구현 메모".
 
-**보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음.
+**보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
 
@@ -12,9 +12,9 @@
 - 로그인: Supabase Auth. 화면이 받은 access token을 모든 요청에 `Authorization: Bearer <token>`으로 보낸다(`/health` · `/ontology` 제외). 백엔드는 토큰을 Supabase(`/auth/v1/user`)로 확인해 user id를 얻는다.
   - 배포: 구글 로그인(`supabase.auth.signInWithOAuth({ provider: "google" })`). 구글 OAuth 키는 동규가 아침에 넣는다.
   - 로컬: `NEXT_PUBLIC_DEV_LOGIN=1`일 때만 시험용 계정(이메일 · 비밀번호, 로컬 Supabase에만 있음) 로그인 칸을 보인다.
-  - 초대 목록: 백엔드 환경변수 `ALLOWED_EMAILS`(쉼표 목록)가 있으면 목록 밖 계정은 모든 로그인 요청이 403 `not_allowed`("초대된 사람만 쓸 수 있어요"). 화면은 이때 안내와 로그아웃만 보인다. 없으면 로그인한 누구나.
+  - 초대 목록(설정했을 때만): 백엔드 환경변수 `ALLOWED_EMAILS`(쉼표 목록)가 있으면 목록 밖 계정은 모든 로그인 요청이 403 `not_allowed`("초대된 사람만 쓸 수 있어요"). 화면은 이때 안내와 로그아웃만 보인다. 없으면 로그인한 누구나(지금 배포, 2026-10-08).
   - 화면(supabase-js)은 로그인에만 쓴다. Supabase Data API(`/rest/v1` · GraphQL)로는 표를 읽고 쓸 수 없다(anon · authenticated 권한 없음). 데이터는 모두 이 API로.
-- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
+- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖 — `ALLOWED_EMAILS`를 설정했을 때만) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`를 설정했을 때만) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`를 설정했을 때만) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`를 설정했을 때만. 셋 다 기본 0 = 상한 없음) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
 - 입력 글의 NUL 등 제어 문자(줄바꿈 · 탭 제외)는 받을 때 지운다.
 - 시각은 ISO 8601(+09:00). id는 문자열.
 - 원문(일기 글 · 인용 · 사람 이름)은 실행 기록 · 오류 메시지 · `/stats`에 절대 넣지 않는다.
@@ -44,7 +44,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - 끊기면: `GET /diary/{id}`로 상태를 보고, `status`가 `failed`이거나 멈춰 있으면 `POST /diary/{id}/resume/stream`(같은 이벤트, 끝난 단계는 건너뜀 — 건너뛴 단계도 progress 는 다시 보낸다). 화면이 끊겨도 서버(로컬 · Docker)는 끝까지 처리한다. 서버가 다시 켜져 멈춘 기록은 `GET /diary/{id}`가 `failed`로 알려 준다.
 - `error` 이벤트의 `resumable`: 실명 검사에 걸린 경우(`real_name_leak`, 밖으로 보내지 않음)만 `false`. 그 밖의 코드: `studio_timeout` · `studio_failed` · `studio_bad_output` · `llm_failed` · `internal`.
 - 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`). 잠금은 DB(`entries.locked_until`, 조건부 update)라 서버 인스턴스가 여러 개여도 하나만 돈다. 노드가 끝날 때마다 잠금을 `RUN_LOCK_S`(기본 600초)만큼 늘리고, 끝나면 푼다. 서버가 멈춰 잠금이 만료되면 `GET /diary/{id}`가 `failed`로 알려 준다.
-- 이어 하기도 이번 달 비용 상한(`monthly_budget`)과 하루 수를 본다. 하루 수 = 오늘 처리를 시작하거나 이어 한 기록 수(오늘 이미 센 기록을 다시 이어 하는 건 더하지 않음, 지운 글도 그대로 셈, 시드한 글은 안 셈). 기록 하나당 이어 하기는 `RESUME_LIMIT`(기본 3)번까지(429 `resume_limit`).
+- 운영 상한은 환경변수를 설정했을 때만 건다(기본 0 = 없음). 설정하면 이어 하기도 이번 달 비용 상한(`monthly_budget`)과 하루 수를 본다. 하루 수 = 오늘 처리를 시작하거나 이어 한 기록 수(오늘 이미 센 기록을 다시 이어 하는 건 더하지 않음, 지운 글도 그대로 셈, 시드한 글은 안 셈). 기록 하나당 이어 하기는 `RESUME_LIMIT`번까지(429 `resume_limit`).
 - 시험 · curl용으로 같은 본문의 `POST /diary`(스트림 없이 EntryResult 한 번)도 둔다.
 
 ### EntryResult
