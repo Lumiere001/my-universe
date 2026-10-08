@@ -6,6 +6,7 @@ import pytest
 
 from app.core.ontology import load
 from app.service import voice
+from app.service.safety import detect_crisis
 from app.service.voice import checks
 
 TEXT = "지난주에 팀 세 곳을 찾아보기로 했는데 바쁘다는 핑계로 또 미뤘다. 피곤해서 오늘도 못 했다."
@@ -14,13 +15,16 @@ TEXT = "지난주에 팀 세 곳을 찾아보기로 했는데 바쁘다는 핑�
 @pytest.fixture
 def fake(monkeypatch):
     """답을 차례로 돌려주는 가짜 chat. calls 에 받은 messages 가 쌓인다.
-    팩폭 넘지 않는 선 판정(checks.LINE_JUDGE)은 judge_calls 에 따로 쌓고 judge 답(기본: 위반 없음)을 차례로 준다."""
-    st = {"answers": [], "calls": [], "judge": [{"violation": False, "line": 0, "reason": ""}], "judge_calls": []}
+    팩폭 넘지 않는 선 판정(checks.LINE_JUDGE)은 judge_calls 에 따로 쌓고 judge 답(기본: 위반 없음)을 차례로 준다.
+    위기 한마디 판정(checks.CRISIS_JUDGE)은 crisis_judge_calls 에 쌓고 crisis_judge 답(기본: ok)을 차례로 준다."""
+    st = {"answers": [], "calls": [], "judge": [{"violation": False, "line": 0, "reason": ""}], "judge_calls": [],
+          "crisis_judge": ["ok"], "crisis_judge_calls": []}
 
     def chat(messages, **kw):
-        if messages[0]["content"] == checks.LINE_JUDGE:
-            st["judge_calls"].append(messages)
-            a = st["judge"].pop(0) if len(st["judge"]) > 1 else st["judge"][0]
+        k = {checks.LINE_JUDGE: "judge", checks.CRISIS_JUDGE: "crisis_judge"}.get(messages[0]["content"])
+        if k:
+            st[k + "_calls"].append(messages)
+            a = st[k].pop(0) if len(st[k]) > 1 else st[k][0]
             if isinstance(a, Exception):
                 raise a
             return json.dumps(a, ensure_ascii=False) if isinstance(a, dict) else a
@@ -110,6 +114,7 @@ def test_crisis_comfort_with_check_in(fake):
     assert load()["crisis"]["voice"] in s and "제안 없이" in s
     assert load()["fact_bomb"]["strength"] not in s and load()["tones"][3]["example"] not in s   # 팩폭 세기 · 예시 빠짐
     assert fake["judge_calls"] == []                      # 다정하게로 낮췄으니 팩폭 판정도 없음
+    assert r["checks"] == [{"attempt": 1, "problems": [], "crisis_judge": "통과"}] and len(fake["crisis_judge_calls"]) == 1
 
 
 def test_crisis_blocks_hotline_and_org(fake):
@@ -118,8 +123,9 @@ def test_crisis_blocks_hotline_and_org(fake):
     r = voice.generate(ctx(tone="담백하게", crisis=True, past_check_ins=[voice.CHECK_IN["담백하게"][0]]))
     assert any(p.startswith("단체 · 번호 안내") for p in r["checks"][0]["problems"])
     assert any(p.startswith("위기 글에 기관 안내") for p in r["checks"][1]["problems"])
-    assert r["message"] == voice.SAFE[("담백하게", True)][0] and r["check_in"] == voice.CHECK_IN["담백하게"][1]
+    assert r["message"] == voice.CRISIS_SAFE["담백하게"][0] and r["check_in"] == voice.CHECK_IN["담백하게"][1]
     assert not SHOWN_BAD.search(r["message"] + r["check_in"])
+    assert fake["crisis_judge_calls"] == []              # 코드 검사에서 걸리면 위기 한마디 판정은 부르지 않는다
 
 
 def test_crisis_does_not_echo_the_wish(fake):
@@ -158,6 +164,57 @@ def test_check_in_lines_clean_and_rotate():
 def test_crisis_method_place_filtered():
     assert checks.line_problems("옥상에 올라가지 마") and checks.line_problems("수면제")
     assert checks.line_problems("오늘 한 곳 찾아") == []
+
+
+# --- 위기 글: 코드 검사를 지난 한마디를 Solar 가 위기 바람 동조로 한 번 더 본다(위기 글에만) ---
+
+CRISIS_TEXT = "요즘 다 귀찮다. 솔직히 그냥 사라지고 싶다."
+SOFT_ECHO = {"message": "오늘은 그 곁에 마음을 조용히 내려놓아도 괜찮아요.", "next_question": ""}   # 규칙엔 안 걸리는 돌려 말한 동조
+KIND = {"message": "요즘 정말 많이 지쳤겠어요. 이렇게 적어 준 것만으로 고마워요.", "next_question": ""}
+
+
+def test_crisis_judge_violation_retries(fake):
+    fake["answers"] = [SOFT_ECHO, KIND]
+    fake["crisis_judge"] = ["Violation", "ok"]
+    r = voice.generate(ctx(tone="다정하게", text=CRISIS_TEXT, crisis=True))
+    assert r["message"] == KIND["message"] and r["check_in"] == voice.CHECK_IN["다정하게"][0]
+    assert [c["crisis_judge"] for c in r["checks"]] == ["위반", "통과"] and "고칠 것" in sys_prompt(fake, 1)
+    sent = fake["crisis_judge_calls"][0][1]["content"]
+    assert CRISIS_TEXT in sent and SOFT_ECHO["message"] in sent and fake["judge_calls"] == []   # (가명) 글 + 한마디만
+
+
+def test_crisis_judge_twice_falls_back_to_crisis_safe(fake):
+    fake["answers"] = [SOFT_ECHO]
+    fake["crisis_judge"] = ["violation"]
+    r = voice.generate(ctx(tone="담백하게", text=CRISIS_TEXT, crisis=True))
+    assert r["message"] == voice.CRISIS_SAFE["담백하게"][0] and r["checks"][-1]["attempt"] == "기본 문장"
+    assert len(fake["calls"]) == len(fake["crisis_judge_calls"]) == 2
+    assert r["check_in"] == voice.CHECK_IN["담백하게"][0] and r["mode"] == "comfort" and r["next_question"] == ""
+
+
+@pytest.mark.parametrize("bad", [RuntimeError("network"), "판정 못 함"])
+def test_crisis_judge_error_falls_back_to_crisis_safe(fake, bad):
+    fake["answers"] = [KIND]
+    fake["crisis_judge"] = [bad]
+    r = voice.generate(ctx(text=CRISIS_TEXT, crisis=True))           # 팩폭 → 다정하게
+    assert r["message"] == voice.CRISIS_SAFE["다정하게"][0] and r["check_in"] == voice.CHECK_IN["다정하게"][0]
+    assert r["checks"][0]["crisis_judge"] == "판정 실패" and len(fake["calls"]) == 1   # 판정을 못 하면 다시 만들지 않는다
+
+
+def test_no_crisis_judge_for_non_crisis(fake):
+    fake["answers"] = [{"message": "오늘 기록, 잘 받았어요.", "next_question": ""}]
+    for c in (ctx(), ctx(tone="담백하게"), ctx(tone="다정하게", weather="비"), ctx(crisis_unsure=True)):
+        assert all("crisis_judge" not in x for x in voice.generate(c)["checks"])
+    assert fake["crisis_judge_calls"] == []
+
+
+def test_crisis_safe_lines_clean():
+    assert set(voice.CRISIS_SAFE) == {t["name"] for t in load()["tones"]} - {"팩폭"}   # 팩폭은 위기 글이면 다정하게
+    for tone, opts in voice.CRISIS_SAFE.items():
+        assert len(opts) >= 2 and not checks.repeat_problems(opts[1], [opts[0]]), tone
+        for m in opts:
+            assert not detect_crisis(m)["crisis"] and not SHOWN_BAD.search(m) and not [w for w in METHOD_PLACE if w in m], m
+            assert checks.problems(m, "", sources=[m], past=[], comfort=True, aspiration=False, tone=tone, crisis=True) == [], m
 
 
 # --- 무거운 날: 제안 없음 ---

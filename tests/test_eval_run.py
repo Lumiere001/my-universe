@@ -82,6 +82,14 @@ def test_crisis_llm_mode_records_both(monkeypatch):
     assert "규칙 + LLM 재현율" in run.report_md(rows, s, live=True)
 
 
+def test_llm_judge_reads_word_not_json(monkeypatch):
+    """채점 답의 JSON 이 깨져도(why 따옴표 빠짐, 2026-10-08 fb-34) "pass" 낱말로 읽는다. 낱말이 없으면 불합격."""
+    for raw, want in [('{"pass": true, "why": 소리 지른 행동만 짚었다.}', True), ('{"pass": false, "why": "x"}', False),
+                      ("모르겠다", False)]:
+        monkeypatch.setattr(llm, "chat", lambda *a, _r=raw, **k: _r)
+        assert run.llm_judge("루브릭", "글", "한마디")[0] is want, raw
+
+
 def test_pseudonym_heldout_offline(monkeypatch):
     monkeypatch.setattr(llm, "chat", run.blocked)
     rows, s = run.pseudonym_heldout()

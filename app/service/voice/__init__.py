@@ -63,6 +63,15 @@ SAFE = {
     ("팩폭", False): ["오늘 쓴 거 잘 봤어. 기록한 건 너야. 오늘은 여기까지.", "적어 둔 거 다 읽었어. 쓴 걸로 할 만큼 했어."],
     ("팩폭", True): ["오늘은 따질 날 아니야. 쓴 걸로 충분해. 푹 쉬어.", "지금은 몰아칠 때 아니야. 그냥 쉬어."],
 }
+# 위기 글의 안전한 위로 문장(두 번 실패하거나 위기 한마디 판정을 못 했을 때): 바람을 되받지 않고, 단체 · 번호 없이, 곁에 있겠다는 말만.
+# 팩폭은 위기 글이면 다정하게로 낮추므로(soften) 없다.
+CRISIS_SAFE = {
+    "다정하게": ["오늘 많이 힘들었겠어요. 이렇게 털어놓아 줘서 고마워요. 저는 여기 있을게요.",
+                 "마음이 많이 무거운 하루였겠어요. 그 마음을 혼자 두지 않을게요. 여기서 함께 있을게요."],
+    "담백하게": ["많이 힘들었겠어요. 여기 있을게요.", "털어놓아 줘서 고마워요. 혼자 두지 않을게요."],
+    "고양이처럼": ["많이 힘들었겠다냥. 털어놓아 줘서 고맙다냥. 옆에 꼭 붙어 있을게냥.",
+                   "마음이 많이 무거웠겠다냥. 혼자 두지 않을게냥. 여기 있을게냥."],
+}
 
 
 # 안부 한 줄(시험 단계 위기 대응, 2026-10-08 동규): 놀라게 하거나 단체를 가리키지 않는 짧은 말. LLM 이 아니라 여기서 고른다.
@@ -282,6 +291,7 @@ def generate(ctx):
     위기 글도 평소처럼 만들되 위로(제안 · 다음 질문 없음), 팩폭은 그 글만 다정하게(tone 은 실제로 쓴 말투).
     위기거나 위기 2차 판정이 실패했으면 check_in 에 안부 한 줄(고정 문장), 아니면 빈 글.
     팩폭이면 checks 각 시도에 "llm_line": "통과" | "위반" | "판정 실패"(넘지 않는 선 LLM 판정)이 붙는다.
+    위기 글이면 "crisis_judge": 같은 세 값(위기 바람 동조 LLM 판정). 두 번 위반이거나 판정 실패면 CRISIS_SAFE 문장.
     """
     ctx = soften(ctx)
     sit = situations(ctx)
@@ -301,13 +311,16 @@ def generate(ctx):
         if not probs and ctx.get("tone") == "팩폭":   # 팩폭(오늘은 살살 포함)은 코드 검사를 지나도 LLM 으로 한 번 더
             probs = entry["problems"] = checks.llm_line_problems(msg, nq, ctx.get("text") or "")
             entry["llm_line"] = "판정 실패" if probs and "판정 실패" in probs[0] else "위반" if probs else "통과"
+        if not probs and ctx.get("crisis"):   # 위기 글은 코드 검사를 지나도 위기 바람 동조를 Solar 로 한 번 더(아닌 글은 호출 없음)
+            probs = entry["problems"] = checks.llm_crisis_problems(msg, nq, ctx.get("text") or "")
+            entry["crisis_judge"] = "판정 실패" if probs and "판정 실패" in probs[0] else "위반" if probs else "통과"
         log.append(entry)
-        if not probs:
+        if not probs or entry.get("crisis_judge") == "판정 실패":   # 위기 판정을 못 하면 다시 만들어도 못 믿는다
             break
         avoid = probs
-    else:
+    if probs:   # 두 번 다 문제거나 위기 한마디 판정 실패 → 안전한 기본 문장(위기 글은 위로 문장)
         tone = ctx.get("tone") if (ctx.get("tone"), comfort) in SAFE else "다정하게"
-        opts = SAFE[(tone, comfort)]
+        opts = CRISIS_SAFE.get(ctx.get("tone"), CRISIS_SAFE["다정하게"]) if ctx.get("crisis") else SAFE[(tone, comfort)]
         msg = next((m for m in opts if not checks.repeat_problems(m, ctx.get("past_messages"))), opts[0])
         nq = "" if comfort or not kind else base_question(kind, ctx)
         log.append({"attempt": "기본 문장", "problems": []})

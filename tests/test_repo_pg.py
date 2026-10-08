@@ -133,6 +133,36 @@ def test_api_with_real_tokens(repo, users, monkeypatch):
         main.app.dependency_overrides.clear()
 
 
+def test_crisis_and_caps_on_pg(repo, users, monkeypatch):
+    """최근 바뀐 길을 Postgres 로: 위기 글(시험 단계)도 평소 결과 + 위로 한마디 + 안부 한 줄, 위기 표시 · 위로 여부는 암호문 안.
+    운영 상한(기본 0 = 끔)은 env 로 켰을 때 runs 로 센다."""
+    from fastapi.testclient import TestClient
+
+    import main
+    from app.deps import get_repo
+    from tests.test_graph_flow import CRISIS
+    monkeypatch.setattr(config, "DAILY_ENTRY_LIMIT", 1)
+    monkeypatch.setattr(config, "MONTHLY_COST_CAP_USD", 100.0)
+    main.app.dependency_overrides[get_repo] = lambda: repo
+    try:
+        c = TestClient(main.app)
+        h = {"Authorization": f"Bearer {users['a'][0]}"}
+        r = c.post("/diary/stream", headers=h, json={"title": CRISIS[0], "text": CRISIS[1]})
+        res = json.loads([b for b in r.text.split("\n\n") if b.startswith("event: result")][0].split("data: ", 1)[1])
+        assert res["status"] == "done" and res["crisis"] is True and res["thoughts"]
+        assert res["message"]["mode"] == "comfort" and res["message"]["check_in"]
+        assert c.get("/universe", headers=h).json()["planets"][0]["id"] == res["id"]
+        r = c.post("/diary", headers=h, json={"text": "하나 더"})
+        assert r.status_code == 429 and r.json()["error"]["code"] == "daily_limit"
+    finally:
+        main.app.dependency_overrides.clear()
+    with psycopg.connect(config.DATABASE_URL) as conn:
+        cols = {x[0] for x in conn.execute("select column_name from information_schema.columns "
+                                           "where table_schema = 'public' and table_name in ('entries', 'messages')").fetchall()}
+        blob = b"".join(bytes(x[0]) for x in conn.execute("select enc from entries where user_id = %s", [users["a"][1]]))
+    assert not cols & {"crisis", "mode", "check_in"} and "죽고".encode() not in blob
+
+
 def test_data_api_blocked(users):
     """H1: 화면이 공개하는 anon 키 + 사용자 토큰으로 Supabase Data API(/rest/v1)를 직접 불러도 표를 읽고 쓰지 못한다."""
     token, uid = users["a"]

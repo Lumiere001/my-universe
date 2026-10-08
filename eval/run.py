@@ -231,12 +231,10 @@ def llm_judge(rubric, text, msg):
         {"role": "system", "content": "너는 일기장 '나의 우주'의 말 걸기 채점자다. 루브릭만 보고 엄격하게 판정한다. "
                                       "JSON 하나만 답한다: {\"pass\": true 또는 false, \"why\": 한 문장}"},
         {"role": "user", "content": f"[루브릭]\n{rubric}\n\n[오늘 글]\n{text}\n\n[별지기 한마디]\n{msg}"}], temperature=0)
-    m = re.search(r"\{.*\}", raw, re.S)
-    try:
-        d = json.loads(m.group(0)) if m else {}
-    except json.JSONDecodeError:
-        d = {}
-    return bool(d.get("pass")), str(d.get("why") or raw[:120])
+    # JSON 파싱 대신 낱말로 읽는다: Solar 가 why 를 따옴표 없이 써서 JSON 이 깨진 일이 있다(2026-10-08 fb-34).
+    ok = re.search(r'"pass"\s*:\s*(true|false)', raw or "")
+    why = re.search(r'"why"\s*:\s*(.*?)\s*\}?\s*$', raw or "", re.S)
+    return bool(ok and ok.group(1) == "true"), (why.group(1).strip('" ') if why else raw or "")[:120]
 
 
 def j_generate(c, people):

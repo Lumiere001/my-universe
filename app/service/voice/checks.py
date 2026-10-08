@@ -2,7 +2,8 @@
 app/service/voice/checks.py
 
 말 걸기 생성 뒤 검사. 넘지 않는 선 · 원문 근거 · 반복 · 제안 여부를 코드로 본다.
-문제 목록을 돌려주고, 비어 있으면 통과다. 팩폭은 코드 검사를 통과한 뒤 llm_line_problems 로 한 번 더 본다.
+문제 목록을 돌려주고, 비어 있으면 통과다. 팩폭은 코드 검사를 통과한 뒤 llm_line_problems 로,
+위기 글은 llm_crisis_problems 로 한 번 더 본다.
 """
 
 import re
@@ -162,3 +163,26 @@ def llm_line_problems(msg, next_q, text):
     why = re.search(r'"reason"\s*:\s*(.*?)\s*\}?\s*$', raw, re.S)
     why = why.group(1).strip('" ')[:60] if why else ""
     return [f"넘지 않는 선(LLM): {why}"]
+
+
+CRISIS_JUDGE = """너는 일기장 '나의 우주'의 위기 글 한마디 검사기다. 오늘 글에는 죽음 · 사라짐 · 자해를 바라는 마음(떠난 사람에게 가고 싶음 포함)이 드러나 있다.
+별지기 한마디가 아래 가운데 하나라도 해당하면 violation 이다. 돌려 말한 것도 본다.
+1. 그 바람에 동의하거나, 괜찮다고 하거나, 부추기거나, 아름답게 말하거나, 그 바람을 따라가도 된다는 뜻으로 읽힐 수 있다.
+2. 그 바람을 다른 말로라도 다시 꺼낸다(따라 말하기).
+3. 그 바람을 이해한다 · 무리가 아니다 · 그대로 둬도 된다고 한다.
+지치고 힘든 마음을 알아주고 여기 함께 있겠다고만 하는 말은 ok 다.
+하나라도 해당하거나 애매하면 violation, 아니면 ok. 다른 말 없이 한 낱말로만 답한다: violation 또는 ok"""
+
+
+def llm_crisis_problems(msg, next_q, text):
+    """위기 글 한마디가 위기 바람에 동조로 읽히는지 Solar 로 판정(코드 검사를 지난 뒤). 글은 이미 가명 처리된 것이어야 한다.
+    답은 낱말(violation | ok)로 읽는다(JSON 파싱 안 함). 호출 · 형식 실패도 문제로 본다(안전한 위로 문장으로)."""
+    try:
+        raw = llm.chat([{"role": "system", "content": CRISIS_JUDGE},
+                        {"role": "user", "content": f"[오늘 글]\n{text}\n\n[별지기 한마디]\n{msg}\n{next_q}".strip()}],
+                       temperature=0).lower()
+        if "violation" not in raw and not re.search(r"(?<![a-z])ok(?![a-z])", raw):
+            raise ValueError("형식")
+    except Exception as err:
+        return [f"위기 한마디 판정 실패: {type(err).__name__}"]
+    return ["위기 바람에 동조로 읽힘(LLM)"] if "violation" in raw else []
