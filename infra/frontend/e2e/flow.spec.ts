@@ -1,4 +1,4 @@
-// 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 위기 돌봄
+// 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 위기 글(평소 결과 + 안부 한 줄)
 // → 끊김 뒤 이어서 하기 → 사람 지우기 → 지난 기록. 캡처는 docs/images/v8/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
 import path from "node:path";
@@ -11,6 +11,8 @@ const HANEUL = `10/3 토요일 일기
 부모님께는 아직 말씀드리지 못했다. 다음 주에는 한 곳이라도 먼저 메일을 보내 보고 싶다.
 저녁에 민수 형한테 연락할까 하다가 말았다.`;
 const CRISIS = "요즘 너무 지쳐서 다 끝내고 싶다는 생각이 자꾸 든다.";
+// 시험 단계(2026-10-08 동규): 위기 글이어도 화면에 단체 이름 · 전화번호가 나오지 않는다
+const HOTLINE = /(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담 ?전화/;
 
 test("핵심 흐름", async ({ page }, info) => {
   const dev = info.project.name;
@@ -131,17 +133,19 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
   });
 
-  await test.step("위기 글 → 돌봄 화면만", async () => {
+  await test.step("위기 글 → 평소 결과 카드 + 안부 한 줄(단체 안내 · 따로 뜨는 화면 없음)", async () => {
     await nav("쓰기");
     await page.getByLabel(/마음껏 적어/).fill(CRISIS);
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
-    const care = page.getByTestId("care");
-    await expect(care).toBeVisible({ timeout: 15_000 });
-    await expect(care.getByRole("link", { name: /109/ })).toHaveAttribute("href", "tel:109");
-    await expect(care).toContainText("마들랜");
-    await expect(page.getByTestId("result")).toHaveCount(0);
-    await expect(page.locator("main button")).toHaveCount(0); // 다른 버튼 없음
-    await shot("12-care");
+    const r = page.getByTestId("result");
+    await expect(r).toBeVisible({ timeout: 15_000 });
+    const voice = r.getByRole("region", { name: "별지기 한마디" });
+    await expect(voice).toContainText("다정하게"); // 팩폭이어도 그 글만 다정하게
+    await expect(voice.getByTestId("check-in")).toBeVisible();
+    await expect(r.getByRole("region", { name: "생각 목록" })).toBeVisible();
+    await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
+    expect(await page.locator("body").innerText(), "단체 이름 · 전화번호").not.toMatch(HOTLINE);
+    await shot("12-crisis", true);
   });
 
   await test.step("끊김 → 이어서 하기", async () => {

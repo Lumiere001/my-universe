@@ -13,8 +13,9 @@ const STEPS: [string, string][] = [
   ["past", "지난 생각을 찾는 중"], ["observe", "이어진 생각을 살피는 중"], ["voice", "별지기가 한마디를 고르는 중"],
   ["save", "우주에 저장하는 중"],
 ];
-// 위기 감지는 백엔드(app/service/safety) 몫. 여기서는 돌봄 화면을 보기 위한 흉내만 낸다.
+// 위기 감지는 백엔드(app/service/safety) 몫. 여기서는 시험 단계 동작(평소 결과 + 위로 한마디 + 안부 한 줄)만 흉내 낸다.
 const CRISIS = ["죽고 싶", "사라지고 싶", "자해", "끝내고 싶"];
+const CHECK_IN = "요즘 많이 버거웠을 것 같아요. 괜찮은지 다음에 또 물어볼게요.";
 
 /* ---------- 하늘의 우주 ---------- */
 const P = (id: string, star_id: string, sun_id: string, day: string, title: string, order: number,
@@ -107,10 +108,12 @@ const COMFORT = "마음이 무거운 날엔 무거운 채로 있어도 괜찮아
 
 function result(id: string, input: DiaryInput): EntryResult {
   const heavy = !!ontology.weather.find((w) => w.name === input.weather && "comfort_only" in w);
-  const comfort = heavy || settings.comfort_only_today === today();
+  const crisis = CRISIS.some((w) => input.text.includes(w));
+  const comfort = heavy || crisis || settings.comfort_only_today === today();
+  const tone: Tone = crisis && settings.tone === "팩폭" ? "다정하게" : settings.tone; // 위기 글이면 팩폭도 그 글만 다정하게
   return {
     id, status: "done", step: "save", written_at: input.written_at ?? "2026-10-03T22:40:00+09:00",
-    title: input.title || "10/3 토요일 일기", weather: input.weather ?? null, crisis: false, care: null,
+    title: input.title || "10/3 토요일 일기", weather: input.weather ?? null, crisis,
     info: { summary: "관심 있는 팀 세 곳을 찾아보기로 했지만 한 곳도 못 찾아봤고, 대신 일하는 곳보다 배우는 느낌이 중요하다는 쪽으로 생각이 정리됐다.",
       addressee: "나", addressee_person: null, events: ["팀 찾기를 미룸", "부모님께 아직 말하지 못함"] },
     thoughts: [
@@ -141,21 +144,10 @@ function result(id: string, input: DiaryInput): EntryResult {
     ],
     reached: [{ aspiration_id: "a2", quote: "어디서 일하든 내가 배우고 있다는 느낌이 더 중요하다",
       message: "'어디서든 배우는 사람'에 한 걸음 닿은 문장이에요." }],
-    message: { text: comfort ? COMFORT : MESSAGES[settings.tone], tone: settings.tone, mode: comfort ? "comfort" : "normal" },
-    next_question: { kind: "free", text: "부모님께는 어떤 말부터 꺼내고 싶어요?" },
+    message: { text: comfort ? COMFORT : MESSAGES[tone], tone, mode: comfort ? "comfort" : "normal", check_in: crisis ? CHECK_IN : null },
+    next_question: comfort ? { kind: "none", text: "" } : { kind: "free", text: "부모님께는 어떤 말부터 꺼내고 싶어요?" },
     people_questions: [{ id: "q1", name: "민수 형", question: "'민수 형'은 사람 목록의 선배 민수와 같은 사람인가요?",
       options: ["같은 사람", "다른 사람", "사람 이름 아님"] }],
-  };
-}
-
-function care(id: string, input: DiaryInput): EntryResult {
-  return {
-    id, status: "done", step: "safety", written_at: "2026-10-03T23:40:00+09:00", title: input.title || "", weather: input.weather ?? null,
-    crisis: true,
-    care: { message: "많이 힘든 마음을 여기까지 적어 줘서 고마워요. 지금 안전한 곳에 있나요? 혼자 견디지 않아도 돼요. 지금 바로 이야기를 들어 줄 곳이 있어요.",
-      resources: ontology.crisis.resources },
-    info: null, thoughts: [], relations: [], past: [], reached: [], message: { text: "", tone: settings.tone, mode: "care" },
-    next_question: null, people_questions: [],
   };
 }
 
@@ -164,7 +156,6 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 /* ---------- API 흉내 ---------- */
 async function run(id: string, input: DiaryInput, from: number, h: StreamHandlers): Promise<EntryResult> {
-  const crisis = CRISIS.some((w) => input.text.includes(w));
   for (let i = from; i < STEPS.length; i++) {
     await sleep(STEP_MS);
     // "[끊김]"이 든 글은 세 번째 단계에서 한 번 끊어 "이어서 하기"를 흉내 낸다
@@ -173,11 +164,10 @@ async function run(id: string, input: DiaryInput, from: number, h: StreamHandler
       throw { entry_id: id, code: "disconnected", message: "연결이 끊겼어요.", resumable: true } as StreamError;
     }
     h.onProgress({ entry_id: id, step: STEPS[i][0], label: STEPS[i][1], done: i + 1, total: STEPS.length });
-    if (crisis) break;
   }
-  const r = crisis ? care(id, input) : result(id, input);
+  const r = result(id, input);
   entries.set(id, r);
-  if (!crisis && !universe.planets.find((p) => p.id === id)) {
+  if (!universe.planets.find((p) => p.id === id)) {
     universe.planets.push(P(id, "s1", "d1", "2026-10-03", r.title, universe.planets.filter((p) => p.star_id === "s1").length, { ring: true, people: ["p1"], weather: input.weather ?? null }));
     universe.links.push(
       { id: "r1", from_planet: "e02", to_planet: id, type: "바뀜", line: "실선", cross_domain: false, needs_confirm: false, explanation: r.relations[0].explanation },

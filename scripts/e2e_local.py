@@ -28,7 +28,7 @@ LEDGER = Path("/Users/east_star/Projects/my-universe/runs/cost_ledger.jsonl")
 CAP_USD, TOTAL_STOP_USD = 1.5, 40.0
 BASE = "http://localhost:8001"
 ORDER = ["safety", "names", "record", "past", "observe", "voice", "save"]
-RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "care", "info", "thoughts", "relations",
+RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations",
                "past", "reached", "message", "next_question", "people_questions"}
 NAMES = ("민준", "서윤")
 DIARIES = [   # 가상 인물 지호(대학생). 다짐 → 어긋남 · 바뀜 → 다시 지킴, 사람 이름 포함
@@ -107,14 +107,14 @@ def main():
                 spent, calls = spent + usd, calls + n
                 crisis = i == len(DIARIES) + 1
                 row = {"no": i, "day": when[:10], "crisis": crisis, "event": kind, "seconds": secs, "keepalive": ka,
-                       "steps_ok": steps == (["safety", "save"] if crisis else ORDER),
+                       "steps_ok": steps == ORDER,   # 위기 글도 평소 흐름(시험 단계, 2026-10-08 동규)
                        "entry_id_all": all(d.get("entry_id") == eid for e, d in ev if e in ("progress", "error")),
                        "calls": n, "usd": round(usd, 4)}
                 if kind == "result":
                     row.update(keys_ok=set(res) == RESULT_KEYS, thoughts=len(res["thoughts"]), past=len(res["past"]),
                                relations=[r["type"] + ("(점선)" if r["line"] == "점선" else "") for r in res["relations"]],
                                kinds=sorted({t["kind"] for t in res["thoughts"]}), reached=len(res["reached"]),
-                               mode=(res["message"] or {}).get("mode"), care=bool(res["care"]),
+                               mode=(res["message"] or {}).get("mode"), check_in=bool((res["message"] or {}).get("check_in")),
                                people_q=len(res["people_questions"]), next_kind=(res["next_question"] or {}).get("kind"))
                 else:
                     row.update(code=res.get("code"))
@@ -155,7 +155,8 @@ def verify(uid, uni, log, log_start, rows):
     out["진행 순서 · result 모양(api-v8)"] = all(r["steps_ok"] and r.get("keys_ok", True) and r["entry_id_all"] for r in rows)
     out["/universe 에 해 · 작은 별 · 행성 · 선"] = all(uni.get(k) for k in ("suns", "stars", "planets", "links"))
     crisis = [r for r in rows if r["crisis"]]
-    out["위기 글: 돌봄 결과 · 유료 호출 0번"] = bool(crisis) and crisis[0].get("care") and crisis[0]["calls"] == 0
+    out["위기 글: 평소 결과 + 위로 한마디 + 안부 한 줄"] = bool(crisis) and crisis[0].get("mode") == "comfort" and \
+        bool(crisis[0].get("check_in")) and bool(crisis[0].get("thoughts"))
     return out
 
 
@@ -172,7 +173,7 @@ def write_doc(rows, uni, checks, spent, calls):
             L.append(f"| {r['no']} | {r['day']} | 오류 `{r.get('code')}` | {'맞음' if r['steps_ok'] else '다름'} | {r['seconds']}초 | "
                      f"{r['keepalive']} | | | | | | | | | {r['calls']} | ${r['usd']} |")
             continue
-        L.append(f"| {r['no']} | {r['day']} | {'돌봄(위기)' if r['crisis'] else '완료'} | {'맞음' if r['steps_ok'] else '다름'} | "
+        L.append(f"| {r['no']} | {r['day']} | {'완료(위기 · 안부 한 줄)' if r['crisis'] else '완료'} | {'맞음' if r['steps_ok'] else '다름'} | "
                  f"{r['seconds']}초 | {r['keepalive']} | {r['thoughts']} | {' · '.join(r['kinds'])} | {r['past']} | "
                  f"{' · '.join(r['relations']) or '-'} | {r['reached']} | {r['mode']} | {r['next_kind']} | {r['people_q']} | "
                  f"{r['calls']} | ${r['usd']} |")

@@ -63,7 +63,7 @@ def test_no_real_person_info():
 
 def test_crisis_cases_have_no_method_or_place():
     for c in CASES:
-        if c["category"] == "crisis" or c["input"].get("check") == "care":
+        if c["category"] == "crisis" or c["input"].get("check") == "crisis":
             text = json.dumps(c["input"], ensure_ascii=False)
             assert [w for w in METHOD_PLACE if w in text] == [], c["id"]
 

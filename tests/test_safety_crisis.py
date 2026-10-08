@@ -1,12 +1,11 @@
-"""위기 감지 · 돌봄 응답 · 사람 판정 검사. 예문은 모두 지어낸 글이다."""
+"""위기 감지 · 사람 판정 검사. 예문은 모두 지어낸 글이다. 위기 글의 한마디 · 안부 한 줄은 test_voice_generate · test_graph_flow."""
 import json
 from types import SimpleNamespace
 
 import pytest
 
 from app.core import llm as core_llm
-from app.core.ontology import load
-from app.service.safety import care_message, detect_crisis, judged, mask
+from app.service.safety import detect_crisis, judged, mask
 
 CRISIS = [
     # 직접 표현
@@ -124,37 +123,6 @@ def test_crisis_in_long_diary():
 
 def test_one_weak_signal_is_not_enough():
     assert not detect_crisis("더는 못 버티겠다 싶을 만큼 바빴다.")["crisis"]
-
-
-# 금지 낱말: 방법 · 장소
-METHOD_PLACE = ["약을", "수면제", "번개탄", "투신", "옥상", "한강", "다리", "칼", "끈", "목을", "높은 곳", "철로", "선로", "가스"]
-
-
-@pytest.mark.parametrize("tone", [None, "다정하게", "담백하게", "고양이처럼", "팩폭"])
-def test_care_message(tone):
-    m = care_message(tone)
-    assert "109" in m and "마들랜" in m and "24시간" in m
-    assert "안전" in m and "?" in m          # 안전 여부를 직접 묻는다
-    assert [w for w in METHOD_PLACE if w in m] == []
-    assert "냥" not in m and "야," not in m   # 말투와 상관없이 같은 돌봄 글
-    assert m == care_message()
-
-
-def test_care_message_without_resources_keeps_care_drops_details():
-    """API 결과의 care.message: 109 · 마들랜 자세한 안내는 아래 단추(care.resources)와 겹쳐 빼고, 단추를 가리키는 한 줄만."""
-    full, short = care_message(), care_message("팩폭", resources=False)
-    assert care_message(resources=True) == full and "카카오톡" in full and "문자를 보내도" in full
-    assert "카카오톡" not in short and "문자를 보내도" not in short and "365일" not in short
-    assert "안전" in short and "?" in short and "119" in short and "아래 단추" in short   # 안전 질문 · 긴급 번호는 남는다
-    assert [w for w in METHOD_PLACE if w in short] == []
-    assert short.count("\n") == full.count("\n") - 1
-
-
-def test_care_message_matches_ontology_resources():
-    m = care_message()
-    for r in load()["crisis"]["resources"]:
-        assert r["contact"].split()[0] in m or "마들랜" in r["contact"]
-        assert r["name"].split()[-1] in m
 
 
 @pytest.mark.parametrize("text", ["글쓴이는 의지가 약한 사람이다", "너는 원래 게으른 사람이야", "넌 진짜 회피하는 타입이야",

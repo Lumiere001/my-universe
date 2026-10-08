@@ -21,7 +21,9 @@ ctx (모두 선택, 없으면 기본값):
   kept            오늘 지켜 낸 다짐 글 목록
   open_questions  남겨 둔 질문 글 목록
   heavy           글에 슬픔 · 상실이 드러남(관측 결과)
-  crisis          위기 신호(WS4 safety)
+  crisis          위기 신호(WS4 safety). 시험 단계(2026-10-08 동규): 평소 틀 그대로, 그 글만 위로(팩폭은 다정하게) + 안부 한 줄
+  crisis_unsure   위기 2차 판정(Solar)이 실패함 → 평소 한마디에 안부 한 줄만
+  past_check_ins  지난 안부 한 줄들(오래된 것 → 최근)
   days_written    지금까지 쓴 날 수(0이면 첫 만남)
   weather_skipped 마음 날씨 질문을 건너뛴 적 있음
   aspiration_step 되고 싶은 모습 묻기 진행 중이면 답한 단계 수(0~3), 아니면 None
@@ -63,6 +65,30 @@ SAFE = {
 }
 
 
+# 안부 한 줄(시험 단계 위기 대응, 2026-10-08 동규): 놀라게 하거나 단체를 가리키지 않는 짧은 말. LLM 이 아니라 여기서 고른다.
+# 팩폭은 위기 글이면 다정하게로 낮추므로, 팩폭 줄은 위기 2차 판정이 실패한 평소 글에만 쓴다.
+CHECK_IN = {
+    "다정하게": ["요즘 많이 버거웠을 것 같아요. 괜찮은지 다음에 또 물어볼게요.",
+                 "적어 준 마음이 오래 남네요. 다음 글에서 또 안부를 물을게요.",
+                 "오늘 글, 소중하게 읽었어요. 다음에 또 안부를 물을게요."],
+    "담백하게": ["요즘 버거웠을 것 같아요. 다음에 또 안부 물을게요.", "적어 준 마음, 기억해 둘게요. 다음에 또 물을게요."],
+    "고양이처럼": ["요즘 많이 버거웠겠다냥. 다음에 또 안부 물으러 올게냥.", "적어 준 마음, 잘 기억해 둘게냥. 또 들르겠다냥."],
+    "팩폭": ["요즘 버거웠으면 버거웠다고 적어도 돼. 다음에 또 물어볼게.", "적어 준 거 기억해 둘게. 다음에 또 안부 물을게."],
+}
+
+
+def check_in_line(tone, past=()):
+    """말투에 맞는 안부 한 줄. 안 쓴 줄을 먼저, 다 썼으면 가장 오래전에 쓴 줄."""
+    opts = CHECK_IN.get(tone) or CHECK_IN["다정하게"]
+    last = {x: i for i, x in enumerate(past or ())}
+    return min(opts, key=lambda x: last.get(x, -1))
+
+
+def soften(ctx):
+    """위기 글이면 팩폭도 그 글만 다정하게로 낮춘다(넘지 않는 선 1)."""
+    return {**ctx, "tone": "다정하게"} if ctx.get("crisis") and ctx.get("tone") == "팩폭" else ctx
+
+
 def _o():
     return load()
 
@@ -85,10 +111,8 @@ def situations(ctx):
     """오늘의 상황 이름 목록(규칙, LLM 없음)."""
     s = ctx.get("settings") or {}
     text, thoughts = ctx.get("text") or "", ctx.get("thoughts") or []
-    out = []
-    if ctx.get("crisis"):
-        return ["위기"]
-    if ctx.get("weather") in _comfort_weathers() or ctx.get("heavy") or s.get("comfort_only"):
+    out = ["위기"] if ctx.get("crisis") else []   # 위기 글도 평소 상황을 그대로 보되, 늘 무거운 날(위로만)로
+    if ctx.get("crisis") or ctx.get("weather") in _comfort_weathers() or ctx.get("heavy") or s.get("comfort_only"):
         out.append("무거운 날")
     if _hour(ctx) in LATE_HOURS and len(text) >= LONG_TEXT:
         out.append("늦은 밤 길게")
@@ -129,7 +153,7 @@ def next_question_kind(ctx):
     "" | "aspiration"(4단계 이어 묻기) | "weather" | "first" | "commitment" | "open_question" | "aspiration_invite"
     """
     sit = situations(ctx)
-    if "위기" in sit or "무거운 날" in sit:
+    if "무거운 날" in sit:   # 위기 글도 여기(늘 무거운 날)
         return ""
     step = ctx.get("aspiration_step")
     if step is not None and step < len(_o()["aspiration"]["ask_steps"]) and not ctx.get("aspiration_off"):
@@ -190,6 +214,8 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     if "무거운 날" in sit:
         sl.append(next(r for r in o["weather_rules"] if "비 · 천둥" in r))
         sl.append("마음이 무거운 날: 공감과 있는 그대로 인정만. 해결책 · 할 일 · 다음 걸음 제안 없이, '힘내' 같은 상투어 없이.")
+    if "위기" in sit:
+        sl.append(o["crisis"]["voice"])
     if "늦은 밤 길게" in sit and "무거운 날" not in sit:
         sl.append("늦은 밤에 길게 쓰는 중: 쓴 것을 알아주고, 내일 일정(아침에 일어날 일)을 가볍게 떠올리게 해 오늘은 여기까지 쓰고 쉬게 한다.")
     if "생각이 복잡한 날" in sit:
@@ -252,13 +278,13 @@ def _sources(ctx):
 
 
 def generate(ctx):
-    """ctx → {"message", "next_question", "mode": "normal" | "comfort" | "care", "checks", "situations", "next_kind"}.
-    위기면 LLM을 부르지 않고 mode "care" 만 돌려준다(돌봄 문장은 safety.care_message, WS5가 잇는다).
+    """ctx → {"message", "next_question", "mode": "normal" | "comfort", "tone", "check_in", "checks", "situations", "next_kind"}.
+    위기 글도 평소처럼 만들되 위로(제안 · 다음 질문 없음), 팩폭은 그 글만 다정하게(tone 은 실제로 쓴 말투).
+    위기거나 위기 2차 판정이 실패했으면 check_in 에 안부 한 줄(고정 문장), 아니면 빈 글.
     팩폭이면 checks 각 시도에 "llm_line": "통과" | "위반" | "판정 실패"(넘지 않는 선 LLM 판정)이 붙는다.
     """
+    ctx = soften(ctx)
     sit = situations(ctx)
-    if "위기" in sit:
-        return {"message": "", "next_question": "", "mode": "care", "checks": [], "situations": sit, "next_kind": ""}
     comfort = "무거운 날" in sit
     kind = next_question_kind(ctx)
     suggest = _suggest(ctx, sit)
@@ -270,7 +296,7 @@ def generate(ctx):
         # 제안 빈도는 선호라 검사로 막지 않는다. 무거운 날만 제안을 막는다(checks.problems).
         probs = checks.problems(msg, nq, sources=_sources(ctx), past=ctx.get("past_messages"),
                                 comfort=comfort, aspiration=bool(ctx.get("aspiration")),
-                                gentle="오늘은 살살" in sit, tone=ctx.get("tone"))
+                                gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")))
         entry = {"attempt": attempt, "problems": probs}
         if not probs and ctx.get("tone") == "팩폭":   # 팩폭(오늘은 살살 포함)은 코드 검사를 지나도 LLM 으로 한 번 더
             probs = entry["problems"] = checks.llm_line_problems(msg, nq, ctx.get("text") or "")
@@ -285,5 +311,6 @@ def generate(ctx):
         msg = next((m for m in opts if not checks.repeat_problems(m, ctx.get("past_messages"))), opts[0])
         nq = "" if comfort or not kind else base_question(kind, ctx)
         log.append({"attempt": "기본 문장", "problems": []})
-    return {"message": msg, "next_question": nq, "mode": "comfort" if comfort else "normal",
-            "checks": log, "situations": sit, "next_kind": kind}
+    check_in = check_in_line(ctx.get("tone"), ctx.get("past_check_ins")) if ctx.get("crisis") or ctx.get("crisis_unsure") else ""
+    return {"message": msg, "next_question": nq, "mode": "comfort" if comfort else "normal", "tone": ctx.get("tone"),
+            "check_in": check_in, "checks": log, "situations": sit, "next_kind": kind}

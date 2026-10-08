@@ -110,10 +110,14 @@ def test_no_baseless_numbers():
         assert s not in text
 
 
-def test_crisis_resources():
-    text = json.dumps(O["crisis"], ensure_ascii=False)
-    assert "109" in text and "마들랜" in text
-    assert "24시간" in text
+def test_crisis_trial_stage():
+    """시험 단계(동규 2026-10-08): 단체 연결 · 화면 전환 없이 평소 결과 + 안부 한 줄. 109 · 마들랜 안내는 남기되 화면에 쓰지 않음."""
+    c = O["crisis"]
+    text = json.dumps(c["resources"], ensure_ascii=False)
+    assert "109" in text and "마들랜" in text and "24시간" in text
+    assert "지금 화면에 쓰지 않음" in c["resources_note"] and "안부 한 줄" in c["stage"]
+    shown = json.dumps([c["principles"], c["voice"], O["fact_bomb"]["never_cross"]], ensure_ascii=False)
+    assert not re.search(r"109|112|119|마들랜|돌봄", shown)   # 프롬프트 · 팩폭 경고(화면)에 들어가는 글
 
 
 def test_limits_are_numbers_only():

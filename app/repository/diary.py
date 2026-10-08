@@ -349,12 +349,8 @@ def save_states(s, new, old):
 
 
 def message(s, row):
-    """messages 행 → {text, next_question, mode}. 돌봄 · 위로 모드는 enc 안에만."""
+    """messages 행 → {text, next_question, mode, check_in}. 위로 모드 · 안부 한 줄은 enc 안에만."""
     return {"mode": "normal", **unseal(s, "messages", row["id"], row["enc"])}
-
-
-def past_messages(s):
-    return [unseal(s, "messages", r["id"], r["enc"]).get("text", "") for r in s.rows("messages", order="created_at")]
 
 
 def aspirations(s):

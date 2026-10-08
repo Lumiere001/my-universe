@@ -97,9 +97,8 @@ fieldset.card > legend + * { clear: both; }
 .steps li.done::before { background: var(--violet); border-color: var(--violet); }
 .steps li.now::before { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
 
-/* 위기 돌봄 */
+/* 경고 상자(팩폭 경고) */
 .care { background: #13224f; border: 1px solid #52679f; border-radius: 18px; padding: 20px; }
-.care a.call { display: block; text-align: center; font-size: 1.1rem; font-weight: 700; background: var(--gold); color: #3a2a05; border-radius: 14px; padding: 14px; text-decoration: none; margin: 10px 0; }
 
 /* 우주 */
 .uni { position: relative; height: min(72dvh, 760px); min-height: 420px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #061334; }

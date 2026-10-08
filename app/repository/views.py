@@ -6,10 +6,8 @@ app/repository/views.py
 
 from collections import Counter
 
-from app.core.ontology import load
 from app.repository import diary
 from app.service.rules import universe_view
-from app.service.safety import care_message
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
              "commitment": "free", "open_question": "free", "": "none", None: "none"}
@@ -53,14 +51,10 @@ def entry_result(s, eid):
     if not e:
         return None
     d = e["data"]
-    settings, _ = diary.profile(s)
     base = {"id": eid, "status": e["status"], "step": e["step"] or "", "written_at": diary.iso(e["written_at"]),
-            "title": d.get("title", ""), "weather": e["weather"], "crisis": e["crisis"], "care": None, "info": None,
+            "title": d.get("title", ""), "weather": e["weather"], "crisis": e["crisis"], "info": None,
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
             "people_questions": []}
-    if e["crisis"]:
-        return {**base, "care": {"message": care_message(resources=False), "resources": load()["crisis"]["resources"]},
-                "message": {"text": "", "tone": settings["tone"], "mode": "care"}}
     if e["status"] != "done":
         return base
     states = diary.states(s)
@@ -88,7 +82,8 @@ def entry_result(s, eid):
             "past": past,
             "reached": [{"aspiration_id": r["aspiration_id"], "quote": r.get("quote", ""), "message": r.get("note", "")}
                         for r in reached],
-            "message": {"text": msg.get("text", ""), "tone": m[0]["tone"], "mode": msg["mode"]} if m else None,
+            "message": {"text": msg.get("text", ""), "tone": m[0]["tone"], "mode": msg["mode"],
+                        "check_in": msg.get("check_in") or None} if m else None,
             "next_question": {"kind": NEXT_KIND.get(m[0]["next_kind"], "free"), "text": msg.get("next_question", "")} if m else None,
             "people_questions": qs}
 
@@ -103,7 +98,7 @@ def entry_list(s, limit=20, before=None):
 
 
 def universe(s):
-    entries = {e["id"]: e for e in diary.entries(s, status="done") if not e["crisis"]}
+    entries = {e["id"]: e for e in diary.entries(s, status="done")}   # 위기 글도 평소처럼 행성(시험 단계)
     suns = diary.suns(s)
     sun_name = {x["id"]: x["name"] for x in suns}
     stars = diary.stars(s)

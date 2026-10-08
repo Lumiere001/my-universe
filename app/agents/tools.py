@@ -133,7 +133,7 @@ VOICE_TEXT = ("text", "summary", "thoughts", "reached", "aspiration", "commitmen
 
 
 def speak(ctx, people):
-    """voice.generate 를 가명 글로 부르고 한마디 · 다음 질문을 원래 이름으로 되돌린다. 위기면 LLM 을 부르지 않는다."""
+    """voice.generate 를 가명 글로 부르고 한마디 · 다음 질문을 원래 이름으로 되돌린다(안부 한 줄은 고정 문장이라 그대로)."""
     m, table = mask_obj({k: ctx[k] for k in VOICE_TEXT if ctx.get(k)}, people)
     out = voice.generate({**ctx, **m})
     return {**out, "message": unmask(out["message"], table), "next_question": unmask(out["next_question"], table)}

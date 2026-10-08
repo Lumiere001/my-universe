@@ -18,15 +18,14 @@ export type Relation = {
   id: string; from: string; to: string; from_entry: string; to_entry: string; type: string; group: string;
   line: "실선" | "점선"; cross_domain: boolean; needs_confirm: boolean; explanation: string; quote: string | null;
 };
-export type Care = { message: string; resources: { name: string; contact: string; hours?: string }[] };
 export type EntryResult = {
   id: string; status: "processing" | "done" | "failed"; step: string; written_at: string; title: string;
-  weather: Weather | null; crisis: boolean; care: Care | null;
+  weather: Weather | null; crisis: boolean;
   info: { summary: string; addressee: string; addressee_person: string | null; events: string[] } | null;
   thoughts: Thought[]; relations: Relation[];
   past: { thought_id: string; entry_id: string; text: string; written_at: string }[];
   reached: { aspiration_id: string; quote: string; message: string }[];
-  message: { text: string; tone: Tone; mode: "normal" | "comfort" | "care" } | null;
+  message: { text: string; tone: Tone; mode: "normal" | "comfort"; check_in: string | null } | null;
   next_question: { kind: "weather" | "aspiration" | "free" | "none"; text: string } | null;
   people_questions: { id: string; name: string; question: string; options: string[] }[];
 };

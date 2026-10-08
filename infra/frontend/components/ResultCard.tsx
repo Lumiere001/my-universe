@@ -1,6 +1,6 @@
 "use client";
-// 결과 카드: 별지기 한마디 → 닿은 순간 → 글 정보 → 생각 목록 → 이어진 지난 생각 → 사람 질문 → 다음 질문 → 불편한 점 한 줄.
-// 위기(crisis)면 평소 결과 대신 돌봄 화면만 보인다.
+// 결과 카드: 별지기 한마디(+ 안부 한 줄) → 닿은 순간 → 글 정보 → 생각 목록 → 이어진 지난 생각 → 사람 질문 → 다음 질문 → 불편한 점 한 줄.
+// 위기 글도 같은 카드다(시험 단계, 2026-10-08 동규): 따로 뜨는 화면 · 단체 안내 없이, 한마디 아래 안부 한 줄만.
 import Link from "next/link";
 import { useState } from "react";
 import { answerPersonQuestion, sendFeedback, type EntryResult, type Feedback } from "@/lib/api";
@@ -53,28 +53,10 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
   );
 }
 
-export function CareCard({ r }: { r: EntryResult }) {
-  return (
-    <section className="care stack" aria-label="돌봄" data-testid="care">
-      <div className="voice"><span className="who" aria-hidden>별</span><div className="bubble"><p style={{ whiteSpace: "pre-line" }}>{r.care?.message}</p></div></div>
-      {r.care?.resources.map((x) => (
-        <div key={x.name}>
-          {/^\d+$/.test(x.contact)
-            ? <a className="call" href={`tel:${x.contact}`}>{x.name} {x.contact}{x.hours ? ` (${x.hours})` : ""}</a>
-            : <p><b>{x.name}</b><br />{x.contact}{x.hours ? ` (${x.hours})` : ""}</p>}
-        </div>
-      ))}
-      {/* 돌봄 문장에 이미 119 · 112 가 있으면 겹쳐 쓰지 않는다 */}
-      {!/11[29]/.test(r.care?.message ?? "") && <p className="sub">지금 위험하다면 112 · 119로도 바로 연락할 수 있어요.</p>}
-    </section>
-  );
-}
-
 export default function ResultCard({ r }: { r: EntryResult }) {
   const kindName = useKindName();
   const [vows, setVows] = useState<Record<string, string>>({});
   const [answered, setAnswered] = useState<Record<string, string>>({});
-  if (r.crisis) return <CareCard r={r} />;
 
   const thought = (id: string) => r.thoughts.find((t) => t.id === id);
   const past = (id: string) => r.past.find((p) => p.thought_id === id);
@@ -89,6 +71,7 @@ export default function ResultCard({ r }: { r: EntryResult }) {
             <div>
               <div className="sub">별지기 · {m.tone}{m.mode === "comfort" ? " · 오늘은 위로만" : ""}</div>
               <div className="bubble"><p style={{ margin: 0 }}>{m.text}</p></div>
+              {m.check_in && <p className="sub" data-testid="check-in" style={{ margin: "6px 0 0" }}>{m.check_in}</p>}
             </div>
           </div>
           <FeedbackButtons label="한마디 피드백" target="message" targetId={r.id} values={["좋아요", "별로", "오늘은 위로만"]} />

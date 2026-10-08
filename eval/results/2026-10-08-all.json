@@ -1236,9 +1236,7 @@
    "ambiguous": false,
    "status": "pass",
    "problems": [],
-   "detail": {
-    "mode": "care"
-   }
+   "detail": {}
   },
   {
    "id": "fb-21",
@@ -1249,9 +1247,7 @@
    "ambiguous": false,
    "status": "pass",
    "problems": [],
-   "detail": {
-    "mode": "care"
-   }
+   "detail": {}
   },
   {
    "id": "fb-22",
@@ -1262,9 +1258,7 @@
    "ambiguous": false,
    "status": "pass",
    "problems": [],
-   "detail": {
-    "mode": "care"
-   }
+   "detail": {}
   },
   {
    "id": "fb-23",

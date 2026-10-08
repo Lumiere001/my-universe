@@ -4,6 +4,8 @@
 
 **WS5 구현에서 바뀐 점(2026-10-08):** 아래 본문에 반영했다. 요약은 맨 끝 "§7 WS5 구현 메모".
 
+**시험 단계 위기 대응(2026-10-08 아침, 동규 결정):** 위기 글도 7단계를 다 돌고 평소 EntryResult 를 준다. `care` 칸을 없애고 `message.check_in`(안부 한 줄)을 더했다(§1).
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -40,7 +42,7 @@ event: error
 data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable": true}
 ```
 
-- step 순서: `safety`(위기 확인) → `names`(사람 · 가명) → `record`(기록 Agent) → `past`(지난 생각 고르기) → `observe`(관측 Agent) → `voice`(한마디) → `save`. 위기면 `safety` 다음 바로 `result`(care).
+- step 순서: `safety`(위기 확인) → `names`(사람 · 가명) → `record`(기록 Agent) → `past`(지난 생각 고르기) → `observe`(관측 Agent) → `voice`(한마디) → `save`. 위기 글도 같다(시험 단계).
 - 끊기면: `GET /diary/{id}`로 상태를 보고, `status`가 `failed`이거나 멈춰 있으면 `POST /diary/{id}/resume/stream`(같은 이벤트, 끝난 단계는 건너뜀 — 건너뛴 단계도 progress 는 다시 보낸다). 화면이 끊겨도 서버(로컬 · Docker)는 끝까지 처리한다. 서버가 다시 켜져 멈춘 기록은 `GET /diary/{id}`가 `failed`로 알려 준다.
 - `error` 이벤트의 `resumable`: 실명 검사에 걸린 경우(`real_name_leak`, 밖으로 보내지 않음)만 `false`. 그 밖의 코드: `studio_timeout` · `studio_failed` · `studio_bad_output` · `llm_failed` · `internal`.
 - 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`). 잠금은 DB(`entries.locked_until`, 조건부 update)라 서버 인스턴스가 여러 개여도 하나만 돈다. 노드가 끝날 때마다 잠금을 `RUN_LOCK_S`(기본 600초)만큼 늘리고, 끝나면 푼다. 서버가 멈춰 잠금이 만료되면 `GET /diary/{id}`가 `failed`로 알려 준다.
@@ -54,7 +56,6 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   "id": "e1", "status": "processing|done|failed", "step": "observe",
   "written_at": "2026-10-09T23:10:00+09:00", "title": "...", "weather": "흐림",
   "crisis": false,
-  "care": null,
   "info": {"summary": "...", "addressee": "나|특정 인물|신", "addressee_person": "p1|null", "events": ["..."]},
   "thoughts": [
     {"id": "t1", "text": "...", "kind": "다짐", "grateful": false, "certainty": "단정",
@@ -70,13 +71,13 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   ],
   "past": [{"thought_id": "t9", "entry_id": "e0", "text": "...", "written_at": "..."}],
   "reached": [{"aspiration_id": "a1", "quote": "...", "message": "..."}],
-  "message": {"text": "...", "tone": "다정하게", "mode": "normal|comfort|care"},
+  "message": {"text": "...", "tone": "다정하게", "mode": "normal|comfort", "check_in": "안부 한 줄|null"},
   "next_question": {"kind": "weather|aspiration|free|none", "text": "..."},
   "people_questions": [{"id": "q1", "name": "...", "question": "...", "options": ["..."]}]
 }
 ```
 
-`care`(위기일 때): `{"message": "...", "resources": v8.json crisis.resources}` = `[{"name": "자살예방 상담전화", "contact": "109", "hours": "365일 24시간", "note": "무료, 문자도 가능"}, {"name": "자살예방 SNS 상담 마들랜", "full_name": "마음을 들어주는 랜선친구", "contact": "카카오톡에서 '마들랜' 검색 · 마들랜 앱 · 109 문자", "hours": "365일 24시간"}]`. 이때 `thoughts` 등은 비고, `message`는 `{"text": "", "mode": "care"}`, `step`은 `save`. 위기 글은 Studio · Solar 를 부르지 않는다.
+`crisis`: 위기로 감지된 글이면 true(감지 결과는 기록 enc 안에 남겨 얼마나 자주 걸리는지 본다). 시험 단계(2026-10-08 아침 동규 결정)에는 위기여도 결과 모양이 같다 — `care` 칸은 없앴고(돌봄 화면 · 109 · 마들랜 · 119 · 112 안내 없음), 생각 · 관계 · 우주 행성이 평소처럼 나온다(Studio · Solar 도 평소처럼, 가명 글로). 위기 글의 `message`는 `mode: "comfort"`(제안 · 다음 질문 없음, 팩폭이면 그 글만 `tone: "다정하게"`)이고, `message.check_in`에 안부 한 줄(코드에 둔 고정 문장, 지난 안부와 겹치지 않게)이 온다. 화면은 한마디 아래 작은 줄로 보인다. 위기 2차 판정(Solar)이 실패한 글은 평소 `message` + 같은 `check_in`. 그 밖의 글은 `check_in: null`. 정식 운영 때의 안내(v8.json `crisis.resources`)는 그때 다시 정한다.
 
 그 밖의 칸: `thoughts[].state` 는 그 생각의 다짐 · 질문 상태, 없으면 그 생각이 새 쪽인 바뀜, 없으면 그 생각이 낀 긴장(`열림|블랙홀|해소`). `relations` 는 이 기록이 새 쪽(`to_entry`)인 관계 + 이 기록에서 시작해 뒤 기록으로 이어진 관계. `people_questions[].options`: 동명이인 · 별명은 `["같은 사람", "다른 사람", "사람 이름 아님"]`, 이름인지 낱말인지는 `["사람 이름", "사람 이름 아님"]`. `next_question.kind`: voice 의 weather → `weather`, aspiration · aspiration_invite → `aspiration`, first · commitment · open_question → `free`, 없음 → `none`.
 
@@ -110,7 +111,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `cross_domain: true`인 선은 화면에서 행성을 눌렀을 때만 그린다(설정 `cross_links`로 정도 조절).
 - `north_star`는 되고 싶은 모습이 없으면 `null`. `reached_planets`: 지금 판에 닿은 순간이 있는 행성.
 - `thought_count`: 생각 수(행성 크기), `certainty`: 가장 많은 확신(같으면 단정, 밝기), `has_question`: 열린 질문이 있음('?'), `ring`: 다짐이 있음, `ring_state`: `열림`(빈 고리) · `채워짐`(지킨 다짐).
-- 생각이 없는 글(위기 글 · 생각 없이 일정만 적은 글)은 행성으로 띄우지 않고 `/diary` 목록에만 있다. 같은 기록 안의 관계는 `links`에 넣지 않는다.
+- 생각이 없는 글(생각 없이 일정만 적은 글, 시험 단계 전에 저장된 위기 글)은 행성으로 띄우지 않고 `/diary` 목록에만 있다. 같은 기록 안의 관계는 `links`에 넣지 않는다.
 - `twins` id = 긴장 묶음 키(`긴장:<관계 id>`), `blackholes` 는 풀리지 않은 채 다른 날 다시 나온 긴장.
 
 ## 3. 피드백 · 상태 버튼
@@ -147,10 +148,10 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 ## 7. WS5 구현 메모
 
 - 코드: `main.py`(FastAPI) · `app/api`(diary.py = 일기 · SSE, routes.py = 나머지) · `app/agents`(graph.py = Super Graph, tools.py, studio.py) · `app/repository`(Postgres · Chroma · 메모리 가짜, 암호화) · `app/core`(config · security · auth · logger · seed · llm).
-- 그래프: `safety → names → record(하위 그래프: record_input → record_agent → record_clean) → observer(하위 그래프: past → observe → rules) → voice → save`. 위기면 `safety → save`. 노드마다 상태를 `entries.steps_enc`(암호화)에 남기고, 이어 하기는 끝난 노드를 건너뛴다. 끝나면 단계별 저장값은 지운다.
+- 그래프: `safety → names → record(하위 그래프: record_input → record_agent → record_clean) → observer(하위 그래프: past → observe → rules) → voice → save`. 위기 글도 같은 길(시험 단계). 가치 이름 · 빈 주제는 '기타 생각' 작은 별로 모은다(그 별은 기록 Agent 의 기존 작은 별 목록에 넣지 않음). 노드마다 상태를 `entries.steps_enc`(암호화)에 남기고, 이어 하기는 끝난 노드를 건너뛴다. 끝나면 단계별 저장값은 지운다.
 - 외부로 보내는 글은 호출마다 한 번에 가명 처리(`tools.mask_obj`: 한 요청 안에서는 같은 사람 = 같은 가명) → 보내기 바로 전 `assert_no_real_names`(`llm.guard`, 실명이면 보내지 않고 `real_name_leak`) → 받은 답을 그 요청의 표로 되돌림.
-- 저장: 원문(본문 · 제목 · 요약 · 생각 · 인용 · 변화 · 작은 별 이름 · 사람 이름 · 관계 설명 · 상태 이력 · 한마디 · 되고 싶은 모습)은 `enc`(AES-256-GCM, 사용자별 키 HKDF(DIARY_ENC_KEY, user_id), aad `표:행 id`)에만. 위기 표시(`crisis`) · 한마디 모드(`care` · `comfort`) · 설정(오늘은 위로만 · 살살 날짜 포함) · 마음 상태 버튼 값도 enc 안에. 백엔드는 요청마다 백엔드 전용 역할 `app_user`(PostgREST 가 모르는 역할) + `app.user_id` 로 트랜잭션을 열어 RLS 가 백엔드 쿼리에도 걸린다. anon · authenticated 는 표 권한이 없다(supabase/migrations/20261009000000_v8_security.sql).
+- 저장: 원문(본문 · 제목 · 요약 · 생각 · 인용 · 변화 · 작은 별 이름 · 사람 이름 · 관계 설명 · 상태 이력 · 한마디 · 되고 싶은 모습)은 `enc`(AES-256-GCM, 사용자별 키 HKDF(DIARY_ENC_KEY, user_id), aad `표:행 id`)에만. 위기 표시(`crisis`) · 한마디 모드(`comfort`) · 안부 한 줄 · 설정(오늘은 위로만 · 살살 날짜 포함) · 마음 상태 버튼 값도 enc 안에. 백엔드는 요청마다 백엔드 전용 역할 `app_user`(PostgREST 가 모르는 역할) + `app.user_id` 로 트랜잭션을 열어 RLS 가 백엔드 쿼리에도 걸린다. anon · authenticated 는 표 권한이 없다(supabase/migrations/20261009000000_v8_security.sql).
 - 벡터: Chroma 컬렉션 `thoughts`(문서 없음, 메타 user_id · entry_id · star_id · written_at · kind). 벡터는 가명 글의 임베딩.
-- 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice 검사 문제 개수만(상황 이름 · 돌봄 모드는 남기지 않음). 시각 · 파일 날짜는 KST. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 · 하루 수 계산, `est_usd >= 0` check).
+- 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice 검사 문제 개수만(상황 이름 · 위로 모드 · 위기 여부는 남기지 않음). 시각 · 파일 날짜는 KST. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 · 하루 수 계산, `est_usd >= 0` check).
 - 로컬: `scripts/dev_up.sh`(로컬 Supabase · ChromaDB · `.env.local` · 시험용 계정 tester@ · e2e@my-universe.test · 하늘 데모 우주) → `uv run --frozen uvicorn main:app --port 8001`. e2e 결과: `docs/ws5-e2e.md`.
 - id 모양: 기록 `e_<hex>`, 생각 `<기록 id>-tNN`(글 속 순서), 관계 `<옛 생각 id>><새 생각 id>`, 사람 `p_` · 작은 별 `s_` · 해 `d_` · 되고 싶은 모습 `a_` · 이름 질문 `q_`. 화면은 모양에 기대지 말고 문자열로만 다룬다.

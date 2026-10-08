@@ -13,5 +13,5 @@ npx playwright install chromium && npm run e2e   # 휴대폰 · PC 핵심 흐름
 npx playwright test -c playwright.real.config.ts  # 실제 백엔드(:8001)에 붙여 같은 흐름(유료 일기 기기당 1편) → docs/e2e-real.md
 ```
 
-- 가짜 데이터 모드에서 글에 `[끊김]` 을 넣으면 연결 끊김 → "이어서 하기"를, "끝내고 싶" 같은 말을 넣으면 돌봄 화면을 볼 수 있다(진짜 위기 감지는 백엔드 몫).
+- 가짜 데이터 모드에서 글에 `[끊김]` 을 넣으면 연결 끊김 → "이어서 하기"를, "끝내고 싶" 같은 말을 넣으면 위기 글 결과(평소 카드 + 위로 한마디 + 안부 한 줄, 시험 단계)를 볼 수 있다(진짜 위기 감지는 백엔드 몫).
 - Vercel: Root Directory = `infra/frontend`, 프레임워크 Next.js 자동 인식. 환경변수는 `.env.example` 의 이름 그대로.

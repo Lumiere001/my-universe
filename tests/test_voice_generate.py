@@ -1,5 +1,6 @@
 """말 걸기 생성(WS7) 검사. LLM은 가짜로 바꿔 규칙 · 검사 로직만 본다."""
 import json
+import re
 
 import pytest
 
@@ -94,13 +95,64 @@ def test_gentle_only_for_fact_bomb(fake):
     assert "오늘은 살살: " not in sys_prompt(fake)
 
 
-# --- 위기 ---
+# --- 위기(시험 단계, 동규 2026-10-08): 평소 틀로 만들되 그 글만 위로 + 안부 한 줄, 단체 · 번호 없음 ---
 
-def test_crisis_no_llm_call(fake):
-    fake["answers"] = [{"message": "x", "next_question": ""}]
-    r = voice.generate(ctx(crisis=True))
-    assert r["mode"] == "care" and r["message"] == "" and fake["calls"] == []
-    assert voice.next_question_kind(ctx(crisis=True)) == ""
+METHOD_PLACE = ["약을", "수면제", "번개탄", "투신", "옥상", "한강", "다리", "칼", "끈", "목을", "높은 곳", "철로", "선로", "가스"]
+SHOWN_BAD = re.compile(r"(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담")
+
+
+def test_crisis_comfort_with_check_in(fake):
+    fake["answers"] = [{"message": "요즘 많이 지쳤겠어요. 이렇게 적어 준 것만으로 충분해요.", "next_question": "뭐 할래?"}]
+    r = voice.generate(ctx(crisis=True))                 # 말투는 팩폭
+    assert r["mode"] == "comfort" and r["tone"] == "다정하게" and r["next_question"] == "" and r["next_kind"] == ""
+    assert r["message"].startswith("요즘 많이 지쳤겠어요") and r["check_in"] == voice.CHECK_IN["다정하게"][0]
+    s = sys_prompt(fake)
+    assert load()["crisis"]["voice"] in s and "제안 없이" in s
+    assert load()["fact_bomb"]["strength"] not in s and load()["tones"][3]["example"] not in s   # 팩폭 세기 · 예시 빠짐
+    assert fake["judge_calls"] == []                      # 다정하게로 낮췄으니 팩폭 판정도 없음
+
+
+def test_crisis_blocks_hotline_and_org(fake):
+    fake["answers"] = [{"message": "많이 힘들었겠어요. 109에 전화하면 이야기할 사람이 있어요.", "next_question": ""},
+                       {"message": "전문가와 이야기해 보는 것도 방법이에요.", "next_question": ""}]
+    r = voice.generate(ctx(tone="담백하게", crisis=True, past_check_ins=[voice.CHECK_IN["담백하게"][0]]))
+    assert any(p.startswith("단체 · 번호 안내") for p in r["checks"][0]["problems"])
+    assert any(p.startswith("위기 글에 기관 안내") for p in r["checks"][1]["problems"])
+    assert r["message"] == voice.SAFE[("담백하게", True)][0] and r["check_in"] == voice.CHECK_IN["담백하게"][1]
+    assert not SHOWN_BAD.search(r["message"] + r["check_in"])
+
+
+def test_crisis_does_not_echo_the_wish(fake):
+    fake["answers"] = [{"message": "사라지고 싶은 마음, 억지로 밀어내지 않아도 괜찮아요.", "next_question": ""},
+                       {"message": "요즘 정말 많이 지쳤겠어요. 이렇게 적어 준 것만으로 충분해요.", "next_question": ""}]
+    r = voice.generate(ctx(tone="다정하게", crisis=True))
+    assert r["checks"][0]["problems"] == ["위기 바람을 따라 말함"] and r["checks"][1]["problems"] == []
+    assert "따라 말하거나 괜찮다고 하지 않는다" in sys_prompt(fake)
+
+
+def test_crisis_unsure_adds_check_in_only(fake):
+    fake["answers"] = [{"message": "핑계 그만. 오늘 한 곳 찾아.", "next_question": ""}]
+    r = voice.generate(ctx(crisis_unsure=True))           # 위기 2차 판정 실패: 평소 팩폭 그대로 + 안부 한 줄
+    assert r["mode"] == "normal" and r["tone"] == "팩폭" and r["message"] == "핑계 그만. 오늘 한 곳 찾아."
+    assert r["check_in"] == voice.CHECK_IN["팩폭"][0] and "무거운 날" not in r["situations"]
+
+
+def test_plain_entry_has_no_check_in(fake):
+    fake["answers"] = [{"message": "핑계 그만. 오늘 한 곳 찾아.", "next_question": ""}]
+    r = voice.generate(ctx())
+    assert r["check_in"] == "" and r["tone"] == "팩폭" and r["mode"] == "normal"
+
+
+def test_check_in_lines_clean_and_rotate():
+    for tone, opts in voice.CHECK_IN.items():
+        assert len(opts) >= 2 and len(set(opts)) == len(opts), tone
+        for x in opts:
+            assert checks.problems(x, "", sources=[x], past=[], comfort=True, aspiration=False, tone=tone, crisis=True) == [], x
+            assert not SHOWN_BAD.search(x) and not [w for w in METHOD_PLACE if w in x], x
+    a, b = voice.CHECK_IN["담백하게"][:2]
+    assert voice.check_in_line("담백하게") == a and voice.check_in_line("담백하게", [a]) == b   # 지난 안부와 겹치지 않게
+    assert voice.check_in_line("담백하게", [a, b]) == a and voice.check_in_line("담백하게", [b, a]) == b   # 다 썼으면 오래된 것
+    assert voice.check_in_line("없는 말투") == voice.CHECK_IN["다정하게"][0]
 
 
 def test_crisis_method_place_filtered():

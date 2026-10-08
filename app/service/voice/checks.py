@@ -10,6 +10,7 @@ from difflib import SequenceMatcher
 
 from app.core import llm
 
+from app.service.safety.crisis import detect_crisis
 from app.service.safety.judge import judged
 
 # 넘지 않는 선: 행동 · 핑계가 아니라 사람 자체를 때리는 표현
@@ -27,6 +28,8 @@ _LINE = [
                 r"|나잇값|나이\s?(값|먹고|먹어서|처먹|(?:[가-힣]{1,4}\s?)?(넘어서|넘은\s?게|씩이나|이나\s?돼서))"
                 r"|(스물|서른|마흔|쉰|[2-9]0)\s?(살|대)?\s?(넘어서|씩이나|이나\s?먹고|이나\s?돼서)"),
     ("위기 방법 · 장소", r"뛰어내|목을\s?매|투신|번개탄|손목을|약을\s?모|수면제|옥상|다리\s?위|선로"),
+    # 시험 단계(2026-10-08 동규): 한마디로 단체 · 전화번호를 안내하지 않는다
+    ("단체 · 번호 안내", r"(?<!\d)(?:109|112|119|1393)(?!\d)|마들랜|생명의\s?전화|자살\s?예방|상담\s?전화"),
     ("거리 숫자", r"\d+\s?(%|퍼센트|점\b|점이|점을|점만)|달성률|점수|거리[는가]?\s?\d"
               r"|거리[는가은이]?\s?(이제\s?|아직\s?|겨우\s?)?(한|두|세|네|다섯|몇)\s?(걸음|발|칸|단계|계단)"),
 ]
@@ -48,6 +51,9 @@ _UNAVOIDABLE = [
      r"((네|니|너)가[^.?!]{0,20}(어서|아서|해서|여서|라서|니까|때문)|(너|네|니)\s?(때문|탓)(이|이야|이지|잖아|야))"
      r"|당할\s?만|만만하게\s?굴|만만해\s?보|만만하니까|자업자득|맞을\s?짓", None),
 ]
+
+# 위기 글 한마디에는 기관 · 연락처도 꺼내지 않는다(넓게 잡는다. 평소 글에는 걸지 않음)
+_HELP = r"상담|전문가|병원|치료|센터|기관|연락처"
 
 # 다음 걸음 제안(질문 · 명령)으로 보이는 끝맺음
 _SUGGEST = re.compile(r"볼까|할까|볼래|해\s?봐|해\s?보자|하자|해라|하세요|보세요|어때|어떨까|해\s?볼|"
@@ -103,8 +109,8 @@ def repeat_problems(text, past):
 MAX_LEN = 300  # 한마디는 짧게(2~4문장)
 
 
-def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None):
-    """생성된 한마디 · 다음 질문의 문제 목록."""
+def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False):
+    """생성된 한마디 · 다음 질문의 문제 목록. crisis: 위기 글(기관 · 연락처 안내도 막음)."""
     both = f"{msg}\n{next_q}"
     out = line_problems(both)
     out += [p for p in unavoidable_problems(both, " ".join(sources or [])) if p not in out]
@@ -113,6 +119,10 @@ def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, t
     out += quote_problems(both, sources) + repeat_problems(msg, past)
     if comfort and (has_suggestion(msg) or next_q):
         out.append("무거운 날인데 제안이 있음")
+    if crisis and (m := re.search(_HELP, both)):
+        out.append(f"위기 글에 기관 안내: '{m.group(0)}'")
+    if crisis and detect_crisis(both)["crisis"]:   # 죽음 · 사라짐 바람을 되받거나 괜찮다고 하지 않는다(규칙만, 네트워크 없음)
+        out.append("위기 바람을 따라 말함")
     if aspiration and (m := re.search(r"멀어\S*|되고\s?싶다(면서|며|더니)", both)):
         out.append(f"멀어진 순간을 말함: '{m.group(0)}'")
     if gentle and re.search(r"(^|\s)야[,!]", msg):

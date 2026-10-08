@@ -1,5 +1,6 @@
 // 실제 모드 핵심 흐름(시험용 계정 tester@ · 하늘 데모 우주): 로그인 → 우주 → 지난 기록 → 새 일기(실제 Studio + Solar)
-// → 진행 단계 → (휴대폰: 처리 중 새로고침 → 이어서 하기) → 결과 카드 → 피드백 · 버튼 저장 확인 → 위기 글 → 사람 → 되고 싶은 모습
+// → 진행 단계 → (휴대폰: 처리 중 새로고침 → 이어서 하기) → 결과 카드 → 피드백 · 버튼 저장 확인 → 위기 글(평소 결과 + 안부 한 줄, 유료)
+// → 사람 → 되고 싶은 모습
 // → 설정(팩폭) → 로그아웃. 만든 기록 · 사람 · 설정은 끝나고 되돌린다. 캡처는 docs/images/v8-real/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
@@ -23,6 +24,8 @@ const DIARY = `10/8 목요일 밤
 예전에는 남한테 기대면 안 되고 혼자 다 해야 한다고 생각했는데, 오늘은 같이 나누니까 오히려 마음이 가벼웠다.
 내일은 아침 수업 전에 내 몫을 먼저 끝내 두겠다.`;
 const CRISIS = "요즘 너무 지쳐서 다 끝내고 싶다는 생각이 자꾸 든다.";
+// 시험 단계(2026-10-08 동규): 위기 글이어도 화면에 단체 이름 · 전화번호가 나오지 않는다
+const HOTLINE = /(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담 ?전화/;
 
 let TOKEN = "";
 async function call<T = any>(method: string, p: string, body?: unknown): Promise<T> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -226,24 +229,25 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     }
   });
 
-  await test.step("위기 글 → 돌봄 화면(유료 호출 없음)", async () => {
+  // 위기 글도 평소처럼 Studio · Solar 를 거친다(유료) → 유료 일기를 쓰는 기기에서만
+  if (diary) await test.step("위기 글 → 평소 결과 카드 + 안부 한 줄(단체 안내 · 따로 뜨는 화면 없음)", async () => {
     await nav("쓰기");
     await page.getByLabel(/마음껏 적어/).fill(CRISIS);
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
-    const care = page.getByTestId("care");
-    await expect(care).toBeVisible({ timeout: 30_000 });
-    await expect(care.getByRole("link").first()).toHaveAttribute("href", /^tel:/);
-    await expect(page.getByTestId("result")).toHaveCount(0);
+    const r = page.getByTestId("result");
+    await expect(r).toBeVisible({ timeout: 240_000 });
+    await expect(r.getByTestId("check-in")).toBeVisible();
+    await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
+    expect(await page.locator("body").innerText(), "단체 이름 · 전화번호").not.toMatch(HOTLINE);
     const id = (await call("GET", "/diary?limit=1")).entries[0].id;
     made.push(id);
+    const e = await call("GET", `/diary/${id}`);
     const calls = sql(`select coalesce(sum(calls), 0) from runs where entry_id = '${id}'`);
-    log(dev, "위기 글 외부 호출", calls);
-    expect(calls).toBe("0");
-    const careText = await care.innerText();
-    const lines = careText.split("\n").map((x) => x.trim()).filter(Boolean);
-    expect(lines.length, "돌봄 문장 겹침").toBe(new Set(lines).size);
-    expect(careText.match(/119/g)?.length, "119 · 112 안내는 한 번").toBe(1);
-    await shot("13-care");
+    log(dev, "위기 글", { 감지: e.crisis, 모드: e.message?.mode, 말투: e.message?.tone, 생각: e.thoughts.length, 외부호출: calls });
+    expect(e.crisis, "감지 결과는 계속 남김").toBe(true);
+    expect(e.message.mode).toBe("comfort");
+    expect("care" in e, "care 칸 없음").toBe(false);
+    await shot("13-crisis", true);
   });
 
   await test.step("사람 목록: 추가 · 지우기 안내", async () => {

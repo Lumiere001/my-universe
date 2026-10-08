@@ -11,6 +11,7 @@ cd infra/frontend && npx playwright test -c playwright.real.config.ts           
 npx playwright test -c playwright.real.config.ts --project=mobile                 # 하나만
 ```
 
+- **2026-10-08 아침 이후(시험 단계 위기 대응):** 위기 글 단계는 "평소 결과 카드 + 안부 한 줄, 화면에 109 · 마들랜 · 119 · 112 없음, API `crisis: true` · `mode: comfort`"를 본다. 위기 글도 Studio · Solar 를 거쳐 유료라 유료 일기를 쓰는 기기에서만 돈다(캡처 `13-crisis.png`). 아래 표 · 캡처는 그 전 실행 기록이다.
 - 설정 `infra/frontend/playwright.real.config.ts`, 시험 `infra/frontend/e2e-real/real.spec.ts`. 가짜 모드 e2e(`playwright.config.ts`, `e2e/`)는 그대로다.
 - 비밀번호는 루트 `.env.local` 의 `DEV_TEST_PASSWORD` 를 시험 코드가 읽기만 한다(출력 · 캡처 없음, 입력 칸은 가려짐).
 - 시험이 끝나면 만든 기록(일기 · 위기 글)과 새로 생긴 사람을 지우고 말투 설정을 되돌린다. 되고 싶은 모습은 지우는 길이 없어 이력에 남는다(현재 판은 원래 문장으로 다시 저장해 둠).

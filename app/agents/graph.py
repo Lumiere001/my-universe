@@ -4,7 +4,8 @@ app/agents/graph.py
 LangGraph Super Graph: 일기 한 편을 safety → names → record → past → observe → voice → save 로 처리한다.
 - record_extractor 하위 그래프: 입력 만들기 → 기록 Agent → 정리(rules.clean_record · 작은 별 · 생각 벡터)
 - observer 하위 그래프: 지난 생각 고르기(rules.pick_past) → 관측 Agent → 규칙(filter_relations)
-- 위기면 safety 다음 바로 save(돌봄). 외부 호출(Studio · Solar)은 모두 llm.guard 안에서 보내기 직전에 실명 검사.
+- 위기여도 흐름은 같다(시험 단계, 2026-10-08 동규): 감지 결과만 암호화해 남기고, 한마디는 위로 + 안부 한 줄(voice).
+- 외부 호출(Studio · Solar)은 모두 llm.guard 안에서 보내기 직전에 실명 검사.
 - 노드가 끝날 때마다 상태를 entries.steps_enc 에 암호화해 남긴다. 끊긴 뒤 다시 돌리면 끝난 노드는 건너뛴다(resume).
 """
 
@@ -40,6 +41,7 @@ class State(TypedDict, total=False):
     weather: Any
     done: list               # 끝난 노드
     crisis: bool
+    crisis_unsure: bool      # 위기 2차 판정(Solar)이 실패함 → 안부 한 줄만
     people: list             # 사람 목록(가명 표). 이 글에서 자동 등록한 사람 포함
     questions: list          # 헷갈리는 이름 질문 id
     topics: dict             # 기존 작은 별 {이름: 해}
@@ -122,7 +124,7 @@ def safety(state, ctx):
     with ctx.repo.session(ctx.uid) as s:
         people = diary.people(s)
     found = detect_crisis(f"{state.get('title', '')}\n{state['text']}", people=people, llm=True)
-    return {"crisis": found["crisis"]}
+    return {"crisis": found["crisis"], "crisis_unsure": any(x["type"] == "llm_error" for x in found["signals"])}
 
 
 @node("names", "names")
@@ -151,9 +153,13 @@ def record_input(state, ctx):
     return {"topics": topics}
 
 
+OTHER_TOPIC = "기타 생각"   # 가치 이름 · 빈 주제를 모으는 작은 별(match_topic 표시, 2026-10-08 동규 · 오케스트레이터 추천)
+
+
 @node("record_agent")
 def record_agent(state, ctx):
-    return {"record_raw": tools.run_record_agent(state.get("title", ""), state["text"], state["topics"], state["people"])}
+    topics = [t for t in state["topics"] if t != OTHER_TOPIC]   # 모으는 별은 기록 Agent 에게 고를 이름으로 주지 않는다
+    return {"record_raw": tools.run_record_agent(state.get("title", ""), state["text"], topics, state["people"])}
 
 
 def _quote_ok(quote, source):
@@ -176,7 +182,8 @@ def record_clean(state, ctx):
     source = f"{state.get('title', '')}\n{state['text']}"
     kept = [t for t in rec["thoughts"] if _quote_ok(t["quote"], source)]   # 원문에 없는 인용은 버린다(1차 G1)
     for t in kept:
-        t["topic"] = t["topic"] or "이름 없는 주제"
+        if {"가치 이름", "빈 주제"} & set(t["problems"]):
+            t["topic"], t["domain"] = OTHER_TOPIC, topics.get(OTHER_TOPIC) or t["domain"]
     # 생각 벡터(가명 글) + 해를 못 정한 주제의 벡터를 한 번에
     need = sorted({t["topic"] for t in kept if not t["domain"]})
     vecs = tools.embed([t["thought"] or t["quote"] for t in kept] + need, state["people"])
@@ -265,7 +272,7 @@ def speak(state, ctx):
     day = diary.today()
     with ctx.repo.session(ctx.uid) as s:
         settings, onboarding = diary.profile(s)
-        msgs = diary.past_messages(s)
+        msgs = [diary.message(s, r) for r in s.rows("messages", order="created_at")]
         done = [e for e in diary.entries(s, status="done") if e["id"] != ctx.entry_id]
         states = diary.states(s)
         asp = (diary.aspirations(s) or [None])[-1]
@@ -279,7 +286,9 @@ def speak(state, ctx):
         "tone": settings["tone"], "text": state["text"], "summary": state["record"].get("summary", ""),
         "thoughts": [{k: t[k] for k in ("thought", "kind", "certainty", "quote")} for t in state["today"]],
         "weather": state.get("weather"), "addressee": state["record"].get("addressee"), "written_at": state["written_at"],
-        "past_messages": msgs,
+        "past_messages": [m.get("text", "") for m in msgs],
+        "past_check_ins": [m["check_in"] for m in msgs if m.get("check_in")],
+        "crisis": state.get("crisis"), "crisis_unsure": state.get("crisis_unsure"),
         "aspiration": {"said": asp["said"], "value": (asp["values"] or [""])[0], "obstacle": asp.get("obstacle"),
                        "if_then": asp.get("if_then")} if asp else None,
         "reached": [{"quote": r["evidence"], "note": r.get("explanation", "")} for r in state.get("reached", [])],
@@ -295,7 +304,7 @@ def speak(state, ctx):
     }
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
-    return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind")}, "tone": settings["tone"]},
+    return {"voice": {k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
             "_checks": len(checks)}
 
 
@@ -303,16 +312,6 @@ def speak(state, ctx):
 def save(state, ctx):
     eid = ctx.entry_id
     with ctx.repo.session(ctx.uid) as s:
-        if state.get("crisis"):
-            settings, _ = diary.profile(s)
-            s.delete("messages", entry_id=eid)
-            mid = diary.new_id("m")   # 돌봄 글은 고정이라 저장하지 않는다
-            s.insert("messages", {"id": mid, "entry_id": eid, "tone": settings["tone"], "next_kind": "",
-                                  "enc": diary.seal(s, "messages", mid, {"text": "", "next_question": ""})})
-            data = {**diary.entry(s, eid)["data"], "crisis": True}   # 위기 표시는 enc 안에만
-            s.update("entries", {"status": "done", "step": "save", "enc": diary.seal(s, "entries", eid, data), "steps_enc": None,
-                                 "updated_at": diary.now()}, id=eid)
-            return {}
         e = diary.entry(s, eid)
         # 다시 돌려도 같은 결과가 되게 이 기록의 생각부터 지우고 다시 쓴다
         old = [t["id"] for t in s.rows("thoughts", entry_id=eid)]
@@ -341,7 +340,7 @@ def save(state, ctx):
         mid = diary.new_id("m")
         s.insert("messages", {"id": mid, "entry_id": eid, "tone": v["tone"], "next_kind": v["next_kind"],
                               "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"],
-                                                                     "mode": v["mode"]})})
+                                                                     "mode": v["mode"], "check_in": v.get("check_in", "")})})
         stars = Counter(t["star_id"] for t in state["today"])
         star = max(stars, key=lambda k: (stars[k], -[t["star_id"] for t in state["today"]].index(k))) if stars else None
         sun = next((t["sun_id"] for t in state["today"] if t["star_id"] == star), None)
@@ -349,6 +348,8 @@ def save(state, ctx):
         person = next((p for t in state["today"] for p in t["people"]), None) if info.get("addressee") == "특정 인물" else None
         data = {**e["data"], "summary": info.get("summary", ""), "events": info.get("events", []), "addressee_person": person,
                 "past": [p["id"] for p in state["past"]]}
+        if state.get("crisis"):
+            data["crisis"] = True   # 위기 표시는 enc 안에만(얼마나 자주 걸리는지 보려고 남김)
         s.update("entries", {"status": "done", "step": "save", "star_id": star, "sun_id": sun, "addressee": info.get("addressee"),
                              "enc": diary.seal(s, "entries", eid, data), "steps_enc": None, "error_code": None,
                              "updated_at": diary.now()}, id=eid)
@@ -385,7 +386,7 @@ def build():
     g.add_node("voice", speak)
     g.add_node("save", save)
     g.add_edge(START, "safety")
-    g.add_conditional_edges("safety", lambda st: "save" if st.get("crisis") else "names", ["save", "names"])
+    g.add_edge("safety", "names")
     g.add_edge("names", "record")
     g.add_edge("record", "observer")
     g.add_edge("observer", "voice")

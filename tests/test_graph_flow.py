@@ -1,4 +1,4 @@
-"""그래프 순서 · 위기 분기 · 이어 하기 · 외부 요청 실명 0건 · 원문 없는 로그 (외부 클라이언트는 가짜, 저장소는 메모리)."""
+"""그래프 순서 · 위기 글(평소 흐름 + 안부 한 줄) · 이어 하기 · 외부 요청 실명 0건 · 원문 없는 로그 (외부 클라이언트는 가짜, 저장소는 메모리)."""
 import hashlib
 import json
 import re
@@ -9,6 +9,8 @@ import pytest
 from app.agents import graph, studio
 from app.core import config, llm, security
 from app.repository import MemRepo, diary, views
+from app.service import voice
+from app.service.safety.crisis import LLM_PROMPT
 
 U1 = "11111111-1111-1111-1111-111111111111"
 NAMES = ("민준", "서윤")                      # 가상 인물 지호의 친구들(실명 역할)
@@ -27,6 +29,7 @@ class FakeUpstage:
     def __init__(self):
         self.sent, self.store, self.calls = [], {}, {"record": 0, "observe": 0, "chat": 0, "embed": 0}
         self.fail_observe = 0
+        self.crisis_llm = '{"crisis": false, "reason": "평범한 하루"}'   # 위기 2차 판정 답(예외면 실패)
         self.deleted = []
         self.files = _o(create=self._file, delete=self.deleted.append)
         self.responses = _o(create=self._run, retrieve=None)
@@ -80,6 +83,10 @@ class FakeUpstage:
     def _chat(self, model, messages, **kw):
         self.calls["chat"] += 1
         self.sent.append(json.dumps(messages, ensure_ascii=False))
+        if messages[0]["content"] == LLM_PROMPT:
+            if isinstance(self.crisis_llm, Exception):
+                raise self.crisis_llm
+            return _o(choices=[_o(message=_o(content=self.crisis_llm))], usage=_o(prompt_tokens=100, completion_tokens=10))
         user = messages[-1]["content"]
         who = next((n for n in re.findall(r"([가-힣]{2})(?:이가|이랑|이도)", user)), "")
         msg = f"오늘도 걷기를 적어 줬네요. {who}와 함께한 시간이 힘이 됐겠어요."
@@ -124,6 +131,7 @@ def test_order_result_and_no_real_names(env):
     assert any(t["grateful"] for t in r1["thoughts"])
     assert r1["thoughts"][0]["state"] == {"type": "다짐", "status": "열림", "mistake": False}
     assert "민준" in r1["message"]["text"]                    # 가명으로 받은 답을 원래 이름으로 되돌림
+    assert r1["message"]["mode"] == "normal" and r1["message"]["check_in"] is None   # 평범한 글에는 안부 한 줄 없음
     e2, steps2, r2 = write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
     assert steps2 == graph.ORDER
     assert r2["past"] and r2["past"][0]["entry_id"] == e1      # 둘째 글에서 지난 생각이 나옴
@@ -150,12 +158,50 @@ def test_stored_text_is_encrypted_and_vectors_have_no_text(env):
     assert all(set(m) == {"entry_id", "star_id", "written_at", "kind"} for m in metas)
 
 
-def test_crisis_goes_to_care_without_paid_calls(env):
-    _, steps, r = write(env, U1, *CRISIS, "2026-10-02T23:30:00+09:00")
-    assert steps == ["safety", "save"]
-    assert r["crisis"] is True and "109" in r["care"]["message"] and r["message"]["mode"] == "care"
-    assert {x["name"] for x in r["care"]["resources"]} >= {"자살예방 상담전화"}
-    assert env.fake.calls == {"record": 0, "observe": 0, "chat": 0, "embed": 0}
+SHOWN_BAD = re.compile(r"(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담")   # 시험 단계: 보이는 글에 단체 · 번호 없음
+
+
+def test_crisis_keeps_usual_result_with_check_in(env):
+    """동규 2026-10-08 시험 단계 결정: 위기여도 평소 결과(생각 · 우주 행성) + 위로 한마디(팩폭은 다정하게) + 안부 한 줄."""
+    with env.repo.session(U1) as s:
+        diary.save_profile(s, settings={"tone": "팩폭", "fact_bomb_ack": True})
+    eid, steps, r = write(env, U1, *CRISIS, "2026-10-02T23:30:00+09:00")
+    assert steps == graph.ORDER and r["status"] == "done" and r["thoughts"]
+    m = r["message"]
+    assert r["crisis"] is True and "care" not in r
+    assert m["mode"] == "comfort" and m["tone"] == "다정하게" and r["next_question"]["kind"] == "none"
+    assert m["check_in"] in voice.CHECK_IN["다정하게"]
+    shown = " ".join([m["text"], m["check_in"], r["next_question"]["text"], *[t["text"] for t in r["thoughts"]]])
+    assert not SHOWN_BAD.search(shown)
+    assert env.fake.calls["record"] == 1 and env.fake.calls["observe"] == 1
+    with env.repo.session(U1) as s:
+        assert eid in [p["id"] for p in views.universe(s)["planets"]]
+        assert diary.entry(s, eid)["data"]["crisis"] is True                   # 감지 결과는 enc 안에 남김
+
+
+def test_crisis_check_failure_adds_check_in_only(env):
+    env.fake.crisis_llm = RuntimeError("network")      # 규칙은 위기 아님, Solar 2차 판정 실패(llm_error)
+    _, steps, r = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    assert steps == graph.ORDER and r["crisis"] is False
+    assert r["message"]["mode"] == "normal" and r["message"]["check_in"] in voice.CHECK_IN["다정하게"]
+
+
+def test_value_or_empty_topic_goes_to_other_star(env, monkeypatch):
+    """가치 이름(배려) · 빈 주제는 '기타 생각' 작은 별로 모으고, 그 별은 기록 Agent 의 기존 작은 별 목록에 넣지 않는다."""
+    first = env.fake._record
+
+    def record(html):
+        d = first(html)
+        for t, topic in zip(d["thoughts"], ["배려", ""]):
+            t["topic"] = [topic]
+        return d
+    monkeypatch.setattr(env.fake, "_record", record)
+    _, _, r = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    assert [t["topic"] for t in r["thoughts"]] == [graph.OTHER_TOPIC] * 2
+    write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        assert [x["name"] for x in diary.stars(s)].count(graph.OTHER_TOPIC) == 1   # 두 글이 한 별에 모임
+    assert not [h for h in env.fake.sent if f"<li>{graph.OTHER_TOPIC}</li>" in h]
 
 
 def test_resume_skips_finished_steps(env):
@@ -232,11 +278,12 @@ def test_studio_file_delete_failure_only_logged(env, monkeypatch):
 
 def test_mood_marks_only_inside_enc(env):
     _, _, r = write(env, U1, *CRISIS, "2026-10-02T23:30:00+09:00")
-    assert r["crisis"] is True and r["message"]["mode"] == "care"
+    assert r["crisis"] is True and r["message"]["mode"] == "comfort"
     write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
     t = env.repo.store.tables
-    assert all("crisis" not in e for e in t["entries"]) and all("mode" not in m for m in t["messages"])
+    assert all("crisis" not in e for e in t["entries"])
+    assert all("mode" not in m and "check_in" not in m for m in t["messages"])
     assert all(set(r["meta"]) <= {"checks"} and isinstance(r["meta"].get("checks", 0), int) for r in t["runs"])
     with env.repo.session(U1) as s:
         assert [e["crisis"] for e in diary.entries(s)].count(True) == 1
-        assert {views.entry_result(s, e["id"])["message"]["mode"] for e in diary.entries(s)} == {"care", "normal"}
+        assert {views.entry_result(s, e["id"])["message"]["mode"] for e in diary.entries(s)} == {"comfort", "normal"}

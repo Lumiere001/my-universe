@@ -14,7 +14,7 @@ from tests.test_graph_flow import CRISIS, DAY1, DAY2, NAMES, U1, env  # noqa: F4
 U2 = "22222222-2222-2222-2222-222222222222"
 TOKENS = {"tok1": {"id": U1, "email": "jiho@my-universe.test"}, "tok2": {"id": U2, "email": "other@my-universe.test"}}
 H1, H2 = {"Authorization": "Bearer tok1"}, {"Authorization": "Bearer tok2"}
-RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "care", "info", "thoughts", "relations",
+RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations",
                "past", "reached", "message", "next_question", "people_questions"}
 
 
@@ -88,12 +88,14 @@ def test_keepalive_comment(client, env, monkeypatch):  # noqa: F811
     assert ": keep-alive" in text and ev[-1][0] == "result"
 
 
-def test_crisis_care(client, env):  # noqa: F811
+def test_crisis_keeps_usual_flow(client, env):  # noqa: F811
+    """시험 단계(동규 2026-10-08): 위기 글도 7단계를 다 돌고 평소 결과 + 위로 한마디 + 안부 한 줄. care 칸 · 단체 안내 없음."""
     _, ev = write(client, *CRISIS, "2026-10-02T23:30:00+09:00")
-    assert [d["step"] for e, d in ev if e == "progress"] == ["safety", "save"]
-    res = ev[-1][1]
-    assert res["crisis"] and res["care"]["resources"][0]["contact"] == "109"
-    assert env.fake.calls == {"record": 0, "observe": 0, "chat": 0, "embed": 0}
+    assert [d["step"] for e, d in ev if e == "progress"] == ["safety", "names", "record", "past", "observe", "voice", "save"]
+    kind, res = ev[-1]
+    assert kind == "result" and set(res) == RESULT_KEYS and res["crisis"] and res["thoughts"]
+    assert res["message"]["mode"] == "comfort" and res["message"]["check_in"]
+    assert "109" not in res["message"]["text"] + res["message"]["check_in"] and env.fake.calls["record"] == 1
 
 
 def test_error_event_and_resume(client, env):  # noqa: F811

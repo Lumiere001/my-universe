@@ -72,7 +72,7 @@ export default function WritePage() {
   if (result) return (
     <main>
       <ResultCard r={result} />
-      {!result.crisis && <button onClick={again}>새 글 쓰기</button>}
+      <button onClick={again}>새 글 쓰기</button>
     </main>
   );
 
