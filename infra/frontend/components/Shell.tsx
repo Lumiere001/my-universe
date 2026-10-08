@@ -1,6 +1,7 @@
 "use client";
 // 위 막대(휴대폰은 아래 막대) + 로그인 문. 가짜 데이터 모드에서는 로그인을 건너뛴다.
 // 초대 목록(백엔드 ALLOWED_EMAILS) 밖 계정이면 403 not_allowed → 안내와 로그아웃만 보인다.
+// /privacy(개인정보처리방침)는 로그인 없이 보인다(구글 OAuth 브랜딩 링크, 정적 HTML 에도 들어감).
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,7 +40,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      {state === "in" ? children : state === "out" ? <Login /> : state === "not_allowed" ? (
+      {state === "in" || path === "/privacy" ? children : state === "out" ? <Login /> : state === "not_allowed" ? (
         <main><div className="card stack" role="alert">
           <h1>초대된 사람만 쓸 수 있어요</h1>
           <p className="sub">이 계정은 아직 초대 목록에 없어요. 운영자에게 알려 주세요.</p>
@@ -78,6 +79,7 @@ function Login() {
           </form>
         )}
       </div>
+      <p className="sub"><Link href="/privacy">개인정보처리방침</Link></p>
     </main>
   );
 }

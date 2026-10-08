@@ -1,5 +1,6 @@
 "use client";
 // (바) 설정: 말투 4종 + 미리보기(v8.json 예문, LLM 호출 없음). 팩폭은 경고 확인 뒤에만. 제안 빈도 · 영역 넘는 선 · 날씨 묻기.
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { OneLine } from "@/components/ResultCard";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
@@ -83,6 +84,7 @@ export default function SettingsPage() {
 
       {!MOCK && <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>}
       {!MOCK && <DeleteAccount />}
+      <p className="sub"><Link href="/privacy">개인정보처리방침</Link></p>
     </main>
   );
 }

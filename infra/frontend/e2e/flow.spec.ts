@@ -1,4 +1,4 @@
-// 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 위기 글(평소 결과 + 안부 한 줄)
+// 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 개인정보처리방침 → 위기 글(평소 결과 + 안부 한 줄)
 // → 끊김 뒤 이어서 하기 → 사람 지우기 → 지난 기록. 캡처는 docs/images/v8/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
 import path from "node:path";
@@ -131,6 +131,11 @@ test("핵심 흐름", async ({ page }, info) => {
     await shot("11-fact-bomb-warning", true);
     await w.getByRole("button", { name: /팩폭으로 할게요/ }).click();
     await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  await test.step("설정 아래 개인정보처리방침", async () => {
+    await page.getByRole("link", { name: "개인정보처리방침" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "나의 우주 개인정보처리방침" })).toBeVisible();
   });
 
   await test.step("위기 글 → 평소 결과 카드 + 안부 한 줄(단체 안내 · 따로 뜨는 화면 없음)", async () => {
