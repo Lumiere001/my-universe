@@ -285,7 +285,7 @@ def respond(ctx):
     if kind == "recall" and not ctx.get("past"):   # 찾을 기록이 없으면 Solar 를 부르지 않고 없다고 답한다
         return {**base, "text": NOT_FOUND[_tone(tone)], "found": False, "checks": []}
     avoid, log, text, found = [], [], "", False
-    for _ in (1, 2):
+    for _ in range(3 if "긴 이야기" in sit else 2):   # 긴 이야기는 한 번 더(e2e 에서 두 번 다 걸려 기본 문장이 되던 것, WS21)
         text, found = parse(llm.chat(messages(ctx, sit, avoid), temperature=0.2 if kind == "recall" else 0.5))
         if kind == "recall":
             if found is None:   # JSON 없이 글만 옴: 지난 기록 원문을 그대로 인용했을 때만 찾은 것(인용 대조가 근거)

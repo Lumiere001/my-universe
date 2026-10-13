@@ -196,3 +196,17 @@ def test_long_story_summary_is_cut_at_sentence_end(monkeypatch):
     assert "긴 이야기" not in chat.situations("가" * chat.LONG_TURN, crisis=True)                    # 위기 턴은 위로만(묻지 않음)
     sys_prompt = chat.messages({"tone": "다정하게", "text": "가" * chat.LONG_TURN}, chat.situations("가" * chat.LONG_TURN))[0]["content"]
     assert chat.LINES["긴 이야기"] in sys_prompt
+
+
+def test_long_story_reply_gets_third_try(client, env, talk):  # noqa: F811
+    """긴 이야기 턴은 검사에 두 번 걸려도 한 번 더 써 본다(짧은 말은 전처럼 두 번 뒤 기본 문장)."""
+    from app.service import chat
+    bad = {"reply": "많이 바빴네요. 기획안은 어땠어요? 점심은요?", "found": False}            # 질문 2개
+    good = {"reply": "긴 하루를 들려줘서 고마워요. 보람이한테 먼저 부탁한 건 어땠어요?", "found": False}
+    c = start(client)
+    talk.queue[:] = [bad, bad, good]
+    v = vsay(client, c["id"], LONG)
+    assert v["turns"][-1]["text"] == good["reply"] and len(talk.reply_calls) == 3
+    talk.queue[:] = [bad, bad, good]
+    v = last(say(client, c["id"], "점심엔 국수를 먹었다."))
+    assert v["turns"][-1]["text"] in chat.SAFE["다정하게"] and len(talk.reply_calls) == 5   # 짧은 말: 두 번 뒤 기본 문장
