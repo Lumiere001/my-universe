@@ -8,6 +8,8 @@
 
 **기록 칸(WS11, 2026-10-13):** 쓰기 본문에 `source` · `source_ref` · `day`, EntryResult · 목록에 `source` · `day` · `day_basis` · `day_check` · `confirmed` · `record_type`, 생각에 `original`, `info.original` 을 더했다(칸 추가만). 같은 글(같은 Studio 설정) · 같은 원본이 다시 오면 Studio 를 부르지 않고 그 기록으로 안내한다(§1). 마이그레이션 `20261013000000_v8_record_fields.sql`(덧붙이기만).
 
+**쓰기 화면 작은 묶음(WS13, 2026-10-14):** `GET /diary/prompt`(쓰기 화면 위 별지기 말풍선) · `PATCH /diary/{id}/day`(글이 다루는 날 고치기) 를 더하고(§2), Settings 에 `keeper_name`(별지기 이름)을 더했다(§6). 새 경로 · 칸 추가만이고 마이그레이션은 없다.
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -96,6 +98,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `GET /diary?limit=20&before=<written_at>` → `{"entries": [{"id", "written_at", "title", "summary", "weather", "status", "sun", "star", "source", "day", "day_basis", "day_check", "confirmed", "record_type"}]}`
 - `GET /diary/{id}` → EntryResult
 - `DELETE /diary/{id}` → 204 (생각 · 관계 · 한마디 · 그 기록 · 생각 · 관계를 가리킨 피드백 · 벡터까지. 남은 기록이 모두 끝난 상태면 이 기록에만 쓰인 작은 별 · 자동 등록 사람도 정리). 정리 중이면 409.
+- `GET /diary/prompt` → `{"kind": "first|weather|aspiration|free|none", "text": "질문", "vow": {"thought_id", "text", "overdue": false} | null}` 쓰기 화면 위 별지기 말풍선(LLM 없음). 기록이 없으면 정해 둔 첫 만남 질문(`first`, PRD §6.2), 있으면 마지막 글의 '다음에 써 볼 질문'(`next_question` 과 같은 종류 · 글). 날씨 질문은 건너뛰었으면(`weather_ask: false`) `none`, 되고 싶은 모습 질문은 넘어감 · 그만 묻기 · 이미 적었으면 `none`. `vow` 는 다짐 안부: 기한이 지났거나(`overdue: true`) 마지막 글에서 나온 열린 다짐 하나(화면은 지켰어요 · 그만둘래요 버튼, 누르면 닫혀 다시 안 나옴). 마지막 글이 위로 모드(무거운 날 · 위기)였거나 오늘은 위로만이면, 또는 지난 질문이 이미 다짐 안부면 `null`. `/diary/{id}` 보다 먼저 등록한다.
+- `PATCH /diary/{id}/day` `{"day": "YYYY-MM-DD"}` → EntryResult. 글이 다루는 날을 고친다(`day_basis: "확실"`, `day_check: false`). 정리 결과(생각 · 관계)는 다시 돌리지 않는다. 정리 중이면 409 `already_running`, 남의 · 없는 기록은 404.
 - `GET /universe` → 아래 Universe
 - `GET /ontology` → `app/core/ontology/v8.json` 그대로(범례 · 보기 목록은 화면이 여기서 읽는다)
 
@@ -152,7 +156,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 - `GET /me` → `{"user": {"id", "email"}, "settings": Settings, "onboarding": {"entries": 0, "aspiration": "none|asked|skip|stop|set", "weather_asked": false}}`
 - `PATCH /settings`(일부만) → Settings
-  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true}`
+  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true, "keeper_name": "별지기"}`
+  - `keeper_name`: 별지기 이름(1~12자, 화면 말풍선에만 씀 · LLM 에 보내지 않음).
   - 팩폭은 `fact_bomb_ack: true`(경고 확인) 뒤에만 고를 수 있다(아니면 409 `fact_bomb_ack_required`). 경고 확인을 거두면 말투는 다정하게로.
 - `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
 - `GET /health` → `{"status": "ok", "version": "0.8.0"}`

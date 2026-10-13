@@ -17,7 +17,7 @@ from app.service.safety import forget
 
 TZ = ZoneInfo(config.TIMEZONE)
 SETTINGS = {"tone": "다정하게", "fact_bomb_ack": False, "gentle_today": None, "comfort_only_today": None,
-            "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True}
+            "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True, "keeper_name": "별지기"}
 ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
 ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
               "feedback")
@@ -237,6 +237,12 @@ def same_entry(s, title, text, written_at, source="텍스트", source_ref=None):
     if not hit and source_ref:
         hit = s.rows("entries", source_ref=ref_hash(s, source, source_ref), limit=1)
     return hit[0]["id"] if hit else None
+
+
+def set_day(s, eid, day):
+    """사용자가 고친 글이 다루는 날(확실). '날짜 확인 필요' 표시를 거둔다. 정리 결과(생각의 날)는 다시 돌리지 않는다."""
+    data = {k: v for k, v in entry(s, eid)["data"].items() if k != "day_check"}
+    s.update("entries", {"day": day, "day_basis": "확실", "enc": seal(s, "entries", eid, data), "updated_at": now()}, id=eid)
 
 
 def entry(s, eid):
