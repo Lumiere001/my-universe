@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
 import { KeeperNameField, KEEPER, rememberKeeperName } from "@/components/Keeper";
+import PrefSuggest from "@/components/PrefSuggest";   // WS22
 import { OneLine } from "@/components/ResultCard";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
@@ -49,6 +50,7 @@ export default function SettingsPage() {
     <main>
       <h1>설정</h1>
       {msg && <p className="toast" role="status">{msg}</p>}
+      <PrefSuggest onApply={save} />
 
       <section className="card stack" aria-label="말투">
         <KeeperNameField value={s.keeper_name ?? KEEPER} onSave={(n) => save({ keeper_name: n })} />

@@ -43,6 +43,7 @@ FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_up
 - 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 지금은 운영 상한 없이 구글 로그인한 누구나 쓴다(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` 같은 손잡이는 넣지 않음 — 실제 배포 · 수익화를 생각할 때 사용량을 보고 정함, [plan §2-9](docs/plan-v8-1017.md)).
 - 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호는 규칙 + Solar 2단으로 감지해 암호문 안에 남기고, 시험 단계(2026-10-08 동규 결정)에는 단체 연결 · 따로 뜨는 화면 없이 평소 결과에 위로 한마디 + 안부 한 줄을 준다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
 - 동의: 첫 로그인 때 `/consent`에서 필수 · 민감정보(따로) · 만 14세 이상 · 선택(운영자 피드백 열람)을 받는다. 동의 전에는 기록을 만들 수 없다(백엔드도 403 `consent_required`). 문구 판은 `app/api/consent.py`의 `VERSION`, 이용약관 `/terms` · 개인정보처리방침 `/privacy`, 문의 메일은 화면 환경변수 `NEXT_PUBLIC_CONTACT_EMAIL`(비우면 '준비 중').
+- 운영 화면: `/ops`(메뉴에 없음). 백엔드 환경변수 `ADMIN_EMAILS`(운영자 구글 계정) 계정만 열린다. 모든 사용자의 숫자 · 코드만(실행 · 관문 · 평균 시간 · 추정 비용 합계와 $50 경고 · 실패 · 골든셋 · 만족 · 지향 · 대화 · 말 걸기 지표, DB 역할 `app_ops` 는 암호문 칸을 못 읽음), 피드백 원문은 열람에 동의한 사용자 것만 가명으로 · 볼 때마다 열람 기록, 피드백 정리(Solar)는 누를 때만. 주 1회 오답 모으기: `OPS_TOKEN=… uv run --frozen python scripts/collect_feedback.py --api <백엔드>`(로컬은 `--local`). 설정 화면에는 내 피드백으로 본 "이 설정으로 바꿀까요?"(영역 넘는 선 · 제안 빈도)가 뜬다. API: [docs/api-v8.md §6.2](docs/api-v8.md).
 
 ### GHCR 이미지
 
