@@ -28,6 +28,7 @@ async function signedIn(page: Page) {
     "/me": { user: { id: user.id, email: user.email }, settings, onboarding: { entries: 3, aspiration: DIARY, weather_asked: true } },
     "/ontology": onto,
     "/diary": { entries: [{ id: "e1", written_at: "2026-10-03T21:00:00+09:00", title: "10/3 토요일 일기", summary: DIARY, weather: "흐림", status: "done", sun: "삶의 성취", star: "진로" }] },
+    "/settings/suggestions": { suggestions: [] },   // 설정 화면의 '이 설정으로 바꿀까요?'(WS22): 제안 없음
     // 로그인 뒤 첫 화면(이야기하기)이 여는 이어 할 대화 하나(별지기가 먼저 물은 말만)
     "/talk": { conversations: [{ id: "c1", created_at: "2026-10-03T21:00:00+09:00", updated_at: "2026-10-03T21:00:00+09:00", summary: "",
       turns: [{ role: "keeper", kind: "first", text: "오늘 하루는 어땠어요?", at: "2026-10-03T21:00:00+09:00" }],
