@@ -77,18 +77,22 @@ def node(name):
 
 @node("safety")
 def safety(state, ctx):
-    found = detect_crisis(state["text"], people=state["people"], llm=True)
+    # 머리말: 물음 꼴의 말("예전에 뭐라고 했지?")에 판정기가 판정 대신 대답해 형식 오류(안부 한 줄)가 나던 것(2026-10-14 --live)
+    found = detect_crisis(f"(일기장 대화에서 사용자가 한 말)\n{state['text']}", people=state["people"], llm=True)
     return {"crisis": found["crisis"], "crisis_unsure": any(x["type"] == "llm_error" for x in found["signals"])}
 
 
-def find_past(repo, uid, text, people):
-    """사용자 말 → 고른 지난 생각(관련 높은 순) [{"id", "day", "thought", "quote", "entry_id"}]. 끝난 기록이 없으면 부르지 않는다."""
+def find_past(repo, uid, text, people, recall=False):
+    """사용자 말 → 고른 지난 생각(관련 높은 순) [{"id", "day", "thought", "quote", "entry_id"}]. 끝난 기록이 없으면 부르지 않는다.
+    지난 기록 물음(recall)이면 기록 본문에서 물음 낱말이 든 문장을 먼저 더한다(생각으로 안 나뉜 일 · 사건도 원문으로 찾게)."""
     vecs = repo.vectors.get(uid)
     with repo.session(uid) as s:
         done = {e["id"]: e for e in diary.entries(s, status="done")}
         ts = [t for t in diary.thoughts(s, entry_id=list(done)) if t["id"] in vecs] if done and vecs else []
+    hits = chat.sentence_hits(text, [(e["id"], diary.local_day(e["written_at"]), e["data"].get("text", "")) for e in done.values()]) \
+        if recall else []
     if not ts:
-        return []
+        return hits
     masked, _ = tools.mask_obj([text], people)
     q = llm.embed(masked, query=True)[0]
     for t in ts:
@@ -96,14 +100,14 @@ def find_past(repo, uid, text, people):
     center = [sum(c) / len(vecs) for c in zip(*vecs.values())] if len(vecs) >= 2 else None
     picked = pick_past([{"id": "turn", "record_id": "talk", "topic": None, "emb": q}], ts, center=center,
                        limit=chat.PAST_IN_PROMPT)
-    return [{"id": p["id"], "entry_id": p["entry_id"], "day": p["day"], "thought": p.get("text", ""), "quote": p.get("quote", "")}
-            for p in picked]
+    return hits + [{"id": p["id"], "entry_id": p["entry_id"], "day": p["day"], "thought": p.get("text", ""),
+                    "quote": p.get("quote", "")} for p in picked]
 
 
 @node("past")
 def past(state, ctx):
     lead = state.get("lead") or []
-    found = find_past(ctx.repo, ctx.uid, state["text"], state["people"])
+    found = find_past(ctx.repo, ctx.uid, state["text"], state["people"], chat.is_recall(state["text"]))
     ids = {p["id"] for p in lead}
     return {"past": lead + [p for p in found if p["id"] not in ids]}
 

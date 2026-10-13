@@ -125,6 +125,7 @@ def test_reply_checks():
     assert chat.problems(ok, sources=src, past_replies=[]) == []
     bad = "지난번에 '저녁마다 달리겠다'고 하셨죠. 오늘은 어땠어요?"                # 지난 기록에 없는 인용
     assert any("원문에 없는 인용" in p for p in chat.problems(bad, sources=src, past_replies=[]))
+    assert chat.problems("'오늘 뭐 했지?'라고 하셨죠. 어디까지 했어요?", sources=["오늘 뭐 했지?"], past_replies=[]) == []   # 인용 속 ? 는 안 셈
     two = "걸었군요. 누구랑 걸었어요? 내일도 걸을 거예요?"                         # 질문 둘
     assert any("질문 2개" in p for p in chat.problems(two, sources=src, past_replies=[]))
     assert any("질문" in p for p in chat.problems("많이 힘들었겠어요. 어떤 일이 있었어요?", sources=src, past_replies=[],
@@ -139,6 +140,18 @@ def test_reply_checks():
     assert chat.recall_fallback([], "다정하게") == chat.NOT_FOUND["다정하게"]
     assert chat.recall_fallback([{"day": "2026-10-01", "quote": "매일 걷겠다", "thought": ""}], "담백하게") == \
         "2026-10-01에 '매일 걷겠다'라고 적었어요."
+
+
+def test_recall_finds_sentences_in_entry_text():
+    entries = [("e1", "2026-10-01", "동아리 회의에서 축제 부스 준비를 맡았다. 시험 기간이랑 겹쳐서 걱정된다."),
+               ("e2", "2026-10-05", "오늘은 도서관에서 공부했다.\n부스 도안을 그렸다.")]
+    hits = chat.sentence_hits("예전에 축제 부스 얘기 뭐라고 했지?", entries)
+    assert [h["quote"] for h in hits] == ["부스 도안을 그렸다.", "동아리 회의에서 축제 부스 준비를 맡았다."]   # 최근 기록부터
+    assert hits[0]["day"] == "2026-10-05" and hits[0]["entry_id"] == "e2"
+    assert chat.sentence_hits("예전에 이사 얘기 뭐라고 했지?", entries) == []          # 없는 이야기는 못 찾음
+    assert chat.sentence_hits("전에 뭐라고 했더라?", entries) == []                    # 찾을 낱말이 없음
+    asked = [("e3", "2026-10-07", "예전에 축제 부스 얘기 뭐라고 했지? 부스는 서윤 선배가 돕기로 했다.")]
+    assert [h["quote"] for h in chat.sentence_hits("지난번에 부스 얘기 어떻게 썼더라?", asked)] == ["부스는 서윤 선배가 돕기로 했다."]
 
 
 def test_draft_checks_and_fallback(monkeypatch):

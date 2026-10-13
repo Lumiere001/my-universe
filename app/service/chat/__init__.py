@@ -109,6 +109,24 @@ def mask_people(people, texts):
                            for n in found["auto"] + [a["name"] for a in found["ask"]]]
 
 
+# 지난 기록 물음에서 찾을 낱말이 아닌 말(때 · 묻는 말)
+ASK_WORDS = ("예전", "전에", "지난", "작년", "그때", "언젠가", "처음", "얘기", "이야기", "뭐라", "어떻게", "무슨", "했", "썼", "적었",
+             "말했", "생각", "내가", "제가", "나는", "기록", "일기")
+HITS = 3
+
+
+def sentence_hits(question, entries):
+    """지난 기록 물음의 낱말(예: 축제 · 부스)이 든 기록 본문 문장 → past 모양(최근 기록부터 HITS 개). entries: [(기록 id, 날, 본문)]."""
+    words = [w[:-1] if len(w) > 2 and w[-1] in "은는이가을를에의도와과랑" else w for w in re.findall(r"[가-힣]{2,}", question or "")]
+    words = [w for w in words if not w.startswith(ASK_WORDS)]
+    out = []
+    for eid, day, text in sorted(entries, key=lambda x: x[1], reverse=True):
+        for i, sent in enumerate(x.strip() for x in re.split(r"(?<=[.!?。])\s+|\n", text or "")):
+            if sent and any(w in sent for w in words) and len(out) < HITS and not is_recall(sent):   # 예전 물음 문장은 기록 내용이 아님
+                out.append({"id": f"{eid}-s{i}", "entry_id": eid, "day": day, "thought": "", "quote": sent})
+    return out
+
+
 def is_recall(text):
     """사용자가 지난 기록을 묻는 말인지(예: '예전에 진로 얘기 뭐라고 했지?')."""
     return bool(RECALL.search((text or "").strip()))
@@ -216,7 +234,7 @@ def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=Fa
                           tone=tone, crisis=crisis)
     if crisis and (m := ECHO.search(reply or "")):
         out.append(f"위기 바람을 다시 꺼냄: '{m.group(0)}'")
-    n = len(re.findall(r"[?？]", reply or ""))
+    n = len(re.findall(r"[?？]", checks._QUOTE.sub("", reply or "")))   # 인용 속 물음표는 세지 않는다
     if n > (0 if crisis or wrap else 1):
         out.append(f"질문 {n}개(한 번에 하나만)")
     return out
@@ -270,7 +288,10 @@ def respond(ctx):
                 found = cited(text, ctx.get("past"))
             if not found:   # 못 찾았으면 정해 둔 문장(답 글에 무엇을 적었든 쓰지 않음)
                 break
-        probs = problems(text, sources=ctx.get("sources") or [], past_replies=ctx.get("past_replies"), tone=tone,
+        # 지난 기록 물음의 답은 지난 기록 원문만 인용할 수 있다(사용자의 물음을 기록처럼 인용하지 않게)
+        src = [f"{p.get('thought', '')} {p.get('quote', '')}" for p in ctx.get("past") or []] if kind == "recall" \
+            else ctx.get("sources") or []
+        probs = problems(text, sources=src, past_replies=ctx.get("past_replies"), tone=tone,
                          crisis=crisis, gentle=bool(ctx.get("gentle")), wrap=kind == "wrap")
         if len(text) > MAX_REPLY:
             probs.append(f"너무 김({len(text)}자)")
@@ -301,10 +322,12 @@ def respond(ctx):
 
 SUMMARY_SYS = ("너는 일기장 '나의 우주'의 정리 담당이다. 대화에서 사용자(나)가 한 말만 근거로 '지금까지 정리'를 3~5줄로 쓴다. "
                "앞 정리가 있으면 이어서 고쳐 쓴다. 별지기가 한 말 · 지난 기록 · 짐작은 넣지 않는다. 사용자가 쓴 표현을 살리고, "
-               "평가 · 진단 · 조언 없이 1인칭(나)으로 쓴다. 정리 글만 답한다(JSON · 머리말 없이).")
+               "평가 · 진단 · 조언 없이 1인칭(나)으로 쓴다. 별지기에게 한 물음('예전에 뭐라고 했지?')과 대화를 끝내는 말('이만 잘게요')은 "
+               "넣지 않는다. 정리 글만 답한다(JSON · 머리말 없이).")
 DRAFT_SYS = ("너는 일기장 '나의 우주'의 정리 담당이다. 대화에서 사용자(나)가 한 말만 근거로 오늘의 일기 초안을 쓴다. "
              "1인칭(나)으로, 사용자가 쓴 표현 · 낱말을 되도록 그대로 살린다. 별지기의 말 · 질문, 지난 기록, 짐작 · 평가 · 조언은 넣지 않는다. "
              "사용자가 말한 마음(힘듦 · 슬픔 등)은 빼거나 누그러뜨리지 않고, 말한 날짜 · 사람 이름은 그대로 둔다. "
+             "별지기에게 한 물음('예전에 뭐라고 했지?')과 대화를 끝내는 말('이만 잘게요')은 일기에 넣지 않는다. "
              "JSON 하나만: {\"title\": 짧은 제목(20자 안), \"text\": 일기 본문}")
 MAX_SUMMARY = 600
 
