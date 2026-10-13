@@ -121,8 +121,8 @@ def _groups(raw, n):
 def ops_summarize(days: int = Days, admin=Depends(get_admin), repo=Depends(get_repo)):
     with ops.reader(repo) as r:
         users = _consented(repo, r, days, wrong=True)
-        lines = [f"[{x['target']} · {x['value']}] 대상: {x['target_text'] or '-'} / 남긴 말: {x['text'] or '-'}"
-                 for u in users for x in u["items"]][-MAX_LINES:]
+        items = sorted((x for u in users for x in u["items"]), key=lambda x: x["at"])[-MAX_LINES:]   # 넘으면 최근 것만
+        lines = [f"[{x['target']} · {x['value']}] 대상: {x['target_text'] or '-'} / 남긴 말: {x['text'] or '-'}" for x in items]
         if not lines:
             return {"days": days, "users": 0, "lines": [], "groups": [], "est_usd": 0}
         numbered = "\n".join(f"{i}. {x}" for i, x in enumerate(lines, 1))
