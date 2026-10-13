@@ -86,6 +86,13 @@ fieldset.card > legend + * { clear: both; }
 /* 별지기 말풍선 */
 .voice { display: flex; gap: 10px; align-items: flex-start; }
 .voice .who { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 35%, #fff6cf, var(--gold) 55%, #b98a1a); color: #3a2a05; font-weight: 700; font-size: .85rem; }
+/* 꾸미기(WS25): 별지기 모습을 고르면 Keeper.tsx 가 <html data-keeper> 와 --keeper(그림 주소)를 둔다 */
+html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repeat; color: transparent; }
+.look { display: inline-flex; align-items: center; gap: 8px; }
+.look img, .look .letter { width: 32px; height: 32px; border-radius: 50%; }
+.look .letter { display: grid; place-items: center; background: radial-gradient(circle at 35% 35%, #fff6cf, var(--gold) 55%, #b98a1a); color: #3a2a05; font-weight: 700; font-size: .8rem; }
+.swatch { display: inline-flex; gap: 3px; align-items: center; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line); }
+.swatch i { width: 9px; height: 9px; border-radius: 50%; }
 .bubble { background: #1d2c66; border: 1px solid #3a4f99; border-radius: 4px 16px 16px 16px; padding: 12px 14px; }
 .bubble.me { background: #0f1f4d; border-radius: 16px 4px 16px 16px; margin-left: auto; max-width: 85%; }
 

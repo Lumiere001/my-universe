@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
-import { KeeperNameField, KEEPER, rememberKeeperName } from "@/components/Keeper";
+import { KeeperNameField, KEEPER, rememberSettings } from "@/components/Keeper";
 import { OneLine } from "@/components/ResultCard";
+import { KEEPER_LOOKS, KEEPER_SVG, THEME_NAMES, THEMES, themeOf } from "@/components/universeLook";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
@@ -35,7 +36,7 @@ export default function SettingsPage() {
     try {
       const n = await patchSettings(p);
       setS(n); setMsg("저장했어요.");
-      if (n.keeper_name) rememberKeeperName(n.keeper_name);
+      rememberSettings(n);
     } catch (e) { setMsg((e as Error).message); }
   };
   const pickTone = (t: Tone) => {
@@ -62,7 +63,7 @@ export default function SettingsPage() {
         </div>
         <div aria-live="polite">
           <p className="sub" style={{ margin: "4px 0" }}>{shown.name} · {shown.description}</p>
-          <div className="voice"><span className="who" aria-hidden>별</span><div className="bubble"><span className="sub">미리보기 · </span>{shown.example}</div></div>
+          <div className="voice"><span className="who" aria-hidden>{(s.keeper_name || KEEPER).slice(0, 1)}</span><div className="bubble"><span className="sub">미리보기 · </span>{shown.example}</div></div>
         </div>
 
         {warn && (
@@ -79,6 +80,8 @@ export default function SettingsPage() {
         )}
       </section>
 
+      <Decorate s={s} onPick={save} />
+
       <Choice legend="다음 걸음 제안 빈도" options={["적게", "보통", "많이"] as const} value={s.suggestions} onPick={(v) => save({ suggestions: v })} />
       <Choice legend="다른 영역과 이어진 선 보이기" options={["숨김", "눌렀을 때", "항상"] as const} value={s.cross_links} onPick={(v) => save({ cross_links: v })} />
       <Choice legend="마음 날씨 물어보기(첫 만남 · 기분이 안 드러난 글에만)" options={["묻기", "묻지 않기"] as const}
@@ -94,6 +97,35 @@ export default function SettingsPage() {
       {!MOCK && <DeleteAccount />}
       <p className="sub"><Link href="/privacy">개인정보처리방침</Link> · <Link href="/terms">이용약관</Link> · <Link href="/consent">동의 내용 보기 · 바꾸기</Link></p>
     </main>
+  );
+}
+
+// 꾸미기(WS25): 우주 테마(우주 화면의 바탕 · 해 · 별 · 행성 색) · 별지기 모습. 고르면 바로 저장, 첫 값이 기본(예전 모습).
+const hex = (n: number) => "#" + n.toString(16).padStart(6, "0");
+function Decorate({ s, onPick }: { s: Settings; onPick: (p: Partial<Settings>) => void }) {
+  const theme = themeOf(s.theme), look = s.keeper_look ?? "글자", name = s.keeper_name || KEEPER;
+  return (
+    <section className="card stack" aria-label="꾸미기">
+      <h2>꾸미기</h2>
+      <div className="row" role="group" aria-label="우주 테마">
+        {THEME_NAMES.map((t) => (
+          <button key={t} className="small look" aria-pressed={theme === t} onClick={() => onPick({ theme: t })}>
+            <span className="swatch" aria-hidden style={{ background: hex(THEMES[t].bg) }}>
+              {THEMES[t].sun.slice(0, 4).map((c) => <i key={c} style={{ background: hex(c) }} />)}
+            </span>{t}
+          </button>
+        ))}
+      </div>
+      <p className="sub" style={{ margin: 0 }}>우주 화면의 바탕 · 해 · 별 · 행성 색이 바뀌어요. 선 · 고리 색은 뜻이 있어 그대로예요.</p>
+      <div className="row" role="group" aria-label="별지기 모습">
+        {KEEPER_LOOKS.map((k) => (
+          <button key={k} className="small look" aria-pressed={look === k} onClick={() => onPick({ keeper_look: k })}>
+            {k === "글자" ? <span className="letter" aria-hidden>{name.slice(0, 1)}</span>
+              : <img src={`/keeper/${KEEPER_SVG[k]}.svg`} alt="" />}{k === "글자" ? "이름 글자" : k}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

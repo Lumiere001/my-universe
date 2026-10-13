@@ -7,6 +7,7 @@ import { answerPersonQuestion, sendFeedback, type EntryResult, type Feedback } f
 import { useKindName } from "@/lib/use";
 import { DayFix, WeatherSkip } from "./EntryTools";
 import { useKeeperName } from "./Keeper";
+import UniverseGrew from "./UniverseGrew";
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
@@ -91,6 +92,8 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
           <p style={{ margin: 0 }}>{x.message}</p>
         </section>
       ))}
+
+      <UniverseGrew r={r} />
 
       {r.info && (
         <section className="card" aria-label="글 정보">

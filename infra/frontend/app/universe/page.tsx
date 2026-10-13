@@ -49,7 +49,8 @@ export default function UniversePage() {
   return (
     <main className="wide">
       <h1 className="sr">나의 우주</h1>
-      <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={setPick}>
+      <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={setPick}
+        theme={me?.settings.theme}>
         <div className="tools" role="group" aria-label="사람 고르기">
           {data.people.map((p) => (
             <button key={p.id} className="small" aria-pressed={person === p.id} onClick={() => setPerson(person === p.id ? null : p.id)}>
