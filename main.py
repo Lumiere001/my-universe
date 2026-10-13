@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import exceptions
 from app.agents import tools
-from app.api import consent, diary, routes
+from app.api import consent, diary, people_thoughts, routes
 from app.api import write   # WS13
 from app.core import config, logger
 
@@ -29,6 +29,7 @@ app.include_router(routes.router)
 app.include_router(write.router)   # diary.router 보다 먼저: GET /diary/prompt 가 /diary/{eid} 에 걸리지 않게
 app.include_router(diary.router)
 app.include_router(consent.router)
+app.include_router(people_thoughts.router)
 tools.sun_vectors()   # 기준 축 벡터 파일(data/ops)이 없으면 시작할 때 sun_vectors_missing 을 남긴다
 
 

@@ -41,14 +41,20 @@ export type Universe = {
   suns: { id: string; name: string; custom: boolean; planet_count: number }[];
   stars: { id: string; sun_id: string; name: string; planet_count: number }[];
   planets: { id: string; star_id: string; sun_id: string; written_at: string; title: string; order: number;
-    ring: boolean; people: string[]; weather: Weather | null }[];
+    ring: boolean; people: string[]; weather: Weather | null;
+    // 크기 = 생각 수, 밝기 = 확신, '?' = 열린 질문, 고리: 열림(빈 고리) · 채워짐(지킨 다짐)
+    ring_state?: "열림" | "채워짐" | null; thought_count?: number; certainty?: string | null; has_question?: boolean }[];
   links: { id: string; from_planet: string; to_planet: string; type: string; line: "실선" | "점선";
-    cross_domain: boolean; needs_confirm: boolean; explanation: string }[];
+    cross_domain: boolean; needs_confirm: boolean; explanation: string;
+    ended?: boolean; from_quote?: string; to_quote?: string }[];  // ended: 끝난 목표 충돌, 인용: 그때 → 지금
   twins: { id: string; a_planet: string; b_planet: string; topic: string; status: string }[];
   blackholes: { id: string; star_id: string; label: string; size: number; planets: string[] }[];
-  north_star: { text: string; values: string[] } | null;
+  north_star: { text: string; values: string[]; reached_planets?: string[];
+    reached?: { entry_id: string; quote: string; at: string }[] } | null;
   people: { id: string; name: string; relation: string; planets: string[] }[];
 };
+export type PersonThoughts = { person: { id: string; name: string; relation: string };
+  thoughts: (Thought & { entry_id: string; written_at: string; title: string })[] };
 export type Person = { id: string; name: string; nickname: string; relation: string; auto: boolean; planets: string[] };
 export type Aspiration = {
   id: string; said: string; values: string[]; obstacle: string; if_then: string; said_at: string;
@@ -217,6 +223,10 @@ export async function updatePerson(id: string, p: Partial<Person>): Promise<Pers
 }
 export async function deletePerson(id: string): Promise<{ ok: boolean; replaced: number }> {
   return MOCK ? (await mock()).deletePerson(id) : json("DELETE", `/people/${encodeURIComponent(id)}`);
+}
+// 그 사람과 얽힌 생각(먼저 쓴 기록부터)
+export async function getPersonThoughts(id: string): Promise<PersonThoughts> {
+  return MOCK ? (await mock()).getPersonThoughts(id) : json("GET", `/people/${encodeURIComponent(id)}/thoughts`);
 }
 export async function answerPersonQuestion(id: string, answer: string): Promise<{ ok: boolean }> {
   return MOCK ? { ok: true } : json("POST", `/people/questions/${encodeURIComponent(id)}`, { answer });

@@ -1,10 +1,12 @@
 "use client";
 // 3D 우주 v8. 해 = 삶의 영역, 해 곁의 작은 별 = 세부 주제, 작은 별을 도는 행성 = 기록(order 가 작을수록 가까움).
 // 1차(universe_view3d.py) 동작을 따른다: 해를 누르면 그 태양계로 다가가고, 빈 곳을 누르면 전체. 좁은 화면이면 물러서서 다 보이게.
+// 행성 크기 = 생각 수, 밝기 = 확신, '?' = 열린 질문, 다른 태양계와 연결이 가장 많은 해가 가운데(색 · 모양 값은 universeLook.ts).
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Settings, Universe } from "@/lib/api";
+import { centerSun, COLOR, CONFLICT, PLANET_R, planetLook, SUN_PALETTE } from "./universeLook";
 
 export type Pick = { kind: "planet" | "sun" | "north" | "blackhole" | "none"; id: string | null };
 type Props = {
@@ -12,9 +14,7 @@ type Props = {
   onPick: (p: Pick) => void; children?: React.ReactNode;
 };
 
-const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
-const VIOLET = 0xb9a6ff, ORANGE = 0xffa184, GOLD = 0xfcd679;
-const PAL = [0x8fb8f6, 0x7ee2a6, 0xf5b47e, 0xc8a6ff, 0x6fd3c4, 0xf09ac0, 0xb3c6fb, 0xe6d27a, 0x9ad7f2];
+const { violet: VIOLET, orange: ORANGE, gold: GOLD } = COLOR;
 const FOV = 50;
 
 function glowTex() {
@@ -41,14 +41,14 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x061334);
+    scene.background = new THREE.Color(COLOR.bg);
     const camera = new THREE.PerspectiveCamera(FOV, 1, 1, 8000);
     scene.add(camera);
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true; controls.dampingFactor = .08; controls.rotateSpeed = .6; controls.screenSpacePanning = true;
     const light = new THREE.DirectionalLight(0xffffff, 1.6);
     light.position.set(-.9, .9, .8); camera.add(light); camera.add(light.target); light.target.position.set(0, 0, -1);
-    scene.add(new THREE.AmbientLight(0x8aa4e8, .9));
+    scene.add(new THREE.AmbientLight(COLOR.ambient, .9));
     const GLOW = glowTex();
     const sprite = (color: number, scale: number, op: number) => {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -65,7 +65,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
         p.set([R * q * Math.cos(t), R * u, R * q * Math.sin(t)], i * 3);
       }
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xe8efff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: .7 })));
+      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: COLOR.dust, size: 1.6, sizeAttenuation: false, transparent: true, opacity: .7 })));
     }
 
     /* ---------- 배치 ---------- */
@@ -80,15 +80,20 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       const sys = Math.max(0, ...stars.map((x) => orbitR(maxOrder(x.id)) + 4));
       sunSys[s.id] = sunR[s.id] + 16 + sys * 2;
     }
-    const circ = data.suns.reduce((a, s) => a + sunSys[s.id] * 2.2, 0);
-    const ringR = data.suns.length > 1 ? circ / (2 * Math.PI) : 0;
+    // 가운데 해는 원점, 나머지는 그 둘레의 원 위에(가운데 해 · 이웃 해와 겹치지 않는 반지름)
+    const hub = centerSun(data), ringSuns = data.suns.filter((s) => s.id !== hub);
+    const circ = ringSuns.reduce((a, s) => a + sunSys[s.id] * 2.2, 0);
+    const ringR = ringSuns.length ? Math.max(circ / (2 * Math.PI), (hub ? sunSys[hub] : 0) + Math.max(...ringSuns.map((s) => sunSys[s.id])) * 1.1) : 0;
     let acc = 0;
     data.suns.forEach((s, i) => {
-      const a = ((acc + sunSys[s.id] * 1.1) / Math.max(1, circ)) * Math.PI * 2;
-      acc += sunSys[s.id] * 2.2;
-      const pos = new THREE.Vector3(Math.cos(a) * ringR, 0, Math.sin(a) * ringR);
+      let pos = new THREE.Vector3();
+      if (s.id !== hub) {
+        const a = ((acc + sunSys[s.id] * 1.1) / Math.max(1, circ)) * Math.PI * 2;
+        acc += sunSys[s.id] * 2.2;
+        pos = new THREE.Vector3(Math.cos(a) * ringR, 0, Math.sin(a) * ringR);
+      }
       sunPos[s.id] = pos;
-      const col = PAL[i % PAL.length];
+      const col = SUN_PALETTE[i % SUN_PALETTE.length];
       const m = new THREE.Mesh(new THREE.SphereGeometry(sunR[s.id], 40, 28), new THREE.MeshBasicMaterial({ color: col }));
       m.position.copy(pos); scene.add(m);
       sprite(col, sunR[s.id] * 6, .55).position.copy(pos);
@@ -98,12 +103,12 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
         const b = (j / Math.max(1, stars.length)) * Math.PI * 2 + i;
         const sp = pos.clone().add(new THREE.Vector3(Math.cos(b), 0, Math.sin(b)).multiplyScalar(sunR[s.id] + 10 + sys));
         starPos[st.id] = sp; starSys[st.id] = sys;
-        const sm = new THREE.Mesh(new THREE.SphereGeometry(2.6, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfff4d6 }));
+        const sm = new THREE.Mesh(new THREE.SphereGeometry(2.6, 20, 14), new THREE.MeshBasicMaterial({ color: COLOR.star }));
         sm.position.copy(sp); scene.add(sm);
-        sprite(0xfff1c4, 16, .6).position.copy(sp);
+        sprite(COLOR.starGlow, 16, .6).position.copy(sp);
         for (let o = 0; o <= maxOrder(st.id); o++) {
           const r = orbitR(o), ring = new THREE.Mesh(new THREE.RingGeometry(r - .25, r + .25, 96),
-            new THREE.MeshBasicMaterial({ color: 0xdbe6ff, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false }));
+            new THREE.MeshBasicMaterial({ color: COLOR.orbit, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false }));
           ring.rotation.x = -Math.PI / 2; ring.position.copy(sp); scene.add(ring);
         }
         labels.push(Object.assign(label("star", st.name), { _p: sp, _dy: 6, _min: [sp, sys, 34] as const }));
@@ -112,21 +117,28 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     });
 
     /* ---------- 행성 (기록) ---------- */
-    type PObj = { id: string; mesh: THREE.Mesh; halo: THREE.Sprite; ring?: THREE.Mesh; sel: THREE.Sprite };
+    type PObj = { id: string; mesh: THREE.Mesh; halo: THREE.Sprite; ring?: THREE.Mesh; sel: THREE.Sprite; k: number };
     const pobj: Record<string, PObj> = {};
-    const PG = new THREE.SphereGeometry(2.3, 24, 16);
+    const PG = new THREE.SphereGeometry(PLANET_R, 24, 16);
     for (const p of data.planets) {
       const c = starPos[p.star_id]; if (!c) continue;
       const a = p.order * 2.4 + p.star_id.length, pos = c.clone().add(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(orbitR(p.order)));
       planetPos[p.id] = pos;
-      const mesh = new THREE.Mesh(PG, new THREE.MeshPhongMaterial({ color: 0xcfdcff, emissive: 0x24345f, shininess: 30, transparent: true }));
-      mesh.position.copy(pos); scene.add(mesh);
-      const halo = sprite(0xd6e6ff, 9, .35); halo.position.copy(pos);
-      const sel = sprite(0xffffff, 16, 0); sel.position.copy(pos);
-      const o: PObj = { id: p.id, mesh, halo, sel };
-      if (p.ring) {  // 금빛 고리 = 열린 다짐
-        const ring = new THREE.Mesh(new THREE.RingGeometry(3.4, 4.3, 48), new THREE.MeshBasicMaterial({ color: GOLD, side: THREE.DoubleSide, transparent: true, opacity: .95 }));
+      const { scale: k, light: lum } = planetLook(p);   // 크기 = 생각 수, 밝기 = 확신
+      const mesh = new THREE.Mesh(PG, new THREE.MeshPhongMaterial({ color: new THREE.Color(COLOR.planet).multiplyScalar(.45 + .55 * lum),
+        emissive: COLOR.planetEmissive, shininess: 30, transparent: true }));
+      mesh.position.copy(pos); mesh.scale.setScalar(k); scene.add(mesh);
+      const halo = sprite(COLOR.planetHalo, 9 * k, .1 + .4 * lum); halo.position.copy(pos);
+      const sel = sprite(0xffffff, 16 * k, 0); sel.position.copy(pos);
+      const o: PObj = { id: p.id, mesh, halo, sel, k };
+      if (p.ring) {  // 금빛 고리 = 다짐(빈 고리 = 열림, 채워진 고리 = 지킨 다짐)
+        const ring = new THREE.Mesh(new THREE.RingGeometry((p.ring_state === "채워짐" ? 2.6 : 3.4) * k, 4.3 * k, 48),
+          new THREE.MeshBasicMaterial({ color: GOLD, side: THREE.DoubleSide, transparent: true, opacity: .95 }));
         ring.position.copy(pos); ring.rotation.x = -Math.PI / 2.6; scene.add(ring); o.ring = ring;
+      }
+      if (p.has_question) {  // '?' = 열린 질문
+        const q = label("q", "?"); q.style.color = "var(--gold)"; q.style.fontWeight = "700";
+        labels.push(Object.assign(q, { _p: pos, _dy: PLANET_R * k + 1 }));
       }
       pobj[p.id] = o;
     }
@@ -144,7 +156,9 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     for (const l of data.links) {
       const A = planetPos[l.from_planet], B = planetPos[l.to_planet]; if (!A || !B || l.type === "긴장") continue;
       const mid = A.clone().add(B).multiplyScalar(.5).add(new THREE.Vector3(0, A.distanceTo(B) * .12, 0));
-      addLine(new THREE.QuadraticBezierCurve3(A, mid, B).getPoints(24), CONFLICT.has(l.type) ? ORANGE : VIOLET, l.line === "점선", l.from_planet, l.to_planet, l.cross_domain);
+      // 끝난 목표 충돌은 흐린 회색 점선으로 구분
+      addLine(new THREE.QuadraticBezierCurve3(A, mid, B).getPoints(24), l.ended ? COLOR.ended : CONFLICT.has(l.type) ? ORANGE : VIOLET,
+        l.ended || l.line === "점선", l.from_planet, l.to_planet, l.cross_domain, l.ended ? .35 : .9);
     }
     // 긴장 선(영역을 넘는 것 포함)은 쌍행성처럼 두 갈래 곡선으로
     const tension = [
@@ -169,10 +183,10 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       const out = sp.clone().sub(sunPos[sun]).setY(0).normalize();
       const r = 2.5 + b.size * 1.4, pos = sp.clone().addScaledVector(out, starSys[b.star_id] + r + 6);
       bh[b.id] = pos;
-      sprite(0xff9a6b, r * 7, .45).position.copy(pos);
-      const disk = new THREE.Mesh(new THREE.RingGeometry(r * 1.15, r * 1.9, 64), new THREE.MeshBasicMaterial({ color: 0xffb37a, side: THREE.DoubleSide, transparent: true, opacity: .7 }));
+      sprite(COLOR.holeGlow, r * 7, .45).position.copy(pos);
+      const disk = new THREE.Mesh(new THREE.RingGeometry(r * 1.15, r * 1.9, 64), new THREE.MeshBasicMaterial({ color: COLOR.holeDisk, side: THREE.DoubleSide, transparent: true, opacity: .7 }));
       disk.position.copy(pos); disk.rotation.x = -Math.PI / 2.3; scene.add(disk);
-      const hole = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      const hole = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), new THREE.MeshBasicMaterial({ color: COLOR.hole }));
       hole.position.copy(pos); scene.add(hole);
       labels.push(Object.assign(label("", "블랙홀 · " + b.label), { _p: pos, _dy: r * 2 + 2, _min: [pos, r * 2, 16] as const }));
     }
@@ -256,6 +270,12 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     const all: Record<string, THREE.Vector3> = { ...planetPos, ...sunPos, ...(north ? { north } : {}) };
     (window as unknown as { __uni?: unknown }).__uni = {
       xy: (id: string) => { const r = canvas.getBoundingClientRect(), s = scr(all[id]); return { x: r.left + s.x, y: r.top + s.y }; },
+      center: () => hub,
+      // 그려진 행성의 크기 · 밝기(색의 밝기) · 빛남(화면 단위 시험)
+      look: (id: string) => {
+        const o = pobj[id], c = (o.mesh.material as THREE.MeshPhongMaterial).color;
+        return { scale: o.mesh.scale.x, bright: +((c.r + c.g + c.b) / 3).toFixed(3), lit: o.halo.material.color.getHex() === GOLD && o.halo.material.opacity === 1 };
+      },
     };
 
     /* ---------- 고른 것 · 빛남 · 영역 넘는 선 ---------- */
@@ -263,10 +283,10 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       for (const id in pobj) {
         const o = pobj[id], dim = g ? !g.has(id) : false, lit = g?.has(id);
         (o.mesh.material as THREE.MeshPhongMaterial).opacity = dim ? .3 : 1;
-        (o.mesh.material as THREE.MeshPhongMaterial).emissive.set(lit ? 0x8a7a2a : 0x24345f);
+        (o.mesh.material as THREE.MeshPhongMaterial).emissive.set(lit ? COLOR.lit : COLOR.planetEmissive);
         o.halo.material.opacity = dim ? .06 : lit ? 1 : o.halo.userData.op;
-        o.halo.scale.setScalar(lit ? 24 : 9);
-        o.halo.material.color.set(lit ? GOLD : o.halo.userData.color ?? 0xd6e6ff);
+        o.halo.scale.setScalar((lit ? 24 : 9) * o.k);
+        o.halo.material.color.set(lit ? GOLD : o.halo.userData.color ?? COLOR.planetHalo);
         o.sel.material.opacity = id === sel ? .9 : 0;
         if (o.ring) (o.ring.material as THREE.MeshBasicMaterial).opacity = dim ? .25 : .95;
       }

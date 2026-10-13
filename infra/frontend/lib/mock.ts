@@ -2,8 +2,8 @@
 // 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
 import ontology from "./ontology.json";
 import type {
-  Aspiration, AspirationState, Consent, ConsentInput, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Prompt, Settings,
-  StreamError, StreamHandlers, Tone, Universe,
+  Aspiration, AspirationState, Consent, ConsentInput, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, PersonThoughts, Prompt, Settings,
+  StreamError, StreamHandlers, Thought, Tone, Universe,
 } from "./api";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -40,40 +40,44 @@ const universe: Universe = {
     { id: "s7", sun_id: "d5", name: "묵상", planet_count: 1 },
   ],
   planets: [
-    P("e01", "s2", "d1", "2026-03-08", "3/8 일요일 독서노트", 0, { ring: true }),
-    P("e02", "s1", "d1", "2026-03-14", "3/14 진로 상담", 0),
-    P("e03", "s5", "d3", "2026-03-20", "3/20 결심", 0, { ring: true }),
-    P("e04", "s3", "d2", "2026-03-27", "3/27 금요일 일기", 0, { people: ["p1"] }),
-    P("e05", "s3", "d2", "2026-04-05", "4/5 혼자 있는 시간", 1),
-    P("e06", "s5", "d3", "2026-04-08", "4/8 반성", 1, { weather: "흐림" }),
-    P("e07", "s6", "d4", "2026-04-12", "4/12 순모임 후", 0),
-    P("e08", "s6", "d4", "2026-05-15", "5/15 동아리 회의", 1, { ring: true }),
-    P("e09", "s1", "d1", "2026-05-30", "5/30 선배와 대화", 1, { people: ["p1"] }),
-    P("e10", "s7", "d5", "2026-06-07", "6/7 시편 23편 묵상", 0, { weather: "구름 조금" }),
-    P("e11", "s3", "d2", "2026-06-20", "6/20 혼자와 함께", 2),
-    P("e12", "s5", "d3", "2026-07-10", "7/10 걷기 2주째", 2, { weather: "맑음" }),
-    P("e13", "s4", "d2", "2026-07-18", "7/18 가족 여행 2일차", 0, { people: ["p2", "p3"], weather: "맑음" }),
-    P("e14", "s1", "d1", "2026-08-28", "8/28 막막함", 2, { weather: "안개" }),
-    P("e15", "s1", "d1", "2026-09-12", "9/12 작은 회사 탐방", 3),
-    P("e16", "s1", "d1", "2026-09-20", "9/20 토요일 일기", 4, { ring: true, people: ["p1"] }),
-    P("e17", "s2", "d1", "2026-08-08", "8/8 독서노트", 1),
+    P("e01", "s2", "d1", "2026-03-08", "3/8 일요일 독서노트", 0, { ring: true, ring_state: "열림", thought_count: 2, certainty: "단정" }),
+    P("e02", "s1", "d1", "2026-03-14", "3/14 진로 상담", 0, { thought_count: 3, certainty: "단정" }),
+    P("e03", "s5", "d3", "2026-03-20", "3/20 결심", 0, { ring: true, ring_state: "채워짐", thought_count: 1, certainty: "단정" }),
+    P("e04", "s3", "d2", "2026-03-27", "3/27 금요일 일기", 0, { people: ["p1"], thought_count: 2, certainty: "고민 중" }),
+    P("e05", "s3", "d2", "2026-04-05", "4/5 혼자 있는 시간", 1, { thought_count: 2, certainty: "고민 중" }),
+    P("e06", "s5", "d3", "2026-04-08", "4/8 반성", 1, { weather: "흐림", thought_count: 3, certainty: "단정" }),
+    P("e07", "s6", "d4", "2026-04-12", "4/12 순모임 후", 0, { thought_count: 1, certainty: "판단 보류" }),
+    P("e08", "s6", "d4", "2026-05-15", "5/15 동아리 회의", 1, { ring: true, ring_state: "열림", thought_count: 2, certainty: "고민 중" }),
+    P("e09", "s1", "d1", "2026-05-30", "5/30 선배와 대화", 1, { people: ["p1"], thought_count: 3, certainty: "고민 중", has_question: true }),
+    P("e10", "s7", "d5", "2026-06-07", "6/7 시편 23편 묵상", 0, { weather: "구름 조금", thought_count: 1, certainty: "단정" }),
+    P("e11", "s3", "d2", "2026-06-20", "6/20 혼자와 함께", 2, { thought_count: 4, certainty: "단정" }),
+    P("e12", "s5", "d3", "2026-07-10", "7/10 걷기 2주째", 2, { weather: "맑음", thought_count: 2, certainty: "단정" }),
+    P("e13", "s4", "d2", "2026-07-18", "7/18 가족 여행 2일차", 0, { people: ["p2", "p3"], weather: "맑음", thought_count: 1, certainty: "단정" }),
+    P("e14", "s1", "d1", "2026-08-28", "8/28 막막함", 2, { weather: "안개", thought_count: 2, certainty: "판단 보류", has_question: true }),
+    P("e15", "s1", "d1", "2026-09-12", "9/12 작은 회사 탐방", 3, { thought_count: 3, certainty: "고민 중" }),
+    P("e16", "s1", "d1", "2026-09-20", "9/20 토요일 일기", 4, { ring: true, ring_state: "열림", people: ["p1"], thought_count: 5, certainty: "고민 중", has_question: true }),
+    P("e17", "s2", "d1", "2026-08-08", "8/8 독서노트", 1, { thought_count: 2, certainty: "단정" }),
   ],
   links: [
-    { id: "l1", from_planet: "e03", to_planet: "e06", type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: "매일 아침 걷기로 한 다짐 뒤에 사흘 만에 멈췄다는 반성이 왔어요." },
-    { id: "l2", from_planet: "e06", to_planet: "e12", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "멈췄던 걷기를 다시 시작해 2주째 이어 가고 있다고 직접 썼어요." },
-    { id: "l3", from_planet: "e01", to_planet: "e17", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "'기록할 때 내 것이 된다'는 생각이 다시 나왔어요." },
-    { id: "l4", from_planet: "e05", to_planet: "e11", type: "해소", line: "실선", cross_domain: false, needs_confirm: false, explanation: "혼자는 충전, 함께는 성장이라고 정리했어요." },
-    { id: "l5", from_planet: "e09", to_planet: "e15", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "선배에게 들은 작은 회사 이야기를 직접 보러 갔어요." },
-    { id: "l6", from_planet: "e14", to_planet: "e16", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "취업이 막막하다는 마음이 진로를 다시 생각하는 글로 이어졌어요." },
-    { id: "l7", from_planet: "e07", to_planet: "e11", type: "이어짐", line: "점선", cross_domain: true, needs_confirm: true, explanation: "순모임에서 털어놓은 경험이 '함께하는 시간은 성장'이라는 생각으로 이어졌어요." },
-    { id: "l8", from_planet: "e10", to_planet: "e14", type: "긴장", line: "점선", cross_domain: true, needs_confirm: true, explanation: "'이미 충분하다'는 고백과 '준비가 안 됐다'는 막막함이 맞서 있어요." },
+    { id: "l1", from_planet: "e03", to_planet: "e06", type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: "매일 아침 걷기로 한 다짐 뒤에 사흘 만에 멈췄다는 반성이 왔어요.", from_quote: "매일 아침 30분씩 걷기로 했다", to_quote: "사흘 하고 멈췄다" },
+    { id: "l2", from_planet: "e06", to_planet: "e12", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "멈췄던 걷기를 다시 시작해 2주째 이어 가고 있다고 직접 썼어요.", from_quote: "사흘 하고 멈췄다", to_quote: "걷기를 2주째 이어 가고 있다" },
+    { id: "l3", from_planet: "e01", to_planet: "e17", type: "이어짐", line: "실선", cross_domain: false, needs_confirm: false, explanation: "'기록할 때 내 것이 된다'는 생각이 다시 나왔어요.", from_quote: "적을 때 비로소 내 것이 된다", to_quote: "기록하는 사람이 결국 배운다" },
+    { id: "l4", from_planet: "e05", to_planet: "e11", type: "해소", line: "실선", cross_domain: false, needs_confirm: false, explanation: "혼자는 충전, 함께는 성장이라고 정리했어요.", from_quote: "혼자 있는 시간이 가장 편하다", to_quote: "혼자는 충전, 함께는 성장" },
+    { id: "l5", from_planet: "e09", to_planet: "e15", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "선배에게 들은 작은 회사 이야기를 직접 보러 갔어요.", from_quote: "작은 회사에 가면 빨리 배운다고 했다", to_quote: "직접 가 보니 배우는 속도가 달랐다" },
+    { id: "l6", from_planet: "e14", to_planet: "e16", type: "이어짐", line: "점선", cross_domain: false, needs_confirm: true, explanation: "취업이 막막하다는 마음이 진로를 다시 생각하는 글로 이어졌어요.", from_quote: "취업을 생각하면 막막하다", to_quote: "진로를 다시 생각해 보기로 했다" },
+    { id: "l7", from_planet: "e07", to_planet: "e11", type: "이어짐", line: "점선", cross_domain: true, needs_confirm: true, explanation: "순모임에서 털어놓은 경험이 '함께하는 시간은 성장'이라는 생각으로 이어졌어요.", from_quote: "순모임에서 처음으로 고민을 털어놓았다", to_quote: "함께하는 시간은 나를 자라게 한다" },
+    { id: "l9", from_planet: "e08", to_planet: "e16", type: "목표 충돌", line: "점선", cross_domain: true, needs_confirm: true, ended: true,
+      explanation: "축제 부스 준비와 팀 찾기가 같은 주에 겹쳤는데, 부스 일을 마치며 충돌이 끝났어요.",
+      from_quote: "축제 부스 준비를 맡았다", to_quote: "팀 세 곳을 직접 찾아보겠다" },
+    { id: "l8", from_planet: "e10", to_planet: "e14", type: "긴장", line: "점선", cross_domain: true, needs_confirm: true, explanation: "'이미 충분하다'는 고백과 '준비가 안 됐다'는 막막함이 맞서 있어요.", from_quote: "이미 충분하다", to_quote: "아직 준비가 안 됐다" },
   ],
   twins: [
     { id: "w1", a_planet: "e04", b_planet: "e05", topic: "혼자 ↔ 함께", status: "해소" },
     { id: "w2", a_planet: "e02", b_planet: "e15", topic: "안정 ↔ 배움", status: "열림" },
   ],
   blackholes: [{ id: "b1", star_id: "s1", label: "큰 회사냐 작은 팀이냐", size: 3, planets: ["e09", "e14", "e16"] }],
-  north_star: { text: "어디서든 배우며, 한 약속은 지키는 사람", values: ["성취", "규범"] },
+  north_star: { text: "어디서든 배우며, 한 약속은 지키는 사람", values: ["성취", "규범"], reached_planets: ["e12"],
+    reached: [{ entry_id: "e12", quote: "걷기를 2주째 이어 가고 있다", at: "2026-07-10T22:00:00+09:00" }] },
   people: [],
 };
 
@@ -174,10 +178,13 @@ async function run(id: string, input: DiaryInput, from: number, h: StreamHandler
   prompt = { kind: r.next_question?.kind === "free" ? "free" : "none", text: r.next_question?.text ?? "",
     vow: r.message?.mode === "comfort" ? null : { thought_id: "t3", text: r.thoughts[2].text, overdue: false } };
   if (!universe.planets.find((p) => p.id === id)) {
-    universe.planets.push(P(id, "s1", "d1", "2026-10-03", r.title, universe.planets.filter((p) => p.star_id === "s1").length, { ring: true, people: ["p1"], weather: input.weather ?? null }));
+    universe.planets.push(P(id, "s1", "d1", "2026-10-03", r.title, universe.planets.filter((p) => p.star_id === "s1").length,
+      { ring: true, ring_state: "열림", people: ["p1"], weather: input.weather ?? null, thought_count: r.thoughts.length, certainty: "단정" }));
     universe.links.push(
-      { id: "r1", from_planet: "e02", to_planet: id, type: "바뀜", line: "실선", cross_domain: false, needs_confirm: false, explanation: r.relations[0].explanation },
-      { id: "r2", from_planet: "e16", to_planet: id, type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: r.relations[1].explanation });
+      { id: "r1", from_planet: "e02", to_planet: id, type: "바뀜", line: "실선", cross_domain: false, needs_confirm: false, explanation: r.relations[0].explanation,
+        from_quote: r.relations[0].quote ?? "", to_quote: r.thoughts[1].quote },
+      { id: "r2", from_planet: "e16", to_planet: id, type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: r.relations[1].explanation,
+        from_quote: "팀 세 곳을 직접 찾아보겠다", to_quote: r.thoughts[0].quote });
   }
   return r;
 }
@@ -201,8 +208,18 @@ export async function getDiary(id: string): Promise<EntryResult> {
   const base = result(id, { text: "", title: p?.title, written_at: p?.written_at, weather: p?.weather });
   // 지난 기록은 요약만 보여 준다(가짜 데이터에는 지난 글의 생각 목록이 없다)
   return { ...base, info: { ...base.info!, summary: SUMMARY[id] ?? base.info!.summary, events: [] },
-    thoughts: [], relations: [], past: [], people_questions: [], reached: [], next_question: null, message: null };
+    thoughts: PAST_THOUGHTS[id] ?? [], relations: [], past: [], people_questions: [], reached: [], next_question: null, message: null };
 }
+// 지난 글의 생각은 행성 카드 · 사람별 생각에 쓰는 몇 개만
+const T = (id: string, text: string, kind: string, certainty: string, quote: string, star_id: string, sun_id: string, people: string[] = []): Thought =>
+  ({ id, text, kind, grateful: kind === "감정", certainty, value: null, quote, self_change: null, topic: "", star_id, sun_id, people, other: null, state: null });
+const PAST_THOUGHTS: Record<string, Thought[]> = {
+  e04: [T("t04a", "형이 먼저 안부를 물어봐 줘서 힘이 됐다.", "감정", "단정", "형이 먼저 안부를 물어봐 줬다", "s3", "d2", ["p1"])],
+  e09: [T("t09a", "작은 팀에서는 배우는 속도가 빠르다더라.", "해석", "고민 중", "작은 회사에 가면 빨리 배운다고 했다", "s1", "d1", ["p1"])],
+  e11: [T("t11a", "혼자는 충전, 함께는 성장이다.", "신념·원칙", "단정", "혼자는 충전, 함께는 성장", "s3", "d2"),
+    T("t11b", "함께하는 시간이 나를 자라게 한다.", "해석", "단정", "함께하는 시간은 나를 자라게 한다", "s3", "d2")],
+  e16: [T("t16a", "민수 형 말처럼 작은 팀도 직접 알아보고 싶다.", "소망", "고민 중", "형 말처럼 작은 팀도 알아보고 싶다", "s1", "d1", ["p1"])],
+};
 const SUMMARY: Record<string, string> = {
   e01: "『배움의 기술』을 읽고 그날 바로 세 줄로 적어 보니 확실히 달랐다. 매주 일요일 독서노트를 쓰기로 했다.",
   e02: "진로 상담 뒤, 직장은 안정이 제일이고 큰 회사에 들어가는 게 맞다고 정리했다.",
@@ -269,6 +286,18 @@ export async function deleteDiary(id: string) {
   universe.planets = universe.planets.filter((p) => p.id !== id);
   universe.links = universe.links.filter((l) => l.from_planet !== id && l.to_planet !== id);
 }
+export async function getPersonThoughts(id: string): Promise<PersonThoughts> {
+  await sleep(100);
+  const p = people.find((x) => x.id === id);
+  if (!p) throw new Error("사람을 찾지 못했어요.");
+  const when = (eid: string) => universe.planets.find((x) => x.id === eid)!;
+  const past = Object.entries(PAST_THOUGHTS).flatMap(([eid, ts]) => ts.filter((t) => t.people.includes(id))
+    .map((t) => ({ ...t, entry_id: eid, written_at: when(eid).written_at, title: when(eid).title })));
+  const mine = [...entries.values()].flatMap((e) => e.thoughts.filter((t) => t.people.includes(id))
+    .map((t) => ({ ...t, entry_id: e.id, written_at: e.written_at, title: e.title })));
+  return { person: { id, name: p.name, relation: p.relation },
+    thoughts: [...past, ...mine].sort((a, b) => a.written_at.localeCompare(b.written_at)) };
+}
 export async function listPeople() { await sleep(100); return { people: structuredClone(people) }; }
 export async function addPerson(p: { name: string; nickname: string; relation: string }) {
   const n: Person = { id: "p" + (people.length + 10), ...p, auto: false, planets: [] };
@@ -289,7 +318,7 @@ export async function saveAspiration(a: { now: string; want: string; obstacle: s
   const n: Aspiration = { id: "a" + (aspiration.history.length + 3), said: a.want, values: a.values, obstacle: a.obstacle,
     if_then: a.if_then, said_at: new Date().toISOString(), reached: [] };
   aspiration = { ...aspiration, current: n, history: aspiration.current ? [aspiration.current, ...aspiration.history] : aspiration.history };
-  universe.north_star = { text: n.said, values: n.values };
+  universe.north_star = { text: n.said, values: n.values, reached_planets: [], reached: [] };
   return n;
 }
 export async function getMe(): Promise<Me> {

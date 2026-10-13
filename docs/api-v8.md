@@ -114,17 +114,20 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
                "order": 0, "ring": true, "ring_state": "열림|채워짐|null", "people": ["p1"], "weather": "비",
                "thought_count": 3, "certainty": "단정", "has_question": false}],
   "links": [{"id": "r1", "from_planet": "e1", "to_planet": "e0", "type": "긴장", "line": "점선",
-             "cross_domain": true, "needs_confirm": true, "explanation": "...", "ended": false}],
+             "cross_domain": true, "needs_confirm": true, "explanation": "...", "ended": false,
+             "from_quote": "그때 원문 인용", "to_quote": "지금 원문 인용"}],
   "twins": [{"id": "w1", "a_planet": "e1", "b_planet": "e3", "topic": "...", "status": "열림|해소"}],
   "blackholes": [{"id": "b1", "star_id": "s1", "label": "...", "size": 3, "planets": ["e1", "e3", "e5"]}],
-  "north_star": {"text": "...", "values": ["배려"], "reached_planets": ["e3"]} ,
+  "north_star": {"text": "...", "values": ["배려"], "reached_planets": ["e3"],
+                 "reached": [{"entry_id": "e3", "quote": "...", "at": "..."}]} ,
   "people": [{"id": "p1", "name": "...", "relation": "룸메이트", "planets": ["e1"]}]
 }
 ```
 
 - `order`: 같은 작은 별에서 먼저 쓴 기록이 0(작은 별에 가장 가까움).
 - `cross_domain: true`인 선은 화면에서 행성을 눌렀을 때만 그린다(설정 `cross_links`로 정도 조절).
-- `north_star`는 되고 싶은 모습이 없으면 `null`. `reached_planets`: 지금 판에 닿은 순간이 있는 행성.
+- `north_star`는 되고 싶은 모습이 없으면 `null`. `reached_planets`: 지금 판에 닿은 순간이 있는 행성, `reached`: 그 닿은 순간(원문 인용 · 때, 오래된 것부터 — 북극성을 누르면 나오는 목록).
+- `links[].from_quote` · `to_quote`: 선 양 끝 생각의 원문 인용(그때 → 지금, 행성 카드).
 - `thought_count`: 생각 수(행성 크기), `certainty`: 가장 많은 확신(같으면 단정, 밝기), `has_question`: 열린 질문이 있음('?'), `ring`: 다짐이 있음, `ring_state`: `열림`(빈 고리) · `채워짐`(지킨 다짐).
 - 생각이 없는 글(생각 없이 일정만 적은 글, 시험 단계 전에 저장된 위기 글)은 행성으로 띄우지 않고 `/diary` 목록에만 있다. 같은 기록 안의 관계는 `links`에 넣지 않는다.
 - `links[].ended`: 목표 충돌인데 두 다짐 중 하나가 닫힘(지켜짐 · 그만둠) → 충돌이 끝남(화면은 흐리게 그리거나 숨김). 다른 종류는 늘 `false`.
@@ -142,6 +145,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `GET /people` → `{"people": [{"id", "name", "nickname", "relation", "auto": true, "planets": ["e1"]}]}`
 - `POST /people` `{"name", "nickname", "relation"}` · `PATCH /people/{id}` · `DELETE /people/{id}`(지우기 = 저장된 글에서 이름을 관계 말로 바꾸고 문장은 남김) → `{"ok": true, "replaced": 4}`
 - `POST /people/questions/{id}` `{"answer": "같은 사람|다른 사람|사람 이름|사람 이름 아님"}` → `{"ok": true}`. 다른 사람 · 사람 이름 → 사람 목록에 더함, 같은 사람(별명) → 겹치는 사람의 별명으로 더함.
+- `GET /people/{id}/thoughts` → `{"person": {"id", "name", "relation"}, "thoughts": [Thought + {"entry_id", "written_at", "title"}]}`: 그 사람과 얽힌 생각(끝난 기록만), 먼저 쓴 기록부터 · 같은 기록 안은 글 순서. 우주에서 사람을 고르면 나오는 목록. 없는(남의) 사람이면 404.
 - `nickname`은 쉼표로 여러 개. 새 이름은 글을 쓸 때 자동 등록(`auto: true`)된다(가명으로 보내기 위해). 손으로 고치면 `auto: false`.
 
 ## 5. 되고 싶은 모습
