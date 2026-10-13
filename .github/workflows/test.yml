@@ -1,0 +1,30 @@
+# push · PR 마다 pytest + 골든셋(외부 호출 없는 모드). 하나라도 실패하면 빨강(WS23, PRD §9 회귀 검사 자동화).
+# 키 · 비밀값은 쓰지 않는다: DB 통합 시험(tests/test_repo_pg.py)은 로컬 Supabase 가 없으면 건너뛰고,
+# 골든셋 --check 는 llm.chat · embed 를 막아 둔 채 관문 실패 · 기준선 회귀만 본다(문서 · 결과 파일은 쓰지 않음).
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: { group: "test-${{ github.ref }}", cancel-in-progress: true }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.26"   # 로컬과 같은 uv(uv.lock 그대로)
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: pytest
+        run: uv run --frozen pytest -q
+      - name: 골든셋(외부 호출 없음)
+        run: uv run --frozen python eval/run.py --check
