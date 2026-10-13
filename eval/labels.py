@@ -12,8 +12,8 @@ eval/labels.py — 사람이 붙이는 정답 · 판정 양식과 채점(WS23, P
     uv run --frozen python eval/labels.py review-score <양식.csv>
 
 AI 결과(<AI 결과>)는 1판 output/records.json, tools/stability_v2.py 결과, 또는 [{id, day, thought, quote, kind, value}] 목록.
-가상 정답: eval/golden/e7_haneul.csv(가상 인물 하늘 61개 생각, 정답 A = 가상 작성자, 2026-10-14 Claude 가 AI 답을 보지 않고 붙임)
-· eval/golden/e7_haneul_c1.json(설정 #1 답) · eval/golden/links_v2.csv(설정 #2 설계 밖 관계 33개 Claude 판정).
+가상 정답: eval/answers/e7_haneul.csv(가상 인물 하늘 61개 생각, 정답 A = 가상 작성자, 2026-10-14 Claude 가 AI 답을 보지 않고 붙임)
+· eval/answers/e7_haneul_c1.json(설정 #1 답) · eval/answers/links_v2.csv(설정 #2 설계 밖 관계 33개 Claude 판정).
 """
 
 import argparse

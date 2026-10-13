@@ -70,10 +70,10 @@ def test_e7_score_only_days_the_config_ran():
 
 def test_virtual_gold_is_valid_and_scores():
     """가상 정답(하늘 61개)은 v8 목록 값만, 설정 #1 답으로 숫자가 나온다(사람 정답이 없어도 E7 · E6 을 잼)."""
-    rows = labels.read_csv(ROOT / "eval/golden/e7_haneul.csv")
+    rows = labels.read_csv(ROOT / "eval/answers/e7_haneul.csv")
     assert len(rows) == 61 and all(r["kind_a"] in choices("kinds") for r in rows)
     assert all(r["value_a"] in choices("values") + [""] for r in rows)
-    pred = labels.load_pred(ROOT / "eval/golden/e7_haneul_c1.json")
+    pred = labels.load_pred(ROOT / "eval/answers/e7_haneul_c1.json")
     assert all(p["kind"] in choices("kinds") for p in pred)   # v7 이름(반성)은 v8 로 바로잡음
     s = labels.e7_score(rows, {"c1": pred})["c1"]
     assert s["matched"] == 61 and 0 < s["kind_accuracy"] <= 1 and s["value_agreement"] is not None
@@ -112,7 +112,7 @@ def test_links_score_and_committed_judgement():
     s = labels.links_score([{"type": "바뀜", "verdict": "틀림"}, {"type": "이어짐", "verdict": "맞음"},
                             {"type": "해소", "verdict": "약함"}, {"type": "이어짐", "verdict": ""}])
     assert s["judged"] == 3 and s["false_rate"] == round(2 / 3, 3) and s["false_by_type"] == {"바뀜": 1, "해소": 1}
-    done = labels.links_score(labels.read_csv(ROOT / "eval/golden/links_v2.csv"))
+    done = labels.links_score(labels.read_csv(ROOT / "eval/answers/links_v2.csv"))
     assert done["off_design"] == done["judged"] == 33 and done["false_rate"] is not None
 
 
