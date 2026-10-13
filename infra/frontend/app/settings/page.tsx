@@ -86,7 +86,7 @@ export default function SettingsPage() {
       <InstallGuide />
       {!MOCK && <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>}
       {!MOCK && <DeleteAccount />}
-      <p className="sub"><Link href="/privacy">개인정보처리방침</Link> · <Link href="/terms">이용약관</Link></p>
+      <p className="sub"><Link href="/privacy">개인정보처리방침</Link> · <a href="/terms">이용약관</a></p>{/* /terms 는 WS24 몫. 생기기 전엔 Link 미리 받기가 404 를 내서 a */}
     </main>
   );
 }
