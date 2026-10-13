@@ -314,9 +314,10 @@ export async function deleteTalk(id: string): Promise<void> {
   await json("DELETE", `/talk/${encodeURIComponent(id)}`);
 }
 // 사용자 말 한 턴 → 별지기 답이 붙은 대화. 받아쓴 말(WS21)도 같은 함수로 보낸다.
-export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void): Promise<Conversation> {
-  if (MOCK) return (await mock()).sayTalk(id, text, onProgress);
-  const res = await postStream(`/talk/${encodeURIComponent(id)}/turn/stream`, { text });
+export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void,
+  via: "text" | "voice" = "text"): Promise<Conversation> {
+  if (MOCK) return (await mock()).sayTalk(id, text, onProgress, via);
+  const res = await postStream(`/talk/${encodeURIComponent(id)}/turn/stream`, { text, via });
   const reader = res.body!.getReader(), dec = new TextDecoder();
   let buf = "";
   try {
@@ -345,4 +346,24 @@ export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryRe
 // 요약 확인: 고친 것을 넣고 우주에 저장 → 저장된 결과(한마디 포함)
 export async function confirmDiary(id: string, c: ConfirmInput): Promise<EntryResult> {
   return MOCK ? (await mock()).confirmDiary(id, c) : json("POST", `/diary/${encodeURIComponent(id)}/confirm`, c);
+}
+
+/* ---------- 말로 쓰기 · 읽어 주기 (WS21, docs/api-v8.md §9) ---------- */
+// 녹음 조각 하나(4MB 아래) → 받아쓴 글. 긴 녹음 나누기 · 이어 붙이기는 components/MicButton.tsx
+export async function transcribe(piece: Blob): Promise<{ text: string; seconds: number }> {
+  if (MOCK) return (await mock()).transcribe(piece);
+  const t = await token();
+  const res = await fetch(BASE + "/voice/transcribe", {
+    method: "POST", body: piece,
+    headers: { "Content-Type": piece.type || "application/octet-stream", ...(t && { Authorization: `Bearer ${t}` }) },
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);
+    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status, j?.error?.message ?? "받아쓰지 못했어요. 다시 해 주세요.");
+  }
+  return res.json();
+}
+// 별지기 말 → mp3
+export async function speak(text: string): Promise<Blob> {
+  return MOCK ? (await mock()).speak(text) : (await req("POST", "/voice/speak", { text })).blob();
 }

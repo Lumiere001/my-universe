@@ -374,7 +374,7 @@ export async function getTalk(id: string) {
   return structuredClone(c);
 }
 export async function deleteTalk(id: string) { talks.delete(id); }
-export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void): Promise<Conversation> {
+export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void, via: "text" | "voice" = "text"): Promise<Conversation> {
   const c = talks.get(id);
   if (!c) throw { entry_id: null, code: "not_found", message: "대화를 찾지 못했어요.", resumable: false } as StreamError;
   for (const [step, label] of [["safety", "말을 살펴보는 중"], ["past", "지난 기록을 찾는 중"], ["reply", "별지기가 답을 고르는 중"]]) {
@@ -385,10 +385,10 @@ export async function sayTalk(id: string, text: string, onProgress: (p: TalkProg
   const reply = crisis ? "많이 힘들었겠어요. 이렇게 털어놓아 줘서 고마워요. 저는 여기 있을게요."
     : wrap ? "오늘은 진로 이야기를 차분히 꺼내 줬네요.\n여기까지 정리해 둘까요? 아래 '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요."
     : REPLIES[c.turn_count % REPLIES.length];
-  c.turns.push({ role: "user", text, at: now(), via: "text" },
+  c.turns.push({ role: "user", text, at: now(), via },
     { role: "keeper", kind: wrap ? "wrap" : "reply", text: reply, mode: crisis ? "comfort" : "normal", tone: settings.tone, check_in: crisis ? CHECK_IN : null, at: now() });
   c.turn_count += 1; c.wrap = wrap; c.updated_at = now();
-  if (c.turn_count % 3 === 0) c.summary = c.turns.filter((t) => t.role === "user").map((t) => t.text).join(" ").slice(0, 200);
+  if (c.turn_count % 3 === 0 || text.length >= 300) c.summary = c.turns.filter((t) => t.role === "user").map((t) => t.text).join(" ").slice(0, 200);
   return structuredClone(c);
 }
 export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryResult> {
@@ -418,4 +418,26 @@ export async function confirmDiary(id: string, x: ConfirmInput): Promise<EntryRe
   entries.set(id, done);
   for (const [k, c] of talks) if (c.entry_id === id) talks.delete(k);
   return structuredClone(done);
+}
+
+/* ---------- 말로 쓰기 · 읽어 주기 (WS21) ---------- */
+// 가상 인물 하늘이 말한 것처럼 조각마다 한 문장. e2e 가 조각 크기 · 읽어 준 글을 보도록 window 에 남긴다.
+const SAID = ["오늘은 아침 일찍 동네 공원을 천천히 걸었어요.", "바람이 차가웠는데 걷고 나니 머리가 맑아졌어요.",
+  "점심엔 동생이랑 김밥을 먹으면서 진로 이야기를 했어요.", "아직 정한 건 없지만 이번 주엔 포트폴리오를 한 장이라도 고쳐 보려고요.",
+  "오후엔 도서관에서 디자인 책을 두 권 빌렸어요.", "읽다 보니 예전에 그림 그리던 때가 생각나서 조금 설렜어요.",
+  "저녁엔 엄마가 끓여 준 된장찌개를 먹고 일찍 씻었어요.", "내일은 오늘보다 삼십 분 일찍 일어나 보고 싶어요.",
+  "요즘 밤에 휴대폰을 오래 보는 게 마음에 걸려요.", "그래서 열한 시가 되면 휴대폰을 책상 위에 두고 자기로 했어요.",
+  "동생이 그 말을 듣고 자기도 같이 해 보겠다고 해서 웃었어요.", "작은 거라도 하나씩 해 보면 조금은 달라질 것 같아요."];
+type VoiceLog = { __voicePieces?: number[]; __spoken?: string[] };
+export async function transcribe(piece: Blob): Promise<{ text: string; seconds: number }> {
+  const w = window as unknown as VoiceLog;
+  const n = (w.__voicePieces ??= []).push(piece.size);
+  await sleep(STEP_MS);
+  const seconds = Math.round(Math.max(0, piece.size - 44) / 32000);   // 16kHz 모노 WAV 조각 기준
+  const at = ((n - 1) * 6) % SAID.length;
+  return { text: seconds >= 60 ? SAID.slice(at, at + 6).join(" ") : SAID[(n - 1) % SAID.length], seconds };   // 긴 조각은 긴 이야기
+}
+export async function speak(text: string): Promise<Blob> {
+  ((window as unknown as VoiceLog).__spoken ??= []).push(text);
+  return new Blob([new Uint8Array(44)], { type: "audio/wav" });
 }

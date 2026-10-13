@@ -1,6 +1,7 @@
 "use client";
 // (가) 일기 쓰기 → 진행 단계 → (나) 결과 카드
 import { useEffect, useRef, useState } from "react";
+import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아쓴 글을 칸에 채움
 import ResultCard from "@/components/ResultCard";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt } from "@/components/WriteParts";
 import { getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
@@ -92,6 +93,7 @@ export default function WritePage() {
           <textarea id="diary" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
             placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
         </div>
+        <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
         <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); }} />
         <fieldset>
           <legend>마음 날씨 (고르지 않아도 돼요)</legend>

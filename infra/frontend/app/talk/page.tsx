@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ConfirmCard from "@/components/ConfirmCard";
 import { useKeeperName } from "@/components/Keeper";
+import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
   deleteTalk, finishTalk, getDiary, getTalk, listTalks, sayTalk, startTalk,
   type Conversation, type EntryResult, type StreamError,
@@ -25,6 +26,7 @@ export default function TalkPage() {
   const [draft, setDraft] = useState<EntryResult | null>(null);   // 확인을 기다리는 정리
   const [saved, setSaved] = useState<EntryResult | null>(null);   // 저장한 결과(한마디)
   const endRef = useRef<HTMLDivElement>(null);
+  const voice = useReadAloud();   // 별지기 답 읽어 주기(WS21, 기본 꺼짐)
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [c?.turns.length, busy, saved, draft]);
 
   const open = async (x: Conversation) => {
@@ -48,15 +50,18 @@ export default function TalkPage() {
     }, (e) => setErr(e?.message || "대화를 불러오지 못했어요."));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const send = async (said: string) => {
+  const send = async (said: string, via: "text" | "voice" = "text") => {
     if (!c || !said.trim() || busy) return;
     setErr(""); setBusy("별지기가 듣는 중…");
     try {
-      setC(await sayTalk(c.id, said.trim(), (p) => setBusy(p.label + "…")));
+      const next = await sayTalk(c.id, said.trim(), (p) => setBusy(p.label + "…"), via);
+      setC(next);
       setText("");
+      voice.say(next.turns[next.turns.length - 1]?.text);
     } catch (e) {
       const x = e as StreamError;
       setErr(x.message || "보내지 못했어요. 다시 보내 주세요.");
+      if (via === "voice") setText(said);   // 받아쓴 말은 칸에 남겨 다시 보내게
       if (x.code === "disconnected") {   // 서버는 끝까지 처리했을 수 있다: 다시 불러와 붙었으면 칸을 비운다
         const now = await getTalk(c.id).catch(() => null);
         if (now && now.turn_count > c.turn_count) { setC(now); setText(""); setErr(""); }
@@ -91,12 +96,18 @@ export default function TalkPage() {
     </div>
   );
   const m = saved?.message;
+  // 받아쓴 말은 바로 대화 턴으로. 한 번에 보낼 수 있는 길이를 넘으면 칸에 두고 줄여 달라고 한다.
+  const heard = (t: string) => {
+    if (t.length <= 8000) return send(t, "voice");
+    setText(t); setErr("받아쓴 말이 8000자를 넘어요. 조금 줄여서 보내 주세요.");
+  };
 
   return (
-    <main>
+    <main onClickCapture={voice.on ? voice.unlock : undefined}>
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
         <h1 style={{ margin: 0 }}>이야기하기</h1>
         <div className="row">
+          <button className="small" aria-pressed={voice.on} onClick={voice.toggle}>읽어 주기 {voice.on ? "켜짐" : "꺼짐"}</button>
           <button className="small" onClick={() => { if (c?.turn_count && !saved) setOthers([c, ...others]); fresh(); }}
             disabled={!!busy}>새 대화</button>
           {c && !saved && <button className="small danger" onClick={remove} disabled={!!busy}>이 대화 지우기</button>}
@@ -139,7 +150,7 @@ export default function TalkPage() {
           </div>
         </section>
       ) : draft ? (
-        <ConfirmCard r={draft} onSaved={(r) => { setSaved(r); setDraft(null); }} />
+        <ConfirmCard r={draft} onSaved={(r) => { setSaved(r); setDraft(null); voice.say(r.message?.text); }} />
       ) : c && (
         <form className="stack" aria-label="말하기" onSubmit={(e) => { e.preventDefault(); send(text); }}>
           <div>
@@ -148,6 +159,7 @@ export default function TalkPage() {
               placeholder="편하게 적어 주세요. (Ctrl · ⌘ + Enter 로 보내기)" maxLength={8000}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(text); } }} />
           </div>
+          <MicButton onText={heard} disabled={!!busy} />
           <div className="row">
             <button type="submit" className="primary" disabled={!!busy || !text.trim()}>보내기</button>
             <button type="button" className={c.wrap ? "primary" : undefined} onClick={finish} disabled={!!busy || !c.turn_count}>
