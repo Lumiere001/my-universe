@@ -77,6 +77,8 @@ MONTHLY_COST_CAP_USD = _float("MONTHLY_COST_CAP_USD", 0)  # 사용자별 이번 
 RESUME_LIMIT = _int("RESUME_LIMIT", 0)                     # 기록 하나당 '이어서 하기' 횟수
 RUN_LOCK_S = _int("RUN_LOCK_S", 600)                       # 실행 잠금(노드가 끝날 때마다 늘림). 서버가 죽으면 이만큼 뒤 '멈춤'
 TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
+# 확인하지 않고 둔 대화 초안(요약 확인 전)을 이만큼 뒤 다음 요청 때 지운다(WS20). 0 = 지우지 않음. 사용 상한이 아님.
+DRAFT_KEEP_HOURS = _int("DRAFT_KEEP_HOURS", 72)
 
 # 비용 추정(요금표 기준 어림값, 크게 잡음)
 PRICE_STUDIO_PAGE = 0.05            # Parse $0.01 + Extract $0.04 (1쪽)

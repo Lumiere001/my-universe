@@ -6,7 +6,7 @@ app/repository/views.py
 
 from collections import Counter
 
-from app.repository import diary
+from app.repository import diary, drafts
 from app.service.rules import universe_view
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
@@ -65,7 +65,7 @@ def entry_result(s, eid):
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
             "people_questions": []}
     if e["status"] != "done":
-        return base
+        return drafts.result(e, base) if drafts.pending(e) else base   # 확인을 기다리는 대화 초안(WS20)
     states = diary.states(s)
     ts = diary.thoughts(s, entry_id=eid)
     ids = [t["id"] for t in ts]
@@ -104,7 +104,7 @@ def entry_list(s, limit=20, before=None):
     return [{"id": e["id"], "written_at": diary.iso(e["written_at"]), "title": e["data"].get("title", ""),
              "summary": e["data"].get("summary", ""), "weather": e["weather"], "status": e["status"],
              "sun": sun.get(e["sun_id"]), "star": star.get(e["star_id"]), **record_fields(e)}
-            for e in diary.entries(s, limit=limit, before=before)]
+            for e in diary.entries(s, limit=limit, before=before) if e.get("confirmed") != drafts.WAITING]   # 확인 전 초안은 안 보임
 
 
 def universe(s):
