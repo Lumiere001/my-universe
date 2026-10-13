@@ -6,12 +6,13 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Settings, Universe } from "@/lib/api";
-import { centerSun, COLOR, CONFLICT, PLANET_R, planetLook, SUN_PALETTE } from "./universeLook";
+import { centerSun, COLOR, CONFLICT, PLANET_R, planetLook, themeColors, themeOf } from "./universeLook";
 
 export type Pick = { kind: "planet" | "sun" | "north" | "blackhole" | "none"; id: string | null };
 type Props = {
   data: Universe; selected: string | null; glow: Set<string> | null; crossLinks: Settings["cross_links"];
   onPick: (p: Pick) => void; children?: React.ReactNode;
+  theme?: string | null;   // 꾸미기(WS25): 설정의 우주 테마. 없거나 모르는 이름이면 기본(밤하늘)
 };
 
 const { violet: VIOLET, orange: ORANGE, gold: GOLD } = COLOR;
@@ -26,7 +27,9 @@ function glowTex() {
 }
 const orbitR = (order: number) => 9 + order * 6;
 
-export default function Universe3D({ data, selected, glow, crossLinks, onPick, children }: Props) {
+export default function Universe3D({ data, selected, glow, crossLinks, onPick, children, theme }: Props) {
+  const themeName = themeOf(theme);
+  const K = themeColors(themeName);
   const wrap = useRef<HTMLDivElement>(null);
   const apply = useRef<(sel: string | null, glow: Set<string> | null, cross: Settings["cross_links"]) => void>(() => {});
   const pickRef = useRef(onPick);
@@ -41,14 +44,14 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(COLOR.bg);
+    scene.background = new THREE.Color(K.bg);
     const camera = new THREE.PerspectiveCamera(FOV, 1, 1, 8000);
     scene.add(camera);
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true; controls.dampingFactor = .08; controls.rotateSpeed = .6; controls.screenSpacePanning = true;
     const light = new THREE.DirectionalLight(0xffffff, 1.6);
     light.position.set(-.9, .9, .8); camera.add(light); camera.add(light.target); light.target.position.set(0, 0, -1);
-    scene.add(new THREE.AmbientLight(COLOR.ambient, .9));
+    scene.add(new THREE.AmbientLight(K.ambient, .9));
     const GLOW = glowTex();
     const sprite = (color: number, scale: number, op: number) => {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -65,7 +68,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
         p.set([R * q * Math.cos(t), R * u, R * q * Math.sin(t)], i * 3);
       }
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: COLOR.dust, size: 1.6, sizeAttenuation: false, transparent: true, opacity: .7 })));
+      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: K.dust, size: 1.6, sizeAttenuation: false, transparent: true, opacity: .7 })));
     }
 
     /* ---------- 배치 ---------- */
@@ -93,7 +96,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
         pos = new THREE.Vector3(Math.cos(a) * ringR, 0, Math.sin(a) * ringR);
       }
       sunPos[s.id] = pos;
-      const col = SUN_PALETTE[i % SUN_PALETTE.length];
+      const col = K.sun[i % K.sun.length];
       const m = new THREE.Mesh(new THREE.SphereGeometry(sunR[s.id], 40, 28), new THREE.MeshBasicMaterial({ color: col }));
       m.position.copy(pos); scene.add(m);
       sprite(col, sunR[s.id] * 6, .55).position.copy(pos);
@@ -103,12 +106,12 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
         const b = (j / Math.max(1, stars.length)) * Math.PI * 2 + i;
         const sp = pos.clone().add(new THREE.Vector3(Math.cos(b), 0, Math.sin(b)).multiplyScalar(sunR[s.id] + 10 + sys));
         starPos[st.id] = sp; starSys[st.id] = sys;
-        const sm = new THREE.Mesh(new THREE.SphereGeometry(2.6, 20, 14), new THREE.MeshBasicMaterial({ color: COLOR.star }));
+        const sm = new THREE.Mesh(new THREE.SphereGeometry(2.6, 20, 14), new THREE.MeshBasicMaterial({ color: K.star }));
         sm.position.copy(sp); scene.add(sm);
-        sprite(COLOR.starGlow, 16, .6).position.copy(sp);
+        sprite(K.starGlow, 16, .6).position.copy(sp);
         for (let o = 0; o <= maxOrder(st.id); o++) {
           const r = orbitR(o), ring = new THREE.Mesh(new THREE.RingGeometry(r - .25, r + .25, 96),
-            new THREE.MeshBasicMaterial({ color: COLOR.orbit, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false }));
+            new THREE.MeshBasicMaterial({ color: K.orbit, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false }));
           ring.rotation.x = -Math.PI / 2; ring.position.copy(sp); scene.add(ring);
         }
         labels.push(Object.assign(label("star", st.name), { _p: sp, _dy: 6, _min: [sp, sys, 34] as const }));
@@ -125,10 +128,10 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       const a = p.order * 2.4 + p.star_id.length, pos = c.clone().add(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(orbitR(p.order)));
       planetPos[p.id] = pos;
       const { scale: k, light: lum } = planetLook(p);   // 크기 = 생각 수, 밝기 = 확신
-      const mesh = new THREE.Mesh(PG, new THREE.MeshPhongMaterial({ color: new THREE.Color(COLOR.planet).multiplyScalar(.45 + .55 * lum),
-        emissive: COLOR.planetEmissive, shininess: 30, transparent: true }));
+      const mesh = new THREE.Mesh(PG, new THREE.MeshPhongMaterial({ color: new THREE.Color(K.planet).multiplyScalar(.45 + .55 * lum),
+        emissive: K.planetEmissive, shininess: 30, transparent: true }));
       mesh.position.copy(pos); mesh.scale.setScalar(k); scene.add(mesh);
-      const halo = sprite(COLOR.planetHalo, 9 * k, .1 + .4 * lum); halo.position.copy(pos);
+      const halo = sprite(K.planetHalo, 9 * k, .1 + .4 * lum); halo.position.copy(pos);
       const sel = sprite(0xffffff, 16 * k, 0); sel.position.copy(pos);
       const o: PObj = { id: p.id, mesh, halo, sel, k };
       if (p.ring) {  // 금빛 고리 = 다짐(빈 고리 = 열림, 채워진 고리 = 지킨 다짐)
@@ -271,6 +274,8 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     (window as unknown as { __uni?: unknown }).__uni = {
       xy: (id: string) => { const r = canvas.getBoundingClientRect(), s = scr(all[id]); return { x: r.left + s.x, y: r.top + s.y }; },
       center: () => hub,
+      bg: () => (scene.background as THREE.Color).getHex(),   // 테마 바탕색(꾸미기 시험)
+      cross: () => lobj.filter((l) => l.cross && l.line.visible).length,   // 보이는 영역 넘는 선 개수(꾸미기 시험)
       // 그려진 행성의 크기 · 밝기(색의 밝기) · 빛남(화면 단위 시험)
       look: (id: string) => {
         const o = pobj[id], c = (o.mesh.material as THREE.MeshPhongMaterial).color;
@@ -283,10 +288,10 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       for (const id in pobj) {
         const o = pobj[id], dim = g ? !g.has(id) : false, lit = g?.has(id);
         (o.mesh.material as THREE.MeshPhongMaterial).opacity = dim ? .3 : 1;
-        (o.mesh.material as THREE.MeshPhongMaterial).emissive.set(lit ? COLOR.lit : COLOR.planetEmissive);
+        (o.mesh.material as THREE.MeshPhongMaterial).emissive.set(lit ? COLOR.lit : K.planetEmissive);
         o.halo.material.opacity = dim ? .06 : lit ? 1 : o.halo.userData.op;
         o.halo.scale.setScalar((lit ? 24 : 9) * o.k);
-        o.halo.material.color.set(lit ? GOLD : o.halo.userData.color ?? COLOR.planetHalo);
+        o.halo.material.color.set(lit ? GOLD : o.halo.userData.color ?? K.planetHalo);
         o.sel.material.opacity = id === sel ? .9 : 0;
         if (o.ring) (o.ring.material as THREE.MeshBasicMaterial).opacity = dim ? .25 : .95;
       }
@@ -324,13 +329,14 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       labels.forEach((d) => d.remove()); canvas.remove();
       scene.traverse((o) => { const m = o as THREE.Mesh; m.geometry?.dispose?.(); });
     };
-  }, [data]);
+  }, [data, themeName]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { apply.current(selected, glow, crossLinks); }, [selected, glow, crossLinks, data]);
+  // 장면을 새로 만들 때(data · 테마)마다 다시 입힌다: 새 선은 visible=true 로 생기고 영역 넘는 선을 숨기는 일은 apply 만 한다
+  useEffect(() => { apply.current(selected, glow, crossLinks); }, [selected, glow, crossLinks, data, themeName]);
 
   // 캔버스와 이름표는 React 가 건드리지 않는 안쪽 칸에 둔다. children 은 그 위에 뜨는 도구 · 카드.
   return (
-    <div className="uni" data-testid="universe">
+    <div className="uni" data-testid="universe" data-theme={themeName} style={{ background: "#" + K.bg.toString(16).padStart(6, "0") }}>
       <div ref={wrap} style={{ position: "absolute", inset: 0 }} />
       {children}
     </div>

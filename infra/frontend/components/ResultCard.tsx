@@ -10,6 +10,7 @@ import { useKeeperName } from "./Keeper";
 import { exportDiary } from "@/lib/api";
 import { localToday } from "./EntryTools";
 // 관측 보고서(WS15): 이어진 지난 생각 다음에 관측 상태 · 한계 · 이 기록 JSON 내려받기.
+import UniverseGrew from "./UniverseGrew";
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
@@ -117,6 +118,8 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
           <p style={{ margin: 0 }}>{x.message}</p>
         </section>
       ))}
+
+      <UniverseGrew r={r} />
 
       {r.info && (
         <section className="card" aria-label="글 정보">

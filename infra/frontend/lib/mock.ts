@@ -326,7 +326,7 @@ export async function saveAspiration(a: { now: string; want: string; obstacle: s
   return n;
 }
 export async function getMe(): Promise<Me> {
-  await sleep(100);
+  await sleep((globalThis as { __slowMe?: number }).__slowMe ?? 100);   // 시험: /me 가 /universe 보다 늦게 오는 경우
   return { user: { id: "mock", email: "haneul@example.com" }, settings: { ...settings },
     onboarding: { entries: universe.planets.length, aspiration: "set", weather_asked: true } };
 }

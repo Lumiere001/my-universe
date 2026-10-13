@@ -9,7 +9,7 @@ cp .env.example .env.local          # 값 채우기(로컬 전용, gitignore)
 NEXT_PUBLIC_MOCK=1 npm run dev      # 백엔드 없이 가짜 데이터(가상 인물 하늘)로 보기 → http://localhost:3000
 npm run dev                         # 백엔드(NEXT_PUBLIC_API_BASE, 기본 http://localhost:8001)와 함께
 npm run build                       # 타입 검사 포함
-npx playwright install chromium && npm run e2e   # 휴대폰 · PC 핵심 흐름 + 캡처(docs/images/v8/) + 쓰기 화면 작은 묶음(e2e/write.spec.ts), 포트는 E2E_PORT
+npx playwright install chromium && npm run e2e   # 휴대폰 · PC 핵심 흐름 + 캡처(docs/images/v8/) + 쓰기 화면 작은 묶음(e2e/write.spec.ts) + 꾸미기(e2e/decorate.spec.ts, 캡처 docs/screens/ws25/), 포트는 E2E_PORT
 npx playwright test -c playwright.real.config.ts  # 실제 백엔드(:8001)에 붙여 같은 흐름(유료 일기 기기당 1편) → docs/e2e-real.md
 npx playwright test -c playwright.landing.config.ts  # 소개 · 설치형 웹앱(로그아웃 실제 모드, 외부 호출 0) → docs/screens/ws26/
 node scripts/make-images.mjs                         # 아이콘 · 공유 미리보기 · 소개 캡처 다시 만들기(public/)

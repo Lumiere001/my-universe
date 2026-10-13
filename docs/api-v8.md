@@ -18,6 +18,8 @@
 
 **인스타 ZIP 가져오기(WS17, 2026-10-14):** `POST /import/instagram/preview`(저장 · 외부 전송 없는 미리 보기)를 더했다(§9). 가져온 글은 기존 `/diary/stream` 에 `source: "지난 글 묶음"` · `source_ref` · `written_at`(게시 시각)으로 한 편씩 보낸다. 새 경로만이고 마이그레이션은 없다.
 
+**꾸미기(WS25, 2026-10-14):** Settings 에 `theme`(우주 테마) · `keeper_look`(별지기 모습)을 더했다(§6). 기본값은 예전 모습이고 화면에만 쓴다. 새 경로 · 마이그레이션 없음.
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -217,8 +219,10 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 - `GET /me` → `{"user": {"id", "email"}, "settings": Settings, "onboarding": {"entries": 0, "aspiration": "none|asked|skip|stop|set", "weather_asked": false}}`
 - `PATCH /settings`(일부만) → Settings
-  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true, "keeper_name": "별지기"}`
+  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true, "keeper_name": "별지기", "theme": "밤하늘", "keeper_look": "글자"}`
   - `keeper_name`: 별지기 이름(1~12자, 화면 말풍선에만 씀 · LLM 에 보내지 않음).
+  - `theme`: 우주 테마 `밤하늘|새벽|오로라|먹`(기본 밤하늘 = 예전 색). 우주 화면의 바탕 · 해 · 별 · 행성 색만 바뀌고 선 · 고리처럼 뜻이 있는 색은 그대로. 목록 밖 값은 422.
+  - `keeper_look`: 별지기 모습 `글자|별|달|고양이|행성`(기본 글자 = 이름 첫 글자 동그라미, 나머지는 `public/keeper/*.svg`). 화면에만 씀 · LLM 에 보내지 않음. 목록 밖 값은 422.
   - 팩폭은 `fact_bomb_ack: true`(경고 확인) 뒤에만 고를 수 있다(아니면 409 `fact_bomb_ack_required`). 경고 확인을 거두면 말투는 다정하게로.
 - `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
 - `GET /health` → `{"status": "ok", "version": "0.8.0"}`

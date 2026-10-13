@@ -17,7 +17,8 @@ from app.service.safety import forget
 
 TZ = ZoneInfo(config.TIMEZONE)
 SETTINGS = {"tone": "다정하게", "fact_bomb_ack": False, "gentle_today": None, "comfort_only_today": None,
-            "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True, "keeper_name": "별지기"}
+            "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True, "keeper_name": "별지기",
+            "theme": "밤하늘", "keeper_look": "글자"}   # 꾸미기(WS25): 기본값 = 예전 모습
 ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
 ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
               "feedback", "conversations")

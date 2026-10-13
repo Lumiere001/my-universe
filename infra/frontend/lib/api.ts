@@ -69,6 +69,7 @@ export type Settings = {
   tone: Tone; fact_bomb_ack: boolean; gentle_today: string | null; comfort_only_today: string | null;
   suggestions: "적게" | "보통" | "많이"; cross_links: "숨김" | "눌렀을 때" | "항상"; weather_ask: boolean;
   keeper_name?: string;
+  theme?: string; keeper_look?: string;   // 꾸미기(WS25): 우주 테마 · 별지기 모습(값 목록은 components/universeLook.ts)
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean } };

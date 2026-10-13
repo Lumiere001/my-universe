@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Landing from "@/components/Landing";
+import { KeeperLook } from "@/components/Keeper";
 import { ApiError, getConsent, getMe, MOCK, supabase } from "@/lib/api";
 
 const NAV = [
@@ -52,6 +53,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
+      {state === "in" && <KeeperLook />}
       {state === "in" || PUBLIC.includes(path) || (state === "consent" && OPEN.includes(path)) ? children
         : state === "out" ? <Landing /> : state === "not_allowed" ? (
         <main><div className="card stack" role="alert">

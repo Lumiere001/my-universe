@@ -119,6 +119,9 @@ class SettingsPatch(In):
     cross_links: Optional[Literal["숨김", "눌렀을 때", "항상"]] = None
     weather_ask: Optional[bool] = None
     keeper_name: Optional[str] = Field(default=None, min_length=1, max_length=12)   # 별지기 이름(화면에만 씀)
+    # 꾸미기(WS25, 화면에만 씀 · LLM 에 보내지 않음). 값 목록 = infra/frontend/components/universeLook.ts 의 THEMES · KEEPER_LOOKS
+    theme: Optional[Literal["밤하늘", "새벽", "오로라", "먹"]] = None
+    keeper_look: Optional[Literal["글자", "별", "달", "고양이", "행성"]] = None
 
     @field_validator("tone")
     @classmethod
