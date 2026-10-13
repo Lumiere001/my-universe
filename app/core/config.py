@@ -75,7 +75,8 @@ MAX_TITLE_CHARS = _int("MAX_TITLE_CHARS", 120)
 DAILY_ENTRY_LIMIT = _int("DAILY_ENTRY_LIMIT", 0)          # 사용자별 하루 글 수
 MONTHLY_COST_CAP_USD = _float("MONTHLY_COST_CAP_USD", 0)  # 사용자별 이번 달 추정 비용 상한(달러)
 RESUME_LIMIT = _int("RESUME_LIMIT", 0)                     # 기록 하나당 '이어서 하기' 횟수
-RUN_LOCK_S = _int("RUN_LOCK_S", 600)                       # 실행 잠금(노드가 끝날 때마다 늘림). 서버가 죽으면 이만큼 뒤 '멈춤'
+IMPORT_MAX_POSTS = _int("IMPORT_MAX_POSTS", 0)             # 인스타 가져오기 한 번에 고를 수 있는 최근 글 수(WS17, 결정 12)
+RUN_LOCK_S = _int("RUN_LOCK_S", 600)                      # 실행 잠금(노드가 끝날 때마다 늘림). 서버가 죽으면 이만큼 뒤 '멈춤'
 TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
 
 # 비용 추정(요금표 기준 어림값, 크게 잡음)
