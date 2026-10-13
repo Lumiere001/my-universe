@@ -185,8 +185,9 @@ def test_start_and_turn_without_real_names(client, env, talk):  # noqa: F811
         assert diary.people(s) == []                                            # 대화 중에는 사람 목록에 등록하지 않음
         raw = s.rows("conversations")[0]
         assert b"\xeb\xaf\xbc\xec\xa4\x80" not in bytes(raw["enc"])             # '민준'이 평문으로 없음(암호문)
-        runs = [r for r in s.rows("runs") if r["step"] == "talk_turn"]
+        runs = [r for r in s.rows("runs") if r["step"] == "chat_turn"]                # 운영 지표 약속(WS22): 대화 id · 턴 · 제안 여부
         assert runs and runs[0]["meta"]["turn"] == 1 and runs[0]["calls"] >= 2 and "민준" not in json.dumps(runs[0]["meta"])
+        assert runs[0]["entry_id"] == c["id"] and isinstance(runs[0]["meta"]["suggested"], bool)
     assert client.get("/talk", headers=H1).json()["conversations"][0]["id"] == c["id"]
     assert client.get(f"/talk/{c['id']}", headers=H2).status_code == 404            # 남의 대화
     assert client.post(f"/talk/{c['id']}/turn/stream", headers=H2, json={"text": "x"}).status_code == 404

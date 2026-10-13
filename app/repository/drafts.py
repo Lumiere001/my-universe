@@ -55,17 +55,18 @@ def _note(s, eid, value, data):
 def confirm(s, vectors, e, summary=None, fixes=(), agreed=()):
     """고친 것(요약 문장 · 생각 종류 · 생각 빼기)을 단계 저장값에 넣고 '확인됨'으로 바꾼다. 원문 인용은 고치지 않는다(G1).
     fixes: [{"id", "kind"?, "remove"?}], agreed: 맞아요를 누른 항목('summary' 또는 생각 id).
-    모르는 생각 id 면 KeyError(아무것도 안 바꿈)."""
+    모르는 생각 id 면 KeyError(아무것도 안 바꿈). → {"items": 요약 + 생각 수, "edited": 고친 항목 수}(운영 지표, WS22)."""
     eid, st = e["id"], dict(e["steps"])
     today = {t["id"]: dict(t) for t in st["today"]}
     unknown = [f["id"] for f in fixes if f["id"] not in today] + [a for a in agreed if a != "summary" and a not in today]
     if unknown:
         raise KeyError(unknown)
     rec = dict(st.get("record") or {})
+    removed, changed = set(), set()
     if summary is not None and summary != rec.get("summary"):
         _note(s, eid, "확인 고침", {"item": "summary", "before": rec.get("summary", ""), "after": summary})
         rec["summary"] = summary
-    removed = set()
+        changed.add("summary")
     for f in fixes:
         t = today[f["id"]]
         if f.get("remove"):
@@ -75,6 +76,7 @@ def confirm(s, vectors, e, summary=None, fixes=(), agreed=()):
             _note(s, eid, "확인 고침", {"item": t["id"], "field": "kind", "before": t["kind"], "after": f["kind"],
                                     "thought": t.get("thought", "")})
             t["kind"] = f["kind"]
+            changed.add(t["id"])
             t["original"] = {k: v for k, v in (t.get("original") or {}).items() if k != "kind"}   # 사람이 고른 값이 이긴다
             if t["kind"] != "감정":
                 t["flags"] = [x for x in t.get("flags") or [] if x != "감사"]
@@ -89,6 +91,7 @@ def confirm(s, vectors, e, summary=None, fixes=(), agreed=()):
         vectors.delete(s.uid, ids=sorted(removed))
     s.update("entries", {"confirmed": "확인됨", "steps_enc": diary.seal(s, "entries.steps", eid, st), "updated_at": diary.now()},
              id=eid)
+    return {"items": 1 + len(today), "edited": len(changed | removed)}
 
 
 def expire(s, vectors):

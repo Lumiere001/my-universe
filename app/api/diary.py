@@ -225,11 +225,11 @@ def confirm(body: ConfirmIn, eid: Id, user=Depends(get_user), repo=Depends(get_r
         if not diary.lock(s, eid):
             raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
         try:
-            drafts.confirm(s, repo.vectors, e, body.summary, [f.model_dump() for f in body.fixes], body.agreed)
+            seen = drafts.confirm(s, repo.vectors, e, body.summary, [f.model_dump() for f in body.fixes], body.agreed)
         except KeyError:
             diary.unlock(s, eid)
             raise ApiError(422, "invalid_input", "고칠 생각을 찾지 못했어요.")
-        diary.add_run(s, eid, "confirm")
+        diary.add_run(s, eid, "confirm", meta=seen)   # 운영 지표: 항목 수 · 고친 수(WS22)
     try:
         graph.run(repo, uid, eid)   # 끝난 노드는 건너뛰고 save 만(외부 호출 없음)
     except Exception as err:

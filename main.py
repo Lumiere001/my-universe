@@ -19,6 +19,7 @@ from app.api import export   # WS15
 from app.api import upload  # WS18
 from app.api import importer   # WS17
 from app.api import edit   # WS16
+from app.api import ops   # WS22
 from app.core import config, logger
 
 docs = config.API_DOCS   # 배포에서는 /docs · /redoc · /openapi.json 을 열지 않는다
@@ -40,6 +41,7 @@ app.include_router(export.router)   # WS15 JSON 내려받기
 app.include_router(upload.router)   # WS18 사진 글자 읽기
 app.include_router(importer.router)   # WS17
 app.include_router(edit.router)   # WS16 우주 고치기
+app.include_router(ops.router)   # WS22 운영 화면 · 선호 맞추기 제안
 tools.sun_vectors()   # 기준 축 벡터 파일(data/ops)이 없으면 시작할 때 sun_vectors_missing 을 남긴다
 
 

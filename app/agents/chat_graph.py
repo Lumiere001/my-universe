@@ -25,6 +25,7 @@ from app.repository import conversations, diary
 from app.service import chat
 from app.service.rules import pick_past
 from app.service.safety import detect_crisis, unmask
+from app.service.voice.checks import has_suggestion
 
 STEPS = {"safety": "말을 살펴보는 중", "past": "지난 기록을 찾는 중", "reply": "별지기가 답을 고르는 중",
          "summary": "지금까지 정리하는 중"}
@@ -232,7 +233,7 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
         code = error_code(e)
         logger.log("error", step="talk_turn", conversation=cid, turn=n, code=code, calls=ctx.calls, what=type(e).__name__)
         with repo.session(uid) as s:
-            diary.add_run(s, None, "talk_turn", (time.time() - t0) * 1000, ctx.calls, ctx.usd, code, {"conversation": cid, "turn": n})
+            diary.add_run(s, cid, "chat_turn", (time.time() - t0) * 1000, ctx.calls, ctx.usd, code, {"conversation": cid, "turn": n})
         raise
     now = diary.iso(diary.now())
     r = out["reply"]
@@ -243,12 +244,13 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
         c["summary"], c["summary_at"] = out["new_summary"], n
     c["crisis"] = bool(c.get("crisis") or out.get("crisis"))   # 위기 표시는 enc 안에만(대화 · 초안 검사에 씀)
     ms = (time.time() - t0) * 1000
-    meta = {"conversation": cid, "turn": n, "kind": r["kind"], "checks": ctx.checks, "past": len(out.get("past") or [])}
+    meta = {"conversation": cid, "turn": n, "kind": r["kind"], "checks": ctx.checks, "past": len(out.get("past") or []),
+            "suggested": has_suggestion(r["text"])}
     with repo.session(uid) as s:
         if not conversations.get(s, cid):   # 답을 만드는 사이 지워진 대화
             return None
         conversations.save(s, c)
-        diary.add_run(s, None, "talk_turn", ms, ctx.calls, ctx.usd, None, meta)
+        diary.add_run(s, cid, "chat_turn", ms, ctx.calls, ctx.usd, None, meta)   # 운영 지표 약속(WS22, docs/api-v8.md §6.2)
         c = conversations.get(s, cid)
     logger.log("step", step="talk_turn", conversation=cid, turn=n, ms=int(ms), calls=ctx.calls, est_usd=round(ctx.usd, 4),
                checks=ctx.checks)
@@ -269,7 +271,7 @@ def make_draft(repo, uid, cid):
         d = chat.draft(mk, crisis=bool(c.get("crisis")), limit=config.MAX_TEXT_CHARS)
     out = {"title": unmask(d["title"], table), "text": unmask(d["text"], table), "fallback": d["fallback"]}
     with repo.session(uid) as s:
-        diary.add_run(s, None, "talk_draft", (time.time() - t0) * 1000, m.calls, m.usd, None,
+        diary.add_run(s, cid, "chat_done", (time.time() - t0) * 1000, m.calls, m.usd, None,
                       {"conversation": cid, "turns": len(users), "fallback": d["fallback"]})
     logger.log("step", step="talk_draft", conversation=cid, calls=m.calls, est_usd=round(m.usd, 4), fallback=d["fallback"])
     return out

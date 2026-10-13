@@ -57,6 +57,9 @@ def test_confirm_saves_fixes_and_clears_turns(client, env, talk):  # noqa: F811
     with env.repo.session(U1) as s:
         notes = [(f["value"], diary.unseal(s, "feedback", f["id"], f["enc"])) for f in s.rows("feedback", target="confirm")]
         assert conversations.get(s, cid) is None                                       # 확인하면 턴은 지움
+        runs = {r["step"]: r for r in s.rows("runs")}                                   # 운영 지표 약속(WS22)
+        assert runs["chat_done"]["entry_id"] == cid and runs["chat_done"]["meta"]["turns"] == 2
+        assert runs["confirm"]["meta"] == {"items": 1 + len(r["thoughts"]), "edited": 3}
     assert sorted(v for v, _ in notes) == ["확인 고침"] * 3                                  # 오답 재료(암호문)
     assert {"item": t0["id"], "field": "kind", "before": t0["kind"], "after": "소망", "thought": t0["text"]} in [d for _, d in notes]
     assert t1["id"] not in env.repo.vectors.get(U1)                                     # 뺀 생각의 벡터도 지움

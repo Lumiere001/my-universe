@@ -235,6 +235,26 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   - 동의할 때마다 `consents` 표에 한 줄 덧붙인다(고치지 않음, 계정 지우기 때 같이 지움). 선택 동의를 거두려면 `operator_read: false` 로 다시 보낸다.
 - 운영 화면(WS22)은 `consent.operator_read(s)` 가 참인 사용자의 피드백 원문만 풀어 보인다(다른 사람 이름은 가명, 열람 기록은 WS22).
 
+## 6.2 운영 화면 · 선호 맞추기 제안 (WS22, 2026-10-14)
+
+화면 `/ops`(메뉴에 없음, 검색 제외). `/ops/*` 는 백엔드 환경변수 `ADMIN_EMAILS`(쉼표 목록, 운영자 구글 계정)의 계정만 열린다. 아니면 403 `not_admin`, 비어 있으면 아무도 못 본다. 코드: `app/api/ops.py` · `app/repository/ops.py`, 마이그레이션 `20261014000200_v8_ops.sql`.
+
+- `GET /ops/summary` → 모든 사용자의 숫자 · 코드 · id · 시각만(원문 0건). DB 는 운영 전용 역할 `app_ops` 로 읽고, 이 역할은 평문 칸에만 select 권한이 있다(암호문 `enc` · `steps_enc`, 작은 별 · 사람 · 해 이름 표는 권한 없음).
+  - `cost`: `{"total_usd", "month_usd", "budget_usd": 50, "used_ratio", "warn"(80% 이상), "over"(100% 이상), "by_step"}` — 운영 `runs.est_usd` 합계(예산은 v8.json `limits.studio_budget_usd`). 개발 · 시험 원장(`runs/cost_ledger.jsonl`)은 따로.
+  - `runs`: 단계별 `{step, count, avg_ms, fails, est_usd}`, 글 한 편(기록 id)당 평균 시간 · 비용, 최근 30번. `gates`: 실명 관문이 막은 요청(`real_name_leak`), 말 걸기 검사로 다시 만든 한마디(voice `meta.checks > 0`). `failures`: 실패한 기록 수 · 코드별 · 최근 30개, 단계 · 코드별 실행 오류. `eval`: 골든셋 결과 파일(`eval/results`) 요약 — 배포 번들에는 `eval/` 이 없어 `null`.
+  - `satisfaction`: 점선 맞아요 비율 · 버튼별 반응 수 · 설정 번호별 반응 · 다음 날 다시 쓴 비율(`{pairs, returned, ratio}`, 사용자가 서비스를 쓴 날 = 기록을 만든 날 + 대화한 날, 다음 날이 다 지난 날만 셈). `direction.multi_sun`: 최근 14일 사용자별 글의 해 가짓수 평균 · 2개 이상 비율 · 전체 평균. `direction.closer_feeling` 은 늘 `null`('가까워졌다는 느낌'은 묻지 않음, 2026-10-13).
+  - `voice`: 한마디 수, 제안 넣은 비율(`messages.suggested`), 지난 한마디와 비슷해 다시 만든 비율(`messages.repeated`), '별로' 비율, 제안 있음/없음 날의 다음 날 다시 쓴 비율. 두 칸은 이 마이그레이션 뒤 저장한 한마디부터 채워진다(전의 행은 세지 않음).
+  - `talk`: 대화 수 · 평균 턴 · 정리한 대화 · 그만둔 대화(마지막 턴 뒤 24시간 동안 정리 없음) · 그만둔 턴별 수 · 제안 직후 그만둔 비율(제안 없는 턴과 비교) · 요약 확인에서 고친 비율. **대화 · 요약 확인 갈래(WS19 · WS20)가 `runs` 에 남기는 약속**(원문 없음, `diary.add_run(s, id, step, ms, calls, usd, None, meta)`):
+    - `step="chat_turn"`, `entry_id`=대화 id, `meta={"turn": n, "suggested": true|false}` — 별지기가 한 턴 답할 때마다(Solar 비용도 여기)
+    - `step="chat_done"`, `entry_id`=대화 id, `meta={"turns": n}` — '대화 마치고 정리하기'
+    - `step="confirm"`, `entry_id`=기록 id, `meta={"items": n, "edited": k}` — 요약 확인에서 '확인하고 우주에 저장'(항목 n 개 중 고친 k 개)
+  - `other_values`: 목록 밖 값('기타')이 나온 수(종류 · 확신 · 가치). `feedback_text`: '불편한 점 한 줄' 수(동의한 사용자 · 동의하지 않은 사용자). `users`: 사용자 수 · 최근 7일 쓴 사람 · 운영자 열람 동의 수.
+- `GET /ops/feedback?days=30&wrong=false` → 운영자 열람에 동의한 사용자(가장 최근 동의가 지금 판이고 `operator_read` 참)만, 그 사용자 세션(`app_user` · RLS)으로 풀어 글 칸만 가명 처리: `{"days", "wrong", "users", "items": [{"user": "사용자 1", "at", "target", "value", "text"(불편한 점 한 줄의 글), "target_text"(관계: '[종류] 그때 생각 → 지금 생각 (설명)' · 한마디 · 다짐 · 기록 요약), "config"}], "other_candidates": [{"field", "original", "count"}], "not_consented": {값: 수}}`. 마음 상태 버튼(오늘은 위로만 · 살살)은 '상태 버튼'으로만(풀지 않음). 부를 때마다 사용자별 열람 기록 한 줄(`ops_reads`: 운영자 id · 사용자 id · `feedback|wrong|summarize` · 본 수). `wrong=true` 면 오답 재료('아니에요' · '별로' · '불편한 점 한 줄')만, 새 값 후보 없이.
+- `POST /ops/feedback/summarize?days=30` → 피드백 정리 Agent(Solar 한 번, 누를 때만): 동의한 오답 재료(가명, 최근 200줄까지)를 이유(잘못 나눔 · 틀린 연결 · 설교 같음 · 같은 말 반복 · 화면 · 기타)별로 묶고 고칠 곳(기록 Agent · 관측 Agent · 말 걸기 규칙 · 화면)을 제안: `{"days", "users", "lines": [가명 줄], "groups": [{"reason", "items": [줄 번호], "count", "fix_where", "suggestion"}], "est_usd"}`. 보내기 전 실명 관문(`llm.guard`), 비용은 운영자 계정의 `runs`(`step="ops_summarize"`)에. 형식 · 호출 실패는 502 `summarize_failed`(열람 기록 없음).
+- `GET /settings/suggestions` → `{"suggestions": [{"setting": "cross_links|suggestions", "from", "to", "reason"}]}`: 내 피드백으로 본 "이 설정으로 바꿀까요?". 영역을 넘는 관계에 '아니에요'(또는 '맞아요')를, 제안이 든 한마디에 '별로'(또는 '좋아요')를 3번 이상 · 반대쪽의 두 배 이상 누르면 한 칸 옮기기를 제안한다(바꾸는 것은 사용자, 화면: 설정 맨 위 카드).
+- `POST /settings/suggestions/seen` → `{"ok": true}`: 제안을 보고 골랐음(바꿨든 그대로 뒀든). 그 뒤의 피드백만 다시 센다.
+- 주 1회 오답 모으기: `scripts/collect_feedback.py`(운영 DB 를 직접 읽지 않고 `GET /ops/feedback?wrong=true` 를 부름) → `runs/wrong/YYYY-MM-DD.jsonl`(git 제외). 토큰은 운영 화면의 '스크립트용 토큰 복사'(운영자 로그인 토큰)를 `OPS_TOKEN` 으로.
+
 ## 7. WS5 구현 메모
 
 - 코드: `main.py`(FastAPI) · `app/api`(diary.py = 일기 · SSE, routes.py = 나머지) · `app/agents`(graph.py = Super Graph, tools.py, studio.py) · `app/repository`(Postgres · Chroma · 메모리 가짜, 암호화) · `app/core`(config · security · auth · logger · seed · llm).
@@ -262,7 +282,7 @@ Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|cont
   - reply: Solar. 따옴표 인용은 사용자 말 · 지난 생각 원문에 글자 그대로 있어야 하고(아니면 다시 · 기본 문장), 질문은 한 번에 하나, 넘지 않는 선 · 반복 · 사람 판정은 한마디와 같은 검사(`voice.checks.problems`). 지난 기록을 묻는 말("예전에 진로 얘기 뭐라고 했지?")은 찾은 기록의 날짜 · 원문 인용으로 답하고(`kind: recall`), 없으면 못 찾았다고 한다(찾을 기록이 없으면 Solar 를 부르지 않음). 끝낼 신호("이제 그만 잘게")나 사용자 턴 8번이면 한 줄 되짚고 정리 제안(`kind: wrap`, 마지막 줄은 고정 문장).
   - summary: 사용자 턴 3번마다(또는 300자 넘는 긴 말이면 바로) '지금까지 정리'를 사용자 말만 근거로 고쳐 쓴다. 사용자 말에 없는 인용 · 사람 판정이 있으면 앞 정리를 그대로 둔다.
   - 가명 표 = 사람 목록 + 이 대화의 새 이름 후보(확실하지 않아도 가명). 대화 중에는 사람 목록에 등록하지 않는다(초안이 일기 그래프의 names 단계를 지날 때 등록). 보내기 직전 실명 검사(`llm.guard`).
-  - 실행 기록: `runs` 에 `talk_turn`(entry_id 없음, meta: 대화 id · 턴 번호 · 답 종류 · 검사 문제 개수 · 지난 생각 수) · `talk_draft`. 이번 달 추정 비용에 같이 들어간다.
+  - 실행 기록(운영 지표 약속, §6.2): `runs` 에 `chat_turn`(entry_id = 대화 id, meta: 턴 번호 · 답 종류 · 검사 문제 개수 · 지난 생각 수 · 제안 여부 `suggested`) · `chat_done`(entry_id = 대화 id, meta: 사용자 턴 수 · fallback) · 요약 확인 `confirm`(entry_id = 기록 id, meta: `items` · `edited`). 이번 달 추정 비용에 같이 들어간다.
 - `POST /talk/{id}/finish/stream` → SSE: `progress` `{"step": "draft", "label": "대화를 일기로 정리하는 중", "done": 0}` → 일기 그래프의 `progress`(safety … voice, save 없음) → `event: result` EntryResult(`status: "confirm"`, `confirmed: "확인 전"`, `source: "대화"`, `message` · `next_question` 은 null — 저장 뒤에 보임). 초안은 사용자 말만 근거(Solar), 사용자 말에 없는 인용 · 사람 판정 · 위기였던 대화에서 그 말이 빠지면 다시, 두 번 다 걸리면 사용자 말을 그대로 이은 글. 그 뒤로 말이 없으면 같은 초안을 다시 준다(Studio 안 부름), 말이 늘었으면 옛 초안을 지우고 다시 만든다. 사용자 말이 없으면 409 `no_turns`.
 - `POST /diary/stream` 본문의 `confirm: true` 는 어느 출처든 save 앞에서 멈춘다(대화 출처는 늘 멈춤). 기본 false 면 지금과 같다.
 - `POST /diary/{id}/confirm` `{"summary": "고친 요약(안 고쳤으면 빼기)", "fixes": [{"id": "생각 id", "kind": "v8 종류"}, {"id": "생각 id", "remove": true}], "agreed": ["summary", "생각 id"]}` → EntryResult(`status: "done"`, `confirmed: "확인됨"`, 한마디 포함). 원문 인용은 고치지 못한다(G1). 뺀 생각은 그 관계 · 닿은 순간 · 벡터도 뺀다. 고친 것은 `feedback`(target `confirm`, value `확인 고침`, 대상 문장 · 고치기 전후는 암호문), 맞아요는 `확인 맞아요`로 남긴다(오답 재료, 기록을 지우면 같이 지움). 저장하면 그 대화를 지운다. 확인을 기다리는 기록이 아니면 409 `not_waiting`, 모르는 생각 id · 보기 밖 종류는 422, 남의 기록은 404, 정리 중이면 409.

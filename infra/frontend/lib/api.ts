@@ -423,3 +423,53 @@ export async function deletePersonWithThoughts(id: string): Promise<{ ok: boolea
   if (MOCK) return { ...(await deletePerson(id)), hidden: 0 };
   return json("DELETE", `/people/${encodeURIComponent(id)}/with-thoughts`);
 }
+
+/* ---------- 운영 · 선호 맞추기 제안 (WS22, docs/api-v8.md §6.2) ---------- */
+export type NextDay = { pairs: number; returned: number; ratio: number | null };
+export type OpsSummary = {
+  generated_at: string;
+  users: { total: number; active_7d: number; operator_read: number };
+  cost: { total_usd: number; month_usd: number; budget_usd: number; used_ratio: number | null; warn: boolean; over: boolean;
+    by_step: Record<string, number> };
+  runs: { count: number; by_step: { step: string; count: number; avg_ms: number; fails: number; est_usd: number }[];
+    per_entry: { entries: number; avg_s: number | null; avg_usd: number | null };
+    recent: { at: string; step: string; ms: number | null; calls: number; est_usd: number; code: string | null; config: string | null; entry_id: string | null }[] };
+  gates: { real_name_leak: number; voice_runs: number; voice_regenerated: number; voice_regenerated_ratio: number | null };
+  failures: { entries: number; by_code: Record<string, number>; run_errors: { step: string; code: string; count: number }[];
+    recent: { entry_id: string; step: string | null; code: string | null; at: string }[] };
+  eval: { file: string; gate_ok: boolean | null; regressions: number; passed: number; total: number; est_usd: number | null }[] | null;
+  satisfaction: { yes: number; no: number; yes_ratio: number | null; reactions: Record<string, number>;
+    by_config: Record<string, Record<string, number>>; next_day: NextDay };
+  direction: { multi_sun: { window_days: number; users: number; avg_suns: number | null; share_2plus: number | null; avg_suns_all: number | null };
+    closer_feeling: null };
+  talk: { conversations: number; avg_turns: number | null; finished: number; dropped: number; drop_at: Record<string, number>;
+    stop_after_suggestion: number | null; stop_without_suggestion: number | null; confirms: number; edited_ratio: number | null;
+    confirms_with_edit: number | null };
+  voice: { messages: number; suggested_ratio: number | null; repeat_ratio: number | null; dislike_ratio: number | null;
+    next_day_with_suggestion: NextDay; next_day_without_suggestion: NextDay };
+  other_values: { thoughts: number; kind: number; certainty: number; value: number };
+  feedback_text: { consented: number; not_consented: number };
+};
+export type OpsFeedback = { days: number; wrong: boolean; users: number;
+  items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null }[];
+  other_candidates: { field: string; original: string; count: number }[]; not_consented: Record<string, number> };
+export type OpsDigest = { days: number; users: number; lines: string[]; est_usd: number;
+  groups: { reason: string; items: number[]; count: number; fix_where: string; suggestion: string }[] };
+export type PrefSuggestion = { setting: "cross_links" | "suggestions"; from: string; to: string; reason: string };
+const mockOps = () => import("./mock-ops");
+export async function getOpsSummary(): Promise<OpsSummary> {
+  return MOCK ? (await mockOps()).summary : json("GET", "/ops/summary");
+}
+// 동의한 사용자의 피드백 원문(가명). 부를 때마다 서버에 열람 기록이 남는다
+export async function getOpsFeedback(days = 30): Promise<OpsFeedback> {
+  return MOCK ? (await mockOps()).feedback : json("GET", `/ops/feedback?days=${days}`);
+}
+export async function summarizeFeedback(days = 30): Promise<OpsDigest> {
+  return MOCK ? (await mockOps()).digest : json("POST", `/ops/feedback/summarize?days=${days}`);
+}
+export async function getPrefSuggestions(): Promise<{ suggestions: PrefSuggestion[] }> {
+  return MOCK ? { suggestions: [] } : json("GET", "/settings/suggestions");
+}
+export async function markPrefSeen(): Promise<{ ok: boolean }> {
+  return MOCK ? { ok: true } : json("POST", "/settings/suggestions/seen");
+}
