@@ -79,7 +79,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 `crisis`: 위기로 감지된 글이면 true(감지 결과는 기록 enc 안에 남겨 얼마나 자주 걸리는지 본다). 시험 단계(2026-10-08 아침 동규 결정)에는 위기여도 결과 모양이 같다 — `care` 칸은 없앴고(돌봄 화면 · 109 · 마들랜 · 119 · 112 안내 없음), 생각 · 관계 · 우주 행성이 평소처럼 나온다(Studio · Solar 도 평소처럼, 가명 글로). 위기 글의 `message`는 `mode: "comfort"`(제안 · 다음 질문 없음, 팩폭이면 그 글만 `tone: "다정하게"`)이고, `message.check_in`에 안부 한 줄(코드에 둔 고정 문장, 지난 안부와 겹치지 않게)이 온다. 화면은 한마디 아래 작은 줄로 보인다. 위기 2차 판정(Solar)이 실패한 글은 평소 `message` + 같은 `check_in`. 그 밖의 글은 `check_in: null`. 정식 운영 때의 안내(v8.json `crisis.resources`)는 그때 다시 정한다.
 
-그 밖의 칸: `thoughts[].state` 는 그 생각의 다짐 · 질문 상태, 없으면 그 생각이 새 쪽인 바뀜, 없으면 그 생각이 낀 긴장(`열림|블랙홀|해소`). `relations` 는 이 기록이 새 쪽(`to_entry`)인 관계 + 이 기록에서 시작해 뒤 기록으로 이어진 관계. `people_questions[].options`: 동명이인 · 별명은 `["같은 사람", "다른 사람", "사람 이름 아님"]`, 이름인지 낱말인지는 `["사람 이름", "사람 이름 아님"]`. `next_question.kind`: voice 의 weather → `weather`, aspiration · aspiration_invite → `aspiration`, first · commitment · open_question → `free`, 없음 → `none`.
+그 밖의 칸: `thoughts[].state` 는 그 생각의 다짐 · 질문 상태, 없으면 그 생각이 새 쪽인 바뀜, 없으면 그 생각이 낀 긴장(`열림|블랙홀|해소`). `relations` 는 이 기록이 새 쪽(`to_entry`)인 관계 + 이 기록에서 시작해 뒤 기록으로 이어진 관계. `people_questions[].options`: 동명이인 · 별명은 `["같은 사람", "다른 사람", "사람 이름 아님"]`, 이름인지 낱말인지는 `["사람 이름", "사람 이름 아님"]`. `next_question.kind`: voice 의 weather → `weather`, aspiration · aspiration_invite → `aspiration`, first · commitment · open_question · widen(좁아짐 막기: 오래 비어 있는 해 · 글이 없는 기준 축을 가끔 묻기) → `free`, 없음 → `none`.
 
 ## 2. 읽기
 
@@ -99,7 +99,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
                "order": 0, "ring": true, "ring_state": "열림|채워짐|null", "people": ["p1"], "weather": "비",
                "thought_count": 3, "certainty": "단정", "has_question": false}],
   "links": [{"id": "r1", "from_planet": "e1", "to_planet": "e0", "type": "긴장", "line": "점선",
-             "cross_domain": true, "needs_confirm": true, "explanation": "..."}],
+             "cross_domain": true, "needs_confirm": true, "explanation": "...", "ended": false}],
   "twins": [{"id": "w1", "a_planet": "e1", "b_planet": "e3", "topic": "...", "status": "열림|해소"}],
   "blackholes": [{"id": "b1", "star_id": "s1", "label": "...", "size": 3, "planets": ["e1", "e3", "e5"]}],
   "north_star": {"text": "...", "values": ["배려"], "reached_planets": ["e3"]} ,
@@ -112,6 +112,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `north_star`는 되고 싶은 모습이 없으면 `null`. `reached_planets`: 지금 판에 닿은 순간이 있는 행성.
 - `thought_count`: 생각 수(행성 크기), `certainty`: 가장 많은 확신(같으면 단정, 밝기), `has_question`: 열린 질문이 있음('?'), `ring`: 다짐이 있음, `ring_state`: `열림`(빈 고리) · `채워짐`(지킨 다짐).
 - 생각이 없는 글(생각 없이 일정만 적은 글, 시험 단계 전에 저장된 위기 글)은 행성으로 띄우지 않고 `/diary` 목록에만 있다. 같은 기록 안의 관계는 `links`에 넣지 않는다.
+- `links[].ended`: 목표 충돌인데 두 다짐 중 하나가 닫힘(지켜짐 · 그만둠) → 충돌이 끝남(화면은 흐리게 그리거나 숨김). 다른 종류는 늘 `false`.
+- `explanation`(관계 · 닿은 순간)과 기록 요약에는 사람 판정 · 진단 문장(G3)과 관측 입력의 내부 번호(T1 · P3)가 없다(번호는 '오늘 생각' · '지난 생각'으로 바뀜).
 - `twins` id = 긴장 묶음 키(`긴장:<관계 id>`), `blackholes` 는 풀리지 않은 채 다른 날 다시 나온 긴장.
 
 ## 3. 피드백 · 상태 버튼
@@ -133,6 +135,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `POST /aspiration` `{"now": "요즘의 나", "want": "되고 싶은 나", "obstacle": "걸리는 것", "if_then": "~면 ~하겠다", "values": ["배려"]}` → Aspiration(바뀌면 새 판, 이력 보존)
 - `POST /aspiration/decline` `{"mode": "skip|stop"}`(이번엔 넘어가기 / 그만 묻기) → `{"ok": true}`
 - `history`는 지금 판을 뺀 지난 판(최근 것이 앞). `values`는 v8.json 가치 이름만, 3개까지. `ask.should_ask`: 판이 없고 거절하지 않았고 쓴 날이 3일 이상.
+- `skip`(이번엔 넘어가기)은 계기가 생기면 풀린다: 그 뒤 글에서 바뀜이 나오거나, 이미 '실수'가 있는 주제에 어긋남이 또 나오면 `/me` 의 `onboarding.aspiration` 이 `none` 으로 돌아가고 `should_ask` 가 다시 `true`, 그 글의 `next_question.kind` 는 `aspiration`(날씨 · 다짐 안부 · 남은 질문이 먼저 잡히면 `/aspiration` 화면에서만 다시 물음). `stop`(그만 묻기)은 사용자가 `POST /aspiration` 으로 적을 때까지 그대로.
 - Aspiration = `{"id", "said", "values", "obstacle", "if_then", "said_at", "reached": [{"entry_id", "quote", "at"}]}`
 
 ## 6. 나 · 설정 · 운영

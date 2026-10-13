@@ -18,8 +18,10 @@ from langgraph.graph import END, START, StateGraph
 
 from app.agents import studio, tools
 from app.core import llm, logger
+from app.core.ontology import load
 from app.repository import diary
-from app.service.rules import advance, clean_record, filter_relations, link_domain
+from app.service import voice as voice_rules
+from app.service.rules import advance, clean_record, clean_text, filter_relations, link_domain, reask_trigger
 from app.service.rules.normalize import key as norm_key
 from app.service.safety import RealNameLeak, detect_crisis, find_new_names
 from app.service.studio_format import parse_record
@@ -163,7 +165,9 @@ def record_agent(state, ctx):
 
 
 def _quote_ok(quote, source):
-    return not quote or tools.norm(quote) in tools.norm(source)
+    """G1: 인용이 원문에 글자 그대로 있어야 한다. 빈 인용은 근거가 없으니 버린다(WS12)."""
+    q = tools.norm(quote)
+    return bool(q) and q in tools.norm(source)
 
 
 @node("record_clean")
@@ -216,6 +220,7 @@ def record_clean(state, ctx):
     ctx.repo.vectors.upsert(ctx.uid, [{"id": t["id"], "emb": v, "entry_id": ctx.entry_id, "star_id": t["star_id"],
                                        "written_at": state["written_at"], "kind": t["kind"]} for t, v in zip(today, tvecs)])
     info = {k: rec[k] for k in ("summary", "addressee", "events")}
+    info["summary"] = clean_text(info["summary"], source)   # G3 + 내부 번호
     return {"record": info, "today": today, "dropped_quotes": len(rec["thoughts"]) - len(kept)}
 
 
@@ -254,7 +259,8 @@ def rules(state, ctx):
     for k in kept:
         k["quote"] = quote.get(frozenset((k["from"], k["to"])))
     today_ids = {t["id"] for t in state["today"]}
-    reached = [r for r in obs.get("reached", []) if r["thought"] in today_ids and r.get("evidence")]
+    reached = [{**r, "explanation": clean_text(r.get("explanation"), state["text"])}
+               for r in obs.get("reached", []) if r["thought"] in today_ids and r.get("evidence")]
     logger.log("step", step="rules", entry_id=ctx.entry_id, relations=len(kept), dropped=len(dropped))
     return {"relations": kept, "reached": reached}
 
@@ -265,6 +271,48 @@ def rules(state, ctx):
 
 def _flag(settings, k, day):
     return settings.get(k) == day
+
+
+def _addressee_person(state):
+    """편지처럼 특정 인물에게 쓴 글이면 그 사람 id(이 글의 생각에 처음 나온 사람)."""
+    if state["record"].get("addressee") != "특정 인물":
+        return None
+    return next((p for t in state["today"] for p in t["people"]), None)
+
+
+PERSON_HISTORY_MAX = 5   # 운영 기본값(연구 근거 아님)
+
+
+def _person_history(s, pid, done):
+    """그 사람이 나온 지난 기록의 요약(최근 것부터). done: 끝난 기록(최근 → 오래된)."""
+    tids = [r["thought_id"] for r in s.rows("thought_people", person_id=pid)]
+    eids = {t["entry_id"] for t in s.rows("thoughts", id=tids)} if tids else set()
+    return [f"{diary.local_day(e['written_at'])} {e['data']['summary']}" for e in done
+            if e["id"] in eids and e["data"].get("summary")][:PERSON_HISTORY_MAX]
+
+
+def _widen_cands(s, state, done, days_written):
+    """좁아짐 막기 재료 후보(앞이 우선): 오늘과 맞서는 지난 생각(쌍행성) → 오래 비어 있는 해 → 글이 없는 기준 축."""
+    ts = {t["id"]: t for t in state["today"] + state["past"]}
+    today_ids = {t["id"] for t in state["today"]}
+    out = [{"kind": "twin", "key": f"twin:{r['from']}", "past": ts[r["from"]].get("thought", ""),
+            "today": ts[r["to"]].get("thought", ""), "day": ts[r["from"]].get("day")}
+           for r in state["relations"] if r["type"] == "긴장" and r["to"] in today_ids and r["from"] in ts
+           and r["from"] not in today_ids]
+    if days_written < voice_rules.ASPIRATION_AFTER_DAYS:   # 며칠 쓰기 전에는 다른 해를 묻지 않는다
+        return out
+    sun_name = {x["id"]: x["name"] for x in diary.suns(s)}
+    pos = {e["id"]: i for i, e in enumerate(done)}          # 0 = 가장 최근 기록
+    last = {}                                               # 해 → 가장 최근에 나온 기록의 순위
+    for t in s.rows("thoughts", entry_id=list(pos)) if pos else []:
+        last[t["sun_id"]] = min(last.get(t["sun_id"], pos[t["entry_id"]]), pos[t["entry_id"]])
+    today_suns = {t["sun_id"] for t in state["today"]}
+    quiet = sorted((sid for sid, i in last.items() if i >= voice_rules.QUIET_AFTER_ENTRIES and sid not in today_suns
+                    and sid in sun_name), key=lambda sid: -last[sid])
+    out += [{"kind": "sun", "key": f"sun:{sun_name[sid]}", "name": sun_name[sid]} for sid in quiet]
+    written = {sun_name.get(sid) for sid in last} | {t["domain"] for t in state["today"]}
+    out += [{"kind": "axis", "key": f"sun:{d['name']}", "name": d["name"]} for d in load()["domains"] if d["name"] not in written]
+    return out
 
 
 @node("voice", "voice")
@@ -278,7 +326,16 @@ def speak(state, ctx):
         asp = (diary.aspirations(s) or [None])[-1]
         need = [k for k, v in states.items() if v["kind"] in ("다짐", "질문") and v["state"] == "열림"]
         text_of = {t["id"]: t.get("text", "") for t in diary.thoughts(s, id=need)} if need else {}
+        person = _addressee_person(state)
+        history = _person_history(s, person, done) if person else []
+        days = len({diary.local_day(e["written_at"]) for e in done})
+        widen = voice_rules.pick_widen(_widen_cands(s, state, done, days), [m.get("widen", "") for m in msgs])
     vow_kept = {r["from"] for r in state["relations"] if r.get("vow_kept")}
+    ts = {t["id"]: t for t in state["today"] + state["past"]}
+    changes = [{"before": ts[r["from"]].get("thought", ""), "after": ts[r["to"]].get("thought", ""), "day": ts[r["from"]].get("day")}
+               for r in state["relations"] if r["type"] == "바뀜" and r["from"] in ts and r["to"] in ts]
+    asked = onboarding.get("aspiration")
+    reask = asked == "skip" and reask_trigger(state["relations"], states)   # 이번엔 넘어가기 → 계기가 생기면 다시 묻는다
     commitments = [{"text": text_of.get(k, ""), "state": v["state"], "due": v.get("due"),
                     "overdue": bool(v.get("due") and v["due"] < day)}
                    for k, v in states.items() if v["kind"] == "다짐" and v["state"] == "열림" and k not in vow_kept and text_of.get(k)]
@@ -295,16 +352,22 @@ def speak(state, ctx):
         "commitments": commitments[:5],
         "kept": [text_of.get(k, "") for k in vow_kept if text_of.get(k)],
         "open_questions": [text_of[k] for k, v in states.items() if v["kind"] == "질문" and v["state"] == "열림" and text_of.get(k)][:3],
-        "days_written": len({diary.local_day(e["written_at"]) for e in done}),
+        "days_written": days,
         "weather_skipped": not settings.get("weather_ask", True),
         "aspiration_step": onboarding.get("aspiration_step"),
-        "aspiration_off": onboarding.get("aspiration") in ("skip", "stop"),
+        "aspiration_off": asked == "stop" or (asked == "skip" and not reask),   # 그만 묻기만 영구
+        "heavy": voice_rules.is_heavy(state["today"], state["record"].get("events")),
+        "person_history": history,
+        "past_thoughts": [{k: p.get(k) or "" for k in ("thought", "quote", "day")} for p in state["past"]],
+        "changes": changes,
+        "widen": widen,
         "settings": {"gentle": _flag(settings, "gentle_today", day), "comfort_only": _flag(settings, "comfort_only_today", day),
                      "suggest": {"적게": "안 함", "보통": "가끔", "많이": "자주"}.get(settings.get("suggestions"), "가끔")},
     }
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
-    return {"voice": {k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
+    return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
+                      "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask},
             "_checks": len(checks)}
 
 
@@ -340,12 +403,13 @@ def save(state, ctx):
         mid = diary.new_id("m")
         s.insert("messages", {"id": mid, "entry_id": eid, "tone": v["tone"], "next_kind": v["next_kind"],
                               "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"],
-                                                                     "mode": v["mode"], "check_in": v.get("check_in", "")})})
+                                                                     "mode": v["mode"], "check_in": v.get("check_in", ""),
+                                                                     "widen": v.get("widen", "")})})
         stars = Counter(t["star_id"] for t in state["today"])
         star = max(stars, key=lambda k: (stars[k], -[t["star_id"] for t in state["today"]].index(k))) if stars else None
         sun = next((t["sun_id"] for t in state["today"] if t["star_id"] == star), None)
         info = state["record"]
-        person = next((p for t in state["today"] for p in t["people"]), None) if info.get("addressee") == "특정 인물" else None
+        person = _addressee_person(state)
         data = {**e["data"], "summary": info.get("summary", ""), "events": info.get("events", []), "addressee_person": person,
                 "past": [p["id"] for p in state["past"]]}
         if state.get("crisis"):
@@ -353,8 +417,11 @@ def save(state, ctx):
         s.update("entries", {"status": "done", "step": "save", "star_id": star, "sun_id": sun, "addressee": info.get("addressee"),
                              "enc": diary.seal(s, "entries", eid, data), "steps_enc": None, "error_code": None,
                              "updated_at": diary.now()}, id=eid)
-        if v["next_kind"] == "weather":
-            diary.save_profile(s, onboarding={"weather_asked": True})
+        ob = {"weather_asked": True} if v["next_kind"] == "weather" else {}
+        if v.get("reask"):
+            ob["aspiration"] = "none"   # 이번엔 넘어가기 뒤 계기가 생김 → 되고 싶은 모습을 다시 묻는다(GET /aspiration should_ask)
+        if ob:
+            diary.save_profile(s, onboarding=ob)
     return {}
 
 
