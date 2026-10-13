@@ -39,7 +39,7 @@ uv run --frozen python eval/experiments.py recall         # 지난 생각 고르
 uv run --frozen python eval/labels.py e7-score eval/answers/e7_haneul.csv --pred eval/answers/e7_haneul_c1.json   # E7 · E6(가상 정답)
 uv run --frozen python tools/stability_v2.py              # 흔들림 2판: 서비스 길로 3편 × 3번(유료, 약 $0.45)
 uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
-uv run --frozen python scripts/test_inputs.py --zip 2        # 입력 4종(인스타 ZIP · MD · TXT · 직접 쓰기)을 API 로 끝까지(서버가 실제면 유료, 편당 약 $0.10)
+uv run --frozen python scripts/test_inputs.py --zip 2        # 입력 4종(인스타 ZIP · MD · TXT · 직접 쓰기)을 API 로 끝까지(서버가 실제면 유료, 편당 약 $0.15)
 FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_upstage.py 8013   # 화면 확인용 백엔드: 로컬 DB · Chroma 그대로, Upstage 만 가짜($0)
 ```
 

@@ -26,10 +26,10 @@ SERIES_END = re.compile(r"(이어짐|=>|\(계속\))\s*$")
 SERIES_GAP_S = 86400   # 하루 안에 올린 다음 게시물만 이어 쓴 글로 본다
 MARKER_MAX = 20        # ponytail: 이어 쓴 표시 줄('(2) 이어서' · '2편')은 짧다고 봄. 그보다 긴 줄은 내용이라 남김
 TITLE_MAX = 40         # 쓰기 화면 파일 불러오기와 같은 기준: 짧은 첫 줄만 제목
-# 화면이 보여 줄 어림값(docs/e2e-real.md · tech-explainer: 편당 외부 호출 4번 약 $0.10, Studio 기록 + 관측 약 54초 + 나머지)
+# 화면이 보여 줄 어림값: 시간은 Studio 기록 + 관측 약 54초 + 나머지, 비용은 편당 $0.15(2026-10-14 결정 — docs/ws17-inputs.md 실측 2편 $0.30)
 # ponytail: 고정값. 사용자별 실측(runs 표 평균)이 필요해지면 그때 바꿈
 EST_SECONDS_PER_POST = 60
-EST_USD_PER_POST = 0.10
+EST_USD_PER_POST = 0.15
 
 
 def fix(s):

@@ -297,7 +297,7 @@ Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|cont
 화면 `/import`(쓰기 화면의 '인스타그램 글 한꺼번에 가져오기'). 순서: ① 브라우저가 '내 정보 다운로드' ZIP(JSON 형식)에서 `posts_N.json` 만 꺼낸다(사진 · 영상은 읽지 않음, ZIP64 포함, `posts_1.json` 을 바로 골라도 됨) ② 미리 보기 ③ 사용자가 '전부 / 최근 N편'을 고름(글 수 · 예상 시간 · 비용을 먼저 보임) ④ 고른 글 중 **오래된 것부터** 한 편씩 `/diary/stream` ⑤ 멈추기(지금 글까지) · 이어 하기(다음 글부터). 새로고침한 뒤에는 ZIP 을 다시 고르면 이미 가져온 글이 표시된다.
 
 - `POST /import/instagram/preview` 본문 `{"posts": [{"title": "캡션", "creation_timestamp": 1774714800, "media": [{"title": "", "creation_timestamp": null}]}]}` — 인스타 게시물 모양에서 캡션 · 시각만(첫 사진 하나, 모르는 칸은 422). 캡션은 인스타가 적은 그대로(깨진 한글, 앞뒤 공백을 떼지 않음). 로그인만 필요(동의 확인 · 위기 판정은 `/diary/stream` 이 함).
-  - 응답 `{"posts": [ImportPost], "max_posts": null | 수, "est_seconds_per_post": 60, "est_usd_per_post": 0.1}`. `posts` 는 최근 것부터.
+  - 응답 `{"posts": [ImportPost], "max_posts": null | 수, "est_seconds_per_post": 60, "est_usd_per_post": 0.15}`. `posts` 는 최근 것부터.
   - ImportPost = `{"ref": "ig:<첫 게시물 시각>", "written_at": "게시 시각 ISO(+09:00)", "title", "text", "day", "day_basis": "확실|추정", "day_check", "parts": 묶은 게시물 수, "too_long": 본문이 MAX_TEXT_CHARS 를 넘음(화면이 건너뜀), "imported": 이 원본으로 정리가 끝난 기록이 이미 있음}`.
   - 정리(`app/service/importer`, 1차 importer.py 에서 옮김): 깨진 한글 복원(UTF-8 바이트가 latin-1 글자로 적힘), 사진만 있는 게시물 뺌, 하루 안에 이어 쓴 게시물('(2)…'로 시작하거나 앞 글이 '이어짐 · => · (계속)'으로 끝남)을 한 편으로(묶인 글의 짧은 표시 줄만 지움), 40자 이하 첫 줄은 제목, 글이 다루는 날은 §1 과 같은 규칙(G2) — 기록을 만들 때 서버가 다시 읽는다.
   - 상한 없음(결정 12): `IMPORT_MAX_POSTS` 가 비면(기본) 무제한. 값이 있으면 `max_posts` 로 내려 주고 화면이 고를 수 있는 편수를 그만큼으로 묶는다(서버 쪽 지킴은 `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD`).

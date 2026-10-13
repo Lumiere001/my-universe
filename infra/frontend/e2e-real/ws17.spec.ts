@@ -74,13 +74,13 @@ test("인스타 ZIP 가져오기(실제 화면 · 로컬 백엔드)", async ({ p
     await expect(list.getByRole("listitem").first()).toContainText("3/28 동아리 해커톤 (1)");   // 깨진 한글 복원 + 묶음
     await expect(list.getByRole("listitem").first()).toContainText("게시물 2개");
     await expect(list.getByRole("listitem").last()).toContainText("2025-12-31");                  // 1월에 올린 12/31 → 지난해
-    await expect(page.getByText(/6편 · 예상 시간 약 6분 · 예상 비용 약 \$0\.60/)).toBeVisible();
+    await expect(page.getByText(/6편 · 예상 시간 약 6분 · 예상 비용 약 \$0\.90/)).toBeVisible();
     await shot("02-preview", true);
   });
 
   await test.step("최근 2편만 → 2편만 기록", async () => {
     await page.getByLabel("최근 몇 편").fill("2");
-    await expect(page.getByText(/2편 · 예상 시간 약 2분 · 예상 비용 약 \$0\.20/)).toBeVisible();
+    await expect(page.getByText(/2편 · 예상 시간 약 2분 · 예상 비용 약 \$0\.30/)).toBeVisible();
     await page.getByRole("button", { name: "가져오기 시작" }).click();
     await expect(progress.getByRole("heading", { name: "다 가져왔어요" })).toBeVisible({ timeout: 120_000 });
     await expect(progress).toContainText("2 / 2편 · 새로 정리 2편");

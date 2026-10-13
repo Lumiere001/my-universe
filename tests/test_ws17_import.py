@@ -78,7 +78,7 @@ def test_preview_api(client, env, monkeypatch):  # noqa: F811
     r = client.post("/import/instagram/preview", headers=H1, json={"posts": posts})
     assert r.status_code == 200
     pv = r.json()
-    assert pv["max_posts"] is None and pv["est_seconds_per_post"] > 0 and pv["est_usd_per_post"] > 0   # 상한 없음(기본)
+    assert pv["max_posts"] is None and pv["est_seconds_per_post"] > 0 and pv["est_usd_per_post"] == 0.15   # 상한 없음(기본), 편당 $0.15(10/14 결정)
     assert len(pv["posts"]) == 6 and not any(p["imported"] for p in pv["posts"])
     assert pv["posts"][1]["text"].endswith("싫은 날")   # 요청 본문의 앞뒤 공백 떼기가 깨진 바이트(A0)를 지우지 않음
     assert env.fake.calls["record"] == 0   # 미리 보기는 밖으로 보내지 않음

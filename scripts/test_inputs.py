@@ -8,7 +8,7 @@ v8 백엔드 API 로 끝까지 돌린다. 글은 모두 가상 인물 도담(골
 
 ZIP 은 화면(/import)과 같은 순서로 보낸다: 게시물 → POST /import/instagram/preview → 아직 안 가져온 최근 N편을 오래된 것부터
 /diary/stream(source='지난 글 묶음', source_ref, written_at = 게시 시각). 같은 ZIP 을 한 번 더 보내 새 기록이 0편인지 본다.
-유료: 서버가 실제 Studio · Solar 를 부르면 편당 약 $0.10. 끝나면 /stats 의 이달 추정 비용 차이를 runs/cost_ledger.jsonl 에 남긴다
+유료: 서버가 실제 Studio · Solar 를 부르면 편당 약 $0.15. 끝나면 /stats 의 이달 추정 비용 차이를 runs/cost_ledger.jsonl 에 남긴다
 (가짜 Upstage 서버 scripts/dev_fake_upstage.py 에 돌릴 때는 --no-ledger). 만든 기록은 끝나면 지운다(--keep 이면 남김).
 결과(원문 없음)는 docs/ws17-inputs.md.
 """
