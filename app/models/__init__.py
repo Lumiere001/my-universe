@@ -5,7 +5,7 @@ app/models
 """
 
 import re
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -34,11 +34,17 @@ def _one_of(name, v, allow_none=True):
     return v
 
 
+SOURCES = ("대화", "텍스트", "사진", "지난 글 묶음")   # 기록 출처(PRD §4.1 · §4.4)
+
+
 class DiaryIn(In):
     text: str = Field(min_length=1, max_length=config.MAX_TEXT_CHARS)
     title: str = Field(default="", max_length=config.MAX_TITLE_CHARS)
     written_at: Optional[datetime] = None
     weather: Optional[str] = None
+    source: Literal[SOURCES] = "텍스트"
+    source_ref: Optional[str] = Field(default=None, max_length=200)   # 가져온 원본 표시(같은 원본 다시 가져오기 막기)
+    day: Optional[date] = None                                         # 사용자가 고른 글이 다루는 날
 
     @field_validator("title")
     @classmethod

@@ -70,9 +70,9 @@ def record_html(title, body, known_topics=()):
 
 
 def parse_record(data):
-    """기록 Agent 추출 JSON → {"summary", "addressee", "events", "thoughts": [생각 dict]}."""
+    """기록 Agent 추출 JSON(+ studio 가 붙인 "_classify") → {"summary", "addressee", "events", "record_type", "thoughts": [생각 dict]}."""
     out = {"summary": " ".join(s.strip() for s in data.get("summary") or [] if isinstance(s, str)),
-           **_closed("addressee", _first(data.get("addressee"))),
+           **_closed("addressee", _first(data.get("addressee"))), "record_type": _first(data.get("_classify")),
            "events": [e.strip() for e in data.get("events") or [] if isinstance(e, str) and e.strip()],
            "thoughts": []}
     for t in data.get("thoughts") or []:

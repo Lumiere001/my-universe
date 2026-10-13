@@ -3,9 +3,12 @@ app/core/security.py
 
 원문 암호화. AES-256-GCM, 사용자별 키 = HKDF-SHA256(DIARY_ENC_KEY, salt=user_id).
 행마다 seal(user_id, aad, dict) → bytes(nonce 12 + 암호문). aad 에 '표:행 id'를 넣어 다른 행으로 옮겨 붙이면 풀리지 않는다.
+같은 글 찾기(digest)는 HMAC-SHA256, 키는 같은 DIARY_ENC_KEY 에서 용도 문자열(info)을 달리해 따로 파생한다(새 비밀값 없음).
 """
 
 import base64
+import hashlib
+import hmac
 import json
 import os
 from functools import lru_cache
@@ -33,8 +36,13 @@ def _master():
 
 
 @lru_cache(maxsize=256)
-def _key(master, user_id):
-    return HKDF(algorithm=hashes.SHA256(), length=32, salt=str(user_id).encode(), info=b"my-universe/diary/v1").derive(master)
+def _key(master, user_id, info=b"my-universe/diary/v1"):
+    return HKDF(algorithm=hashes.SHA256(), length=32, salt=str(user_id).encode(), info=info).derive(master)
+
+
+def digest(user_id, text):
+    """사용자별 HMAC-SHA256 hex. 같은 글이면 같은 값, 다른 사용자 · 키로는 다른 값(글을 되살릴 수 없음)."""
+    return hmac.new(_key(_master(), str(user_id), b"my-universe/digest/v1"), text.encode(), hashlib.sha256).hexdigest()
 
 
 def seal(user_id, aad, data):
