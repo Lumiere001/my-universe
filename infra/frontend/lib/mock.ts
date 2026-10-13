@@ -2,7 +2,7 @@
 // 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
 import ontology from "./ontology.json";
 import type {
-  Aspiration, AspirationState, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Settings,
+  Aspiration, AspirationState, Consent, ConsentInput, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Settings,
   StreamError, StreamHandlers, Tone, Universe,
 } from "./api";
 
@@ -270,4 +270,20 @@ export async function patchSettings(s: Partial<Settings>) {
   if (s.tone === "팩폭" && !(s.fact_bomb_ack ?? settings.fact_bomb_ack)) throw new Error("팩폭은 경고를 확인한 뒤에 고를 수 있어요.");
   settings = { ...settings, ...s };
   return { ...settings };
+}
+
+// 동의: 가짜 데이터 모드는 이미 동의한 사용자(시험 계정과 같음).
+// localStorage "mock-consent" 가 "none" 이면 아직 동의하지 않은 사용자(e2e 동의 화면 시험).
+const CONSENT_V = "2026-10-13";
+const consentRead = () => { try { return localStorage.getItem("mock-consent"); } catch { return null; } };
+export async function getConsent(): Promise<Consent> {
+  const v = consentRead();
+  if (v === "none") return { version: CONSENT_V, needed: true, agreed: null };
+  return { version: CONSENT_V, needed: false, agreed: { version: CONSENT_V, operator_read: v === "operator_read", at: "2026-10-13T09:00:00+09:00" } };
+}
+export async function saveConsent(c: ConsentInput): Promise<Consent> {
+  if (!c.age14) throw new Error("만 14세 미만은 지금 쓸 수 없어요.");
+  if (!c.required || !c.sensitive) throw new Error("필수 동의가 빠졌어요.");
+  localStorage.setItem("mock-consent", c.operator_read ? "operator_read" : "ok");
+  return getConsent();
 }

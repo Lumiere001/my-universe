@@ -84,7 +84,7 @@ export default function SettingsPage() {
 
       {!MOCK && <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>}
       {!MOCK && <DeleteAccount />}
-      <p className="sub"><Link href="/privacy">개인정보처리방침</Link></p>
+      <p className="sub"><Link href="/privacy">개인정보처리방침</Link> · <Link href="/terms">이용약관</Link> · <Link href="/consent">동의 내용 보기 · 바꾸기</Link></p>
     </main>
   );
 }
