@@ -181,8 +181,9 @@ def record_clean(state, ctx):
             t["kind"] = "감사"
     with ctx.repo.session(ctx.uid) as s:
         custom = [x["name"] for x in diary.suns(s) if x["custom"]]
+        aliases = diary.profile(s)[0].get("topic_aliases")   # WS16: 사용자가 합친 작은 별의 옛 이름 → 합친 이름
     topics = state["topics"]
-    rec = clean_record(raw, state["people"], {k: v for k, v in topics.items() if v}, custom)
+    rec = clean_record(raw, state["people"], {k: v for k, v in topics.items() if v}, custom, aliases)
     source = f"{state.get('title', '')}\n{state['text']}"
     kept = [t for t in rec["thoughts"] if _quote_ok(t["quote"], source)]   # 원문에 없는 인용은 버린다(1차 G1)
     for t in kept:
