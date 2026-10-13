@@ -62,6 +62,7 @@ def repo(users, monkeypatch, tmp_path):
     r = PgRepo(config.DATABASE_URL, ChromaVectors())
     for _, uid in users.values():
         seed.wipe(r, uid)
+        seed.agree(r, uid)
     r.fake = fake
     return r
 
@@ -219,6 +220,7 @@ def test_delete_me_real(repo):
     pw = seed._read(seed.ENV_LOCAL)["DEV_TEST_PASSWORD"]
     seed.admin_user("it-del@my-universe.test", pw)
     token, uid = seed.token("it-del@my-universe.test", pw)
+    seed.agree(repo, uid)
     main.app.dependency_overrides[get_repo] = lambda: repo
     try:
         c = TestClient(main.app)
@@ -236,3 +238,36 @@ def test_delete_me_real(repo):
     assert repo.vectors.get(uid) == {}
     with pytest.raises(httpx.HTTPStatusError):
         seed.token("it-del@my-universe.test", pw)
+
+
+def test_consents_rls_append_only_and_data_api(repo, users):
+    """WS24: 동의 기록은 그 사용자만 보고(RLS), 백엔드 역할도 고치지 못하며(update 권한 없음), 필수 셋이 빠진 줄은 DB 가 거부.
+    Data API(/rest/v1)로는 읽지도 쓰지도 못한다."""
+    from app.api import consent
+    from app.core import seed
+    (ta, ua), (_, ub) = users["a"], users["b"]
+    for u in (ua, ub):
+        seed.wipe(repo, u)   # 계정 지우기 = 동의 기록도 지움(repo 픽스처가 넣어 둔 동의)
+    with repo.session(ua) as s:
+        consent.save(s, operator_read=True)
+        assert not consent.needed(s) and consent.operator_read(s)
+    with repo.session(ub) as s:
+        assert s.rows("consents") == [] and consent.needed(s)
+    with psycopg.connect(config.DATABASE_URL) as c:   # 코드가 user_id 를 빠뜨려도 RLS 가 막는다
+        c.execute("set local role app_user")
+        c.execute("select set_config('app.user_id', %s, true)", [ub])
+        assert c.execute("select count(*) from consents").fetchone()[0] == 0
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        with repo.session(ua) as s:
+            s.update("consents", {"operator_read": False})
+    with pytest.raises(psycopg.errors.CheckViolation):
+        with repo.session(ua) as s:
+            s.insert("consents", {"id": "c_bad", "version": consent.VERSION, "required": True, "sensitive": False, "age14": True})
+    base = f"{config.SUPABASE_URL}/rest/v1/consents"
+    user = {"apikey": config.SUPABASE_ANON_KEY, "Authorization": f"Bearer {ta}", "Content-Type": "application/json"}
+    tries = [httpx.get(base, headers=user, params={"select": "*"}),
+             httpx.post(base, headers=user, json={"id": "c_x", "user_id": ua, "version": "x", "required": True,
+                                                  "sensitive": True, "age14": True})]
+    assert [r.status_code for r in tries if r.status_code not in (401, 403)] == []
+    with repo.session(ua) as s:
+        assert [r["operator_read"] for r in s.rows("consents")] == [True]

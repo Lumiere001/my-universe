@@ -284,7 +284,7 @@ def delete_entry(s, vectors, eid):
 
 
 WIPE = ("aspiration_reached", "messages", "relations", "thought_people", "people_questions", "thoughts", "states",
-        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles")
+        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles", "consents")
 
 
 def wipe(s):

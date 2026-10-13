@@ -104,11 +104,22 @@ def token(email, password=None):
     return r.json()["access_token"], r.json()["user"]["id"]
 
 
+def agree(repo, uid):
+    """시험용 계정은 지금 판 동의를 이미 한 상태로 둔다(동의 화면 시험은 새 계정 · 가짜 데이터 모드로)."""
+    from app.api import consent
+    with repo.session(uid) as s:
+        if consent.needed(s):
+            consent.save(s)
+
+
 def accounts():
+    from app.core import config
+    from app.repository import PgRepo
     pw = _read(ENV_LOCAL)["DEV_TEST_PASSWORD"]
+    repo = PgRepo(config.DATABASE_URL)
     for email in ACCOUNTS.values():
-        admin_user(email, pw)
-    print(f"시험용 계정 {len(ACCOUNTS)}개 준비(비밀번호는 .env.local 의 DEV_TEST_PASSWORD).")
+        agree(repo, admin_user(email, pw))
+    print(f"시험용 계정 {len(ACCOUNTS)}개 준비(비밀번호는 .env.local 의 DEV_TEST_PASSWORD, 지금 판 동의 포함).")
 
 
 def wipe(repo, uid):
@@ -124,6 +135,7 @@ def demo(repo, uid):
     from app.service.rules import advance, clean_record, filter_relations
     d = json.loads(DEMO.read_text(encoding="utf-8"))
     wipe(repo, uid)
+    agree(repo, uid)
     vecs, ids, ts, states = [], {}, {}, {}
     with repo.session(uid) as s:
         people = [diary.add_person(s, n, relation=r) for n, r in DEMO_PEOPLE.items()]

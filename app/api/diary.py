@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response
 from fastapi.responses import StreamingResponse
 
 from app.agents import graph
+from app.api import consent
 from app.core import config
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
@@ -91,6 +92,7 @@ def _limits(s, eid=None):
 
 def _create(repo, uid, body: DiaryIn):
     with repo.session(uid) as s:
+        consent.check(s)
         diary.profile(s)
         _limits(s)
         eid = diary.new_id("e")
@@ -127,6 +129,7 @@ def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         if not s.rows("entries", id=eid):
             raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        consent.check(s)
         _limits(s, eid)
         if config.RESUME_LIMIT > 0 and diary.resumes(s, eid) >= config.RESUME_LIMIT:
             raise ApiError(429, "resume_limit", f"이 기록은 {config.RESUME_LIMIT}번까지 이어서 할 수 있어요. 운영자에게 알려 주세요.")
