@@ -10,6 +10,8 @@
 
 **쓰기 화면 작은 묶음(WS13, 2026-10-14):** `GET /diary/prompt`(쓰기 화면 위 별지기 말풍선) · `PATCH /diary/{id}/day`(글이 다루는 날 고치기) 를 더하고(§2), Settings 에 `keeper_name`(별지기 이름)을 더했다(§6). 새 경로 · 칸 추가만이고 마이그레이션은 없다.
 
+**사진(손글씨) 입력(WS18, 2026-10-14):** `POST /photo/read`(사진 한 장의 글자만 읽기, 저장 안 함)를 더했다(§1.1). 읽은 글은 지금의 쓰기 본문(`source: "사진"`)으로 보낸다. 새 경로만이고 마이그레이션 · 새 환경변수는 없다(기존 `UPSTAGE_API_KEY`).
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -56,6 +58,18 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`). 잠금은 DB(`entries.locked_until`, 조건부 update)라 서버 인스턴스가 여러 개여도 하나만 돈다. 노드가 끝날 때마다 잠금을 `RUN_LOCK_S`(기본 600초)만큼 늘리고, 끝나면 푼다. 서버가 멈춰 잠금이 만료되면 `GET /diary/{id}`가 `failed`로 알려 준다.
 - 운영 상한은 환경변수를 설정했을 때만 건다(기본 0 = 없음). 설정하면 이어 하기도 이번 달 비용 상한(`monthly_budget`)과 하루 수를 본다. 하루 수 = 오늘 처리를 시작하거나 이어 한 기록 수(오늘 이미 센 기록을 다시 이어 하는 건 더하지 않음, 지운 글도 그대로 셈, 시드한 글은 안 셈). 기록 하나당 이어 하기는 `RESUME_LIMIT`번까지(429 `resume_limit`).
 - 시험 · curl용으로 같은 본문의 `POST /diary`(스트림 없이 EntryResult 한 번)도 둔다.
+
+## 1.1 사진 글자 읽기 (WS18, 2026-10-14)
+
+`POST /photo/read` 본문 = 사진 한 장의 바이트 그대로(multipart 아님, `Content-Type` 은 아무거나 — 형식은 앞 바이트로 본다) → `{"text": "읽은 글(줄 단위, 빈 줄 뺌, 글자가 없으면 \"\")"}`.
+
+- 흐름(PRD §3 손글씨 사진, 결정 5): 화면이 사진을 긴 변 2400px JPEG 로 다시 그려 4MB 아래로 줄이고(위치 정보 등 메타데이터도 빠짐) 한 장씩 부른다 → 읽은 글을 쪽 순서대로 쓰기 칸에 채움 → 사용자가 고침 → `POST /diary/stream` 에 `"source": "사진"`. 그 뒤는 텍스트와 같은 길(위기 판정 · 가명 처리 → 기록 · 관측 · 한마디). 글이 다루는 날은 첫 줄 날짜(G2, 확실), 없으면 올린 날 · 추정.
+- 여러 쪽: 한 요청 = 한 장(Vercel 함수 요청 본문 4.5MB 한도). 화면이 순서대로 부르고 줄바꿈으로 이어 붙인다.
+- 저장하지 않는다: 사진은 이 요청의 메모리에서 Upstage Document Digitization(`model=ocr`)으로 보내고 버린다. DB · 디스크 · 실행 기록에 사진 · 읽은 글이 남지 않는다(기록에는 `upstage_ocr` · 쪽 수 · 추정 비용 · 시간만). Upstage 응답 `stored: false`(2026-10-14 확인).
+- 이름 가리기 예외(결정 7): 사진 속 이름은 가릴 수 없어 그대로 간다(개인정보처리방침 · 첫 사용 동의에 밝힘). 정리 · 대화 요청의 실명 0건 관문은 고친 글을 보낼 때 그대로 건다.
+- 입력 검사(신뢰 경계, 운영 상한 아님): jpg(`FF D8 FF`) · png · heic(`ftyp` heic · heix · hevc · hevx · heim · heis · mif1 · msf1)만. 크롬은 HEIC 를 못 그려서 화면이 4MB 아래 HEIC 는 그대로 보낸다(Upstage 가 읽음).
+- 오류: 403 `consent_required`(동의 전 — 사진이 밖으로 나가기 전에 막음) · 413 `photo_too_big`(4.5MB 넘음, 받는 중에 멈춤) · 415 `photo_type` · 422 `photo_empty` · 502 `ocr_busy`(Upstage 429 를 1.5초 쉬고 두 번 더 물어도 붐빔) · 502 `ocr_failed` · 503 `ocr_unconfigured`(`UPSTAGE_API_KEY` 없음).
+- 모델: `ocr`(쪽당 $0.0015). 2026-10-14 가상 손글씨 사진(`tests/fixtures/photos`, `tools/photo_samples.py measure`)으로 1회씩 재어 정함: ocr 글자 정확도 1.0 · 약 2초, document-parse 는 줄 공책을 표로 읽어 0.35 · 쪽당 $0.01. 글자 읽기 비용은 `runs` 표(이번 달 추정 비용)에 들어가지 않는다(기록이 생기기 전이라) — 실행 기록(`what: upstage_ocr`)의 `est_usd` 로 센다.
 
 ### EntryResult
 
