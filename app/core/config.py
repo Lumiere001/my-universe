@@ -80,7 +80,17 @@ TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
 # 확인하지 않고 둔 대화 초안(요약 확인 전)을 이만큼 뒤 다음 요청 때 지운다(WS20). 0 = 지우지 않음. 사용 상한이 아님.
 DRAFT_KEEP_HOURS = _int("DRAFT_KEEP_HOURS", 72)
 
+# 받아쓰기 · 읽어 주기(WS21, ElevenLabs — 2026-10-13 동규). 키 권한은 Speech to Text · Text to Speech 만, 값은 동규가 넣음.
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+STT_MODEL = os.getenv("ELEVENLABS_STT_MODEL", "scribe_v2")
+TTS_MODEL = os.getenv("ELEVENLABS_TTS_MODEL", "eleven_multilingual_v2")
+TTS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID") or "JBFqnCBsd6RMkjVDRZzb"   # 목소리 하나 고정(ElevenLabs 기본 목소리, 바꾸려면 env)
+# 한 번에 받는 녹음 조각(입력 검사, 사용 상한 아님). Vercel 본문 한도 4.5MB 아래 — 긴 녹음은 화면이 2분 조각으로 나눠 보낸다.
+VOICE_MAX_BYTES = _int("VOICE_MAX_BYTES", 4 * 1024 * 1024)
+
 # 비용 추정(요금표 기준 어림값, 크게 잡음)
+PRICE_STT_PER_MIN = _float("PRICE_STT_PER_MIN", 0.005)        # ElevenLabs Scribe v2 $0.22/시간(2026-10) → 넉넉히
+PRICE_TTS_PER_1K_CHARS = _float("PRICE_TTS_PER_1K_CHARS", 0.12)   # Multilingual v2 $0.08/1천 자 → 넉넉히
 PRICE_STUDIO_PAGE = 0.05            # Parse $0.01 + Extract $0.04 (1쪽)
 PRICE_CHAT_IN_PER_M = _float("PRICE_CHAT_IN_PER_M", 1.0)
 PRICE_CHAT_OUT_PER_M = _float("PRICE_CHAT_OUT_PER_M", 2.0)
