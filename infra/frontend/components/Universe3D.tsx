@@ -275,6 +275,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       xy: (id: string) => { const r = canvas.getBoundingClientRect(), s = scr(all[id]); return { x: r.left + s.x, y: r.top + s.y }; },
       center: () => hub,
       bg: () => (scene.background as THREE.Color).getHex(),   // 테마 바탕색(꾸미기 시험)
+      cross: () => lobj.filter((l) => l.cross && l.line.visible).length,   // 보이는 영역 넘는 선 개수(꾸미기 시험)
       // 그려진 행성의 크기 · 밝기(색의 밝기) · 빛남(화면 단위 시험)
       look: (id: string) => {
         const o = pobj[id], c = (o.mesh.material as THREE.MeshPhongMaterial).color;
@@ -330,7 +331,8 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     };
   }, [data, themeName]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { apply.current(selected, glow, crossLinks); }, [selected, glow, crossLinks, data]);
+  // 장면을 새로 만들 때(data · 테마)마다 다시 입힌다: 새 선은 visible=true 로 생기고 영역 넘는 선을 숨기는 일은 apply 만 한다
+  useEffect(() => { apply.current(selected, glow, crossLinks); }, [selected, glow, crossLinks, data, themeName]);
 
   // 캔버스와 이름표는 React 가 건드리지 않는 안쪽 칸에 둔다. children 은 그 위에 뜨는 도구 · 카드.
   return (

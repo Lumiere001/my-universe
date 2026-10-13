@@ -65,6 +65,19 @@ test("꾸미기", async ({ page }, info) => {
     }
   });
 
+  await test.step("/me 가 늦게 와 테마로 다시 그려도 영역 넘는 선은 숨김(눌렀을 때)", async () => {
+    const uni = (k: "bg" | "cross") => page.evaluate((key) => (window as unknown as { __uni?: Record<string, () => number> }).__uni?.[key]() ?? null, k);
+    await nav("설정");
+    await deco.getByRole("group", { name: "우주 테마" }).getByRole("button", { name: "오로라" }).click();
+    await page.evaluate(() => { const w = window as unknown as { __uni?: unknown; __slowMe?: number }; delete w.__uni; w.__slowMe = 1500; });
+    await nav("우주");
+    await expect.poll(() => uni("bg")).toBe(THEMES["밤하늘"].bg);   // /me 전: 기본 색
+    expect(await uni("cross")).toBe(0);
+    await expect.poll(() => uni("bg"), { timeout: 5000 }).toBe(THEMES["오로라"].bg);   // /me 뒤: 테마로 다시 그림
+    expect(await uni("cross")).toBe(0);
+    await page.evaluate(() => { delete (window as unknown as { __slowMe?: number }).__slowMe; });
+  });
+
   await test.step("별지기 모습을 고르면 말풍선 그림이 바뀜", async () => {
     await nav("설정");
     const looks = deco.getByRole("group", { name: "별지기 모습" });
