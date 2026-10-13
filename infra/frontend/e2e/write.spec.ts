@@ -23,7 +23,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await expect(bubble.getByTestId("prompt-vow")).toContainText("팀 세 곳");
     await bubble.getByRole("button", { name: /건너뛰기/ }).click();
     await expect(bubble.getByText("다음부터 마음 날씨는 묻지 않을게요")).toBeVisible();
-    await nav("지난 기록"); await nav("쓰기");
+    await nav("지난 기록"); await nav("직접 쓰기");
     await expect(bubble.getByTestId("prompt-vow")).toBeVisible();
     await expect(bubble.getByTestId("prompt-question")).toHaveCount(0);
   });
@@ -73,7 +73,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await dup.getByRole("link", { name: "지난 기록에서 보기" }).click();
     await expect(page).toHaveURL(/\/history\?id=/);
     await expect(result.getByRole("heading", { name: "산책" })).toBeVisible();
-    await nav("쓰기");
+    await nav("직접 쓰기");
   });
 
   await test.step("날짜 확인 필요 → 날짜 고르기", async () => {
@@ -107,7 +107,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await page.getByLabel("별지기 이름").fill("달지기");
     await page.getByRole("button", { name: "이름 바꾸기" }).click();
     await expect(page.getByText("저장했어요.")).toBeVisible();
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await expect(bubble).toContainText("달지기");
   });
 

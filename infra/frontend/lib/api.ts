@@ -19,7 +19,8 @@ export type Relation = {
   line: "실선" | "점선"; cross_domain: boolean; needs_confirm: boolean; explanation: string; quote: string | null;
 };
 export type EntryResult = {
-  id: string; status: "processing" | "done" | "failed"; step: string; written_at: string; title: string;
+  // confirm = 대화 초안이 save 앞에서 멈춰 요약 확인을 기다림(WS20)
+  id: string; status: "processing" | "done" | "failed" | "confirm"; step: string; written_at: string; title: string;
   weather: Weather | null; crisis: boolean;
   info: { summary: string; addressee: string; addressee_person: string | null; events: string[] } | null;
   thoughts: Thought[]; relations: Relation[];
@@ -30,6 +31,7 @@ export type EntryResult = {
   people_questions: { id: string; name: string; question: string; options: string[] }[];
   // 기록 칸(WS11): 글이 다루는 날 · 확실/추정 · 날짜 확인 필요. duplicate = 이미 정리한 같은 글(그 기록의 결과)
   source?: string; day?: string; day_basis?: "확실" | "추정"; day_check?: boolean; duplicate?: boolean;
+  confirmed?: "확인 전" | "확인됨" | null;
 };
 export type Progress = { entry_id: string; step: string; label: string; done: number; total: number };
 export type StreamError = { entry_id: string | null; code: string; message: string; resumable: boolean };
@@ -263,4 +265,84 @@ export async function getConsent(): Promise<Consent> {
 }
 export async function saveConsent(c: ConsentInput): Promise<Consent> {
   return MOCK ? (await mock()).saveConsent(c) : json("POST", "/consent", c);
+}
+
+/* ---------- 대화 · 요약 확인 (WS19 · WS20, docs/api-v8.md §8) ---------- */
+export type TalkTurn = {
+  role: "keeper" | "user"; text: string; at: string;
+  kind?: string; mode?: "normal" | "comfort"; tone?: Tone; check_in?: string | null; via?: "text" | "voice";
+};
+export type Conversation = {
+  id: string; created_at: string; updated_at: string; turns: TalkTurn[]; summary: string;
+  from_entry: string | null; entry_id: string | null; turn_count: number; wrap: boolean;
+};
+export type TalkProgress = { conversation_id: string; step: string; label: string };
+export type ConfirmInput = { summary?: string; fixes: { id: string; kind?: string; remove?: boolean }[]; agreed: string[] };
+
+// SSE 를 여는 POST. 닿지 못하거나 거절되면 StreamError 로 던진다.
+async function postStream(path: string, body?: unknown): Promise<Response> {
+  const t = await token();
+  let res: Response;
+  try {
+    res = await fetch(BASE + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(t && { Authorization: `Bearer ${t}` }) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw { entry_id: null, code: "network", message: "서버에 닿지 못했어요. 말은 화면에 그대로 있어요.", resumable: true } as StreamError;
+  }
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);
+    throw { entry_id: null, code: j?.error?.code ?? "http", message: j?.error?.message ?? "잠시 뒤 다시 해 주세요.", resumable: false } as StreamError;
+  }
+  return res;
+}
+
+export async function listTalks(): Promise<{ conversations: Conversation[] }> {
+  return MOCK ? (await mock()).listTalks() : json("GET", "/talk");
+}
+// 새 대화(별지기가 먼저 묻는 첫 말). from_entry: '이 이야기 이어 하기'로 연 기록
+export async function startTalk(from_entry?: string): Promise<Conversation> {
+  return MOCK ? (await mock()).startTalk(from_entry) : json("POST", "/talk", from_entry ? { from_entry } : undefined);
+}
+export async function getTalk(id: string): Promise<Conversation> {
+  return MOCK ? (await mock()).getTalk(id) : json("GET", `/talk/${encodeURIComponent(id)}`);
+}
+export async function deleteTalk(id: string): Promise<void> {
+  if (MOCK) return (await mock()).deleteTalk(id);
+  await json("DELETE", `/talk/${encodeURIComponent(id)}`);
+}
+// 사용자 말 한 턴 → 별지기 답이 붙은 대화. 받아쓴 말(WS21)도 같은 함수로 보낸다.
+export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void): Promise<Conversation> {
+  if (MOCK) return (await mock()).sayTalk(id, text, onProgress);
+  const res = await postStream(`/talk/${encodeURIComponent(id)}/turn/stream`, { text });
+  const reader = res.body!.getReader(), dec = new TextDecoder();
+  let buf = "";
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const p = parseSSE(buf + dec.decode(value, { stream: true }));
+      buf = p.rest;
+      for (const e of p.events) {
+        const d = JSON.parse(e.data);
+        if (e.event === "progress") onProgress(d);
+        else if (e.event === "turn") return d as Conversation;
+        else if (e.event === "error") throw { ...d, entry_id: null } as StreamError;
+      }
+    }
+  } catch (e) {
+    if ((e as StreamError).code) throw e;
+  }
+  throw { entry_id: null, code: "disconnected", message: "연결이 끊겼어요. 대화를 다시 불러올게요.", resumable: true } as StreamError;
+}
+// 대화 마치고 정리하기 → 확인을 기다리는 정리(status "confirm")
+export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryResult> {
+  if (MOCK) return (await mock()).finishTalk(id, h);
+  return readStream(await postStream(`/talk/${encodeURIComponent(id)}/finish/stream`), h);
+}
+// 요약 확인: 고친 것을 넣고 우주에 저장 → 저장된 결과(한마디 포함)
+export async function confirmDiary(id: string, c: ConfirmInput): Promise<EntryResult> {
+  return MOCK ? (await mock()).confirmDiary(id, c) : json("POST", `/diary/${encodeURIComponent(id)}/confirm`, c);
 }

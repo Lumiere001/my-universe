@@ -1,5 +1,6 @@
 "use client";
 // (사) 지난 기록 목록. 누르면 그 글의 결과 카드(+ 지우기). /history?id=<기록> 이면 그 기록을 바로 연다.
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DeleteEntry } from "@/components/EntryTools";
 import ResultCard from "@/components/ResultCard";
@@ -26,6 +27,7 @@ export default function HistoryPage() {
     <main>
       <button className="small" onClick={() => setOpen(null)} style={{ marginBottom: 12 }}>← 목록으로</button>
       <ResultCard r={open} onChange={setOpen} />
+      <p><Link href={`/talk?from=${encodeURIComponent(open.id)}`}>이 이야기 이어 하기</Link></p>
       <DeleteEntry id={open.id} onDeleted={() => { setGone([...gone, open.id]); setOpen(null); }} />
     </main>
   );

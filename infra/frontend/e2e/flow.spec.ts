@@ -139,7 +139,7 @@ test("핵심 흐름", async ({ page }, info) => {
   });
 
   await test.step("위기 글 → 평소 결과 카드 + 안부 한 줄(단체 안내 · 따로 뜨는 화면 없음)", async () => {
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill(CRISIS);
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     const r = page.getByTestId("result");
@@ -155,7 +155,7 @@ test("핵심 흐름", async ({ page }, info) => {
 
   await test.step("끊김 → 이어서 하기", async () => {
     await nav("지난 기록");
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill(HANEUL + "\n[끊김]");
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     const resume = page.getByRole("button", { name: "이어서 하기" });

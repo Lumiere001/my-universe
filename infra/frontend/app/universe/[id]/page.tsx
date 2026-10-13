@@ -13,6 +13,7 @@ export default function EntryPage() {
     <main>
       <Link href="/universe" className="btn" style={{ marginBottom: 12 }}>← 우주로</Link>
       {err ? <p className="err" role="alert">{err}</p> : r ? <ResultCard r={r} /> : <p className="sub">불러오는 중…</p>}
+      {r && <p><Link href={`/talk?from=${encodeURIComponent(r.id)}`}>이 이야기 이어 하기</Link></p>}
     </main>
   );
 }

@@ -130,7 +130,7 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
   });
 
   await test.step("날짜 확인 필요 → 날짜 고르기", async () => {
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await page.getByLabel(/제목/).fill("3/27~3/29 제주 여행");
     await page.getByLabel(/마음껏 적어/).fill("사흘 동안 바다를 보고 왔다. 다음에는 가족과 같이 오고 싶다.");
     await submit();
