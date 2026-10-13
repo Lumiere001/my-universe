@@ -10,6 +10,8 @@
 
 **쓰기 화면 작은 묶음(WS13, 2026-10-14):** `GET /diary/prompt`(쓰기 화면 위 별지기 말풍선) · `PATCH /diary/{id}/day`(글이 다루는 날 고치기) 를 더하고(§2), Settings 에 `keeper_name`(별지기 이름)을 더했다(§6). 새 경로 · 칸 추가만이고 마이그레이션은 없다.
 
+**대화 · 요약 확인(WS19 · WS20, 2026-10-14):** `/talk` 경로 묶음(§8)과 `POST /diary/{id}/confirm`을 더했다. 쓰기 본문에 `confirm`(기본 false), EntryResult `status`에 `confirm`(확인을 기다리는 초안 — DB 의 status 는 그대로 processing)을 더했다(칸 · 값 추가만, 텍스트 길은 그대로). 마이그레이션 `20261014000100_v8_conversations.sql`(새 표만).
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -189,3 +191,25 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - 실행 기록: `logs/agent_flow_YYYYMMDD.log`(LOG_TO_FILE=1) 또는 표준 출력. 단계 · 시간 · 호출 수 · 추정 비용 · id · 오류 코드 · voice 검사 문제 개수만(상황 이름 · 위로 모드 · 위기 여부는 남기지 않음). 시각 · 파일 날짜는 KST. 같은 숫자가 `runs` 표에도(이번 달 비용 상한 · 하루 수 계산, `est_usd >= 0` check).
 - 로컬: `scripts/dev_up.sh`(로컬 Supabase · ChromaDB · `.env.local` · 시험용 계정 tester@ · e2e@my-universe.test · 하늘 데모 우주) → `uv run --frozen uvicorn main:app --port 8001`. e2e 결과: `docs/ws5-e2e.md`.
 - id 모양: 기록 `e_<hex>`, 생각 `<기록 id>-tNN`(글 속 순서), 관계 `<옛 생각 id>><새 생각 id>`, 사람 `p_` · 작은 별 `s_` · 해 `d_` · 되고 싶은 모습 `a_` · 이름 질문 `q_`. 화면은 모양에 기대지 말고 문자열로만 다룬다.
+
+## 8. 대화 · 요약 확인 (WS19 · WS20, 2026-10-14)
+
+이야기하기 화면(`/talk`). 서비스가 먼저 묻고, 사용자 말 한 턴마다 대화 그래프가 답한다. 턴 원문은 서버 `conversations.enc` 에만(사용자별 키로 암호화, 2026-10-13 동규: 다른 기기에서 이어 하기). 확인하고 저장하면 그 대화는 지우고 확인한 정리본(기록)만 남는다. 확인 전 대화는 사용자가 지우거나 계정 지우기 때 같이 지운다. 외부 AI 로 나가는 요청(턴 · 정리하기 · 확인)과 새 대화는 동의를 먼저 본다(403 `consent_required`).
+
+Conversation = `{"id", "created_at", "updated_at", "turns": [Turn], "summary": "지금까지 정리(사용자 말만 근거)", "from_entry": "기록 id|null", "entry_id": "확인 전 초안 기록 id|null", "turn_count": 사용자 턴 수, "wrap": 마지막 답이 정리 제안이면 true}`
+Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|continue|free|reply|recall|wrap", "text", "mode": "normal|comfort", "tone", "check_in": "안부 한 줄|null", "at"}` / 사용자 `{"role": "user", "text", "via": "text|voice", "at"}`
+
+- `POST /talk` 본문 없음 또는 `{"from_entry": "기록 id"}` → Conversation. 첫 말은 LLM 없이 정한다(PRD §6.2): `from_entry`(끝난 기록)면 그 기록을 이어 하는 말(`continue`) → 다짐 안부(`vow`, 쓰기 화면 말풍선과 같은 다짐) → 기록이 없으면 첫 만남 질문(`first`) → 지난 글의 '다음에 써 볼 질문'(`question` · `aspiration`) → 되고 싶은 모습을 물을 때(`aspiration`) → 그 밖(`free`). 사용자 말이 한 번도 없는 대화는 새로 열 때 치운다.
+- `GET /talk` → `{"conversations": [Conversation]}` 최근 것부터 5개(이어 하기). `GET /talk/{id}` → Conversation. 남의 · 없는 대화는 404.
+- `DELETE /talk/{id}` → 204(확인 전 초안 기록도 같이 지움, 정리 중이면 409).
+- `POST /talk/{id}/turn/stream` `{"text": "1~8000자"}` → SSE: `event: progress` `{"conversation_id", "step": "safety|past|reply|summary", "label"}` … `event: turn` Conversation, 또는 `event: error` `{"conversation_id", "code": "llm_failed|real_name_leak|internal|not_found", "message", "resumable"}`. 실패한 턴은 저장하지 않는다(화면이 같은 말을 다시 보냄). 받아쓴 말(WS21)도 같은 길. `POST /talk/{id}/turn` 은 스트림 없이 Conversation(시험 · curl용, 실패는 502).
+  - safety: 매 턴 위기 2단 판정(규칙 + Solar). 위기면 그 답은 위로(팩폭도 다정하게, 질문 · 제안 없음, `mode: comfort`) + `check_in`(안부 한 줄). Solar 2차 판정이 실패한 턴은 평소 답 + 안부 한 줄. 위기 표시는 대화 암호문 안에만.
+  - past: 사용자 말을 가명 처리 → 질의용 임베딩 → 그 사용자의 끝난 기록의 생각 벡터에서 `rules.pick_past`(코드 코사인). `from_entry` 면 그 기록의 생각을 앞에.
+  - reply: Solar. 따옴표 인용은 사용자 말 · 지난 생각 원문에 글자 그대로 있어야 하고(아니면 다시 · 기본 문장), 질문은 한 번에 하나, 넘지 않는 선 · 반복 · 사람 판정은 한마디와 같은 검사(`voice.checks.problems`). 지난 기록을 묻는 말("예전에 진로 얘기 뭐라고 했지?")은 찾은 기록의 날짜 · 원문 인용으로 답하고(`kind: recall`), 없으면 못 찾았다고 한다(찾을 기록이 없으면 Solar 를 부르지 않음). 끝낼 신호("이제 그만 잘게")나 사용자 턴 8번이면 한 줄 되짚고 정리 제안(`kind: wrap`, 마지막 줄은 고정 문장).
+  - summary: 사용자 턴 3번마다(또는 300자 넘는 긴 말이면 바로) '지금까지 정리'를 사용자 말만 근거로 고쳐 쓴다. 사용자 말에 없는 인용 · 사람 판정이 있으면 앞 정리를 그대로 둔다.
+  - 가명 표 = 사람 목록 + 이 대화의 새 이름 후보(확실하지 않아도 가명). 대화 중에는 사람 목록에 등록하지 않는다(초안이 일기 그래프의 names 단계를 지날 때 등록). 보내기 직전 실명 검사(`llm.guard`).
+  - 실행 기록: `runs` 에 `talk_turn`(entry_id 없음, meta: 대화 id · 턴 번호 · 답 종류 · 검사 문제 개수 · 지난 생각 수) · `talk_draft`. 이번 달 추정 비용에 같이 들어간다.
+- `POST /talk/{id}/finish/stream` → SSE: `progress` `{"step": "draft", "label": "대화를 일기로 정리하는 중", "done": 0}` → 일기 그래프의 `progress`(safety … voice, save 없음) → `event: result` EntryResult(`status: "confirm"`, `confirmed: "확인 전"`, `source: "대화"`, `message` · `next_question` 은 null — 저장 뒤에 보임). 초안은 사용자 말만 근거(Solar), 사용자 말에 없는 인용 · 사람 판정 · 위기였던 대화에서 그 말이 빠지면 다시, 두 번 다 걸리면 사용자 말을 그대로 이은 글. 그 뒤로 말이 없으면 같은 초안을 다시 준다(Studio 안 부름), 말이 늘었으면 옛 초안을 지우고 다시 만든다. 사용자 말이 없으면 409 `no_turns`.
+- `POST /diary/stream` 본문의 `confirm: true` 는 어느 출처든 save 앞에서 멈춘다(대화 출처는 늘 멈춤). 기본 false 면 지금과 같다.
+- `POST /diary/{id}/confirm` `{"summary": "고친 요약(안 고쳤으면 빼기)", "fixes": [{"id": "생각 id", "kind": "v8 종류"}, {"id": "생각 id", "remove": true}], "agreed": ["summary", "생각 id"]}` → EntryResult(`status: "done"`, `confirmed: "확인됨"`, 한마디 포함). 원문 인용은 고치지 못한다(G1). 뺀 생각은 그 관계 · 닿은 순간 · 벡터도 뺀다. 고친 것은 `feedback`(target `confirm`, value `확인 고침`, 대상 문장 · 고치기 전후는 암호문), 맞아요는 `확인 맞아요`로 남긴다(오답 재료, 기록을 지우면 같이 지움). 저장하면 그 대화를 지운다. 확인을 기다리는 기록이 아니면 409 `not_waiting`, 모르는 생각 id · 보기 밖 종류는 422, 남의 기록은 404, 정리 중이면 409.
+- 확인 전 초안은 `GET /diary` 목록 · `GET /universe` 에 보이지 않는다(`GET /diary/{id}` 는 `status: "confirm"`). 확인하지 않고 `DRAFT_KEEP_HOURS`(기본 72, 0 = 안 지움)보다 오래 둔 초안은 따로 도는 작업 없이 다음 요청(일기 쓰기 · 새 대화 · 정리하기) 때 오래된 것부터 지운다(대화는 남아 다시 정리할 수 있음).
