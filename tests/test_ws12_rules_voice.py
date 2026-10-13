@@ -31,6 +31,8 @@ def test_strip_internal_ids_and_g3():
     assert clean_text("T1과 P1이 이어진다. 글쓴이는 의지가 약한 사람이다.") == "오늘 생각과 지난 생각이 이어진다."
     assert clean_text("우울증 진단을 받은 날이다.", "오늘 우울증 진단을 받았다") == "우울증 진단을 받은 날이다."   # 글쓴이 말은 둠
     assert clean_text("우울증 경향이 보인다.", "오늘은 지쳤다") == ""
+    # 글쓴이 원문에 있는 글자('T1' 팀 이름)는 내부 번호가 아니라 그대로 둔다
+    assert clean_text("T1 경기를 보며 페이커를 응원했다.", "오늘 T1 경기를 봤다") == "T1 경기를 보며 페이커를 응원했다."
 
 
 def test_relation_explanation_cleaned():
@@ -70,6 +72,15 @@ def test_quit_text_closes_vow():
         x = T("x", "2026-04-10", kind, thought=text, certainty="판단 보류" if kind == "질문" else "단정")
         kept, _ = run([{"a": "v", "b": "x", "type": "이어짐"}], v, x)
         assert not any(k["vow_quit"] for k in kept), kind
+    # 그만두지 않는다는 다짐 글은 그만둠이 아니다(열림으로 남음)
+    for text in ("힘들어도 포기하지 않기로 했다", "끝까지 포기 안 하기로 했다", "걷기는 그만두지 않기로 했다"):
+        x = T("x", "2026-04-10", "다짐", thought=text, quote=text)
+        kept, _ = run([{"a": "v", "b": "x", "type": "이어짐"}], v, x)
+        assert not kept[0]["vow_quit"], text
+        st = advance(advance({}, {"v": v}, [], "R2026-03-20"), {"v": v, "x": x}, kept, "R2026-04-10")
+        assert st["v"]["state"] == "열림", text
+    x = T("x", "2026-04-10", "다짐", thought="걷기는 안 하기로 했다")     # 부정 꼴이 아닌 '안 하기로'는 그대로 그만둠
+    assert run([{"a": "v", "b": "x", "type": "이어짐"}], v, x)[0][0]["vow_quit"]
 
 
 def test_reask_trigger():
@@ -85,6 +96,8 @@ def test_heavy_and_widen_pick():
     assert voice.is_heavy([{"kind": "해석", "quote": "할머니 기일이라 성묘를 다녀왔다."}])
     assert voice.is_heavy([], ["할머니 장례"])
     assert not voice.is_heavy([{"kind": "해석", "thought": "슬픈 영화를 보고 대본 구조를 분석했다"}])   # 감정 생각이 아님
+    for text in ("내일부터 유산소 30분씩 하겠다", "헤어샵에서 머리를 잘랐다", "지갑을 잃어버려서 짜증났다", "여행을 떠난 첫날이 설렌다"):
+        assert not voice.is_heavy([{"kind": "감정", "thought": text, "quote": text}], [text]), text   # 상실 말 아님
     c = [{"kind": "axis", "key": "sun:관계", "name": "관계"}, {"kind": "axis", "key": "sun:여가", "name": "여가"}]
     assert voice.pick_widen(c, []) == c[0]
     assert voice.pick_widen(c, ["", "sun:관계"]) is None                 # 가끔: 바로 앞에서 썼으면 쉼
@@ -99,6 +112,20 @@ def test_widen_question_kind_and_heavy_skips_it():
     assert "여가" in voice.base_question("widen", {"widen": w})
     assert voice.next_question_kind({**base, "widen": w, "heavy": True}) == ""      # 무거운 날엔 넓히지 않음
     assert "넓혀 보기" in voice.situations({**base, "widen": {"kind": "twin", "key": "twin:p"}})
+
+
+def test_heavy_day_does_not_reflect_changes():
+    """위기 · 비 · 천둥 날에는 바뀜이 있어도 '생각이 바뀜' 지시와 changes 재료를 프롬프트에 싣지 않는다."""
+    ch = [{"before": "혼자가 편하다", "after": "같이 걷고 싶다", "day": "2026-10-01"}]
+    base = {"text": "오늘 글", "changes": ch, "tone": "다정하게"}
+    for extra in ({"crisis": True}, {"weather": "비"}, {"weather": "천둥"}, {"heavy": True}):
+        ctx = {**base, **extra}
+        sit = voice.situations(ctx)
+        assert "무거운 날" in sit and "생각이 바뀜" not in sit, extra
+        blob = repr(voice.build_messages(ctx, "", sit, False))
+        assert "예전엔" not in blob and "혼자가 편하다" not in blob, extra
+    sit = voice.situations(base)                                   # 평소 날엔 비춰 준다
+    assert "생각이 바뀜" in sit and "혼자가 편하다" in repr(voice.build_messages(base, "", sit, False))
 
 
 def test_skip_vs_stop_question_kind():
@@ -175,16 +202,20 @@ def test_voice_materials_masked(env, monkeypatch, seen):
     monkeypatch.setattr(env.fake, "_record", rec)
     put(env, "산책", "민준이랑 공원을 한 바퀴 걸었다.", "2026-10-01T22:00:00+09:00")
     observe_as(env, "바뀜")
-    _, r = put(env, "편지", "민준이에게 쓴다. 혼자 걷는 게 더 편하다고 느꼈다. 작년에 떠난 강아지가 그립다.", "2026-10-03T22:00:00+09:00")
+    _, r = put(env, "편지", "민준이에게 쓴다. 혼자 걷는 게 더 편하다고 느꼈다.", "2026-10-03T22:00:00+09:00")
     ctx = seen[-1]
     assert len(ctx["person_history"]) == 1 and "공원을 한 바퀴 걸었다" in ctx["person_history"][0]   # 그 사람이 나온 지난 기록
-    assert ctx["past_thoughts"] and ctx["changes"] and ctx["heavy"] is True
-    assert r["message"]["mode"] == "comfort"                                  # 무거운 날 → 위로만
+    assert ctx["past_thoughts"] and ctx["changes"] and ctx["heavy"] is False
+    assert r["message"]["mode"] == "normal"
     blob = repr({k: ctx[k] for k in ("person_history", "past_thoughts", "changes")})
     assert not [n for n in NAMES if n in blob]                                 # generate 에 온 재료가 이미 가명
     chat = [m for m in env.fake.sent if '"role": "system"' in m and "별지기" in m][-1]
     assert "person_history" in chat and "past_thoughts" in chat and "changes" in chat and "예전엔" in chat
     assert not [n for n in NAMES if n in "\n".join(env.fake.sent)]            # 외부 요청 전체 실명 0건
+    _, r = put(env, "장례", "민준이랑 할머니 장례를 치렀다.", "2026-10-04T22:00:00+09:00")
+    assert seen[-1]["heavy"] is True and seen[-1]["changes"] and r["message"]["mode"] == "comfort"   # 무거운 날 → 위로만
+    chat = [m for m in env.fake.sent if '"role": "system"' in m and "별지기" in m][-1]
+    assert "예전엔" not in chat                                                # 무거운 날엔 바뀜을 되비추지 않음
 
 
 def _three_days(env):

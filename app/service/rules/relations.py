@@ -27,6 +27,8 @@ POS = "자기평가(긍정)"
 # ponytail: 낱말 꼴 목록이라 돌려 말한 그만둠은 놓친다. 놓치면 '그만둘래요' 버튼이 받친다.
 QUIT = re.compile(r"그만\s?(두기로|두겠|뒀|두었|하기로|하겠|했)|관두기로|관뒀|관두겠|포기하기로|포기했|포기하겠"
                   r"|안\s?하기로|하지\s?않기로|접기로|접었|접겠")
+# 그만두지 않는다는 글('포기하지 않기로' · '포기 안 하기로' · '안 그만두기로')은 QUIT 을 보기 전에 지운다
+NOT_QUIT = re.compile(r"(포기|그만\s?두|그만|관두)\s?(하지\s?않|지\s?않|안\s?하)|(안|못)\s?(그만|포기|관두)")
 
 
 def is_question(t):
@@ -66,7 +68,7 @@ def filter_relations(cands, thoughts, states=None):
         vow_quit = False
         later = pa["kind"] == "다짐" and pa["record_id"] != pb["record_id"] and same_topic and _open(states, pa["id"])
         if later and pb["kind"] not in (NEG, "소망", "질문") and not is_question(pb) \
-                and QUIT.search(f"{pb.get('thought', '')} {pb.get('quote', '')}"):
+                and QUIT.search(NOT_QUIT.sub("", f"{pb.get('thought', '')} {pb.get('quote', '')}")):
             notes.append("그만둔다는 글(다짐 → 그만둠)")
             vow_quit = True
             if rtype == "해소":

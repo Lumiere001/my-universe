@@ -9,20 +9,22 @@ import re
 
 from app.service.safety.judge import JUDGE
 
-_ID = re.compile(r"\(?(?<![A-Za-z0-9])([TP])\d{1,2}(?![A-Za-z0-9])\)?(와|는|가|를|로)?")
+_ID = re.compile(r"\(?(?<![A-Za-z0-9])([TP]\d{1,2})(?![A-Za-z0-9])\)?(와|는|가|를|로)?")
 # 받침 있는 '생각' 뒤로 조사를 맞춘다(T1와 → 오늘 생각과)
 _JOSA = {"와": "과", "는": "은", "가": "이", "를": "을", "로": "으로", None: ""}
 
 
-def strip_ids(text):
-    out = _ID.sub(lambda m: ("오늘 생각" if m.group(1) == "T" else "지난 생각") + _JOSA[m.group(2)], text or "")
+def strip_ids(text, source=""):
+    """내부 번호를 바꾼다. 글쓴이 원문(source)에 그 글자가 있으면('T1 경기') 글쓴이 말이라 둔다."""
+    out = _ID.sub(lambda m: m.group(0) if m.group(1) in (source or "") else
+                  ("오늘 생각" if m.group(1)[0] == "T" else "지난 생각") + _JOSA[m.group(2)], text or "")
     return re.sub(r"\s{2,}", " ", out).strip()
 
 
 def clean_text(text, source=""):
     """G3 + 내부 번호. 판정 · 진단 문장은 빼고(원문에 있는 말이면 둠) 남은 문장을 돌려준다(다 빠지면 빈 글)."""
     keep = []
-    for s in re.split(r"(?<=[.?!。])\s+", strip_ids(text)):
+    for s in re.split(r"(?<=[.?!。])\s+", strip_ids(text, source)):
         m = JUDGE.search(s)
         if m and m.group(0) not in (source or ""):
             continue

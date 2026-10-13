@@ -52,8 +52,10 @@ PAST_IN_PROMPT = 10
 PAST_THOUGHTS_IN_PROMPT = 5
 QUIET_AFTER_ENTRIES = 7  # 최근 이만큼의 글에 한 번도 안 나온 해 = 오래 비어 있는 해(좁아짐 막기)
 
-# 마음이 무거운 날: 감정 생각의 슬픔 말, 또는 생각 · 사건의 상실 말(checks._LOSS)
+# 마음이 무거운 날: 감정 생각의 슬픔 말, 또는 생각 · 사건의 상실 말.
+# 상실 말은 checks._LOSS 보다 좁게(유산소 · 헤어샵 · 지갑을 잃어 · 떠난 여행은 아님). _LOSS 는 팩폭 대상 검사용이라 넓다.
 _SAD = r"슬프|슬펐|슬픔|서럽|서러|눈물|울었|울고|울컥|그립|그리워|허전|공허|외롭|외로웠"
+_HEAVY_LOSS = r"장례|기일|돌아가(시|셨|신)|세상을\s?떠|하늘나라|사별|여의[었고어]|여읜|이별|떠나\s?보[내냈낸]"
 
 # 기록이 없을 때 쓰는 정해 둔 질문(PRD §6.2)
 FIRST_QUESTIONS = ["오늘 하루를 한 단어로 하면요?", "오늘 가장 오래 머문 장소는 어디예요?"]
@@ -98,9 +100,9 @@ def is_heavy(thoughts, events=()):
     """슬픔 · 상실이 드러난 글인지(규칙, LLM 없음). 생각 문장 · 인용과 사건만 본다(본문 전체의 '떠난 여행'은 안 봄)."""
     for t in thoughts or []:
         txt = f"{t.get('thought', '')} {t.get('quote', '')}"
-        if re.search(checks._LOSS, txt) or (t.get("kind") == "감정" and re.search(_SAD, txt)):
+        if re.search(_HEAVY_LOSS, txt) or (t.get("kind") == "감정" and re.search(_SAD, txt)):
             return True
-    return any(re.search(checks._LOSS, e or "") for e in events or [])
+    return any(re.search(_HEAVY_LOSS, e or "") for e in events or [])
 
 
 def pick_widen(cands, used=()):
@@ -168,7 +170,7 @@ def situations(ctx):
         out.append("다짐을 지켜 냄")
     if "무거운 날" not in out and any(c.get("overdue") or c.get("state") == "열림" for c in ctx.get("commitments") or []):
         out.append("다짐 안부")
-    if ctx.get("changes"):
+    if ctx.get("changes") and "무거운 날" not in out:   # 위기 · 무거운 날엔 변화를 되비추지 않는다(위로만)
         out.append("생각이 바뀜")
     if ctx.get("widen") and "무거운 날" not in out:
         out.append("넓혀 보기")
@@ -303,7 +305,9 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
         sys.append("[다시 쓰기] 지난 답에 문제가 있었다. 고칠 것:\n" + _lines(avoid))
 
     u = {k: ctx.get(k) for k in ("summary", "weather", "addressee", "reached", "commitments",
-                                 "kept", "open_questions", "person_history", "changes") if ctx.get(k)}
+                                 "kept", "open_questions", "person_history") if ctx.get(k)}
+    if "생각이 바뀜" in sit:
+        u["changes"] = ctx["changes"]
     if ctx.get("past_thoughts"):
         u["past_thoughts"] = ctx["past_thoughts"][:PAST_THOUGHTS_IN_PROMPT]
     if "넓혀 보기" in sit:
