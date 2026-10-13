@@ -2,7 +2,7 @@
 // (라) 사람 목록: 추가 · 고치기 · 지우기(이름을 관계 말로 바꾸고 문장은 남김) · 얽힌 생각 펼치기
 import { useState } from "react";
 import PersonThoughts from "@/components/PersonThoughts";
-import { addPerson, deletePerson, listPeople, updatePerson, type Person } from "@/lib/api";
+import { addPerson, deletePerson, deletePersonWithThoughts, listPeople, updatePerson, type Person } from "@/lib/api";
 import { useLoad } from "@/lib/use";
 
 type Form = { name: string; nickname: string; relation: string };
@@ -30,6 +30,7 @@ export default function PeoplePage() {
   const [data, err, reload] = useLoad(listPeople);
   const [edit, setEdit] = useState<string | null>(null);
   const [del, setDel] = useState<Person | null>(null);
+  const [hide, setHide] = useState(false);   // 지울 때 그 사람이 나온 생각도 지우기(WS16)
   const [msg, setMsg] = useState("");
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -50,11 +51,18 @@ export default function PeoplePage() {
             <div className="stack" role="alertdialog" aria-label={`${p.name} 지우기 확인`}>
               <p style={{ margin: 0 }}>
                 <b>{p.name}</b>을(를) 지우면, 저장된 글에서 이름 “{p.name}”을(를) 관계 말 “{p.relation || "그 사람"}”(으)로 바꿔요.
-                문장 · 생각 · 이어진 선은 그대로 남아요.
+                {hide ? " 그 사람이 나온 생각과 그 생각의 이어진 선은 우주에서 지워요(글 본문은 남아요)." : " 문장 · 생각 · 이어진 선은 그대로 남아요."}
               </p>
+              <label className="row" style={{ gap: 6 }}>
+                <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} style={{ width: "auto" }} />
+                그 사람이 나온 생각도 지우기
+              </label>
               <div className="row">
                 <button className="danger small" onClick={async () => {
-                  const r = await deletePerson(p.id); setDel(null); setMsg(`${p.name}을(를) 지웠어요. 글 ${r.replaced}곳의 이름을 “${p.relation || "그 사람"}”(으)로 바꿨어요.`); reload();
+                  // WS16: 고르면 그 사람이 나온 생각 · 관계 · 벡터도 지운다
+                  const r = hide ? await deletePersonWithThoughts(p.id) : { ...(await deletePerson(p.id)), hidden: 0 };
+                  setDel(null); setHide(false);
+                  setMsg(`${p.name}을(를) 지웠어요. 글 ${r.replaced}곳의 이름을 “${p.relation || "그 사람"}”(으)로 바꿨어요.${r.hidden ? ` 생각 ${r.hidden}개를 지웠어요.` : ""}`); reload();
                 }}>지우기</button>
                 <button className="small" onClick={() => setDel(null)}>취소</button>
               </div>

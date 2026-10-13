@@ -189,6 +189,20 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `POST /people/questions/{id}` `{"answer": "같은 사람|다른 사람|사람 이름|사람 이름 아님"}` → `{"ok": true}`. 다른 사람 · 사람 이름 → 사람 목록에 더함, 같은 사람(별명) → 겹치는 사람의 별명으로 더함.
 - `GET /people/{id}/thoughts` → `{"person": {"id", "name", "relation"}, "thoughts": [Thought + {"entry_id", "written_at", "title"}]}`: 그 사람과 얽힌 생각(끝난 기록만), 먼저 쓴 기록부터 · 같은 기록 안은 글 순서. 우주에서 사람을 고르면 나오는 목록. 없는(남의) 사람이면 404.
 - `nickname`은 쉼표로 여러 개. 새 이름은 글을 쓸 때 자동 등록(`auto: true`)된다(가명으로 보내기 위해). 손으로 고치면 `auto: false`.
+- `DELETE /people/{id}/with-thoughts` → `{"ok": true, "replaced": 4, "hidden": 3}`: 사람 지우기 + **그 사람이 나온 생각도 숨기기**(WS16). 그 사람이 나온 생각 · 그 생각의 관계 · 상태 · 닿은 순간 · 피드백 · 벡터를 지우고, 글 본문은 `DELETE /people/{id}` 처럼 이름만 관계 말로 바꾼다. 순서: 벡터 → DB(벡터를 못 지우면 503 `vector_delete_failed`, 아무것도 안 지움). 정리 중인 기록이 있으면 409 `already_running`.
+
+## 4.1 우주 고치기 (WS16, 2026-10-14)
+
+`app/api/edit.py` · `app/repository/edit.py`. 남의 해 · 별 · 생각이면 404. 작은 별 옮기기 · 합치기 · 사람과 생각 지우기는 정리 중인 기록이 있으면 409 `already_running`. 고친 내용은 `feedback` 표에 **오답 재료**로 남는다(평문 값 `축 고침` · `옮김` · `합침` · `합치지 않음` · `고침`, 무엇을 무엇으로 고쳤는지는 암호문). 멈춘 기록의 단계 저장값(`steps_enc`)도 같이 고쳐 이어 하기가 지운 별로 저장하지 않는다.
+
+- `GET /suns` → `{"suns": [{"id", "name", "custom", "axis"}], "axes": ["삶의 성취", …9개, "사용자 영역"]}`. `axis` = 이어 둔 기준 축(기준 축 이름의 해는 그 자체, 아직 안 이은 해는 null).
+- `POST /suns` `{"name": "통일 사역"}`(1~20자) → `{"id", "name", "custom": true, "axis", "suggested": {"axis", "basis": "낱말|임베딩|없음"}}`. 기준 축은 AI 가 제안한다: 이름이 기준 축 이름 · 대표 낱말과 겹치면 그 축(외부 호출 없음), 아니면 중심 보정 임베딩이 가장 가까운 축(Solar 임베딩 한 번, 가명 처리 · 실명 검사 뒤, `runs` 에 `suggest_axis` 로 비용), 임베딩을 못 쓰면 `사용자 영역`. 고정 문턱 없음. 동의 전이면 403 `consent_required`, 이미 사용자 해면 409 `already_exists`. 같은 이름의 해가 일기에서 이미 생겼으면 사용자 해로 표시만 한다. 새 해는 행성이 없어도 `/universe` 의 `suns` 에 뜬다.
+- `PATCH /suns/{id}` `{"axis": "<axes 중 하나>"}` → 해(사용자가 AI 제안을 바꿈 → 오답 재료 `축 고침`). 기준 축 이름의 해는 409 `base_axis`.
+- `PATCH /stars/{id}` `{"sun_id": "d_…"}` → `{"id", "sun_id", "name"}`. 작은 별 · 그 별의 생각 · 그 별이 주인인 기록의 해를 바꾼다(우주에서 행성이 따라감). 다음 글의 같은 주제도 옮긴 해로 간다.
+- `GET /stars/merge` → `{"candidates": [{"a": {"id", "name"}, "b": {"id", "name"}, "sun", "why"}]}`: `rules.merge_candidates`(띄어쓰기만 다른 이름, 같은 해에서 서로 가장 가까운 두 별. 별 벡터 = 그 별 생각 벡터의 평균, 외부 호출 없음). '기타 생각' 별과 거절한 짝은 빼고.
+- `POST /stars/merge` `{"from_id", "into_id"}` → into 별. from 의 생각이 into 의 이름 · 해로 가고, 관계 · 상태의 주제 이름도 바뀌고, from 은 지운다. 옛 이름은 비슷한 말(`settings.topic_aliases`)로 남아 다음 글에서 기록 Agent 가 옛 이름을 내도 into 로 간다.
+- `POST /stars/merge/decline` `{"from_id", "into_id"}` → `{"ok": true}`(그 짝은 다시 제안하지 않음).
+- `PATCH /thoughts/{id}` `{"kind"?: "<kinds>", "value"?: "<values>|null"}` → Thought. 고친 칸마다 오답 재료 `고침`(`{field, from, to}`). 종류가 다짐이 아니게 되면 금빛 고리(다짐 상태)를 거두고, 다짐 · 질문이 되면 열림으로 시작한다. 감정이 아니게 되면 '감사' 표시를 거둔다.
 
 ## 5. 되고 싶은 모습
 
