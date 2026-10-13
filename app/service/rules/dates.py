@@ -6,7 +6,7 @@ G2(PRD §8.2): 제목 · 본문 첫 줄 속 날짜 → 글이 다루는 날. 순
 """
 
 import re
-from datetime import date, timedelta
+from datetime import date
 
 # 앞의 것부터 찾고, 찾은 자리는 지워 다음 모양이 그 안을 다시 읽지 않게 한다(2026.3.27 의 3.27).
 _PATTERNS = [
@@ -20,18 +20,10 @@ FIRST_LINE_MAX = 30
 
 
 def _near(m, d, written):
-    """연도가 없는 날짜: 쓴 날에 가장 가까운 해(1월에 쓴 12/31 은 지난해)."""
-    best = None
-    for y in (written.year - 1, written.year, written.year + 1):
-        try:
-            c = date(y, m, d)
-        except ValueError:
-            continue
-        if best is None or abs(c - written) < abs(best - written):
-            best = c
-    if best is None:
-        raise ValueError
-    return best
+    """연도가 없는 날짜: 쓴 날과 같거나 앞선 날 중 가장 최근 해(10월에 쓴 3/27 은 올해, 1월에 쓴 12/31 은 지난해).
+    그해에 없는 날(2/29 등)은 ValueError → 못 읽음."""
+    y = written.year if date(written.year, m, d) <= written else written.year - 1
+    return date(y, m, d)
 
 
 def _dates(s, written):
