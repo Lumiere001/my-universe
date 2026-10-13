@@ -6,6 +6,8 @@ app/api/diary.py
 손님이 끊어도 스레드는 끝까지 간다(로컬 · Docker). 끊긴 뒤에는 GET /diary/{id} → POST /diary/{id}/resume/stream.
 같은 기록을 두 번 돌리지 않게 DB 잠금(entries.locked_until, 조건부 update)을 쓴다 — 인스턴스가 여러 개여도 하나만 돈다.
 같은 글(같은 설정) · 같은 원본이 다시 오면 Studio 를 부르지 않고 그 기록으로 안내한다(PRD §8.5 A, 상한이 아니라 중복 막기).
+요약 확인(WS20): 대화 초안 · confirm 칸이 참인 글은 save 앞에서 멈춰 status 'confirm' 결과를 주고,
+POST /diary/{id}/confirm 이 고친 것을 넣어 저장한다. 텍스트 길(confirm 없음)은 그대로.
 """
 
 import json
@@ -23,8 +25,8 @@ from app.api import consent
 from app.core import config
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
-from app.models import DiaryIn
-from app.repository import diary, views
+from app.models import ConfirmIn, DiaryIn
+from app.repository import conversations, diary, drafts, views
 
 router = APIRouter(tags=["일기"])
 KEEPALIVE_S = 10
@@ -114,6 +116,7 @@ def _create(repo, uid, body: DiaryIn):
     try:
         with repo.session(uid) as s:
             consent.check(s)   # 지금 판에 동의하지 않았으면 403(외부 AI 로 나가기 전에)
+            drafts.expire(s, repo.vectors)   # 확인하지 않고 오래 둔 대화 초안 정리(WS20, 따로 도는 작업 없음)
             diary.profile(s)
             same = diary.same_entry(s, body.title, body.text, written, body.source, body.source_ref)
             if same:
@@ -121,6 +124,8 @@ def _create(repo, uid, body: DiaryIn):
             _limits(s)
             eid = diary.new_id("e")
             diary.create_entry(s, eid, written, body.weather, body.title, body.text, body.source, body.source_ref, body.day)
+            if body.confirm:   # 요약 확인 뒤 저장(대화 초안은 create_entry 가 이미 '확인 전')
+                s.update("entries", {"confirmed": drafts.WAITING}, id=eid)
             diary.lock(s, eid)
             diary.add_run(s, eid, "start")
     except UniqueViolation:   # 같은 원본을 동시에 두 번 가져옴: DB 유일 색인이 뒤의 것을 막음 → 먼저 들어간 기록으로 안내
@@ -203,3 +208,36 @@ def delete_entry(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
             raise ApiError(409, "already_running", "정리가 끝난 뒤에 지울 수 있어요.")
         diary.delete_entry(s, repo.vectors, eid)
     return Response(status_code=204)
+
+
+@router.post("/diary/{eid}/confirm", summary="요약 확인: 고친 것(요약 · 생각 종류 · 생각 빼기)을 넣고 우주에 저장(WS20)")
+def confirm(body: ConfirmIn, eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
+    """확인을 기다리는 초안만. 고친 것 · 맞아요는 오답 재료(feedback, 암호문)로 남기고, 저장하면 그 대화의 턴을 지운다
+    (확인한 정리본 = 기록만 남김). save 는 외부 호출이 없지만 대화 길의 마지막이라 동의를 같이 본다."""
+    uid = user["id"]
+    with repo.session(uid) as s:
+        e = diary.entry(s, eid)
+        if not e:
+            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        consent.check(s)
+        if not drafts.pending(e):
+            raise ApiError(409, "not_waiting", "확인을 기다리는 기록이 아니에요.")
+        if not diary.lock(s, eid):
+            raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
+        try:
+            drafts.confirm(s, repo.vectors, e, body.summary, [f.model_dump() for f in body.fixes], body.agreed)
+        except KeyError:
+            diary.unlock(s, eid)
+            raise ApiError(422, "invalid_input", "고칠 생각을 찾지 못했어요.")
+        diary.add_run(s, eid, "confirm")
+    try:
+        graph.run(repo, uid, eid)   # 끝난 노드는 건너뛰고 save 만(외부 호출 없음)
+    except Exception as err:
+        code = graph.error_code(err)
+        raise ApiError(502, code, MESSAGES.get(code, MESSAGES["internal"]))
+    finally:
+        with repo.session(uid) as s:
+            diary.unlock(s, eid)
+    with repo.session(uid) as s:
+        conversations.delete(s, entry_id=eid)
+        return views.entry_result(s, eid)

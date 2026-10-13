@@ -45,6 +45,7 @@ class DiaryIn(In):
     source: Literal[SOURCES] = "텍스트"
     source_ref: Optional[str] = Field(default=None, max_length=200)   # 가져온 원본 표시(같은 원본 다시 가져오기 막기)
     day: Optional[date] = None                                         # 사용자가 고른 글이 다루는 날
+    confirm: bool = False                                              # 요약 확인 뒤 저장(save 앞에서 멈춤, WS20). 대화는 늘 확인
 
     @field_validator("title")
     @classmethod
@@ -123,3 +124,35 @@ class SettingsPatch(In):
     @classmethod
     def _tone(cls, v):
         return _one_of("tones", v)
+
+
+##################################################
+# 대화 · 요약 확인 (WS19 · WS20)
+##################################################
+
+ID = r"^[A-Za-z0-9_-]{1,80}$"
+
+
+class TalkIn(In):
+    from_entry: Optional[str] = Field(default=None, pattern=ID)   # '이 이야기 이어 하기': 그 기록을 첫 맥락으로
+
+
+class TurnIn(In):
+    text: str = Field(min_length=1, max_length=config.MAX_TEXT_CHARS)
+
+
+class ThoughtFix(In):
+    id: str = Field(pattern=r"^[A-Za-z0-9_>-]{1,120}$")
+    kind: Optional[str] = None      # 생각 종류 고치기
+    remove: bool = False            # 이 생각 빼기
+
+    @field_validator("kind")
+    @classmethod
+    def _kind(cls, v):
+        return _one_of("kinds", v)
+
+
+class ConfirmIn(In):
+    summary: Optional[str] = Field(default=None, min_length=1, max_length=1000)   # 고친 요약 문장(안 고쳤으면 비움)
+    fixes: list[ThoughtFix] = Field(default_factory=list, max_length=100)
+    agreed: list[str] = Field(default_factory=list, max_length=101)                # 맞아요를 누른 항목('summary' · 생각 id)

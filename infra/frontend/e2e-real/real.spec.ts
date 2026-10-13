@@ -156,7 +156,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
   let entryId = "";
   const diary = !process.env.REAL_DIARY || process.env.REAL_DIARY === dev;
   if (diary) await test.step("새 일기 → 진행 단계가 실제로 바뀜", async () => {
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill(DIARY);
     await shot("07-write");
     const t0 = Date.now();
@@ -231,7 +231,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
 
   // 위기 글도 평소처럼 Studio · Solar 를 거친다(유료) → 유료 일기를 쓰는 기기에서만
   if (diary) await test.step("위기 글 → 평소 결과 카드 + 안부 한 줄(단체 안내 · 따로 뜨는 화면 없음)", async () => {
-    await nav("쓰기");
+    await nav("직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill(CRISIS);
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     const r = page.getByTestId("result");

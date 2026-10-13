@@ -7,6 +7,7 @@ LangGraph Super Graph: 일기 한 편을 safety → names → record → past �
 - 위기여도 흐름은 같다(시험 단계, 2026-10-08 동규): 감지 결과만 암호화해 남기고, 한마디는 위로 + 안부 한 줄(voice).
 - 외부 호출(Studio · Solar)은 모두 llm.guard 안에서 보내기 직전에 실명 검사.
 - 노드가 끝날 때마다 상태를 entries.steps_enc 에 암호화해 남긴다. 끊긴 뒤 다시 돌리면 끝난 노드는 건너뛴다(resume).
+- 대화에서 온 초안(entries.confirmed = '확인 전')은 voice 뒤 save 앞에서 멈춘다. 확인 화면이 고친 뒤 다시 돌리면 save 만 돈다(WS20).
 """
 
 import time
@@ -56,6 +57,7 @@ class State(TypedDict, total=False):
     relations: list          # 규칙을 거친 관계
     reached: list
     voice: dict
+    hold: bool               # 요약 확인 전: voice 뒤 save 앞에서 멈춤(WS20)
 
 
 @dataclass
@@ -464,7 +466,8 @@ def build():
     g.add_edge("names", "record")
     g.add_edge("record", "observer")
     g.add_edge("observer", "voice")
-    g.add_edge("voice", "save")
+    # 대화에서 온 초안(확인 전)은 save 앞에서 멈춘다(WS20). 확인하면 끝난 노드를 건너뛰고 save 만 돈다.
+    g.add_conditional_edges("voice", lambda st: END if st.get("hold") else "save", ["save", END])
     g.add_edge("save", END)
     return g.compile()
 
@@ -482,6 +485,7 @@ def run(repo, uid, entry_id, emit=lambda *_: None):
                            "day": diary.local_day(e["written_at"]), "weather": e["weather"], "done": []}
     if e["status"] == "done":
         state["done"] = ORDER + ["record_input", "record_agent", "record_clean", "rules"]
+    state["hold"] = e.get("confirmed") == "확인 전"   # 요약 확인을 기다림(entries.confirmed, WS20)
     try:
         super_graph.invoke(state, {"configurable": {"ctx": ctx}, "recursion_limit": 50})
     except Exception as err:

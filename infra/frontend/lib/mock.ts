@@ -2,8 +2,8 @@
 // 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
 import ontology from "./ontology.json";
 import type {
-  Aspiration, AspirationState, Consent, ConsentInput, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, PersonThoughts, Prompt, Settings,
-  StreamError, StreamHandlers, Thought, Tone, Universe,
+  Aspiration, AspirationState, ConfirmInput, Consent, ConsentInput, Conversation, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person,
+  PersonThoughts, Prompt, Settings, StreamError, StreamHandlers, TalkProgress, Thought, Tone, Universe,
 } from "./api";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -347,4 +347,75 @@ export async function saveConsent(c: ConsentInput): Promise<Consent> {
   if (!c.required || !c.sensitive) throw new Error("필수 동의가 빠졌어요.");
   localStorage.setItem("mock-consent", c.operator_read ? "operator_read" : "ok");
   return getConsent();
+}
+
+/* ---------- 대화 · 요약 확인 (WS19 · WS20) ---------- */
+// 별지기 답은 고정 문장 몇 개를 돌려 쓴다(백엔드는 Solar + 말 검사). 위기 말이면 위로 + 안부 한 줄, 질문 없음.
+const talks = new Map<string, Conversation>();
+const REPLIES = ["그랬군요. 그때 마음은 어땠어요?", "지난 9/20에 '팀 세 곳을 직접 찾아보겠다'고 하셨는데, 오늘 이야기와 이어지네요. 요즘은 어때요?",
+  "이야기해 줘서 고마워요. 그다음엔 어떻게 됐어요?"];
+let talkSeq = 1;
+const now = () => new Date().toISOString();
+export async function listTalks() { await sleep(100); return { conversations: [...talks.values()].reverse().map((c) => structuredClone(c)) }; }
+export async function startTalk(from?: string): Promise<Conversation> {
+  await sleep(150);
+  for (const [k, c] of talks) if (!c.turn_count) talks.delete(k);
+  const p = from && universe.planets.find((x) => x.id === from);
+  const text = p ? `${p.written_at.slice(0, 10)}에 쓴 '${p.title}' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?`
+    : prompt.vow ? `지난번에 적은 다짐, '${prompt.vow.text}' 요즘은 어때요? 떠오르는 만큼 편하게 들려줘요.` : "오늘 하루는 어땠어요? 떠오르는 것부터 편하게 이야기해 줘요.";
+  const c: Conversation = { id: "c" + talkSeq++, created_at: now(), updated_at: now(), summary: "", from_entry: p ? from! : null,
+    entry_id: null, turn_count: 0, wrap: false, turns: [{ role: "keeper", kind: p ? "continue" : prompt.vow ? "vow" : "free", text, at: now() }] };
+  talks.set(c.id, c);
+  return structuredClone(c);
+}
+export async function getTalk(id: string) {
+  const c = talks.get(id);
+  if (!c) throw new Error("대화를 찾지 못했어요.");
+  return structuredClone(c);
+}
+export async function deleteTalk(id: string) { talks.delete(id); }
+export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void): Promise<Conversation> {
+  const c = talks.get(id);
+  if (!c) throw { entry_id: null, code: "not_found", message: "대화를 찾지 못했어요.", resumable: false } as StreamError;
+  for (const [step, label] of [["safety", "말을 살펴보는 중"], ["past", "지난 기록을 찾는 중"], ["reply", "별지기가 답을 고르는 중"]]) {
+    onProgress({ conversation_id: id, step, label });
+    await sleep(STEP_MS);
+  }
+  const crisis = CRISIS.some((w) => text.includes(w)), wrap = /그만|여기까지|잘게/.test(text) && !crisis;
+  const reply = crisis ? "많이 힘들었겠어요. 이렇게 털어놓아 줘서 고마워요. 저는 여기 있을게요."
+    : wrap ? "오늘은 진로 이야기를 차분히 꺼내 줬네요.\n여기까지 정리해 둘까요? 아래 '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요."
+    : REPLIES[c.turn_count % REPLIES.length];
+  c.turns.push({ role: "user", text, at: now(), via: "text" },
+    { role: "keeper", kind: wrap ? "wrap" : "reply", text: reply, mode: crisis ? "comfort" : "normal", tone: settings.tone, check_in: crisis ? CHECK_IN : null, at: now() });
+  c.turn_count += 1; c.wrap = wrap; c.updated_at = now();
+  if (c.turn_count % 3 === 0) c.summary = c.turns.filter((t) => t.role === "user").map((t) => t.text).join(" ").slice(0, 200);
+  return structuredClone(c);
+}
+export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryResult> {
+  const c = talks.get(id)!;
+  const text = c.turns.filter((t) => t.role === "user").map((t) => t.text).join("\n");
+  h.onProgress({ entry_id: "", step: "draft", label: "대화를 일기로 정리하는 중", done: 0, total: STEPS.length });
+  const eid = "e" + seq++;
+  for (let i = 0; i < STEPS.length - 1; i++) {
+    await sleep(STEP_MS);
+    h.onProgress({ entry_id: eid, step: STEPS[i][0], label: STEPS[i][1], done: i + 1, total: STEPS.length });
+  }
+  const r: EntryResult = { ...result(eid, { text, title: "오늘의 이야기" }), status: "confirm", step: "voice", source: "대화",
+    day_basis: "확실", confirmed: "확인 전", message: null, next_question: null, reached: [], people_questions: [] };
+  entries.set(eid, r);
+  c.entry_id = eid;
+  return structuredClone(r);
+}
+export async function confirmDiary(id: string, x: ConfirmInput): Promise<EntryResult> {
+  await sleep(300);
+  const r = entries.get(id);
+  if (!r || r.status !== "confirm") throw new Error("확인을 기다리는 기록이 아니에요.");
+  const gone = new Set(x.fixes.filter((f) => f.remove).map((f) => f.id));
+  const kind = new Map(x.fixes.filter((f) => f.kind).map((f) => [f.id, f.kind!]));
+  const done: EntryResult = { ...result(id, { text: "", title: r.title }), source: "대화", confirmed: "확인됨", day_basis: "확실",
+    info: { ...r.info!, summary: x.summary ?? r.info!.summary },
+    thoughts: r.thoughts.filter((t) => !gone.has(t.id)).map((t) => ({ ...t, kind: kind.get(t.id) ?? t.kind })) };
+  entries.set(id, done);
+  for (const [k, c] of talks) if (c.entry_id === id) talks.delete(k);
+  return structuredClone(done);
 }
