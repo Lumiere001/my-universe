@@ -208,13 +208,36 @@ def test_same_source_ref_at_once_is_duplicate_not_500(client, env, monkeypatch):
     assert env.fake.calls["record"] == 1
 
 
+_BAD_SQL = re.compile(r"\b(drop|rename|truncate|delete\s+from)\b|set\s+not\s+null|alter\s+column\s+\S+\s+(set\s+data\s+)?type"
+                      r"|\balter\s+policy\b", re.I)
+# add column 한 개(다음 add column · 문장 끝까지). check (… , …) 속 쉼표에서 끊기지 않게 쉼표로 나누지 않는다
+_ADD_COLUMN = re.compile(r"\badd\s+column\b.*?(?=,\s*add\s+column\b|;|$)", re.I | re.S)
+
+
+def _not_additive(sql):
+    """덧붙이기가 아닌 SQL 이면 그 조각. 지우기 · 이름 바꾸기 · 기존 칸 NOT NULL · 형 바꾸기 · 정책 바꾸기(alter · drop policy),
+    기본값 없는 새 NOT NULL 칸(이 칸을 모르는 지금 배포 코드의 insert 가 깨짐)."""
+    sql = re.sub(r"--[^\n]*", "", sql)
+    if m := _BAD_SQL.search(sql):
+        return m.group(0)
+    return next((c.group(0) for c in _ADD_COLUMN.finditer(sql)
+                 if re.search(r"\bnot\s+null\b", c.group(0), re.I) and not re.search(r"\bdefault\b", c.group(0), re.I)), None)
+
+
 def test_migrations_after_v8_security_only_add():
-    """운영 DB 를 깨지 않게 새 마이그레이션은 덧붙이기만(지우기 · 이름 바꾸기 · 기존 칸 NOT NULL · 형 바꾸기 금지)."""
-    bad = re.compile(r"\b(drop|rename|truncate|delete\s+from)\b|set\s+not\s+null|alter\s+column\s+\S+\s+(set\s+data\s+)?type",
-                     re.I)
+    """운영 DB 를 깨지 않게 새 마이그레이션은 덧붙이기만."""
     files = sorted(Path("supabase/migrations").glob("*.sql"))
     new = [f for f in files if f.name >= "20261013"]
     assert new
     for f in new:
-        sql = re.sub(r"--[^\n]*", "", f.read_text(encoding="utf-8"))
-        assert not bad.search(sql), f.name
+        assert _not_additive(f.read_text(encoding="utf-8")) is None, f.name
+    # 검사기 자체가 잡는지
+    for bad in ("alter table entries add column mood text not null;",
+                "alter table entries add column a text,\n  add column b int not null;",
+                "alter policy own on entries using (true);", "drop policy own on entries;",
+                "alter table entries alter column day set not null;", "alter table runs drop column meta;"):
+        assert _not_additive(bad), bad
+    for ok in ("alter table entries add column source text not null default '텍스트', add column day date;",
+               "alter table entries add column b text check (b in ('가', '나')), add column c int not null default 0;",
+               "create policy own on t using (user_id = 1);  -- drop policy 는 주석이라 괜찮음"):
+        assert _not_additive(ok) is None, ok
