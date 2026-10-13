@@ -70,7 +70,8 @@ export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean } };
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
-export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string };
+export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string;
+  source?: "텍스트" | "사진" | "지난 글 묶음" | "대화" };   // 기록 출처(기본 텍스트). 사진에서 읽은 글이면 "사진"(WS18)
 // 쓰기 화면 위 별지기 말풍선(GET /diary/prompt)
 export type Prompt = { kind: "first" | "weather" | "aspiration" | "free" | "none"; text: string;
   vow: { thought_id: string; text: string; overdue: boolean } | null };
@@ -263,4 +264,23 @@ export async function getConsent(): Promise<Consent> {
 }
 export async function saveConsent(c: ConsentInput): Promise<Consent> {
   return MOCK ? (await mock()).saveConsent(c) : json("POST", "/consent", c);
+}
+
+/* ---------- 사진 글자 읽기 (WS18, docs/api-v8.md) ---------- */
+// 사진 한 장(화면에서 4MB 아래로 줄인 것)의 글자만 읽는다. 서버는 사진 · 읽은 글을 저장하지 않는다. 여러 쪽은 한 장씩 차례로 부른다.
+let mockPage = 0;
+export async function readPhoto(photo: Blob): Promise<{ text: string }> {
+  if (MOCK) { await new Promise((ok) => setTimeout(ok, 300)); return { text: `(가짜 글자 읽기 ${++mockPage}번째 사진)\n오늘은 도서관에서 시험 공부를 했다.` }; }
+  const t = await token();
+  const res = await fetch(BASE + "/photo/read", {
+    method: "POST",
+    headers: { "Content-Type": photo.type || "application/octet-stream", ...(t && { Authorization: `Bearer ${t}` }) },
+    body: photo,
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);   // 배포 앞단이 막은 413 은 JSON 이 아니다
+    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status,
+      j?.error?.message ?? (res.status === 413 ? "사진이 너무 커요(4.5MB까지). JPG로 바꾸거나 다시 찍어 올려 주세요." : "잠시 뒤 다시 해 주세요."));
+  }
+  return res.json();
 }
