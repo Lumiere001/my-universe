@@ -34,10 +34,16 @@ scripts/stop_docker.sh
 uv run --frozen pytest -q                                 # 467개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 5개는 건너뜀)
 uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
 uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
+uv run --frozen python eval/run.py --check                # CI 와 같은 검사(관문 실패 · 기준선 회귀면 종료 코드 1)
+uv run --frozen python eval/experiments.py recall         # 지난 생각 고르기 재현율 · E4(외부 호출 없음). e1 · e5 · drift · e9 · e2 --live
+uv run --frozen python eval/labels.py e7-score eval/answers/e7_haneul.csv --pred eval/answers/e7_haneul_c1.json   # E7 · E6(가상 정답)
+uv run --frozen python tools/stability_v2.py              # 흔들림 2판: 서비스 길로 3편 × 3번(유료, 약 $0.45)
 uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
 uv run --frozen python scripts/test_inputs.py --zip 2        # 입력 4종(인스타 ZIP · MD · TXT · 직접 쓰기)을 API 로 끝까지(서버가 실제면 유료, 편당 약 $0.10)
 FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_upstage.py 8013   # 화면 확인용 백엔드: 로컬 DB · Chroma 그대로, Upstage 만 가짜($0)
 ```
+
+push · PR 마다 GitHub Actions(`.github/workflows/test.yml`, 이름 `test`)가 키 없이 pytest 와 골든셋 `--check` 를 돌리고, 실패하면 빨강이 된다.
 
 결과와 합격 기준: [docs/eval-v8.md](docs/eval-v8.md), [docs/ws5-e2e.md](docs/ws5-e2e.md), 화면 실제 모드 e2e는 [docs/e2e-real.md](docs/e2e-real.md). 유료 실행은 `runs/cost_ledger.jsonl`에 한 줄씩 남긴다.
 

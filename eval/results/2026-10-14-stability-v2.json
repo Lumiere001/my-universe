@@ -1,0 +1,440 @@
+{
+ "agent": "기록 Agent",
+ "path": "app/agents/studio.py",
+ "config_id": "2",
+ "records": 3,
+ "runs_each": 3,
+ "type_agreement": "3/3",
+ "kind_agreement": "1/3",
+ "value_agreement": "1/3",
+ "topic_agreement": "0/3",
+ "thought_count_agreement": "2/3",
+ "mean_quote_overlap": 0.83,
+ "records_failed": 0,
+ "failed_runs": 2,
+ "studio_calls": 13,
+ "est_usd": 0.65,
+ "detail": [
+  {
+   "record": "9/20 토요일 일기",
+   "day": "2026-09-20",
+   "type_same": true,
+   "thought_counts": [
+    5,
+    5,
+    5
+   ],
+   "kinds_same": true,
+   "values_same": true,
+   "topics_same": false,
+   "kind_counts": [
+    {
+     "해석": 1,
+     "질문": 2,
+     "감정": 1,
+     "다짐": 1
+    },
+    {
+     "해석": 1,
+     "질문": 2,
+     "감정": 1,
+     "다짐": 1
+    },
+    {
+     "해석": 1,
+     "질문": 2,
+     "감정": 1,
+     "다짐": 1
+    }
+   ],
+   "quote_overlap_vs_first": [
+    0.67,
+    1.0
+   ],
+   "failed_runs": [],
+   "seconds": [
+    43.9,
+    35.2,
+    31.0
+   ],
+   "runs": [
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "quote": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "kind": "해석",
+       "certainty": "고민 중",
+       "value": "자율",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "quote": "그래도 부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "배려",
+       "topic": "부모님"
+      },
+      {
+       "thought": "안정을 포기하는 게 맞는 선택일까?",
+       "quote": "안정을 포기하는 게 맞는 선택일까?",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "안정",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "오늘은 마음이 좀 무겁다.",
+       "quote": "오늘은 마음이 좀 무겁다.",
+       "kind": "감정",
+       "certainty": "단정",
+       "value": "",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "quote": "오늘은 마음이 좀 무겁다. 다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "kind": "다짐",
+       "certainty": "단정",
+       "value": "자율",
+       "topic": "진로 선택"
+      }
+     ]
+    },
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "quote": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "kind": "해석",
+       "certainty": "고민 중",
+       "value": "자율",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "quote": "그래도 부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "배려",
+       "topic": "부모님"
+      },
+      {
+       "thought": "안정을 포기하는 게 맞는 선택일까?",
+       "quote": "안정을 포기하는 게 맞는 선택일까?",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "안정",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "오늘은 마음이 좀 무겁다.",
+       "quote": "오늘은 마음이 좀 무겁다.",
+       "kind": "감정",
+       "certainty": "단정",
+       "value": "",
+       "topic": "진로 선택"
+      },
+      {
+       "thought": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "quote": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "kind": "다짐",
+       "certainty": "단정",
+       "value": "자율",
+       "topic": "진로 선택"
+      }
+     ]
+    },
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "quote": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+       "kind": "해석",
+       "certainty": "고민 중",
+       "value": "자율",
+       "topic": "일하는 방식"
+      },
+      {
+       "thought": "부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "quote": "그래도 부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "배려",
+       "topic": "부모님"
+      },
+      {
+       "thought": "안정을 포기하는 게 맞는 선택일까?",
+       "quote": "안정을 포기하는 게 맞는 선택일까?",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "안정",
+       "topic": "안정과 선택"
+      },
+      {
+       "thought": "오늘은 마음이 좀 무겁다.",
+       "quote": "오늘은 마음이 좀 무겁다.",
+       "kind": "감정",
+       "certainty": "단정",
+       "value": "",
+       "topic": "진로 고민의 마음"
+      },
+      {
+       "thought": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "quote": "오늘은 마음이 좀 무겁다. 다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+       "kind": "다짐",
+       "certainty": "단정",
+       "value": "자율",
+       "topic": "관심 있는 팀 탐색"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "record": "4/12 순모임 후",
+   "day": "2026-04-12",
+   "type_same": true,
+   "thought_counts": [
+    4,
+    4
+   ],
+   "kinds_same": false,
+   "values_same": false,
+   "topics_same": false,
+   "kind_counts": [
+    {
+     "신념·원칙": 1,
+     "해석": 2,
+     "질문": 1
+    },
+    {
+     "신념·원칙": 1,
+     "해석": 1,
+     "기타": 1,
+     "질문": 1
+    }
+   ],
+   "quote_overlap_vs_first": [
+    1.0
+   ],
+   "failed_runs": [
+    "studio_failed"
+   ],
+   "seconds": [
+    5.6,
+    32.2,
+    67.0
+   ],
+   "runs": [
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "결국 사람은 함께해야 성장한다.",
+       "quote": "결국 사람은 함께해야 성장한다.",
+       "kind": "신념·원칙",
+       "certainty": "단정",
+       "value": "배려",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "혼자서는 내 맹점을 볼 수 없다.",
+       "quote": "혼자서는 내 맹점을 볼 수 없다.",
+       "kind": "해석",
+       "certainty": "단정",
+       "value": "",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다.",
+       "quote": "그런데 지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다.",
+       "kind": "해석",
+       "certainty": "고민 중",
+       "value": "배려",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "어느 쪽이 진짜 나일까.",
+       "quote": "어느 쪽이 진짜 나일까.",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "자율",
+       "topic": "혼자와 함께"
+      }
+     ]
+    },
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "결국 사람은 함께해야 성장한다.",
+       "quote": "결국 사람은 함께해야 성장한다.",
+       "kind": "신념·원칙",
+       "certainty": "단정",
+       "value": "배려",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "혼자서는 내 맹점을 볼 수 없다.",
+       "quote": "혼자서는 내 맹점을 볼 수 없다.",
+       "kind": "해석",
+       "certainty": "단정",
+       "value": "",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다.",
+       "quote": "그런데 지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다.",
+       "kind": "기타",
+       "certainty": "단정",
+       "value": "",
+       "topic": "혼자와 함께"
+      },
+      {
+       "thought": "어느 쪽이 진짜 나일까.",
+       "quote": "어느 쪽이 진짜 나일까.",
+       "kind": "질문",
+       "certainty": "판단 보류",
+       "value": "자율",
+       "topic": "자기이해"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "record": "6/14 종강 일기 (1)",
+   "day": "2026-06-14",
+   "type_same": true,
+   "thought_counts": [
+    6,
+    4
+   ],
+   "kinds_same": false,
+   "values_same": false,
+   "topics_same": false,
+   "kind_counts": [
+    {
+     "감정": 1,
+     "자기평가(긍정)": 1,
+     "해석": 1,
+     "자기평가(부정)": 2,
+     "다짐": 1
+    },
+    {
+     "감정": 1,
+     "자기평가(부정)": 2,
+     "다짐": 1
+    }
+   ],
+   "quote_overlap_vs_first": [
+    0.67
+   ],
+   "failed_runs": [
+    "studio_failed"
+   ],
+   "seconds": [
+    11.5,
+    35.0,
+    35.6
+   ],
+   "runs": [
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "드디어 종강.",
+       "quote": "드디어 종강.",
+       "kind": "감정",
+       "certainty": "단정",
+       "value": "",
+       "topic": "종강"
+      },
+      {
+       "thought": "부스는 무사히 끝났다.",
+       "quote": "부스는 무사히 끝났다.",
+       "kind": "자기평가(긍정)",
+       "certainty": "단정",
+       "value": "성취",
+       "topic": "축제 부스 마무리"
+      },
+      {
+       "thought": "손님도 생각보다 많았다.",
+       "quote": "손님도 생각보다 많았다.",
+       "kind": "해석",
+       "certainty": "단정",
+       "value": "",
+       "topic": "축제 부스 손님"
+      },
+      {
+       "thought": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다.",
+       "quote": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다.",
+       "kind": "자기평가(부정)",
+       "certainty": "단정",
+       "value": "성취",
+       "topic": "축제와 시험 병행"
+      },
+      {
+       "thought": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다.",
+       "quote": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다.",
+       "kind": "자기평가(부정)",
+       "certainty": "단정",
+       "value": "자율",
+       "topic": "시험 공부 집중 실패"
+      },
+      {
+       "thought": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다.",
+       "quote": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다.",
+       "kind": "다짐",
+       "certainty": "단정",
+       "value": "안정",
+       "topic": "역할 조절"
+      }
+     ]
+    },
+    {
+     "record_type": "생각·성찰",
+     "thoughts": [
+      {
+       "thought": "드디어 종강.",
+       "quote": "드디어 종강.",
+       "kind": "감정",
+       "certainty": "단정",
+       "value": "",
+       "topic": "종강"
+      },
+      {
+       "thought": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다.",
+       "quote": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다.",
+       "kind": "자기평가(부정)",
+       "certainty": "단정",
+       "value": "성취",
+       "topic": "축제와 시험 병행"
+      },
+      {
+       "thought": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다.",
+       "quote": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다.",
+       "kind": "자기평가(부정)",
+       "certainty": "단정",
+       "value": "자율",
+       "topic": "축제와 시험 병행"
+      },
+      {
+       "thought": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다.",
+       "quote": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다.",
+       "kind": "다짐",
+       "certainty": "단정",
+       "value": "안정",
+       "topic": "할 일 조절"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

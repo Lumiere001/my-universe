@@ -5,6 +5,7 @@ eval/run.py — 골든셋 실행기(WS8)
     uv run --frozen python eval/run.py --heldout [--live]   # 골든셋 밖 위기 문장: 규칙만 / 규칙 + LLM 재현율 · 오탐
     uv run --frozen python eval/run.py --live --crisis-llm  # 위기를 서비스와 같게 규칙 + LLM 으로 판정(규칙만 결과도 함께 적음)
     uv run --frozen python eval/run.py --pseudonym-heldout  # 골든셋 밖 이름 문장: 이름 재현율 · 낱말 오탐
+    uv run --frozen python eval/run.py --check   # CI(.github/workflows/test.yml): 관문 실패 · 기준선 회귀면 종료 코드 1, 파일은 안 씀
 
 기본: 외부 호출 없이 안전 · 위기 · 규칙 판정만(llm.chat · embed 를 막아 둔다).
 --live: 말 걸기 생성 사례에 Solar(app.core.llm)를 써서 한마디를 만들고 판정한다. 보내는 글은 가상 인물 글을
@@ -563,6 +564,21 @@ def _write_between(mark, body):
         DOC.write_text(doc[:i + len(mark[0])] + "\n" + body + "\n" + doc[j:], encoding="utf-8")
 
 
+def check(category=None, live=False):
+    """CI 문지기. 외부 호출 없는 실행은 live 관문 사례가 늘 '미실행'이라 gate_ok 대신 실행한 관문 사례의 실패만 본다."""
+    llm.chat, llm.embed = (live_chat, blocked) if live else (blocked, blocked)
+    rows = run([category] if category else CATEGORIES, live)
+    bpath = RESULTS / "baseline.json"
+    s = summarize(rows, json.loads(bpath.read_text(encoding="utf-8")) if bpath.exists() else None)
+    bad = [r["id"] for r in rows if r["gate"] and r["status"] == "fail"]
+    for cat, v in s["categories"].items():
+        print(f"{cat:18} {v['passed']}/{v['total']}  관문 {v['gate_passed']}/{v['gate_total']}  미실행 {v['skipped']}")
+    print(f"관문 실패 {bad or '없음'} · 기준선 회귀 {s['regressions'] or '없음'}")
+    if bad or s["regressions"]:
+        sys.exit(1)
+    return s
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="나의 우주 골든셋 실행기")
     ap.add_argument("--category", choices=CATEGORIES)
@@ -571,7 +587,10 @@ def main(argv=None):
     ap.add_argument("--heldout", action="store_true", help="골든셋 밖 위기 문장만(규칙만 / --live 면 규칙 + LLM)")
     ap.add_argument("--crisis-llm", action="store_true", help="위기를 규칙 + LLM 으로(서비스와 같게, --live 필요)")
     ap.add_argument("--pseudonym-heldout", action="store_true", help="골든셋 밖 이름 문장: 이름 재현율 · 낱말 오탐(외부 호출 없음)")
+    ap.add_argument("--check", action="store_true", help="CI: 관문 실패(미실행 live 사례 제외) · 기준선 회귀면 종료 코드 1, 문서 · 결과 파일을 쓰지 않음")
     a = ap.parse_args(argv)
+    if a.check:
+        return check(a.category, a.live)
     if a.crisis_llm and not a.live:
         ap.error("--crisis-llm 은 --live 와 함께")
     MODE["crisis_llm"] = a.crisis_llm
