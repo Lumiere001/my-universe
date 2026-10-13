@@ -185,6 +185,29 @@ def test_same_source_ref_not_imported_again(client, env):  # noqa: F811
     assert client.post("/diary/stream", headers=H1, json={**body, "source": "편지"}).status_code == 422
 
 
+def test_same_source_ref_at_once_is_duplicate_not_500(client, env, monkeypatch):  # noqa: F811
+    """같은 원본을 동시에 두 번 가져와 둘 다 '아직 없음'을 본 뒤 DB 유일 색인이 뒤의 것을 막으면(UniqueViolation) 500 대신 duplicate."""
+    import psycopg
+    body = {"title": "", "text": "인스타 글 하나.", "source": "지난 글 묶음", "source_ref": "ig:1700000000"}
+    first = events(client.post("/diary/stream", headers=H1, json=body).text)[-1][1]
+    real, seen = diary.same_entry, []
+
+    def racing(*a, **kw):   # 먼저 볼 때는 다른 요청이 아직 넣기 전
+        seen.append(1)
+        return None if len(seen) == 1 else real(*a, **kw)
+
+    def insert_blocked(*a, **kw):
+        raise psycopg.errors.UniqueViolation("entries_user_source_ref")
+    monkeypatch.setattr(diary, "same_entry", racing)
+    monkeypatch.setattr(diary, "create_entry", insert_blocked)
+    again = client.post("/diary/stream", headers=H1, json=body)
+    assert again.status_code == 200 and events(again.text) == [("result", {**first, "duplicate": True})]
+    seen.clear()
+    r = client.post("/diary", headers=H1, json=body)
+    assert r.status_code == 200 and r.json()["duplicate"] is True and r.json()["id"] == first["id"]
+    assert env.fake.calls["record"] == 1
+
+
 def test_migrations_after_v8_security_only_add():
     """운영 DB 를 깨지 않게 새 마이그레이션은 덧붙이기만(지우기 · 이름 바꾸기 · 기존 칸 NOT NULL · 형 바꾸기 금지)."""
     bad = re.compile(r"\b(drop|rename|truncate|delete\s+from)\b|set\s+not\s+null|alter\s+column\s+\S+\s+(set\s+data\s+)?type",

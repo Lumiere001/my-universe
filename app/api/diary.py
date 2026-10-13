@@ -16,6 +16,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 from fastapi.responses import StreamingResponse
+from psycopg.errors import UniqueViolation
 
 from app.agents import graph
 from app.core import config
@@ -109,16 +110,23 @@ def _create(repo, uid, body: DiaryIn):
     written = body.written_at or datetime.now(diary.TZ)
     if not written.tzinfo:
         written = written.replace(tzinfo=diary.TZ)
-    with repo.session(uid) as s:
-        diary.profile(s)
-        same = diary.same_entry(s, body.title, body.text, written, body.source, body.source_ref)
-        if same:
-            return same, True
-        _limits(s)
-        eid = diary.new_id("e")
-        diary.create_entry(s, eid, written, body.weather, body.title, body.text, body.source, body.source_ref, body.day)
-        diary.lock(s, eid)
-        diary.add_run(s, eid, "start")
+    try:
+        with repo.session(uid) as s:
+            diary.profile(s)
+            same = diary.same_entry(s, body.title, body.text, written, body.source, body.source_ref)
+            if same:
+                return same, True
+            _limits(s)
+            eid = diary.new_id("e")
+            diary.create_entry(s, eid, written, body.weather, body.title, body.text, body.source, body.source_ref, body.day)
+            diary.lock(s, eid)
+            diary.add_run(s, eid, "start")
+    except UniqueViolation:   # 같은 원본을 동시에 두 번 가져옴: DB 유일 색인이 뒤의 것을 막음 → 먼저 들어간 기록으로 안내
+        with repo.session(uid) as s:
+            same = diary.same_entry(s, body.title, body.text, written, body.source, body.source_ref)
+        if not same:
+            raise
+        return same, True
     return eid, False
 
 
