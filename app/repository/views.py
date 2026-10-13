@@ -101,10 +101,12 @@ def entry_result(s, eid):
 def entry_list(s, limit=20, before=None):
     sun = {x["id"]: x["name"] for x in diary.suns(s)}
     star = {x["id"]: x["name"] for x in diary.stars(s)}
+    waiting = len(s.rows("entries", confirmed=drafts.WAITING))   # 확인 전 초안은 안 보임: 그만큼 더 가져와 거른 뒤에도 한 쪽이 limit 개
+    shown = [e for e in diary.entries(s, limit=limit + waiting, before=before) if e.get("confirmed") != drafts.WAITING][:limit]
     return [{"id": e["id"], "written_at": diary.iso(e["written_at"]), "title": e["data"].get("title", ""),
              "summary": e["data"].get("summary", ""), "weather": e["weather"], "status": e["status"],
              "sun": sun.get(e["sun_id"]), "star": star.get(e["star_id"]), **record_fields(e)}
-            for e in diary.entries(s, limit=limit, before=before) if e.get("confirmed") != drafts.WAITING]   # 확인 전 초안은 안 보임
+            for e in shown]
 
 
 def universe(s):

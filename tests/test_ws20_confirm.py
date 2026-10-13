@@ -118,3 +118,18 @@ def test_new_turns_redraft_and_delete_talk_removes_draft(client, env, talk):  # 
     assert client.get(f"/diary/{r2['id']}", headers=H1).status_code == 404               # 확인 전 초안도 같이
     c = start(client)
     assert client.post(f"/talk/{c['id']}/finish/stream", headers=H1).json()["error"]["code"] == "no_turns"
+
+
+def test_list_page_stays_full_with_waiting_draft(client, env):  # noqa: F811
+    base = diary.parse_dt("2026-10-01T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        done = [diary.new_id("e") for _ in range(21)]
+        for i, eid in enumerate(done):                                                  # 완료 기록 21편
+            diary.create_entry(s, eid, base + timedelta(hours=i), None, f"글 {i}", "오늘은 도서관에서 공부했다.")
+        s.update("entries", {"status": "done"})
+        draft = diary.new_id("e")                                                       # + 가장 새 대화 초안 1편(확인 전)
+        diary.create_entry(s, draft, base + timedelta(days=5), None, "", "아침에 30분 걸었다.", source="대화")
+    page = client.get("/diary", headers=H1, params={"limit": 20}).json()["entries"]
+    assert len(page) == 20 and draft not in [e["id"] for e in page]                     # 초안을 걸러도 한 쪽이 꽉 참
+    rest = client.get("/diary", headers=H1, params={"limit": 20, "before": page[-1]["written_at"]}).json()["entries"]
+    assert [e["id"] for e in rest] == [done[0]]                                         # before 로 다음 쪽이 이어짐
