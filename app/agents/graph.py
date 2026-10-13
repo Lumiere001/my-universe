@@ -335,7 +335,8 @@ def speak(state, ctx):
     changes = [{"before": ts[r["from"]].get("thought", ""), "after": ts[r["to"]].get("thought", ""), "day": ts[r["from"]].get("day")}
                for r in state["relations"] if r["type"] == "바뀜" and r["from"] in ts and r["to"] in ts]
     asked = onboarding.get("aspiration")
-    reask = asked == "skip" and reask_trigger(state["relations"], states)   # 이번엔 넘어가기 → 계기가 생기면 다시 묻는다
+    # 이번엔 넘어가기 → 계기가 생기면 다시 묻는다(위기 · 무거운 날에 생긴 계기는 미뤄 둔 것을 다음 글에서)
+    reask = asked == "skip" and bool(onboarding.get("reask_pending") or reask_trigger(state["relations"], states))
     commitments = [{"text": text_of.get(k, ""), "state": v["state"], "due": v.get("due"),
                     "overdue": bool(v.get("due") and v["due"] < day)}
                    for k, v in states.items() if v["kind"] == "다짐" and v["state"] == "열림" and k not in vow_kept and text_of.get(k)]
@@ -364,10 +365,13 @@ def speak(state, ctx):
         "settings": {"gentle": _flag(settings, "gentle_today", day), "comfort_only": _flag(settings, "comfort_only_today", day),
                      "suggest": {"적게": "안 함", "보통": "가끔", "많이": "자주"}.get(settings.get("suggestions"), "가끔")},
     }
+    later = reask and bool(state.get("crisis_unsure") or "무거운 날" in voice_rules.situations(ctx_v))
+    if later:   # 위기 · 무거운 날(위기 판정 실패 포함)엔 되고 싶은 모습을 다시 묻지 않고 다음 글로 미룬다
+        reask, ctx_v["aspiration_off"] = False, True
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
     return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
-                      "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask},
+                      "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask, "reask_later": later},
             "_checks": len(checks)}
 
 
@@ -419,7 +423,10 @@ def save(state, ctx):
                              "record_type": info.get("record_type"), "updated_at": diary.now()}, id=eid)
         ob = {"weather_asked": True} if v["next_kind"] == "weather" else {}
         if v.get("reask"):
-            ob["aspiration"] = "none"   # 이번엔 넘어가기 뒤 계기가 생김 → 되고 싶은 모습을 다시 묻는다(GET /aspiration should_ask)
+            # 이번엔 넘어가기 뒤 계기가 생김 → 되고 싶은 모습을 다시 묻는다(GET /aspiration should_ask)
+            ob.update(aspiration="none", reask_pending=False)
+        elif v.get("reask_later"):
+            ob["reask_pending"] = True
         if ob:
             diary.save_profile(s, onboarding=ob)
     return {}

@@ -145,7 +145,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `POST /aspiration` `{"now": "요즘의 나", "want": "되고 싶은 나", "obstacle": "걸리는 것", "if_then": "~면 ~하겠다", "values": ["배려"]}` → Aspiration(바뀌면 새 판, 이력 보존)
 - `POST /aspiration/decline` `{"mode": "skip|stop"}`(이번엔 넘어가기 / 그만 묻기) → `{"ok": true}`
 - `history`는 지금 판을 뺀 지난 판(최근 것이 앞). `values`는 v8.json 가치 이름만, 3개까지. `ask.should_ask`: 판이 없고 거절하지 않았고 쓴 날이 3일 이상.
-- `skip`(이번엔 넘어가기)은 계기가 생기면 풀린다: 그 뒤 글에서 바뀜이 나오거나, 이미 '실수'가 있는 주제에 어긋남이 또 나오면 `/me` 의 `onboarding.aspiration` 이 `none` 으로 돌아가고 `should_ask` 가 다시 `true`, 그 글의 `next_question.kind` 는 `aspiration`(날씨 · 다짐 안부 · 남은 질문이 먼저 잡히면 `/aspiration` 화면에서만 다시 물음). `stop`(그만 묻기)은 사용자가 `POST /aspiration` 으로 적을 때까지 그대로.
+- `skip`(이번엔 넘어가기)은 계기가 생기면 풀린다: 그 뒤 글에서 바뀜이 나오거나, 이미 '실수'가 있는 주제에 어긋남이 또 나오면 `/me` 의 `onboarding.aspiration` 이 `none` 으로 돌아가고 `should_ask` 가 다시 `true`, 그 글의 `next_question.kind` 는 `aspiration`(날씨 · 다짐 안부 · 남은 질문이 먼저 잡히면 `/aspiration` 화면에서만 다시 물음). 계기가 위기 글 · 무거운 날(비 · 천둥 · 상실 · 위기 판정 실패 · 오늘은 위로만)에 생기면 그 글에선 묻지 않고 다음 글에서 묻는다. `stop`(그만 묻기)은 사용자가 `POST /aspiration` 으로 적을 때까지 그대로.
 - Aspiration = `{"id", "said", "values", "obstacle", "if_then", "said_at", "reached": [{"entry_id", "quote", "at"}]}`
 
 ## 6. 나 · 설정 · 운영

@@ -242,6 +242,27 @@ def test_skip_reasks_on_trigger_stop_never(env, mode):
         assert r["next_question"]["kind"] != "aspiration" and ob == "stop" and should is False
 
 
+@pytest.mark.parametrize("weather,text", [("비", "혼자 걷는 게 더 좋다고 느꼈다."),
+                                          ("맑음", "혼자 걷는 게 더 좋다고 느꼈다. 요즘 너무 지쳐서 죽고 싶다는 생각이 든다.")])
+def test_reask_waits_past_heavy_or_crisis_day(env, weather, text):
+    """'이번엔 넘어가기' 뒤 계기가 무거운 날(비) · 위기 글에서 생기면 그 글에선 다시 묻지 않고, 다음 글에서 묻는다."""
+    _three_days(env)
+    with env.repo.session(U1) as s:
+        diary.save_profile(s, onboarding={"aspiration": "skip"})
+    observe_as(env, "바뀜")
+    _, r = put(env, "걷기 4", text, "2026-10-04T22:00:00+09:00", weather=weather)
+    assert r["relations"][0]["type"] == "바뀜" and r["message"]["mode"] == "comfort"
+    with env.repo.session(U1) as s:
+        assert diary.profile(s)[1]["aspiration"] == "skip" and not views.aspiration_state(s)["ask"]["should_ask"]
+    assert r["next_question"]["kind"] != "aspiration"
+    observe_as(env, "이어짐")                                                       # 다음 글엔 새 계기 없음
+    _, r = put(env, "걷기 5", "밤에 운동장을 걸었다.", "2026-10-05T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        ob = diary.profile(s)[1]
+        should = views.aspiration_state(s)["ask"]["should_ask"]
+    assert r["next_question"]["kind"] == "aspiration" and ob["aspiration"] == "none" and not ob["reask_pending"] and should
+
+
 def test_widen_sometimes_and_not_same_twice(env, seen):
     _three_days(env)
     with env.repo.session(U1) as s:
