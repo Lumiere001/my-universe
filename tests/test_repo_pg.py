@@ -250,13 +250,15 @@ def test_record_fields_on_pg(repo, users):
     with repo.session(ua) as s:
         r = views.entry_result(s, eid)
         assert (r["source"], r["day"], r["day_basis"], r["record_type"]) == ("사진", "2026-09-30", "확실", "생각·성찰")
-        assert diary.same_entry(s, "9/30 걷기", DAY2[1]) == eid and diary.same_entry(s, "다른", "글", "사진", "photo-1") == eid
+        w = diary.parse_dt("2026-10-01T09:00:00+09:00")
+        assert diary.same_entry(s, "9/30 걷기", DAY2[1], w) == eid and diary.same_entry(s, "다른", "글", w, "사진", "photo-1") == eid
+        assert diary.same_entry(s, "9/30 걷기", DAY2[1], diary.parse_dt("2026-10-02T09:00:00+09:00")) is None   # 다른 날
         assert {x["studio_config"] for x in s.rows("runs", entry_id=eid)} == {"2/2"}
     with pytest.raises(psycopg.errors.UniqueViolation):   # 같은 원본을 두 번 가져오지 못함(DB 가 막음)
         with repo.session(ua) as s:
             diary.create_entry(s, "e_dupref", diary.now(), None, "", "다른 글", "사진", "photo-1")
     with repo.session(users["b"][1]) as s:
-        assert diary.same_entry(s, "9/30 걷기", DAY2[1]) is None
+        assert diary.same_entry(s, "9/30 걷기", DAY2[1], diary.parse_dt("2026-10-01T22:00:00+09:00")) is None
     with psycopg.connect(config.DATABASE_URL) as c:
         ref, h = c.execute("select source_ref, content_hash from entries where id = %s", [eid]).fetchone()
     assert len(ref) == len(h) == 64 and "photo" not in ref

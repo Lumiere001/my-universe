@@ -102,16 +102,16 @@ def _same(repo, uid, eid):
 
 def _create(repo, uid, body: DiaryIn):
     """→ (기록 id, 이미 있던 같은 글인지)."""
+    written = body.written_at or datetime.now(diary.TZ)
+    if not written.tzinfo:
+        written = written.replace(tzinfo=diary.TZ)
     with repo.session(uid) as s:
         diary.profile(s)
-        same = diary.same_entry(s, body.title, body.text, body.source, body.source_ref)
+        same = diary.same_entry(s, body.title, body.text, written, body.source, body.source_ref)
         if same:
             return same, True
         _limits(s)
         eid = diary.new_id("e")
-        written = body.written_at or datetime.now(diary.TZ)
-        if not written.tzinfo:
-            written = written.replace(tzinfo=diary.TZ)
         diary.create_entry(s, eid, written, body.weather, body.title, body.text, body.source, body.source_ref, body.day)
         diary.lock(s, eid)
         diary.add_run(s, eid, "start")

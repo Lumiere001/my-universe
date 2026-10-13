@@ -110,15 +110,26 @@ def test_feedback_config_and_removed_relation_kept(client, env):  # noqa: F811
 def test_same_text_not_sent_again(client, env, monkeypatch):  # noqa: F811
     _, ev = write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     first = ev[-1][1]
-    _, ev = write(client, DAY1[0], "  " + DAY1[1].replace(" ", "  ") + "\n", "2026-10-02T22:00:00+09:00")   # 띄어쓰기만 다름
+    _, ev = write(client, DAY1[0], "  " + DAY1[1].replace(" ", "  ") + "\n", "2026-10-01T23:30:00+09:00")   # 같은 날, 띄어쓰기만 다름
     assert [e for e, _ in ev] == ["result"] and ev[0][1]["duplicate"] is True and ev[0][1]["id"] == first["id"]
     assert env.fake.calls["record"] == 1 and env.fake.calls["observe"] == 1   # Studio 를 다시 부르지 않음
-    r = client.post("/diary", headers=H1, json={"title": DAY1[0], "text": DAY1[1]})
+    r = client.post("/diary", headers=H1, json={"title": DAY1[0], "text": DAY1[1], "written_at": "2026-10-01T08:00:00+09:00"})
     assert r.json()["duplicate"] is True and r.json()["id"] == first["id"]
     assert len(client.get("/diary", headers=H1).json()["entries"]) == 1
     monkeypatch.setattr(config, "V8_RECORD_CONFIG_ID", "3")   # 설정이 바뀌면 같은 글도 새로 정리
     _, ev = write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     assert ev[-1][1]["id"] != first["id"] and "duplicate" not in ev[-1][1] and env.fake.calls["record"] == 2
+
+
+def test_same_short_text_other_day_is_new_entry(client, env):  # noqa: F811
+    """다른 날 쓴 똑같은 짧은 글은 새 기록(같은 날 같은 글만 중복). 날짜는 쓴 날의 한국 시간 날짜로 가른다."""
+    _, ev = write(client, "", "오늘도 별일 없었다.", "2026-10-01T23:50:00+09:00")
+    first = ev[-1][1]["id"]
+    _, ev = write(client, "", "오늘도 별일 없었다.", "2026-10-01T15:30:00+00:00")   # UTC 로는 10/1 이지만 한국 시간 10/2 00:30
+    assert "duplicate" not in ev[-1][1] and ev[-1][1]["id"] != first
+    _, ev = write(client, "", "오늘도 별일 없었다.", "2026-10-02T21:00:00+09:00")   # 같은 날(10/2) 다시 → 중복
+    assert ev[-1][1]["duplicate"] is True
+    assert env.fake.calls["record"] == 2 and len(client.get("/diary", headers=H1).json()["entries"]) == 2
 
 
 def test_same_text_unfinished_points_to_resume(client, env):  # noqa: F811
@@ -127,7 +138,7 @@ def test_same_text_unfinished_points_to_resume(client, env):  # noqa: F811
     eid = ev[-1][1]["entry_id"]
     _, ev = write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     assert ev == [("error", {"entry_id": eid, "code": "duplicate", "message": ev[0][1]["message"], "resumable": True})]
-    r = client.post("/diary", headers=H1, json={"title": DAY1[0], "text": DAY1[1]})
+    r = client.post("/diary", headers=H1, json={"title": DAY1[0], "text": DAY1[1], "written_at": "2026-10-01T22:10:00+09:00"})
     assert r.status_code == 409 and r.json()["error"]["code"] == "duplicate"
     assert env.fake.calls["record"] == 1
 

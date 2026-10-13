@@ -68,10 +68,11 @@ def studio_config():
     return f"{config.V8_RECORD_CONFIG_ID}/{config.V8_OBSERVE_CONFIG_ID}"
 
 
-def content_hash(s, title, text):
-    """같은 글 · 같은 설정이면 같은 값(띄어쓰기 · 줄바꿈 · 유니코드 조합 차이는 무시). 사용자별 HMAC 이라 글을 되살릴 수 없다."""
+def content_hash(s, title, text, written_at):
+    """같은 날(쓴 날, 현지 날짜) 쓴 같은 글 · 같은 설정이면 같은 값(띄어쓰기 · 줄바꿈 · 유니코드 조합 차이는 무시).
+    다른 날 쓴 같은 짧은 글('오늘도 별일 없었다.')은 새 기록이다. 사용자별 HMAC 이라 글을 되살릴 수 없다."""
     norm = unicodedata.normalize("NFC", " ".join(f"{title or ''}\n{text}".split()))
-    return security.digest(s.uid, f"content\n{studio_config()}\n{norm}")
+    return security.digest(s.uid, f"content\n{studio_config()}\n{local_day(written_at)}\n{norm}")
 
 
 def ref_hash(s, source, ref):
@@ -227,12 +228,12 @@ def create_entry(s, eid, written_at, weather, title, text, source="텍스트", s
                          "error_code": None, "enc": seal(s, "entries", eid, data), "updated_at": now(),
                          "source": source, "source_ref": ref_hash(s, source, source_ref), "day": d, "day_basis": basis,
                          "confirmed": "확인 전" if source == "대화" else None, "record_type": None,
-                         "content_hash": content_hash(s, title, text)})
+                         "content_hash": content_hash(s, title, text, written_at)})
 
 
-def same_entry(s, title, text, source="텍스트", source_ref=None):
-    """같은 글(같은 설정) 또는 같은 원본을 이미 받은 기록 id. 없으면 None(PRD §8.5 A: 다시 보내지 않기)."""
-    hit = s.rows("entries", content_hash=content_hash(s, title, text), limit=1)
+def same_entry(s, title, text, written_at, source="텍스트", source_ref=None):
+    """같은 날 쓴 같은 글(같은 설정) 또는 같은 원본을 이미 받은 기록 id. 없으면 None(PRD §8.5 A: 다시 보내지 않기)."""
+    hit = s.rows("entries", content_hash=content_hash(s, title, text, written_at), limit=1)
     if not hit and source_ref:
         hit = s.rows("entries", source_ref=ref_hash(s, source, source_ref), limit=1)
     return hit[0]["id"] if hit else None
