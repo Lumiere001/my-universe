@@ -28,7 +28,7 @@ export default function HistoryPage() {
     <main>
       <button className="small" onClick={() => setOpen(null)} style={{ marginBottom: 12 }}>← 목록으로</button>
       <ResultCard r={open} onChange={setOpen} />
-      <p><Link href={`/talk?from=${encodeURIComponent(open.id)}`}>이 이야기 이어 하기</Link></p>
+      <p><Link href={`/?from=${encodeURIComponent(open.id)}`}>이 이야기 이어 하기</Link></p>
       <DeleteEntry id={open.id} onDeleted={() => { setGone([...gone, open.id]); setOpen(null); }} />
     </main>
   );

@@ -9,7 +9,7 @@ const PHOTOS = path.resolve(__dirname, "../../../tests/fixtures/photos");
 test("사진으로 쓰기", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/write");
   const box = page.getByRole("group", { name: "사진으로 쓰기" });
   const input = box.getByLabel(/사진에서 글자 읽기/);
   const list = box.getByRole("list", { name: "읽을 사진(쪽 순서)" });

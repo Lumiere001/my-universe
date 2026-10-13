@@ -17,7 +17,7 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
   };
 
   await test.step("결과 카드: 관측 상태 · 한계 · 이 기록 JSON", async () => {
-    await page.goto("/");
+    await page.goto("/write");
     await page.getByLabel(/마음껏 적어/).fill("민수 형이랑 진로 이야기를 했다. 작은 팀도 알아보고 싶다.");
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     const obs = result.getByRole("region", { name: "관측 보고서" });

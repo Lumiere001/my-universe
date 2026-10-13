@@ -1,7 +1,7 @@
 "use client";
 // 이야기하기(WS19, 주 화면): 별지기가 먼저 묻고 한 턴씩 이어 간다. 대화는 서버에 암호화해 두어 다른 기기에서도 이어 한다.
 // '지금까지 정리'(접이식) → '대화 마치고 정리하기' → 요약 확인(ConfirmCard) → 저장 뒤 한마디 · 안부는 이 화면의 별지기 말풍선.
-// /talk?from=<기록 id> 는 그 기록을 첫 맥락으로 새 대화를 연다('이 이야기 이어 하기').
+// /?from=<기록 id>(옛 주소 /talk?from=) 는 그 기록을 첫 맥락으로 새 대화를 연다('이 이야기 이어 하기').
 // 말 보내기는 send(text) 하나 — 마이크(WS21)도 받아쓴 글을 여기로 보낸다.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -102,7 +102,7 @@ export default function TalkPage() {
           {c && !saved && <button className="small danger" onClick={remove} disabled={!!busy}>이 대화 지우기</button>}
         </div>
       </div>
-      <p className="sub">별지기와 이야기하면 내 말로 일기를 정리해 드려요. 글로 쓰고 싶으면 <Link href="/">직접 쓰기</Link>.</p>
+      <p className="sub">별지기와 이야기하면 내 말로 일기를 정리해 드려요. 글로 쓰고 싶으면 <Link href="/write">직접 쓰기</Link>.</p>
 
       {c?.summary && !saved && (
         <details className="card" style={{ padding: "10px 14px" }}>

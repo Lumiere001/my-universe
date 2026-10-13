@@ -56,7 +56,7 @@ export default function ConsentPage() {
     try {
       const r = await saveConsent({ version: c.version, required, sensitive, age14: age === "14+", operator_read: operator });
       if (again) { setC(r); setMsg("저장했어요."); setBusy(false); }
-      else window.location.assign("/");   // Shell 이 동의를 다시 확인하고 쓰기 화면을 연다
+      else window.location.assign("/");   // Shell 이 동의를 다시 확인하고 첫 화면(이야기하기)을 연다
     } catch (e) {
       setErr((e as Error).message); setBusy(false);
       load();   // 문구 판이 바뀌었으면(409) 새 판을 다시 받는다

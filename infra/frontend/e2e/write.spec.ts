@@ -18,7 +18,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
   const again = async () => { await page.getByRole("button", { name: "새 글 쓰기" }).click(); await expect(page.getByLabel(/마음껏 적어/)).toBeVisible(); };
 
   await test.step("말풍선: 날씨 질문 + 다짐 안부 → 건너뛰면 날씨 질문 없음", async () => {
-    await page.goto("/");
+    await page.goto("/write");
     await expect(bubble.getByTestId("prompt-question")).toContainText("마음 날씨");
     await expect(bubble.getByTestId("prompt-vow")).toContainText("팀 세 곳");
     await bubble.getByRole("button", { name: /건너뛰기/ }).click();

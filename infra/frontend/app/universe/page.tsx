@@ -83,7 +83,7 @@ export default function UniversePage() {
               </ul>
             )}
             <Link href={`/universe/${encodeURIComponent(planet.id)}`}>결과 카드 보기</Link>
-            {" · "}<Link href={`/talk?from=${encodeURIComponent(planet.id)}`}>이 이야기 이어 하기</Link>
+            {" · "}<Link href={`/?from=${encodeURIComponent(planet.id)}`}>이 이야기 이어 하기</Link>
             {links.map((l) => {
               const other = l.from_planet === planet.id ? l.to_planet : l.from_planet;
               const q = "quote" + (CONFLICT.has(l.type) && !l.ended ? " o" : "");

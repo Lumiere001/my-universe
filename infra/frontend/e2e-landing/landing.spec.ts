@@ -1,4 +1,4 @@
-// WS26 수용 기준: 로그아웃 '/' → 소개 · '구글로 시작하기', 로그인 상태는 쓰기 화면, manifest · 아이콘 · 서비스 워커 등록 · 설치 가능,
+// WS26 수용 기준: 로그아웃 '/' → 소개 · '구글로 시작하기', 로그인 상태는 이야기하기 화면(2026-10-14 결정), manifest · 아이콘 · 서비스 워커 등록 · 설치 가능,
 // 서비스 워커 캐시에 API 응답 · 일기 글이 없음, OG 메타, 설치 안내(안드로이드 버튼 · 아이폰 그림 · 설치했으면 숨김), 개인정보처리방침 링크.
 // 데이터는 가상 인물(하늘)뿐. 캡처는 docs/screens/ws26/.
 import { expect, test, type Page } from "@playwright/test";
@@ -28,6 +28,10 @@ async function signedIn(page: Page) {
     "/me": { user: { id: user.id, email: user.email }, settings, onboarding: { entries: 3, aspiration: DIARY, weather_asked: true } },
     "/ontology": onto,
     "/diary": { entries: [{ id: "e1", written_at: "2026-10-03T21:00:00+09:00", title: "10/3 토요일 일기", summary: DIARY, weather: "흐림", status: "done", sun: "삶의 성취", star: "진로" }] },
+    // 로그인 뒤 첫 화면(이야기하기)이 여는 이어 할 대화 하나(별지기가 먼저 물은 말만)
+    "/talk": { conversations: [{ id: "c1", created_at: "2026-10-03T21:00:00+09:00", updated_at: "2026-10-03T21:00:00+09:00", summary: "",
+      turns: [{ role: "keeper", kind: "first", text: "오늘 하루는 어땠어요?", at: "2026-10-03T21:00:00+09:00" }],
+      from_entry: null, entry_id: null, turn_count: 0, wrap: false }] },
   };
   await page.route(`${FAKE.api}/**`, (r) => {
     const p = new URL(r.request().url()).pathname;
@@ -86,11 +90,11 @@ test("로그아웃: 소개 → 구글로 시작하기, 개인정보처리방침 
   expect(url.searchParams.get("redirect_to")).toBe(info.project.use.baseURL);
 });
 
-test("로그인 상태: 소개 없이 바로 쓰기 화면", async ({ page }) => {
+test("로그인 상태: 소개 없이 바로 이야기하기 화면", async ({ page }) => {
   const errors = watchErrors(page);
   await signedIn(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "오늘의 일기" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
   await expect(page.getByRole("button", { name: "구글로 시작하기" })).toHaveCount(0);
   await page.goto("/settings");

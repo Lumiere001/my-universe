@@ -29,7 +29,7 @@ test("핵심 흐름", async ({ page }, info) => {
   };
 
   await test.step("쓰기: 글과 마음 날씨", async () => {
-    await page.goto("/");
+    await page.goto("/write");
     await page.getByLabel(/마음껏 적어/).fill(HANEUL);
     await page.getByRole("button", { name: /^흐림/ }).click();
     await expect(page.getByRole("button", { name: /^흐림/ })).toHaveAttribute("aria-pressed", "true");

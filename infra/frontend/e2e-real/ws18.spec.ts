@@ -85,6 +85,7 @@ test("사진으로 쓰기(실제 글자 읽기 · 로컬 백엔드)", async ({ p
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
     await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
     await expect(diary).toBeVisible();
   });
 

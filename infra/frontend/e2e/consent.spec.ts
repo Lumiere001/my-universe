@@ -46,13 +46,13 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
     await shot("02-under-14");
   });
 
-  await test.step("필수 셋에 동의하면 쓰기 화면", async () => {
+  await test.step("필수 셋에 동의하면 첫 화면(이야기하기)", async () => {
     await page.getByRole("button", { name: "만 14세 이상이에요" }).click();
     await expect(page.getByTestId("under-14")).toHaveCount(0);
     await expect(start).toBeEnabled();
     await start.click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByLabel(/마음껏 적어/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
   });
 

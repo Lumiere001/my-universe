@@ -13,7 +13,7 @@ import { KeeperLook } from "@/components/Keeper";
 import { ApiError, getConsent, getMe, MOCK, supabase } from "@/lib/api";
 
 const NAV = [
-  ["/talk", "이야기하기"], ["/", "직접 쓰기"], ["/universe", "우주"], ["/history", "지난 기록"], ["/people", "사람"], ["/aspiration", "되고 싶은 나"], ["/settings", "설정"],
+  ["/", "이야기하기"], ["/write", "직접 쓰기"], ["/universe", "우주"], ["/history", "지난 기록"], ["/people", "사람"], ["/aspiration", "되고 싶은 나"], ["/settings", "설정"],
 ] as const;
 const PUBLIC = ["/privacy", "/terms"];
 const OPEN = [...PUBLIC, "/consent", "/settings"];   // 동의 전에도 열리는 화면(설정 = 로그아웃 · 계정 지우기)

@@ -60,6 +60,7 @@ test("인스타 ZIP 가져오기(실제 화면 · 로컬 백엔드)", async ({ p
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
     await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
     await page.getByRole("link", { name: "인스타그램 글 한꺼번에 가져오기" }).click();
     await expect(page.getByRole("heading", { name: "인스타그램에서 가져오기" })).toBeVisible();
     await shot("01-pick");

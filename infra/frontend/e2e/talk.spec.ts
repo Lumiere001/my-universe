@@ -22,8 +22,11 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   };
 
   await test.step("별지기가 먼저 묻는다(다짐 안부)", async () => {
-    await page.goto("/");
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "이야기하기", exact: true }).click();
+    await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기하기(2026-10-14 결정), 직접 쓰기는 /write
+    await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
+    const menu = page.getByRole("navigation", { name: "화면" });
+    await expect(menu.getByRole("link", { name: "이야기하기", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(menu.getByRole("link", { name: "직접 쓰기", exact: true })).toHaveAttribute("href", "/write");
     await expect(talk).toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
     await shot("01-start");
   });
