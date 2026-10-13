@@ -82,12 +82,12 @@ def delete_talk(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     return Response(status_code=204)
 
 
-def _turn_queue(repo, uid, cid, text):
+def _turn_queue(repo, uid, cid, text, via="text"):
     q = queue.Queue()
 
     def work():
         try:
-            v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)))
+            v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)), via)
             q.put(("turn", v) if v else ("error", {"conversation_id": cid, "code": "not_found",
                                                    "message": "대화를 찾지 못했어요.", "resumable": False}))
         except Exception as e:
@@ -110,13 +110,13 @@ def _check(repo, uid, cid):
 @router.post("/talk/{cid}/turn/stream", summary="사용자 말 한 턴(SSE: progress → turn | error)")
 def turn_stream(body: TurnIn, cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     _check(repo, user["id"], cid)
-    return diary_api._stream(_turn_queue(repo, user["id"], cid, body.text))
+    return diary_api._stream(_turn_queue(repo, user["id"], cid, body.text, body.via))
 
 
 @router.post("/talk/{cid}/turn", summary="사용자 말 한 턴(스트림 없이, 시험 · curl용)")
 def turn(body: TurnIn, cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     _check(repo, user["id"], cid)
-    q = _turn_queue(repo, user["id"], cid, body.text)
+    q = _turn_queue(repo, user["id"], cid, body.text, body.via)
     out = None
     while (item := q.get()) is not None:
         out = item

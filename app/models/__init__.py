@@ -142,6 +142,7 @@ class TalkIn(In):
 
 class TurnIn(In):
     text: str = Field(min_length=1, max_length=config.MAX_TEXT_CHARS)
+    via: Literal["text", "voice"] = "text"                          # 받아쓴 말(WS21 마이크 · 녹음 파일)
 
 
 class ThoughtFix(In):

@@ -67,5 +67,13 @@
    "basis": "결정 3(사람 한 명 단위 지우기), plan §1 사람", "ambiguous": false, "ambiguous_reason": ""},
   {"id": "pn-22", "persona": "p_office", "category": "safety_pseudonym", "input": {"op": "forget", "person": {"name": "고민석", "nicknames": ["민석"], "relation": "팀장"}, "text": "민석 팀장님이 칭찬했다. 고민석 팀장님은 말이 짧다."},
    "expected": {"absent": ["민석"]}, "judge": "machine", "how": "forget → '민석' 0건(호칭이 관계 말과 겹칠 때의 자연스러운 꼴은 보지 않음)",
-   "basis": "결정 3", "ambiguous": false, "ambiguous_reason": ""}
+   "basis": "결정 3", "ambiguous": false, "ambiguous_reason": ""},
+  {"id": "pn-23", "persona": "p_office", "category": "safety_pseudonym", "input": {"text": "민석 팀장님이 기획안을 다시 보자고 했다. 고민석 팀장님 말이 맞았다. 오후엔 지훈 과장님한테 자료를 넘겼다.", "people": [{"name": "보람", "nicknames": [], "relation": "입사 동기"}]},
+   "expected": {"hidden": ["민석", "지훈"], "keep": ["기획안", "자료"]}, "judge": "machine",
+   "how": "사람 목록에 아직 없는 이름 + 직함(팀장님 · 과장님), 성 붙은 꼴(고민석)까지 → 가명 글에 '민석' · '지훈' 0건, 왕복 일치",
+   "basis": "결정 3(새 이름 자동 등록, 확실하지 않으면 가명), PRD §8.2 G4(호칭), WS21 e2e 에서 찾은 누출", "ambiguous": false, "ambiguous_reason": ""},
+  {"id": "pn-24", "persona": "p_prayer", "category": "safety_pseudonym", "input": {"text": "새로 오신 정우 집사님과 수요 기도를 했습니다. 혜진 간사님의 기도 제목도 기억하게 하소서."},
+   "expected": {"hidden": ["정우", "혜진"], "keep": ["기도"]}, "judge": "machine",
+   "how": "목록에 없는 이름 + 직분(집사님 · 간사님) → 가명 글에 '정우' · '혜진' 0건, 왕복 일치",
+   "basis": "결정 3, PRD §8.2 G4(호칭)", "ambiguous": false, "ambiguous_reason": ""}
 ]
