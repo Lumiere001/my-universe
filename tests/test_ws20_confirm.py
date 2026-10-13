@@ -49,7 +49,9 @@ def test_confirm_saves_fixes_and_clears_turns(client, env, talk):  # noqa: F811
     t0, t1 = r["thoughts"][0], r["thoughts"][1]
     body = {"summary": "아침 걷기를 시작했다.", "fixes": [{"id": t0["id"], "kind": "소망"}, {"id": t1["id"], "remove": True}],
             "agreed": []}
+    chats = env.fake.calls["chat"]
     done = client.post(f"/diary/{r['id']}/confirm", headers=H1, json=body).json()
+    assert env.fake.calls["chat"] == chats + 1                                          # 종류 고침 · 빼기 → 한마디를 다시 만듦
     assert done["status"] == "done" and done["confirmed"] == "확인됨"
     assert done["info"]["summary"] == "아침 걷기를 시작했다."                               # 고친 값이 저장됨
     assert [(t["id"], t["kind"]) for t in done["thoughts"]] == [(t0["id"], "소망")]          # 종류 고침 · 생각 빼기
@@ -77,10 +79,12 @@ def test_confirm_agree_only_and_bad_input(client, env, talk):  # noqa: F811
     assert client.post(f"/diary/{r['id']}/confirm", headers=H1, json={"fixes": [{"id": r["thoughts"][0]["id"], "kind": "없는 종류"}]}
                        ).status_code == 422
     assert client.post(f"/diary/{r['id']}/confirm", headers=H2, json={}).status_code == 404   # 남의 초안
-    ok = client.post(f"/diary/{r['id']}/confirm", headers=H1, json={"agreed": ["summary", r["thoughts"][0]["id"]]}).json()
+    chats = env.fake.calls["chat"]
+    ok = client.post(f"/diary/{r['id']}/confirm", headers=H1, json={"summary": "아침에 걸었다.", "agreed": [r["thoughts"][0]["id"]]}).json()
+    assert env.fake.calls["chat"] == chats                                              # 요약만 고치거나 맞아요면 한마디 그대로
     assert ok["status"] == "done" and ok["thoughts"][0]["kind"] == r["thoughts"][0]["kind"]
     with env.repo.session(U1) as s:
-        assert sorted(f["value"] for f in s.rows("feedback", target="confirm")) == ["확인 맞아요"] * 2
+        assert sorted(f["value"] for f in s.rows("feedback", target="confirm")) == ["확인 고침", "확인 맞아요"]
 
 
 def test_text_path_unchanged_and_confirm_flag(client, env):  # noqa: F811

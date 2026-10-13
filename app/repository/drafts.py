@@ -82,7 +82,9 @@ def confirm(s, vectors, e, summary=None, fixes=(), agreed=()):
                 t["flags"] = [x for x in t.get("flags") or [] if x != "감사"]
     for a in agreed:
         _note(s, eid, "확인 맞아요", {"item": a})
-    # ponytail: 고친 종류로 관계 규칙 · 한마디를 다시 돌리지 않는다(빠진 생각의 관계만 뺌). 어긋남이 보이면 그때 rules 를 다시 부른다.
+    # ponytail: 고친 종류로 관계 규칙은 다시 돌리지 않는다(빠진 생각의 관계만 뺌). 어긋남이 보이면 그때 rules 를 다시 부른다.
+    if removed or changed - {"summary"}:   # 종류를 고쳤거나 생각을 뺐으면 저장할 때 한마디를 다시 만든다(2026-10-14 결정, 요약만 고치면 그대로)
+        st["done"] = [d for d in st.get("done", []) if d != "voice"]
     st["record"] = rec
     st["today"] = [today[t["id"]] for t in st["today"] if t["id"] not in removed]
     st["relations"] = [r for r in st.get("relations", []) if r["from"] not in removed and r["to"] not in removed]
