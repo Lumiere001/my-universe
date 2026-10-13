@@ -17,7 +17,8 @@ TOKENS = {"tok1": {"id": U1, "email": "jiho@my-universe.test"}, "tok2": {"id": U
 H1, H2 = {"Authorization": "Bearer tok1"}, {"Authorization": "Bearer tok2"}
 RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations",
                "past", "reached", "message", "next_question", "people_questions",
-               "source", "day", "day_basis", "day_check", "confirmed", "record_type"}   # 기록 칸(WS11)
+               "source", "day", "day_basis", "day_check", "confirmed", "record_type",   # 기록 칸(WS11)
+               "observation"}   # 관측 상태 · 한계(WS15)
 
 
 @pytest.fixture

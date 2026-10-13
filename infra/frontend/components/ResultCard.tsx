@@ -7,6 +7,9 @@ import { answerPersonQuestion, sendFeedback, type EntryResult, type Feedback } f
 import { useKindName } from "@/lib/use";
 import { DayFix, WeatherSkip } from "./EntryTools";
 import { useKeeperName } from "./Keeper";
+import { exportDiary } from "@/lib/api";
+import { localToday } from "./EntryTools";
+// 관측 보고서(WS15): 이어진 지난 생각 다음에 관측 상태 · 한계 · 이 기록 JSON 내려받기.
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
@@ -53,6 +56,29 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
       </div>
       <button type="submit" className="small" style={{ alignSelf: "flex-end" }}>보내기</button>
     </form>
+  );
+}
+
+// JSON 내려받기(WS15): id 가 있으면 그 기록, 없으면 전체. 받은 JSON 을 파일로 저장한다(다른 사람 이름은 그대로).
+export function DownloadJson({ id, label }: { id?: string; label: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const go = async () => {
+    setBusy(true); setErr("");
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(await exportDiary(id), null, 2)], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `my-universe-${id ?? "all"}-${localToday()}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <div className="row">
+      <button type="button" className="small" disabled={busy} onClick={go}>{busy ? "준비하는 중…" : label}</button>
+      {err && <span className="err" role="alert">{err}</span>}
+    </div>
   );
 }
 
@@ -152,6 +178,22 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
               </article>
             );
           })}
+        </section>
+      )}
+
+      {r.observation && (
+        <section className="card stack" aria-label="관측 보고서" data-testid="observation">
+          <h2>관측 보고서</h2>
+          <p style={{ margin: 0 }}>관측 상태 <span className="badge v">{r.observation.state}</span></p>
+          {r.observation.limits.length > 0 && (
+            <div>
+              <span className="sub">한계</span>
+              <ul className="sub" style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                {r.observation.limits.map((x) => <li key={x}>{x}</li>)}
+              </ul>
+            </div>
+          )}
+          <DownloadJson id={r.id} label="이 기록 JSON 내려받기" />
         </section>
       )}
 

@@ -156,6 +156,10 @@ function result(id: string, input: DiaryInput): EntryResult {
     next_question: comfort ? { kind: "none", text: "" } : { kind: "free", text: "부모님께는 어떤 말부터 꺼내고 싶어요?" },
     people_questions: [{ id: "q1", name: "민수 형", question: "'민수 형'은 사람 목록의 선배 민수와 같은 사람인가요?",
       options: ["같은 사람", "다른 사람", "사람 이름 아님"] }],
+    // 관측 보고서(WS15)
+    observation: { state: "바뀜", limits: ["생각 나누기와 이어진 선은 AI 가 원문 인용을 근거로 한 추정이라 틀릴 수 있어요.",
+      "지난 생각 2개와만 비교했어요. 같은 세부 주제와 뜻이 가까운 것을 골랐고, 이 글을 정리할 때 이미 있던 기록만 봤어요.",
+      "점선은 글에 직접 쓰지 않은 연결이에요. 맞는지 알려 주세요."] },
   };
 }
 

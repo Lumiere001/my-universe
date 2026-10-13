@@ -33,6 +33,7 @@ def test_finish_pauses_before_save_and_hides_draft(client, env, talk):  # noqa: 
     assert all(t["quote"] for t in r["thoughts"])                                       # 원문 근거
     assert client.get("/diary", headers=H1).json()["entries"] == []                     # 목록 · 우주에 안 보임
     assert client.get("/universe", headers=H1).json()["planets"] == []
+    assert client.get("/export", headers=H1).json()["records"] == []                     # 전체 내려받기에도 안 들어감(WS15)
     assert client.get(f"/diary/{r['id']}", headers=H1).json()["status"] == "confirm"
     assert client.get(f"/talk/{cid}", headers=H1).json()["entry_id"] == r["id"]
     ev2 = finish(client, cid)                                                           # 말이 그대로면 같은 초안

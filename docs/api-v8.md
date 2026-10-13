@@ -12,6 +12,8 @@
 
 **대화 · 요약 확인(WS19 · WS20, 2026-10-14):** `/talk` 경로 묶음(§8)과 `POST /diary/{id}/confirm`을 더했다. 쓰기 본문에 `confirm`(기본 false), EntryResult `status`에 `confirm`(확인을 기다리는 초안 — DB 의 status 는 그대로 processing)을 더했다(칸 · 값 추가만, 텍스트 길은 그대로). 마이그레이션 `20261014000100_v8_conversations.sql`(새 표만).
 
+**관측 보고서 · JSON 내려받기(WS15, 2026-10-14):** EntryResult 에 `observation`(관측 상태 · 한계)을 더하고(§1), `GET /export` · `GET /export/{id}`(JSON 내려받기)를 더했다(§2.1). 다른 사람 이름은 가리지 않는다(2026-10-13 동규 결정 12). 칸 · 경로 추가만이고 마이그레이션은 없다.
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -86,9 +88,13 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   "reached": [{"aspiration_id": "a1", "quote": "...", "message": "..."}],
   "message": {"text": "...", "tone": "다정하게", "mode": "normal|comfort", "check_in": "안부 한 줄|null"},
   "next_question": {"kind": "weather|aspiration|free|none", "text": "..."},
-  "people_questions": [{"id": "q1", "name": "...", "question": "...", "options": ["..."]}]
+  "people_questions": [{"id": "q1", "name": "...", "question": "...", "options": ["..."]}],
+  "observation": {"state": "해소|바뀜|긴장|어긋남|이어짐|목표 충돌|이어진 지난 생각 없음|처음 쓰는 주제|비교할 지난 글 없음|생각이 없는 글",
+                  "limits": ["생각 나누기와 이어진 선은 AI 가 원문 인용을 근거로 한 추정이라 틀릴 수 있어요.", "..."]}
 }
 ```
+
+관측 보고서(WS15, PRD §7 474): `observation` 은 끝난 기록에만(그 밖은 null). `state` 는 규칙이 거른 뒤 저장된 관계로 다시 센다(관측 Agent 의 Classify 는 저장하지 않음): 생각이 없으면 `생각이 없는 글`, 정리할 때 비교한 지난 생각이 없으면 `비교할 지난 글 없음`, 이 글이 새 쪽인 지난 글과의 관계가 있으면 그 종류 중 앞의 것(해소 > 바뀜 > 긴장 > 어긋남 > 이어짐, 목록 밖 `목표 충돌`은 그 뒤 — v8.json `observation_states.priority`), 관계가 없고 같은 작은 별의 지난 생각이 있었으면 `이어진 지난 생각 없음`, 아니면 `처음 쓰는 주제`. 같은 글 안의 관계는 세지 않는다. `limits` 는 그 기록에 맞는 한계 문장: AI 추정(생각이 있으면 늘) · 비교한 지난 생각 수와 고른 방법 · 점선이 있으면 확인 부탁 · 날짜 확인 필요 또는 날 추정.
 
 기록 칸: `source` 출처, `day` 글이 다루는 날(이 칸 전에 저장된 기록은 쓴 날 · 추정), `day_check` 날짜 확인 필요(G2), `confirmed` 대화에서 온 글의 요약 확인 상태(그 밖은 null), `record_type` 기록 Agent Classify 가 고른 글 유형(목록 밖이면 `기타` + `info.original.record_type`, 이 칸 전 기록은 null). `thoughts[].original` 은 목록 밖 값의 원래 말(종류 · 확신 · 가치, 없으면 null). `other` 는 예전 화면용으로 종류의 원래 말만.
 
@@ -104,6 +110,24 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `GET /diary/prompt` → `{"kind": "first|weather|aspiration|free|none", "text": "질문", "vow": {"thought_id", "text", "overdue": false} | null}` 쓰기 화면 위 별지기 말풍선(LLM 없음). 기록이 없으면 정해 둔 첫 만남 질문(`first`, PRD §6.2), 있으면 마지막 글의 '다음에 써 볼 질문'(`next_question` 과 같은 종류 · 글). 날씨 질문은 건너뛰었으면(`weather_ask: false`) `none`, 되고 싶은 모습 질문은 넘어감 · 그만 묻기 · 이미 적었으면 `none`. `vow` 는 다짐 안부: 기한이 지났거나(`overdue: true`) 마지막 글에서 나온 열린 다짐 하나(화면은 지켰어요 · 그만둘래요 버튼, 누르면 닫혀 다시 안 나옴). 마지막 글이 위로 모드(무거운 날 · 위기)였거나 오늘은 위로만이면, 또는 지난 질문이 이미 다짐 안부면 `null`. `/diary/{id}` 보다 먼저 등록한다.
 - `PATCH /diary/{id}/day` `{"day": "YYYY-MM-DD"}` → EntryResult. 글이 다루는 날을 고친다(`day_basis: "확실"`, `day_check: false`). 정리 결과(생각 · 관계)는 다시 돌리지 않는다. 정리 중이면 409 `already_running`, 남의 · 없는 기록은 404.
 - `GET /universe` → 아래 Universe
+
+### 2.1 JSON 내려받기 (WS15, 2026-10-14)
+
+- `GET /export` → 전체(먼저 쓴 기록부터), `GET /export/{id}` → 기록 하나(남의 · 없는 기록은 404). 화면이 받아 파일(`my-universe-….json`)로 저장한다.
+- 모양(`schema: "my-universe-export/1"`):
+
+```json
+{
+  "schema": "my-universe-export/1", "exported_at": "2026-10-14T21:00:00+09:00", "scope": "entry|all",
+  "records": [{EntryResult 에서 people_questions · step 을 뺀 것, "text": "원문 본문",
+               "thoughts": [{… EntryResult 의 생각, "domain": "해 이름", "people": ["민준"]}],
+               "info": {…, "addressee_person": "이름|null"}}],
+  "domains": [{"id": "d1", "name": "건강", "custom": false, "topics": [{"id": "s1", "name": "아침 걷기"}]}]
+}
+```
+
+- 담기는 것: 기록(원문 · 제목 · 기록 칸 `source` · `day` · `day_basis` · `day_check` · `confirmed` · `record_type`) · 생각 · 영역(`domains` = 해, `topics` = 작은 별, 내보낸 생각이 가리키는 것만 — 전체면 사용자가 더한 해도) · 관계(`relations`) · 보고서(`observation` · `past` · `reached` · `message` · `next_question`).
+- **다른 사람 이름은 가리지 않는다**(2026-10-13 동규 결정 12: 본인 기록이라 실명 그대로, 가리기 선택지도 없음). 사람은 id 대신 이름으로 적고(`thoughts[].people` · `info.addressee_person`), 사람 목록(외부 AI 로 보낼 때 가명을 만드는 표)은 넣지 않는다.
 - `GET /ontology` → `app/core/ontology/v8.json` 그대로(범례 · 보기 목록은 화면이 여기서 읽는다)
 
 ### Universe

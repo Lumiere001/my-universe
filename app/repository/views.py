@@ -6,6 +6,7 @@ app/repository/views.py
 
 from collections import Counter
 
+from app.core.ontology import load
 from app.repository import diary, drafts
 from app.service.rules import universe_view
 
@@ -54,6 +55,38 @@ def record_fields(e):
             "confirmed": e.get("confirmed"), "record_type": e.get("record_type")}
 
 
+OBS_ORDER = load()["observation_states"]["priority"]   # 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음 쓰는 주제
+
+
+def observation(r, ts, rels, past_ids, pts):
+    """관측 보고서의 관측 상태 · 한계(PRD §7 474, WS15). 관측 Agent 의 Classify 는 저장하지 않으므로
+    규칙이 거른 뒤 저장된 관계로 다시 센다. r: 기록 칸이 붙은 EntryResult 앞부분, ts: 이 기록의 생각,
+    rels: 이 기록의 관계, past_ids: 정리할 때 비교한 지난 생각 id, pts: 그중 아직 남은 생각 {id: 생각}."""
+    ids = {t["id"] for t in ts}
+    found = [x["type"] for x in rels if x["to"] in ids and x["from_record"] != r["id"]]   # 이 글이 새 쪽인 지난 글과의 관계
+    if not ts:
+        state = "생각이 없는 글"
+    elif not past_ids:
+        state = "비교할 지난 글 없음"
+    elif found:
+        state = min(found, key=lambda k: OBS_ORDER.index(k) if k in OBS_ORDER else len(OBS_ORDER))
+    elif {p["star_id"] for p in pts.values()} & {t["star_id"] for t in ts}:
+        state = "이어진 지난 생각 없음"   # 같은 세부 주제의 지난 생각은 있었지만 이어지지 않음
+    else:
+        state = "처음 쓰는 주제"
+    limits = ["생각 나누기와 이어진 선은 AI 가 원문 인용을 근거로 한 추정이라 틀릴 수 있어요."] if ts else []
+    if past_ids:
+        limits.append(f"지난 생각 {len(past_ids)}개와만 비교했어요. 같은 세부 주제와 뜻이 가까운 것을 골랐고, "
+                      "이 글을 정리할 때 이미 있던 기록만 봤어요.")
+    if any(x["line"] == "점선" and x["to"] in ids for x in rels):
+        limits.append("점선은 글에 직접 쓰지 않은 연결이에요. 맞는지 알려 주세요.")
+    if r["day_check"]:
+        limits.append("글 속 날짜를 하나로 읽지 못했어요. 글이 다루는 날을 확인해 주세요.")
+    elif r["day_basis"] == "추정":
+        limits.append("글이 다루는 날을 쓴 날로 추정했어요.")
+    return {"state": state, "limits": limits}
+
+
 def entry_result(s, eid):
     e = diary.entry(s, eid)
     if not e:
@@ -63,7 +96,7 @@ def entry_result(s, eid):
             **record_fields(e),
             "title": d.get("title", ""), "weather": e["weather"], "crisis": e["crisis"], "info": None,
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
-            "people_questions": []}
+            "people_questions": [], "observation": None}
     if e["status"] != "done":
         return drafts.result(e, base) if drafts.pending(e) else base   # 확인을 기다리는 대화 초안(WS20)
     states = diary.states(s)
@@ -71,7 +104,7 @@ def entry_result(s, eid):
     ids = [t["id"] for t in ts]
     rels = (diary.relations(s, to_thought=ids) + [r for r in diary.relations(s, from_thought=ids) if r["to"] not in ids]) if ids else []
     past_ids = d.get("past") or []
-    past = []
+    past, pts = [], {}
     if past_ids:
         pts = {t["id"]: t for t in diary.thoughts(s, id=past_ids)}
         when = {x["id"]: x["written_at"] for x in s.rows("entries", id=list({t["entry_id"] for t in pts.values()}))}
@@ -95,7 +128,8 @@ def entry_result(s, eid):
             "message": {"text": msg.get("text", ""), "tone": m[0]["tone"], "mode": msg["mode"],
                         "check_in": msg.get("check_in") or None} if m else None,
             "next_question": {"kind": NEXT_KIND.get(m[0]["next_kind"], "free"), "text": msg.get("next_question", "")} if m else None,
-            "people_questions": qs}
+            "people_questions": qs,
+            "observation": observation(base, ts, rels, past_ids, pts)}
 
 
 def entry_list(s, limit=20, before=None):
@@ -107,6 +141,42 @@ def entry_list(s, limit=20, before=None):
              "summary": e["data"].get("summary", ""), "weather": e["weather"], "status": e["status"],
              "sun": sun.get(e["sun_id"]), "star": star.get(e["star_id"]), **record_fields(e)}
             for e in shown]
+
+
+EXPORT_SCHEMA = "my-universe-export/1"
+
+
+def export(s, eid=None):
+    """JSON 내려받기(PRD §5.6 · §7 474, WS15): 기록 하나(eid) 또는 전체(먼저 쓴 것부터). 없는 기록이면 None.
+    records[] = EntryResult(people_questions · step 뺌) + 원문 text, 생각에 영역 이름. 보고서 = observation · relations ·
+    past · reached · message · next_question. 다른 사람 이름은 실명 그대로(2026-10-13 동규 결정 12) — 사람은 id 대신
+    이름으로 적고, 사람 목록(외부 AI 로 보낼 때의 가명 표)은 넣지 않는다."""
+    es = ([e for e in [diary.entry(s, eid)] if e] if eid
+          else [e for e in diary.entries(s)[::-1] if e.get("confirmed") != drafts.WAITING])   # 확인 전 대화 초안은 목록처럼 뺌(WS20)
+    if eid and not es:
+        return None
+    name = {p["id"]: p["name"] for p in diary.people(s)}
+    suns = diary.suns(s)
+    sun = {x["id"]: x["name"] for x in suns}
+    records = []
+    for e in es:
+        # ponytail: 기록마다 entry_result 를 따로 읽어 쿼리 수가 기록 수에 비례한다. 수천 편이 되면 한 번에 읽어 묶기.
+        r = {k: v for k, v in entry_result(s, e["id"]).items() if k not in ("people_questions", "step")}
+        r["text"] = e["data"].get("text", "")
+        for t in r["thoughts"]:
+            t["people"] = [name[i] for i in t["people"] if i in name]
+            t["domain"] = sun.get(t["sun_id"])
+        if r["info"]:
+            r["info"]["addressee_person"] = name.get(r["info"]["addressee_person"])
+        records.append(r)
+    used_sun = {t["sun_id"] for r in records for t in r["thoughts"]}
+    used_star = {t["star_id"] for r in records for t in r["thoughts"]}
+    stars = [x for x in diary.stars(s) if x["id"] in used_star]
+    return {"schema": EXPORT_SCHEMA, "exported_at": diary.iso(diary.now()), "scope": "entry" if eid else "all",
+            "records": records,
+            "domains": [{"id": x["id"], "name": x["name"], "custom": x["custom"],
+                         "topics": [{"id": st["id"], "name": st["name"]} for st in stars if st["sun_id"] == x["id"]]}
+                        for x in suns if x["id"] in used_sun or (x["custom"] and not eid)]}
 
 
 def universe(s):
