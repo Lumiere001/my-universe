@@ -112,6 +112,8 @@ def filter_relations(cands, thoughts, states=None):
             continue
         # 선: 관측 Agent가 '작성자가 직접 씀' + 기록 Agent도 새 생각에서 스스로 쓴 변화를 뽑았을 때만 실선
         line = "실선" if _yes(c.get("author_stated")) and pb.get("self_change") else "점선"
+        # 설명은 G3 · 내부 번호를 거른 뒤의 글로 판정하고 보여 준다(사람 판정 · 진단 문장만이었으면 빈 설명)
+        explanation = clean_text(c.get("explanation"), " ".join(f"{t.get('quote', '')} {t.get('thought', '')}" for t in (pa, pb)))
         cross = bool(pa.get("domain") and pb.get("domain") and pa["domain"] != pb["domain"])
         if cross:
             if group not in O["cross_domain"]["allowed_groups"]:
@@ -125,7 +127,7 @@ def filter_relations(cands, thoughts, states=None):
                     continue
                 line = "실선"
             else:
-                if not (quoted and (c.get("explanation") or "").strip()):
+                if not (quoted and explanation):
                     drop("영역 넘는 다른 날 관계인데 원문 설명이 없음")
                     continue
                 line = "점선"
@@ -135,8 +137,7 @@ def filter_relations(cands, thoughts, states=None):
             "topic": (c.get("topic") or pb.get("topic") or "").strip(), "line": line,
             # 점선 = AI 추정 → 사용자 확인(맞아요 → 실선 / 아니에요 → 지움, v8.json line_styles). 영역 안 점선도 같다.
             "cross_domain": cross, "needs_confirm": line == "점선", "vow_kept": vow_kept, "vow_quit": vow_quit,
-            "explanation": clean_text(c.get("explanation"), " ".join(f"{t.get('quote', '')} {t.get('thought', '')}"
-                                                                     for t in (pa, pb))),
+            "explanation": explanation,
             "axis": (c.get("axis") or "").strip(),
             "notes": notes,
         })

@@ -41,6 +41,16 @@ def test_relation_explanation_cleaned():
     assert kept[0]["explanation"] == "지난 생각과 오늘 생각이 같은 방향이다."
 
 
+def test_cross_domain_other_day_needs_explanation_after_cleaning():
+    """영역을 넘는 다른 날 관계는 G3 · 내부 번호를 거른 설명으로 판정한다. 거른 뒤 비면 버린다."""
+    a, b = T("a", "2026-03-20", "해석", domain="일"), T("b", "2026-04-02", "해석", domain="관계")
+    c = {"a": "a", "b": "b", "type": "이어짐", "quoted": True}
+    kept, dropped = run([{**c, "explanation": "글쓴이는 의지가 약한 사람이다."}], a, b)
+    assert not kept and dropped[0]["reason"] == "영역 넘는 다른 날 관계인데 원문 설명이 없음"
+    kept, _ = run([{**c, "explanation": "P1에서 일이 버겁다고 했다. 글쓴이는 의지가 약한 사람이다."}], a, b)
+    assert kept[0]["explanation"] == "지난 생각에서 일이 버겁다고 했다." and kept[0]["line"] == "점선"
+
+
 def test_positive_self_eval_after_open_vow_is_kept_vow():
     """관측 2판은 지킨 다짐을 '이어짐'으로 낸다 → 열린 다짐 + 다른 글의 같은 주제 자기평가(긍정)이면 지켜짐."""
     v = T("v", "2026-03-20", "다짐", thought="매일 아침 30분 걷겠다")
