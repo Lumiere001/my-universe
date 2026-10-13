@@ -202,14 +202,26 @@ Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|cont
 - `POST /talk` 본문 없음 또는 `{"from_entry": "기록 id"}` → Conversation. 첫 말은 LLM 없이 정한다(PRD §6.2): `from_entry`(끝난 기록)면 그 기록을 이어 하는 말(`continue`) → 다짐 안부(`vow`, 쓰기 화면 말풍선과 같은 다짐) → 기록이 없으면 첫 만남 질문(`first`) → 지난 글의 '다음에 써 볼 질문'(`question` · `aspiration`) → 되고 싶은 모습을 물을 때(`aspiration`) → 그 밖(`free`). 사용자 말이 한 번도 없는 대화는 새로 열 때 치운다.
 - `GET /talk` → `{"conversations": [Conversation]}` 최근 것부터 5개(이어 하기). `GET /talk/{id}` → Conversation. 남의 · 없는 대화는 404.
 - `DELETE /talk/{id}` → 204(확인 전 초안 기록도 같이 지움, 정리 중이면 409).
-- `POST /talk/{id}/turn/stream` `{"text": "1~8000자"}` → SSE: `event: progress` `{"conversation_id", "step": "safety|past|reply|summary", "label"}` … `event: turn` Conversation, 또는 `event: error` `{"conversation_id", "code": "llm_failed|real_name_leak|internal|not_found", "message", "resumable"}`. 실패한 턴은 저장하지 않는다(화면이 같은 말을 다시 보냄). 받아쓴 말(WS21)도 같은 길. `POST /talk/{id}/turn` 은 스트림 없이 Conversation(시험 · curl용, 실패는 502).
+- `POST /talk/{id}/turn/stream` `{"text": "1~8000자", "via": "text|voice"(기본 text, 받아쓴 말은 voice — WS21)}` → SSE: `event: progress` `{"conversation_id", "step": "safety|past|reply|summary", "label"}` … `event: turn` Conversation, 또는 `event: error` `{"conversation_id", "code": "llm_failed|real_name_leak|internal|not_found", "message", "resumable"}`. 실패한 턴은 저장하지 않는다(화면이 같은 말을 다시 보냄). 받아쓴 말(WS21)도 같은 길. `POST /talk/{id}/turn` 은 스트림 없이 Conversation(시험 · curl용, 실패는 502).
   - safety: 매 턴 위기 2단 판정(규칙 + Solar). 위기면 그 답은 위로(팩폭도 다정하게, 질문 · 제안 없음, `mode: comfort`) + `check_in`(안부 한 줄). Solar 2차 판정이 실패한 턴은 평소 답 + 안부 한 줄. 위기 표시는 대화 암호문 안에만.
   - past: 사용자 말을 가명 처리 → 질의용 임베딩 → 그 사용자의 끝난 기록의 생각 벡터에서 `rules.pick_past`(코드 코사인). `from_entry` 면 그 기록의 생각을 앞에.
   - reply: Solar. 따옴표 인용은 사용자 말 · 지난 생각 원문에 글자 그대로 있어야 하고(아니면 다시 · 기본 문장), 질문은 한 번에 하나, 넘지 않는 선 · 반복 · 사람 판정은 한마디와 같은 검사(`voice.checks.problems`). 지난 기록을 묻는 말("예전에 진로 얘기 뭐라고 했지?")은 찾은 기록의 날짜 · 원문 인용으로 답하고(`kind: recall`), 없으면 못 찾았다고 한다(찾을 기록이 없으면 Solar 를 부르지 않음). 끝낼 신호("이제 그만 잘게")나 사용자 턴 8번이면 한 줄 되짚고 정리 제안(`kind: wrap`, 마지막 줄은 고정 문장).
-  - summary: 사용자 턴 3번마다(또는 300자 넘는 긴 말이면 바로) '지금까지 정리'를 사용자 말만 근거로 고쳐 쓴다. 사용자 말에 없는 인용 · 사람 판정이 있으면 앞 정리를 그대로 둔다.
+  - summary: 사용자 턴 3번마다(또는 300자 넘는 긴 말이면 바로) '지금까지 정리'를 사용자 말만 근거로 고쳐 쓴다(400자 안, 600자를 넘으면 문장 끝에서 자름 — WS21). 사용자 말에 없는 인용 · 사람 판정이 있으면 앞 정리를 그대로 둔다.
+  - 긴 이야기(300자 넘는 말, 녹음 등 — WS21): 위기 턴이 아니면 상황 '긴 이야기'(다 되짚지 않고 들었다는 한 문장 + 마음이 실린 한 가지만 짧게 이어 묻기), 답 검사에 걸리면 세 번까지 써 본다(짧은 말은 두 번).
   - 가명 표 = 사람 목록 + 이 대화의 새 이름 후보(확실하지 않아도 가명). 대화 중에는 사람 목록에 등록하지 않는다(초안이 일기 그래프의 names 단계를 지날 때 등록). 보내기 직전 실명 검사(`llm.guard`).
   - 실행 기록: `runs` 에 `talk_turn`(entry_id 없음, meta: 대화 id · 턴 번호 · 답 종류 · 검사 문제 개수 · 지난 생각 수) · `talk_draft`. 이번 달 추정 비용에 같이 들어간다.
 - `POST /talk/{id}/finish/stream` → SSE: `progress` `{"step": "draft", "label": "대화를 일기로 정리하는 중", "done": 0}` → 일기 그래프의 `progress`(safety … voice, save 없음) → `event: result` EntryResult(`status: "confirm"`, `confirmed: "확인 전"`, `source: "대화"`, `message` · `next_question` 은 null — 저장 뒤에 보임). 초안은 사용자 말만 근거(Solar), 사용자 말에 없는 인용 · 사람 판정 · 위기였던 대화에서 그 말이 빠지면 다시, 두 번 다 걸리면 사용자 말을 그대로 이은 글. 그 뒤로 말이 없으면 같은 초안을 다시 준다(Studio 안 부름), 말이 늘었으면 옛 초안을 지우고 다시 만든다. 사용자 말이 없으면 409 `no_turns`.
 - `POST /diary/stream` 본문의 `confirm: true` 는 어느 출처든 save 앞에서 멈춘다(대화 출처는 늘 멈춤). 기본 false 면 지금과 같다.
 - `POST /diary/{id}/confirm` `{"summary": "고친 요약(안 고쳤으면 빼기)", "fixes": [{"id": "생각 id", "kind": "v8 종류"}, {"id": "생각 id", "remove": true}], "agreed": ["summary", "생각 id"]}` → EntryResult(`status: "done"`, `confirmed: "확인됨"`, 한마디 포함). 원문 인용은 고치지 못한다(G1). 뺀 생각은 그 관계 · 닿은 순간 · 벡터도 뺀다. 고친 것은 `feedback`(target `confirm`, value `확인 고침`, 대상 문장 · 고치기 전후는 암호문), 맞아요는 `확인 맞아요`로 남긴다(오답 재료, 기록을 지우면 같이 지움). 저장하면 그 대화를 지운다. 확인을 기다리는 기록이 아니면 409 `not_waiting`, 모르는 생각 id · 보기 밖 종류는 422, 남의 기록은 404, 정리 중이면 409.
 - 확인 전 초안은 `GET /diary` 목록 · `GET /universe` 에 보이지 않는다(`GET /diary/{id}` 는 `status: "confirm"`). 확인하지 않고 `DRAFT_KEEP_HOURS`(기본 72, 0 = 안 지움)보다 오래 둔 초안은 따로 도는 작업 없이 다음 요청(일기 쓰기 · 새 대화 · 정리하기) 때 오래된 것부터 지운다(대화는 남아 다시 정리할 수 있음).
+
+## 9. 말로 쓰기 · 읽어 주기 (WS21, 2026-10-14)
+
+받아쓰기 · 읽어 주기는 ElevenLabs(미국, 2026-10-13 동규). 목소리 · 읽을 글은 이름을 가릴 수 없어 실명 검사(`llm.guard`) 예외이고, 개인정보처리방침 · 첫 사용 동의에 밝혀 둔다(WS24). 두 경로 모두 동의를 먼저 본다(403 `consent_required`, 그 전엔 ElevenLabs 로 안 나감). 키가 없으면 503 `voice_unconfigured`, ElevenLabs 실패는 502(`stt_failed` · `tts_failed`, runs 에 오류 코드).
+
+- `POST /voice/transcribe` 본문 = 녹음 바이트 그대로(`Content-Type: audio/*`, 멀티파트 아님) → `{"text": "받아쓴 글", "seconds": 길이}`. 형식은 파일 앞 바이트로 본다: wav · mp3 · m4a(휴대폰 음성 메모 · 사파리 녹음) · webm(크롬 녹음) · ogg(파이어폭스 녹음), 그 밖은 415 `bad_format`. 한 번에 `VOICE_MAX_BYTES`(기본 4MB)까지 — 넘으면 끝까지 받지 않고 413 `too_large`.
+  - **녹음은 저장하지 않는다**: 메모리에서 ElevenLabs Scribe(`scribe_v2`, 한국어, 소리 표시 · 화자 구분 끔)로 보내고 버린다. DB · 파일 · 로그 0, 실행 기록 `runs` 에 `stt`(meta: 길이 초 · 바이트 · 형식, 비용 = 분 × `PRICE_STT_PER_MIN`)만. 받아쓴 글도 여기서는 저장하지 않는다.
+  - **4.5MB 넘는 녹음(Vercel 본문 한도)**: 서버는 조각을 모으지 않는다(무상태 — Vercel 함수는 요청마다 다른 곳에서 돌 수 있음). 화면(`components/MicButton.tsx`)이 녹음을 풀어 16kHz 모노 WAV 2분 조각(약 3.8MB)으로 나누고(2분 앞 5초 안 가장 조용한 50ms 에서 자름) 하나씩 보낸 뒤 받아쓴 글을 이어 붙인다. 브라우저가 못 푸는 형식은 4MB 아래면 그대로 보낸다. 0.5초 미만 · 20분 넘는 녹음은 화면에서 막는다(입력 검사: 받아쓴 글이 한 턴 8000자 안에 들게).
+  - 받아쓴 글은 화면이 이야기하기면 대화 턴(`via: voice`)으로, 쓰기 화면이면 칸에 채워 기존 길(위기 판정 · 가명 처리 · '지금까지 정리' · 요약 확인)을 그대로 탄다.
+- `POST /voice/speak` `{"text": "1~2000자"}` → `audio/mpeg`(ElevenLabs `eleven_multilingual_v2`, 목소리 `ELEVENLABS_VOICE_ID`, mp3 44.1kHz 64kbps, `Cache-Control: no-store`). 별지기 답 읽어 주기(화면에서 켜고 끔, 기본 꺼짐, 이 기기에만 기억). runs 에 `tts`(meta: 글자 수, 비용 = 글자/1000 × `PRICE_TTS_PER_1K_CHARS`).
+

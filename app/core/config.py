@@ -82,8 +82,8 @@ DRAFT_KEEP_HOURS = _int("DRAFT_KEEP_HOURS", 72)
 
 # 받아쓰기 · 읽어 주기(WS21, ElevenLabs — 2026-10-13 동규). 키 권한은 Speech to Text · Text to Speech 만, 값은 동규가 넣음.
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-STT_MODEL = os.getenv("ELEVENLABS_STT_MODEL", "scribe_v2")
-TTS_MODEL = os.getenv("ELEVENLABS_TTS_MODEL", "eleven_multilingual_v2")
+STT_MODEL = os.getenv("ELEVENLABS_STT_MODEL") or "scribe_v2"
+TTS_MODEL = os.getenv("ELEVENLABS_TTS_MODEL") or "eleven_multilingual_v2"
 TTS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID") or "JBFqnCBsd6RMkjVDRZzb"   # 목소리 하나 고정(ElevenLabs 기본 목소리, 바꾸려면 env)
 # 한 번에 받는 녹음 조각(입력 검사, 사용 상한 아님). Vercel 본문 한도 4.5MB 아래 — 긴 녹음은 화면이 2분 조각으로 나눠 보낸다.
 VOICE_MAX_BYTES = _int("VOICE_MAX_BYTES", 4 * 1024 * 1024)
