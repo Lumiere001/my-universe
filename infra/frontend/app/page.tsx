@@ -1,6 +1,7 @@
 "use client";
 // (가) 일기 쓰기 → 진행 단계 → (나) 결과 카드
 import { useEffect, useRef, useState } from "react";
+import PhotoInput from "@/components/PhotoInput";
 import ResultCard from "@/components/ResultCard";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt } from "@/components/WriteParts";
 import { getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
@@ -16,6 +17,7 @@ export default function WritePage() {
   const [title, setTitle] = useState("");
   const [day, setDay] = useState("");   // 글이 다루는 날(비우면 오늘 · 글 속 날짜)
   const [ref, setRef] = useState("");   // 불러온 파일 표시(고치면 지움)
+  const [photo, setPhoto] = useState(false);   // 사진에서 읽은 글(source=사진, 고쳐도 사진 출처 그대로)
   const [weather, setWeather] = useState<Weather | null>(null);
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState<Progress | null>(null);
@@ -68,10 +70,10 @@ export default function WritePage() {
     e.preventDefault();
     if (!text.trim()) return;
     setSteps([]); setProg(null); setResult(null);
-    go(() => writeDiary({ text, title, weather, ...(day && { day }), ...(ref && { source_ref: ref }) }, { onProgress }));
+    go(() => writeDiary({ text, title, weather, ...(day && { day }), ...(ref && { source_ref: ref }), ...(photo && { source: "사진" as const }) }, { onProgress }));
   };
   const resume = () => err?.entry_id && go(() => cont(err.entry_id!));
-  const again = () => { setText(""); setTitle(""); setDay(""); setRef(""); setWeather(null); setResult(null); setSteps([]); setProg(null); window.scrollTo(0, 0); };
+  const again = () => { setText(""); setTitle(""); setDay(""); setRef(""); setPhoto(false); setWeather(null); setResult(null); setSteps([]); setProg(null); window.scrollTo(0, 0); };
 
   if (result) return (
     <main>
@@ -92,7 +94,8 @@ export default function WritePage() {
           <textarea id="diary" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
             placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
         </div>
-        <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); }} />
+        <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); setPhoto(false); }} />
+        <PhotoInput disabled={busy} onRead={(t) => { setText((x) => (x.trim() ? x.trimEnd() + "\n" + t : t)); setRef(""); setPhoto(true); }} />
         <fieldset>
           <legend>마음 날씨 (고르지 않아도 돼요)</legend>
           <div className="row">

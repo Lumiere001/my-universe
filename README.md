@@ -45,6 +45,7 @@ FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_up
 - 이야기하기(WS19 · WS20): 주 화면 `/talk`. 별지기가 먼저 묻고(첫 만남 · 다짐 안부 · 남겨 둔 질문 · 되고 싶은 모습 · 지난 기록에서 시작, LLM 없이), 사용자 말 한 턴마다 대화 그래프(`app/agents/chat_graph.py`: safety → past → reply → summary, Solar · SSE)가 지난 생각을 원문 인용으로 떠올리며 이어 묻는다. '대화 마치고 정리하기' → 사용자 말만으로 일기 초안 → 일기 그래프가 save 앞에서 멈춤 → 요약 확인(맞아요 / 고칠래요) → 저장. 대화 턴은 서버에 암호화해 두고(다른 기기에서 이어 하기) 확인하면 지운다. 규칙 · 프롬프트는 `app/service/chat/`, 표는 `supabase/migrations/20261014000100_v8_conversations.sql`. 쓰기 화면은 '직접 쓰기'(`/`)로 그대로.
 - 동의: 첫 로그인 때 `/consent`에서 필수 · 민감정보(따로) · 만 14세 이상 · 선택(운영자 피드백 열람)을 받는다. 동의 전에는 기록을 만들 수 없다(백엔드도 403 `consent_required`). 문구 판은 `app/api/consent.py`의 `VERSION`, 이용약관 `/terms` · 개인정보처리방침 `/privacy`, 문의 메일은 화면 환경변수 `NEXT_PUBLIC_CONTACT_EMAIL`(비우면 '준비 중').
 - JSON 내려받기: 결과 카드의 관측 보고서(관측 상태 · 한계)에서 기록 하나, 지난 기록 화면에서 전체를 내려받는다(`app/api/export.py`, `GET /export` · `/export/{id}`, 모양은 [docs/api-v8.md](docs/api-v8.md) §2.1). 다른 사람 이름은 가리지 않는다(본인 기록).
+- 사진(손글씨) 입력: 쓰기 화면에서 사진 여러 장(쪽 순서 바꾸기) → 화면이 4MB 아래 JPEG 로 줄여 한 장씩 `POST /photo/read`(Upstage ocr 로 글자만, 사진 · 읽은 글은 저장 안 함, `app/api/upload.py` · `app/service/ocr.py`) → 읽은 글을 쓰기 칸에서 고쳐 띄움(`source=사진`, 그 뒤는 텍스트와 같은 길). 시험 사진은 가상 손글씨 `tests/fixtures/photos`(`uv run --frozen --with pillow python tools/photo_samples.py make`), 실제 글자 읽기 화면 확인은 `infra/frontend/e2e-real/ws18.spec.ts`(유료, 쪽당 $0.0015).
 
 ### GHCR 이미지
 
