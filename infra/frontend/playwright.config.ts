@@ -1,7 +1,7 @@
 // 화면 기록 겸 e2e: 가짜 데이터 모드로 빌드해 띄우고, 휴대폰(390x844)과 PC(1440x900)로 핵심 흐름을 돌며 캡처한다.
 import { defineConfig } from "@playwright/test";
 
-const PORT = 3100;
+const PORT = Number(process.env.E2E_PORT) || 3100;   // 다른 갈래와 겹치면 E2E_PORT 로 바꿈
 export default defineConfig({
   testDir: "e2e",
   timeout: 180_000,

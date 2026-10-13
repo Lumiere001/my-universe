@@ -1,6 +1,7 @@
 "use client";
-// (라) 사람 목록: 추가 · 고치기 · 지우기(이름을 관계 말로 바꾸고 문장은 남김)
+// (라) 사람 목록: 추가 · 고치기 · 지우기(이름을 관계 말로 바꾸고 문장은 남김) · 얽힌 생각 펼치기
 import { useState } from "react";
+import PersonThoughts from "@/components/PersonThoughts";
 import { addPerson, deletePerson, listPeople, updatePerson, type Person } from "@/lib/api";
 import { useLoad } from "@/lib/use";
 
@@ -31,6 +32,7 @@ export default function PeoplePage() {
   const [del, setDel] = useState<Person | null>(null);
   const [msg, setMsg] = useState("");
   const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
 
   return (
     <main>
@@ -57,7 +59,7 @@ export default function PeoplePage() {
                 <button className="small" onClick={() => setDel(null)}>취소</button>
               </div>
             </div>
-          ) : (
+          ) : (<>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
                 <b>{p.name}</b>{p.nickname && <span className="sub"> · {p.nickname}</span>} {p.relation ? <span className="badge">{p.relation}</span> : <span className="sub">관계 미정</span>}
@@ -65,11 +67,14 @@ export default function PeoplePage() {
                 <div className="sub">나온 기록 {p.planets.length}편</div>
               </div>
               <div className="row">
+                <button className="small" aria-expanded={open === p.id} onClick={() => setOpen(open === p.id ? null : p.id)}
+                  aria-label={`${p.name}과(와) 얽힌 생각`}>얽힌 생각</button>
                 <button className="small" onClick={() => { setEdit(p.id); setMsg(""); }} aria-label={`${p.name} 고치기`}>고치기</button>
                 <button className="small danger" onClick={() => { setDel(p); setMsg(""); }} aria-label={`${p.name} 지우기`}>지우기</button>
               </div>
             </div>
-          )}
+            {open === p.id && <PersonThoughts id={p.id} />}
+          </>)}
         </section>
       ))}
 
