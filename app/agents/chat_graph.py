@@ -24,7 +24,7 @@ from app.core import config, llm, logger
 from app.repository import conversations, diary
 from app.service import chat
 from app.service.rules import pick_past
-from app.service.safety import detect_crisis, find_new_names, unmask
+from app.service.safety import detect_crisis, unmask
 
 STEPS = {"safety": "말을 살펴보는 중", "past": "지난 기록을 찾는 중", "reply": "별지기가 답을 고르는 중",
          "summary": "지금까지 정리하는 중"}
@@ -109,7 +109,7 @@ def past(state, ctx):
 
 
 def _who(t):
-    return "나" if t["role"] == "user" else "별지기"
+    return "사용자" if t["role"] == "user" else "너"   # 이름 같은 낱말(별지기의 별)이 가명 처리에 걸리지 않게
 
 
 @node("reply")
@@ -165,11 +165,7 @@ talk_graph = build()
 ##################################################
 
 def _people(s, texts):
-    """사람 목록 + 이 대화의 새 이름 후보(확실하지 않아도 가명으로 — 결정 3). 후보는 사람 목록에 등록하지 않는다."""
-    people = [{k: p[k] for k in ("id", "name", "nicknames", "relation")} for p in diary.people(s)]
-    found = find_new_names("\n".join(texts), people)
-    return people + [{"id": None, "name": n, "nicknames": [], "relation": ""}
-                     for n in found["auto"] + [a["name"] for a in found["ask"]]]
+    return chat.mask_people([{k: p[k] for k in ("id", "name", "nicknames", "relation")} for p in diary.people(s)], texts)
 
 
 def _lead(s, eid):

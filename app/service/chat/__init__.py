@@ -17,7 +17,7 @@ import re
 from app.core import llm
 from app.core.ontology import load
 from app.service import voice
-from app.service.safety import detect_crisis, judged
+from app.service.safety import detect_crisis, find_new_names, judged
 from app.service.voice import checks
 
 # 운영 기본값(연구 근거 아님, 피드백으로 맞춘다)
@@ -97,6 +97,14 @@ def opening(p, from_entry=None, invite=False):
     return {"kind": "free", "text": FREE, "sources": []}
 
 
+def mask_people(people, texts):
+    """가명 표 = 사람 목록 + 이 대화의 새 이름 후보(확실하지 않아도 가명으로 — 결정 3). 후보는 사람 목록에 등록하지 않는다
+    (등록은 초안이 일기 그래프의 names 단계를 지날 때). 보내기 직전 실명 검사도 이 표로 한다."""
+    found = find_new_names("\n".join(texts), people)
+    return list(people) + [{"id": None, "name": n, "nicknames": [], "relation": ""}
+                           for n in found["auto"] + [a["name"] for a in found["ask"]]]
+
+
 def is_recall(text):
     """사용자가 지난 기록을 묻는 말인지(예: '예전에 진로 얘기 뭐라고 했지?')."""
     return bool(RECALL.search((text or "").strip()))
@@ -151,13 +159,13 @@ def _rules(tone, gentle):
 
 
 def messages(ctx, sit, avoid=()):
-    """ctx(가명 처리됨): tone · gentle · turns [{"who": "별지기"|"나", "text"}] · summary · past [{"day", "thought", "quote"}] · text.
+    """ctx(가명 처리됨): tone · gentle · turns [{"who": "너"|"사용자", "text"}] · summary · past [{"day", "thought", "quote"}] · text.
     → Solar 메시지. 답 형식은 {"reply", "found"}."""
     o = load()
     tone = next((t for t in o["tones"] if t["name"] == ctx.get("tone")), o["tones"][0])
     gentle = bool(ctx.get("gentle"))
     sys = ["너는 일기장 '나의 우주'의 별지기다. 사용자와 오늘 하루를 이야기한다. 대화가 끝나면 사용자의 말로 일기를 정리하니, "
-           "사용자가 자기 이야기를 편하게 더 꺼내도록 돕는다.",
+           "사용자가 자기 이야기를 편하게 더 꺼내도록 돕는다. turns 의 who 가 '너'면 네가 한 말, '사용자'면 사용자의 말이다.",
            f"[말투] {tone['name']}: {tone['description']}" + ("" if gentle else f"\n예: {tone['example']}")]
     if tone["name"] == "팩폭" and not gentle:
         sys.append(f"[팩폭 세기] {o['fact_bomb']['strength']}")

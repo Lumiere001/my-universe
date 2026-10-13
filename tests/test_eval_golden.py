@@ -6,7 +6,8 @@ from pathlib import Path
 import pytest
 
 GOLDEN = Path(__file__).resolve().parents[1] / "eval/golden"
-CATEGORIES = ["safety_pseudonym", "crisis", "fact_bomb", "voice_safety", "relations", "classify", "cross_domain"]
+CATEGORIES = ["safety_pseudonym", "crisis", "fact_bomb", "voice_safety", "relations", "classify", "cross_domain",
+              "conversation"]
 REQUIRED = ["id", "persona", "category", "input", "expected", "judge", "how", "basis", "ambiguous", "ambiguous_reason"]
 PERSONAS = {p["id"]: p for p in json.loads((GOLDEN / "personas.json").read_text(encoding="utf-8"))}
 CASES = [c for cat in CATEGORIES for c in json.loads((GOLDEN / f"{cat}.json").read_text(encoding="utf-8"))]
