@@ -105,8 +105,13 @@ def test_db_roundtrip_ciphertext_and_rls(repo, users):
         mj = next(p for p in diary.people(s) if p["name"] == NAMES[0])   # 사람별 생각(WS14): 두 날 모두, 먼저 쓴 날부터
         pts = views.person_thoughts(s, mj["id"])["thoughts"]
         assert [t["entry_id"] for t in pts][0] == r1["id"] and pts[-1]["entry_id"] == r2["id"]
+        ex = views.export(s)                                              # JSON 내려받기(WS15): 원문 · 실명 그대로, 먼저 쓴 것부터
+        assert [r["id"] for r in ex["records"]] == [r1["id"], r2["id"]] and ex["records"][0]["text"] == DAY1[1]
+        assert NAMES[0] in {n for t in ex["records"][0]["thoughts"] for n in t["people"]} and ex["domains"]
+        assert r2["observation"]["state"] != "비교할 지난 글 없음" and r1["observation"]["state"] == "비교할 지난 글 없음"
     with repo.session(ub) as s:
         assert views.person_thoughts(s, mj["id"]) is None
+        assert views.export(s, r1["id"]) is None and views.export(s)["records"] == []
     # 벡터: 원문 없음, 사용자별
     docs, metas = repo.vectors.documents(ua)
     assert docs and all(d is None for d in docs) and repo.vectors.get(ub) == {}
