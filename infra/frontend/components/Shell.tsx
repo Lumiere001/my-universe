@@ -1,11 +1,13 @@
 "use client";
 // 위 막대(휴대폰은 아래 막대) + 로그인 문. 가짜 데이터 모드에서는 로그인을 건너뛴다.
 // 초대 목록(백엔드 ALLOWED_EMAILS) 밖 계정이면 403 not_allowed → 안내와 로그아웃만 보인다.
-// /privacy(개인정보처리방침)는 로그인 없이 보인다(구글 OAuth 브랜딩 링크, 정적 HTML 에도 들어감).
+// /privacy(개인정보처리방침) · /terms(이용약관)는 로그인 없이 보인다(구글 OAuth 브랜딩 링크, 정적 HTML 에도 들어감).
+// 로그아웃 상태의 다른 화면은 소개(Landing)를 보인다. 서비스 워커(설치형 웹앱, public/sw.js)는 여기서 등록한다.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, DEV_LOGIN, getMe, MOCK, supabase } from "@/lib/api";
+import Landing from "@/components/Landing";
+import { ApiError, getMe, MOCK, supabase } from "@/lib/api";
 
 const NAV = [
   ["/", "쓰기"], ["/universe", "우주"], ["/history", "지난 기록"], ["/people", "사람"], ["/aspiration", "되고 싶은 나"], ["/settings", "설정"],
@@ -16,6 +18,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<"loading" | "in" | "out" | "not_allowed">(MOCK ? "in" : "loading");
   // 화면을 옮기면 맨 위부터(위 막대에 가려 시작하지 않게)
   useEffect(() => { window.scrollTo(0, 0); }, [path]);
+  useEffect(() => { navigator.serviceWorker?.register("/sw.js").catch(() => { /* 설치만 못 할 뿐 */ }); }, []);
 
   useEffect(() => {
     const sb = supabase();
@@ -40,7 +43,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      {state === "in" || path === "/privacy" ? children : state === "out" ? <Login /> : state === "not_allowed" ? (
+      {state === "in" || path === "/privacy" || path === "/terms" ? children : state === "out" ? <Landing /> : state === "not_allowed" ? (
         <main><div className="card stack" role="alert">
           <h1>초대된 사람만 쓸 수 있어요</h1>
           <p className="sub">이 계정은 아직 초대 목록에 없어요. 운영자에게 알려 주세요.</p>
@@ -48,38 +51,5 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </div></main>
       ) : <main><p className="sub">불러오는 중…</p></main>}
     </>
-  );
-}
-
-function Login() {
-  const sb = supabase();
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
-  const [err, setErr] = useState("");
-  if (!sb) return <main><div className="card"><h1>로그인 설정이 없어요</h1><p className="sub">NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_ANON_KEY 를 넣어 주세요.</p></div></main>;
-  const google = () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
-  const dev = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
-    setErr(error ? "로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요." : "");
-  };
-  return (
-    <main>
-      <div className="card stack">
-        <h1>나의 우주</h1>
-        <p className="sub">일기를 생각 단위로 나눠 우주로 보여 주고, 별지기가 말을 걸어요.</p>
-        <button className="primary" onClick={google}>구글로 로그인</button>
-        {DEV_LOGIN && (
-          <form onSubmit={dev} className="stack" aria-label="시험용 계정 로그인">
-            <p className="sub">시험용 계정(로컬 전용)</p>
-            <div><label htmlFor="em">이메일</label><input id="em" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-            <div><label htmlFor="pw">비밀번호</label><input id="pw" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} required /></div>
-            <button type="submit">시험용 계정으로 들어가기</button>
-            {err && <p className="err" role="alert">{err}</p>}
-          </form>
-        )}
-      </div>
-      <p className="sub"><Link href="/privacy">개인정보처리방침</Link></p>
-    </main>
   );
 }
