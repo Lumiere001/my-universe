@@ -371,7 +371,8 @@ def speak(state, ctx):
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
     return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
-                      "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask, "reask_later": later},
+                      "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask, "reask_later": later,
+                      "repeated": any(p.startswith("지난 한마디") for c in out["checks"] for p in c.get("problems", []))},   # WS22
             "_checks": len(checks)}
 
 
@@ -406,6 +407,7 @@ def save(state, ctx):
         v = state["voice"]
         mid = diary.new_id("m")
         s.insert("messages", {"id": mid, "entry_id": eid, "tone": v["tone"], "next_kind": v["next_kind"],
+                              "suggested": voice_rules.checks.has_suggestion(v["message"]), "repeated": v.get("repeated"),   # WS22
                               "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"],
                                                                      "mode": v["mode"], "check_in": v.get("check_in", ""),
                                                                      "widen": v.get("widen", "")})})

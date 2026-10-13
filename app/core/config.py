@@ -52,6 +52,8 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")   # 계�
 # 쉼표 목록. 있으면 목록 밖 계정은 403 not_allowed. 없으면 로그인한 누구나(지금 배포, 2026-10-08 동규).
 ALLOWED_EMAILS = {e.strip().lower() for e in os.getenv("ALLOWED_EMAILS", "").split(",") if e.strip()}
 DATABASE_URL = os.getenv("DATABASE_URL", "")
+# 운영 화면 /ops 를 볼 수 있는 구글 계정 이메일(쉼표 목록, WS22 · 결정 13). 비우면 아무도 못 본다(403 not_admin).
+ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
 DIARY_ENC_KEY = os.getenv("DIARY_ENC_KEY", "")      # base64 32바이트. 사용자별 키는 HKDF(이 값, user_id)
 
 # ChromaDB: CHROMA_API_KEY 가 있으면 Chroma Cloud, 없으면 CHROMA_HOST:CHROMA_PORT
