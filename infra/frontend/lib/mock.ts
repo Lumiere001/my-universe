@@ -2,7 +2,7 @@
 // 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
 import ontology from "./ontology.json";
 import type {
-  Aspiration, AspirationState, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Settings,
+  Aspiration, AspirationState, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person, Prompt, Settings,
   StreamError, StreamHandlers, Tone, Universe,
 } from "./api";
 
@@ -85,7 +85,7 @@ let people: Person[] = [
 
 let settings: Settings = {
   tone: "다정하게", fact_bomb_ack: false, gentle_today: null, comfort_only_today: null,
-  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true,
+  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기",
 };
 
 let aspiration: AspirationState = {
@@ -111,8 +111,12 @@ function result(id: string, input: DiaryInput): EntryResult {
   const crisis = CRISIS.some((w) => input.text.includes(w));
   const comfort = heavy || crisis || settings.comfort_only_today === today();
   const tone: Tone = crisis && settings.tone === "팩폭" ? "다정하게" : settings.tone; // 위기 글이면 팩폭도 그 글만 다정하게
+  const written = input.written_at ?? "2026-10-03T22:40:00+09:00";
+  const head = `${input.title ?? ""} ${input.text.split("\n")[0]}`;
+  const twoDays = /\d{1,2}\/\d{1,2}\s*~\s*\d{1,2}\/\d{1,2}/.test(head); // 날짜가 둘(3/27~3/29) → 날짜 확인 필요(서버 G2 흉내)
   return {
-    id, status: "done", step: "save", written_at: input.written_at ?? "2026-10-03T22:40:00+09:00",
+    id, status: "done", step: "save", written_at: written, source: "텍스트",
+    day: input.day ?? written.slice(0, 10), day_basis: input.day ? "확실" : "추정", day_check: !input.day && twoDays,
     title: input.title || "10/3 토요일 일기", weather: input.weather ?? null, crisis,
     info: { summary: "관심 있는 팀 세 곳을 찾아보기로 했지만 한 곳도 못 찾아봤고, 대신 일하는 곳보다 배우는 느낌이 중요하다는 쪽으로 생각이 정리됐다.",
       addressee: "나", addressee_person: null, events: ["팀 찾기를 미룸", "부모님께 아직 말하지 못함"] },
@@ -167,6 +171,8 @@ async function run(id: string, input: DiaryInput, from: number, h: StreamHandler
   }
   const r = result(id, input);
   entries.set(id, r);
+  prompt = { kind: r.next_question?.kind === "free" ? "free" : "none", text: r.next_question?.text ?? "",
+    vow: r.message?.mode === "comfort" ? null : { thought_id: "t3", text: r.thoughts[2].text, overdue: false } };
   if (!universe.planets.find((p) => p.id === id)) {
     universe.planets.push(P(id, "s1", "d1", "2026-10-03", r.title, universe.planets.filter((p) => p.star_id === "s1").length, { ring: true, people: ["p1"], weather: input.weather ?? null }));
     universe.links.push(
@@ -177,7 +183,9 @@ async function run(id: string, input: DiaryInput, from: number, h: StreamHandler
 }
 const inputs = new Map<string, DiaryInput>();
 let seq = 18;
-export function writeDiary(input: DiaryInput, h: StreamHandlers) {
+export async function writeDiary(input: DiaryInput, h: StreamHandlers) {
+  const same = [...inputs].find(([i, x]) => entries.get(i)?.status === "done" && x.text === input.text && (x.title ?? "") === (input.title ?? ""));
+  if (same) { await sleep(STEP_MS); return { ...entries.get(same[0])!, duplicate: true }; } // 같은 글은 다시 정리하지 않음
   const id = "e" + seq++;
   inputs.set(id, input);
   return run(id, input, 0, h);
@@ -220,6 +228,7 @@ export async function listDiary(): Promise<{ entries: EntrySummary[] }> {
   const star = (id: string) => universe.stars.find((s) => s.id === id)?.name ?? null;
   return { entries: [...universe.planets].sort((a, b) => b.written_at.localeCompare(a.written_at)).map((p) => ({
     id: p.id, written_at: p.written_at, title: p.title, summary: entries.get(p.id)?.info?.summary ?? SUMMARY[p.id] ?? "",
+    day: entries.get(p.id)?.day ?? p.written_at.slice(0, 10), day_check: entries.get(p.id)?.day_check ?? false,
     weather: p.weather, status: "done", sun: sun(p.sun_id), star: star(p.star_id) })) };
 }
 export async function getUniverse(): Promise<Universe> {
@@ -230,12 +239,35 @@ export async function sendFeedback(f: Feedback) {
   await sleep(150);
   if (f.value === "오늘은 살살") settings = { ...settings, gentle_today: today() };
   if (f.value === "오늘은 위로만") settings = { ...settings, comfort_only_today: today() };
+  if (f.value === "날씨 건너뜀") settings = { ...settings, weather_ask: false };
+  if (f.target === "vow" && f.target_id) closedVows.add(f.target_id);
   if (f.target === "relation" && f.target_id) {
     const l = universe.links.find((x) => x.id === f.target_id);
     if (l && f.value === "맞아요") Object.assign(l, { line: "실선", needs_confirm: false });
     if (l && f.value === "아니에요") universe.links = universe.links.filter((x) => x !== l);
   }
   return { ok: true, state: null };
+}
+/* ---------- 쓰기 화면 말풍선 · 날짜 고치기 · 지우기(WS13) ---------- */
+let prompt: Prompt = { kind: "weather", text: "오늘 마음 날씨는 어디에 가까워요? 맑음 · 구름 조금 · 흐림 · 비 · 천둥 · 안개",
+  vow: { thought_id: "t8", text: "관심 있는 팀 세 곳을 직접 찾아보겠다.", overdue: true } };
+const closedVows = new Set<string>();
+export async function getPrompt(): Promise<Prompt> {
+  await sleep(100);
+  const skip = prompt.kind === "weather" && !settings.weather_ask;
+  return { ...prompt, ...(skip && { kind: "none", text: "" }), vow: prompt.vow && !closedVows.has(prompt.vow.thought_id) ? prompt.vow : null };
+}
+export async function setEntryDay(id: string, day: string): Promise<EntryResult> {
+  await sleep(120);
+  const r = { ...(entries.get(id) ?? (await getDiary(id))), day, day_basis: "확실" as const, day_check: false };
+  entries.set(id, r);
+  return r;
+}
+export async function deleteDiary(id: string) {
+  await sleep(120);
+  entries.delete(id);
+  universe.planets = universe.planets.filter((p) => p.id !== id);
+  universe.links = universe.links.filter((l) => l.from_planet !== id && l.to_planet !== id);
 }
 export async function listPeople() { await sleep(100); return { people: structuredClone(people) }; }
 export async function addPerson(p: { name: string; nickname: string; relation: string }) {

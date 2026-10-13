@@ -28,12 +28,14 @@ export type EntryResult = {
   message: { text: string; tone: Tone; mode: "normal" | "comfort"; check_in: string | null } | null;
   next_question: { kind: "weather" | "aspiration" | "free" | "none"; text: string } | null;
   people_questions: { id: string; name: string; question: string; options: string[] }[];
+  // 기록 칸(WS11): 글이 다루는 날 · 확실/추정 · 날짜 확인 필요. duplicate = 이미 정리한 같은 글(그 기록의 결과)
+  source?: string; day?: string; day_basis?: "확실" | "추정"; day_check?: boolean; duplicate?: boolean;
 };
 export type Progress = { entry_id: string; step: string; label: string; done: number; total: number };
 export type StreamError = { entry_id: string | null; code: string; message: string; resumable: boolean };
 export type EntrySummary = {
   id: string; written_at: string; title: string; summary: string; weather: Weather | null;
-  status: string; sun: string | null; star: string | null;
+  status: string; sun: string | null; star: string | null; day?: string; day_check?: boolean;
 };
 export type Universe = {
   suns: { id: string; name: string; custom: boolean; planet_count: number }[];
@@ -56,12 +58,16 @@ export type AspirationState = { current: Aspiration | null; history: Aspiration[
 export type Settings = {
   tone: Tone; fact_bomb_ack: boolean; gentle_today: string | null; comfort_only_today: string | null;
   suggestions: "적게" | "보통" | "많이"; cross_links: "숨김" | "눌렀을 때" | "항상"; weather_ask: boolean;
+  keeper_name?: string;
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean } };
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
-export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null };
+export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string };
+// 쓰기 화면 위 별지기 말풍선(GET /diary/prompt)
+export type Prompt = { kind: "first" | "weather" | "aspiration" | "free" | "none"; text: string;
+  vow: { thought_id: string; text: string; overdue: boolean } | null };
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -170,6 +176,16 @@ export async function resumeDiary(id: string, h: StreamHandlers): Promise<EntryR
 }
 export async function getDiary(id: string): Promise<EntryResult> {
   return MOCK ? (await mock()).getDiary(id) : json("GET", `/diary/${encodeURIComponent(id)}`);
+}
+export async function getPrompt(): Promise<Prompt> {
+  return MOCK ? (await mock()).getPrompt() : json("GET", "/diary/prompt");
+}
+export async function setEntryDay(id: string, day: string): Promise<EntryResult> {
+  return MOCK ? (await mock()).setEntryDay(id, day) : json("PATCH", `/diary/${encodeURIComponent(id)}/day`, { day });
+}
+export async function deleteDiary(id: string): Promise<void> {
+  if (MOCK) return (await mock()).deleteDiary(id);
+  await json("DELETE", `/diary/${encodeURIComponent(id)}`);
 }
 export async function listDiary(before?: string): Promise<{ entries: EntrySummary[] }> {
   if (MOCK) return (await mock()).listDiary();

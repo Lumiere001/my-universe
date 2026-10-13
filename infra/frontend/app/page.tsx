@@ -2,6 +2,7 @@
 // (가) 일기 쓰기 → 진행 단계 → (나) 결과 카드
 import { useEffect, useRef, useState } from "react";
 import ResultCard from "@/components/ResultCard";
+import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt } from "@/components/WriteParts";
 import { getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
 import { useOntology } from "@/lib/use";
 
@@ -12,6 +13,9 @@ const keep = (id: string | null) => { try { if (id) sessionStorage.setItem(PENDI
 export default function WritePage() {
   const onto = useOntology();
   const [text, setText] = useState("");
+  const [title, setTitle] = useState("");
+  const [day, setDay] = useState("");   // 글이 다루는 날(비우면 오늘 · 글 속 날짜)
+  const [ref, setRef] = useState("");   // 불러온 파일 표시(고치면 지움)
   const [weather, setWeather] = useState<Weather | null>(null);
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState<Progress | null>(null);
@@ -64,27 +68,31 @@ export default function WritePage() {
     e.preventDefault();
     if (!text.trim()) return;
     setSteps([]); setProg(null); setResult(null);
-    go(() => writeDiary({ text, weather }, { onProgress }));
+    go(() => writeDiary({ text, title, weather, ...(day && { day }), ...(ref && { source_ref: ref }) }, { onProgress }));
   };
   const resume = () => err?.entry_id && go(() => cont(err.entry_id!));
-  const again = () => { setText(""); setWeather(null); setResult(null); setSteps([]); setProg(null); window.scrollTo(0, 0); };
+  const again = () => { setText(""); setTitle(""); setDay(""); setRef(""); setWeather(null); setResult(null); setSteps([]); setProg(null); window.scrollTo(0, 0); };
 
   if (result) return (
     <main>
-      <ResultCard r={result} />
+      {result.duplicate && <DuplicateNote id={result.id} />}
+      <ResultCard r={result} onChange={setResult} />
       <button onClick={again}>새 글 쓰기</button>
     </main>
   );
 
   return (
     <main>
+      <KeeperPrompt />
       <form onSubmit={submit} className="stack" aria-label="일기 쓰기">
         <h1>오늘의 일기</h1>
+        <EntryMeta title={title} day={day} disabled={busy} onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} />
         <div>
           <label htmlFor="diary">마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요.</label>
-          <textarea id="diary" value={text} onChange={(e) => setText(e.target.value)} disabled={busy}
+          <textarea id="diary" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
             placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
         </div>
+        <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); }} />
         <fieldset>
           <legend>마음 날씨 (고르지 않아도 돼요)</legend>
           <div className="row">
@@ -111,7 +119,7 @@ export default function WritePage() {
             <div className="stack" role="alert">
               <p className="err">{err.message}</p>
               {err.resumable && err.entry_id ? <button className="primary" onClick={resume} disabled={busy}>이어서 하기</button>
-                : <p className="sub">글은 화면에 그대로 있어요. 잠시 뒤 다시 띄워 주세요.</p>}
+                : err.code !== "duplicate" && <p className="sub">글은 화면에 그대로 있어요. 잠시 뒤 다시 띄워 주세요.</p>}
             </div>
           )}
         </section>
