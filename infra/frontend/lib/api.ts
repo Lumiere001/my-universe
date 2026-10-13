@@ -264,3 +264,43 @@ export async function getConsent(): Promise<Consent> {
 export async function saveConsent(c: ConsentInput): Promise<Consent> {
   return MOCK ? (await mock()).saveConsent(c) : json("POST", "/consent", c);
 }
+
+/* ---------- 우주 고치기 (WS16, docs/api-v8.md §4.1) ---------- */
+export type SunRow = { id: string; name: string; custom: boolean; axis: string | null };
+export type MergeCandidate = { a: { id: string; name: string }; b: { id: string; name: string }; sun: string | null; why: string };
+const USER_AREA = "사용자 영역";
+// 가짜 데이터 모드는 우주를 바꾸지 않고 모양만 돌려준다(화면 흐름 확인용)
+const mockAxes = async () => [...(await import("./ontology.json")).default.domains.map((d) => d.name), USER_AREA];
+export async function getSuns(): Promise<{ suns: SunRow[]; axes: string[] }> {
+  if (!MOCK) return json("GET", "/suns");
+  const axes = await mockAxes();
+  return { suns: (await getUniverse()).suns.map((s) => ({ ...s, axis: axes.includes(s.name) ? s.name : USER_AREA })), axes };
+}
+export async function addSun(name: string): Promise<SunRow & { suggested: { axis: string; basis: string } }> {
+  if (MOCK) return { id: "d_new", name, custom: true, axis: USER_AREA, suggested: { axis: USER_AREA, basis: "없음" } };
+  return json("POST", "/suns", { name });
+}
+export async function setSunAxis(id: string, axis: string): Promise<SunRow> {
+  return MOCK ? { id, name: id, custom: true, axis } : json("PATCH", `/suns/${encodeURIComponent(id)}`, { axis });
+}
+export async function moveStar(id: string, sun_id: string): Promise<{ id: string; sun_id: string; name: string }> {
+  return MOCK ? { id, sun_id, name: id } : json("PATCH", `/stars/${encodeURIComponent(id)}`, { sun_id });
+}
+export async function getMergeCandidates(): Promise<{ candidates: MergeCandidate[] }> {
+  return MOCK ? { candidates: [] } : json("GET", "/stars/merge");
+}
+export async function mergeStars(from_id: string, into_id: string): Promise<{ id: string; name: string }> {
+  return MOCK ? { id: into_id, name: into_id } : json("POST", "/stars/merge", { from_id, into_id });
+}
+export async function declineMerge(from_id: string, into_id: string): Promise<{ ok: boolean }> {
+  return MOCK ? { ok: true } : json("POST", "/stars/merge/decline", { from_id, into_id });
+}
+// 생각 종류 · 가치 고치기(value: null = 비움). 고친 값은 오답 재료로 남는다.
+export async function fixThought(t: Thought, patch: { kind?: string; value?: string | null }): Promise<Thought> {
+  return MOCK ? { ...t, ...patch } : json("PATCH", `/thoughts/${encodeURIComponent(t.id)}`, patch);
+}
+// 사람 지우기 + 그 사람이 나온 생각 · 관계도 지우기(글 본문은 이름만 관계 말로)
+export async function deletePersonWithThoughts(id: string): Promise<{ ok: boolean; replaced: number; hidden: number }> {
+  if (MOCK) return { ...(await deletePerson(id)), hidden: 0 };
+  return json("DELETE", `/people/${encodeURIComponent(id)}/with-thoughts`);
+}

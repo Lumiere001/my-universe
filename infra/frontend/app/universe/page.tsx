@@ -1,5 +1,6 @@
 "use client";
 // (다) 3D 우주 v8 + 행성 요약 카드(원문 인용 · 그때 → 지금 · 결과 카드 링크) + 북극성(닿은 순간) + 사람 고르기(얽힌 생각) + 범례
+// + 우주 고치기(WS16: 해 추가 · 작은 별 옮기기 · 합치기, 행성 카드에서 생각 종류 · 가치 고치기)
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -9,11 +10,12 @@ import type { Pick } from "@/components/Universe3D";
 import { CONFLICT } from "@/components/universeLook";
 import { getDiary, getMe, getUniverse, type EntryResult } from "@/lib/api";
 import { useKindName, useLoad, useOntology } from "@/lib/use";
+import EditPanel, { ThoughtFix } from "./EditPanel";
 
 const Universe3D = dynamic(() => import("@/components/Universe3D"), { ssr: false, loading: () => <div className="uni" /> });
 
 export default function UniversePage() {
-  const [data, err] = useLoad(getUniverse);
+  const [data, err, reload] = useLoad(getUniverse);
   const [me] = useLoad(getMe);
   const onto = useOntology();
   const kindName = useKindName();
@@ -71,8 +73,11 @@ export default function UniversePage() {
             {entry && entry.thoughts.length > 0 && (
               <ul style={{ paddingLeft: 18, margin: "0 0 8px" }}>
                 {entry.thoughts.map((t) => (
-                  <li key={t.id}><span className="badge v">{kindName(t.kind)}</span> {t.text}
-                    {t.quote && <p className="quote">“{unquote(t.quote)}”</p>}</li>
+                  <li key={t.id}><span className="badge v">{kindName(t.kind)}</span>{t.value && <span className="badge">가치 · {t.value}</span>} {t.text}
+                    {t.quote && <p className="quote">“{unquote(t.quote)}”</p>}
+                    <ThoughtFix key={`${t.kind}|${t.value}`} t={t} onFixed={(x) => {
+                      setEntry((e) => e && { ...e, thoughts: e.thoughts.map((y) => (y.id === x.id ? x : y)) }); reload();
+                    }} /></li>
                 ))}
               </ul>
             )}
@@ -158,6 +163,8 @@ export default function UniversePage() {
           ))}
         </div>
       </details>
+
+      <EditPanel data={data} onChanged={reload} />
     </main>
   );
 }
