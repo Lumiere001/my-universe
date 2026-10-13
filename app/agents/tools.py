@@ -108,10 +108,13 @@ def sun_vectors():
 
 
 def search_past(repo, uid, entry_id, today):
-    """오늘 생각(id · topic) → 고른 지난 생각(관련 높은 순, 벡터 없이). rules.pick_past 를 그대로 쓴다."""
+    """오늘 생각(id · topic) → 고른 지난 생각(관련 높은 순, 벡터 없이). rules.pick_past 를 그대로 쓴다.
+    후보는 지금 글보다 먼저 쓴(written_at 이 앞선) 끝난 기록만 — 옛 글을 나중에 가져와 정리해도(WS17) 그 뒤에 쓴 글이 '지난 생각'이 되지 않게."""
     vecs = repo.vectors.get(uid)
     with repo.session(uid) as s:
-        done = {e["id"]: e for e in diary.entries(s, status="done") if e["id"] != entry_id}
+        me = diary.entry(s, entry_id)
+        done = {e["id"]: e for e in diary.entries(s, status="done")
+                if e["id"] != entry_id and (me is None or e["written_at"] < me["written_at"])}
         past = [t for t in diary.thoughts(s, entry_id=list(done)) if t["id"] in vecs] if done else []
         sun_name = {x["id"]: x["name"] for x in diary.suns(s)}
     for t in past:

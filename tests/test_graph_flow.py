@@ -147,6 +147,15 @@ def test_order_result_and_no_real_names(env):
     assert env.fake.calls["record"] == 2 and env.fake.calls["observe"] == 2
 
 
+def test_past_only_from_earlier_written_entries(env):
+    """옛 글을 나중에 가져와도(WS17) 지난 생각 후보는 지금 글보다 먼저 쓴 기록만."""
+    e_new, _, _ = write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
+    e_old, _, r_old = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")   # 뒤늦게 정리한 더 옛 글
+    assert r_old["past"] == [] and r_old["relations"] == []                 # 나중에 쓴 글의 생각은 '지난 생각'이 아님
+    _, _, r3 = write(env, U1, "걷기 닷새째", "아침 걷기를 닷새째 했다. 민준이랑 걸으니 즐겁다.", "2026-10-05T22:00:00+09:00")
+    assert {p["entry_id"] for p in r3["past"]} <= {e_new, e_old} and r3["past"]   # 먼저 쓴 두 글은 그대로 후보
+
+
 def test_stored_text_is_encrypted_and_vectors_have_no_text(env):
     e1, _, _ = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
     raw = json.dumps({t: [{k: (v.hex() if isinstance(v, bytes) else str(v)) for k, v in r.items()} for r in rows]
