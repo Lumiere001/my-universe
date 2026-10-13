@@ -419,7 +419,15 @@ def add_feedback(s, target, target_id, value, text=None, relation=None):
     mood = value in MOOD_FEEDBACK
     data = {k: v for k, v in {"text": text, "value": value if mood else None, "relation": relation}.items() if v}
     s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": MOOD_LABEL if mood else value,
-                          "enc": seal(s, "feedback", fid, data) if data else None, "studio_config": studio_config()})
+                          "enc": seal(s, "feedback", fid, data) if data else None, "studio_config": run_config(s, target_id)})
+
+
+def run_config(s, target_id):
+    """버튼 대상(기록 · 생각 · 관계 id)을 처리한 실행의 Studio 설정 번호(누른 때의 설정이 아님). 처리한 기록이 없으면 None."""
+    tid = (target_id or "").split(">")[-1]   # 관계 id = 옛 생각>새 생각. 관계는 새 생각의 기록을 처리할 때 생긴다
+    t = s.rows("thoughts", id=tid)
+    r = s.rows("runs", entry_id=t[0]["entry_id"] if t else tid, order="id desc", limit=1)
+    return r[0]["studio_config"] if r else None
 
 
 def feedback_counts(s):

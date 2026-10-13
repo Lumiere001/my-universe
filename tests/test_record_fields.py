@@ -99,7 +99,7 @@ def test_other_original_round_trip(env, monkeypatch):  # noqa: F811
     assert r["record_type"] == "기타"
 
 
-def test_feedback_config_and_removed_relation_kept(client, env):  # noqa: F811
+def test_feedback_config_and_removed_relation_kept(client, env, monkeypatch):  # noqa: F811
     _, ev1 = write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     _, ev2 = write(client, *DAY2, "2026-10-03T22:00:00+09:00")
     rel = ev2[-1][1]["relations"][0]
@@ -110,9 +110,19 @@ def test_feedback_config_and_removed_relation_kept(client, env):  # noqa: F811
         assert diary.unseal(s, "feedback", fb["id"], fb["enc"]) == {"relation": {"type": rel["type"], "from": rel["from"],
                                                                                  "to": rel["to"]}}
         assert not s.rows("relations")
+    # 설정이 바뀐 뒤 누른 버튼도 그 기록을 처리한 실행의 설정 번호를 남긴다(누른 때의 설정이 아님)
+    monkeypatch.setattr(config, "V8_RECORD_CONFIG_ID", "3")
+    vow = next(t for t in ev1[-1][1]["thoughts"] if t["kind"] == "다짐")
+    for body in ({"target": "message", "target_id": ev2[-1][1]["id"], "value": "좋아요"},
+                 {"target": "vow", "target_id": vow["id"], "value": "지켰어요"},
+                 {"target": "app", "value": "불편한 점 한 줄", "text": "글씨가 작아요"}):
+        assert client.post("/feedback", headers=H1, json=body).json()["ok"]
+    with env.repo.session(U1) as s:
+        assert [f["studio_config"] for f in s.rows("feedback", order="created_at")][1:] == ["2/2", "2/2", None]
     assert client.delete(f"/diary/{ev2[-1][1]['id']}", headers=H1).status_code == 204
     with env.repo.session(U1) as s:
-        assert s.rows("feedback") == []   # 기록을 지우면 지운 관계의 오답 재료도 같이
+        left = s.rows("feedback")
+        assert [f["target"] for f in left] == ["vow", "app"]   # 기록을 지우면 지운 관계의 오답 재료 · 그 기록 피드백도 같이
 
 
 def test_same_text_not_sent_again(client, env, monkeypatch):  # noqa: F811
