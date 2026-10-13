@@ -18,15 +18,17 @@ def strip_ids(text, source=""):
     """내부 번호를 바꾼다. 글쓴이 원문(source)에 그 글자가 있으면('T1 경기') 글쓴이 말이라 둔다."""
     out = _ID.sub(lambda m: m.group(0) if m.group(1) in (source or "") else
                   ("오늘 생각" if m.group(1)[0] == "T" else "지난 생각") + _JOSA[m.group(2)], text or "")
-    return re.sub(r"\s{2,}", " ", out).strip()
+    return re.sub(r"[^\S\n]{2,}", " ", out).strip()   # 이어진 공백만 줄이고 줄바꿈은 둔다(요약의 줄 나눔)
 
 
 def clean_text(text, source=""):
-    """G3 + 내부 번호. 판정 · 진단 문장은 빼고(원문에 있는 말이면 둠) 남은 문장을 돌려준다(다 빠지면 빈 글)."""
-    keep = []
-    for s in re.split(r"(?<=[.?!。])\s+", strip_ids(text, source)):
+    """G3 + 내부 번호. 판정 · 진단 문장은 빼고(원문에 있는 말이면 둠) 남은 문장을 돌려준다(다 빠지면 빈 글).
+    문장 사이 띄어쓰기 · 줄바꿈은 원래대로 둔다."""
+    parts = re.split(r"(?<=[.?!。])(\s+)", strip_ids(text, source))
+    out = ""
+    for s, gap in zip(parts[::2], parts[1::2] + [""]):
         m = JUDGE.search(s)
         if m and m.group(0) not in (source or ""):
             continue
-        keep.append(s)
-    return " ".join(keep).strip()
+        out += s + gap
+    return out.strip()

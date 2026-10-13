@@ -33,6 +33,10 @@ def test_strip_internal_ids_and_g3():
     assert clean_text("우울증 경향이 보인다.", "오늘은 지쳤다") == ""
     # 글쓴이 원문에 있는 글자('T1' 팀 이름)는 내부 번호가 아니라 그대로 둔다
     assert clean_text("T1 경기를 보며 페이커를 응원했다.", "오늘 T1 경기를 봤다") == "T1 경기를 보며 페이커를 응원했다."
+    # 요약의 줄바꿈은 둔다(이어진 공백만 줄임)
+    assert strip_ids("아침에 걸었다.\n\nT1   저녁엔 쉬었다.") == "아침에 걸었다.\n\n오늘 생각 저녁엔 쉬었다."
+    assert clean_text("아침에 걸었다.\n글쓴이는 의지가 약한 사람이다.\n저녁엔  쉬었다.\n밤엔 읽었다.") == \
+        "아침에 걸었다.\n저녁엔 쉬었다.\n밤엔 읽었다."
 
 
 def test_relation_explanation_cleaned():
