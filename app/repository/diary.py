@@ -20,7 +20,7 @@ SETTINGS = {"tone": "다정하게", "fact_bomb_ack": False, "gentle_today": None
             "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True, "keeper_name": "별지기"}
 ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
 ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
-              "feedback")
+              "feedback", "conversations")
 MOOD_FEEDBACK = ("오늘은 위로만", "오늘은 살살")   # 마음 상태 버튼: 값은 enc 에만, 평문 칸에는 MOOD_LABEL
 MOOD_LABEL = "상태 버튼"
 
@@ -328,7 +328,7 @@ def delete_entry(s, vectors, eid):
 
 
 WIPE = ("aspiration_reached", "messages", "relations", "thought_people", "people_questions", "thoughts", "states",
-        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles", "consents")
+        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles", "consents", "conversations")
 
 
 def wipe(s):
