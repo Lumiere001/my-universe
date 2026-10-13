@@ -35,6 +35,7 @@ MESSAGES = {
     "real_name_leak": "이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 글은 안전하게 저장돼 있어요.",
     "internal": "처리하다 멈췄어요. '이어서 하기'를 눌러 주세요.",
     "duplicate": "이미 보낸 글이에요. 정리가 끝나지 않았으니 '이어서 하기'를 눌러 주세요.",
+    "duplicate_leak": "이미 보낸 글이에요. 이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 글은 안전하게 저장돼 있어요.",
 }
 
 
@@ -92,12 +93,15 @@ def _limits(s, eid=None):
 
 
 def _same(repo, uid, eid):
-    """이미 받은 글: 끝났으면 그 결과(duplicate: true), 아니면 그 기록을 이어 하라는 error(409 성격)."""
+    """이미 받은 글: 끝났으면 그 결과(duplicate: true), 아니면 그 기록을 이어 하라는 error(409 성격).
+    실명이 새어 나갈 뻔해 멈춘 글이면 이어 하기를 권하지 않는다(resumable: false)."""
     with repo.session(uid) as s:
         r = views.entry_result(s, eid)
+        leak = s.rows("entries", id=eid)[0]["error_code"] == "real_name_leak"
     if r["status"] == "done":
         return "result", {**r, "duplicate": True}
-    return "error", {"entry_id": eid, "code": "duplicate", "message": MESSAGES["duplicate"], "resumable": True}
+    return "error", {"entry_id": eid, "code": "duplicate", "message": MESSAGES["duplicate_leak" if leak else "duplicate"],
+                     "resumable": not leak}
 
 
 def _create(repo, uid, body: DiaryIn):

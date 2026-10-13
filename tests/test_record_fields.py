@@ -161,6 +161,19 @@ def test_same_text_unfinished_points_to_resume(client, env):  # noqa: F811
     assert env.fake.calls["record"] == 1
 
 
+def test_same_text_after_real_name_leak_not_resumable(client, env, monkeypatch):  # noqa: F811
+    """실명이 새어 나갈 뻔해 멈춘 글을 같은 날 다시 보내면 duplicate 이되 이어 하기를 권하지 않는다."""
+    from app.agents import tools
+    monkeypatch.setattr(tools, "mask_obj", lambda obj, people: (obj, {}))   # 가명 처리가 고장 났다고 치면
+    _, ev = write(client, *DAY1, "2026-10-01T22:00:00+09:00")
+    assert ev[-1][0] == "error" and ev[-1][1]["code"] == "real_name_leak" and ev[-1][1]["resumable"] is False
+    eid = ev[-1][1]["entry_id"]
+    _, ev = write(client, *DAY1, "2026-10-01T22:30:00+09:00")
+    assert ev == [("error", {"entry_id": eid, "code": "duplicate", "message": ev[0][1]["message"], "resumable": False})]
+    assert "이어서" not in ev[0][1]["message"]
+    assert env.fake.calls["record"] == 0
+
+
 def test_same_source_ref_not_imported_again(client, env):  # noqa: F811
     body = {"title": "", "text": "인스타 글 하나.", "source": "지난 글 묶음", "source_ref": "ig:1700000000"}
     first = events(client.post("/diary/stream", headers=H1, json=body).text)[-1][1]
