@@ -20,7 +20,10 @@ ctx (모두 선택, 없으면 기본값):
   commitments     [{"text", "state", "due", "overdue"}]  (열린 다짐 · 기한 지난 다짐)
   kept            오늘 지켜 낸 다짐 글 목록
   open_questions  남겨 둔 질문 글 목록
-  heavy           글에 슬픔 · 상실이 드러남(관측 결과)
+  heavy           글에 슬픔 · 상실이 드러남(is_heavy: 슬픔 감정 생각 · 상실 말)
+  past_thoughts   고른 지난 생각(관련 높은 순) [{"thought", "quote", "day"}] — 지난 기록 떠올리기 재료
+  changes         이번 글의 바뀜 [{"before", "after", "day"}] — "예전엔 ~라고 하셨는데" 비춰 주기
+  widen           좁아짐 막기 재료(pick_widen) {"kind": "twin" | "sun" | "axis", "key", ...} 또는 None
   crisis          위기 신호(WS4 safety). 시험 단계(2026-10-08 동규): 평소 틀 그대로, 그 글만 위로(팩폭은 다정하게) + 안부 한 줄
   crisis_unsure   위기 2차 판정(Solar)이 실패함 → 평소 한마디에 안부 한 줄만
   past_check_ins  지난 안부 한 줄들(오래된 것 → 최근)
@@ -46,6 +49,13 @@ SHORT_TEXT = 300         # 기분이 안 드러난 '짧은 글' 글자 수
 COMPLEX_THOUGHTS = 6     # 생각이 이만큼 많거나, 질문 · 고민 중이 둘 이상이면 복잡한 날
 ASPIRATION_AFTER_DAYS = 3
 PAST_IN_PROMPT = 10
+PAST_THOUGHTS_IN_PROMPT = 5
+QUIET_AFTER_ENTRIES = 7  # 최근 이만큼의 글에 한 번도 안 나온 해 = 오래 비어 있는 해(좁아짐 막기)
+
+# 마음이 무거운 날: 감정 생각의 슬픔 말, 또는 생각 · 사건의 상실 말.
+# 상실 말은 checks._LOSS 보다 좁게(유산소 · 헤어샵 · 지갑을 잃어 · 떠난 여행은 아님). _LOSS 는 팩폭 대상 검사용이라 넓다.
+_SAD = r"슬프|슬펐|슬픔|서럽|서러|눈물|울었|울고|울컥|그립|그리워|허전|공허|외롭|외로웠"
+_HEAVY_LOSS = r"장례|기일|돌아가(시|셨|신)|세상을\s?떠|하늘나라|사별|여의[었고어]|여읜|이별|떠나\s?보[내냈낸]"
 
 # 기록이 없을 때 쓰는 정해 둔 질문(PRD §6.2)
 FIRST_QUESTIONS = ["오늘 하루를 한 단어로 하면요?", "오늘 가장 오래 머문 장소는 어디예요?"]
@@ -84,6 +94,25 @@ CHECK_IN = {
     "고양이처럼": ["요즘 많이 버거웠겠다냥. 다음에 또 안부 물으러 올게냥.", "적어 준 마음, 잘 기억해 둘게냥. 또 들르겠다냥."],
     "팩폭": ["요즘 버거웠으면 버거웠다고 적어도 돼. 다음에 또 물어볼게.", "적어 준 거 기억해 둘게. 다음에 또 안부 물을게."],
 }
+
+
+def is_heavy(thoughts, events=()):
+    """슬픔 · 상실이 드러난 글인지(규칙, LLM 없음). 생각 문장 · 인용과 사건만 본다(본문 전체의 '떠난 여행'은 안 봄)."""
+    for t in thoughts or []:
+        txt = f"{t.get('thought', '')} {t.get('quote', '')}"
+        if re.search(_HEAVY_LOSS, txt) or (t.get("kind") == "감정" and re.search(_SAD, txt)):
+            return True
+    return any(re.search(_HEAVY_LOSS, e or "") for e in events or [])
+
+
+def pick_widen(cands, used=()):
+    """좁아짐 막기 재료 하나(PRD §8.0): 가끔(바로 앞 한마디가 재료를 썼으면 쉼), 같은 재료를 연달아 쓰지 않음.
+    cands: 앞의 것이 우선인 재료 [{"kind", "key", ...}]. used: 지난 한마디들의 재료 key(오래된 것 → 최근, 안 썼으면 "")."""
+    used = list(used or [])
+    if used and used[-1]:
+        return None
+    last = next((k for k in reversed(used) if k), None)
+    return next((c for c in cands or [] if c["key"] != last), None)
 
 
 def check_in_line(tone, past=()):
@@ -141,6 +170,10 @@ def situations(ctx):
         out.append("다짐을 지켜 냄")
     if "무거운 날" not in out and any(c.get("overdue") or c.get("state") == "열림" for c in ctx.get("commitments") or []):
         out.append("다짐 안부")
+    if ctx.get("changes") and "무거운 날" not in out:   # 위기 · 무거운 날엔 변화를 되비추지 않는다(위로만)
+        out.append("생각이 바뀜")
+    if ctx.get("widen") and "무거운 날" not in out:
+        out.append("넓혀 보기")
     if s.get("gentle") and ctx.get("tone") == "팩폭":
         out.append("오늘은 살살")
     return out
@@ -180,6 +213,8 @@ def next_question_kind(ctx):
         return "open_question"
     if not ctx.get("aspiration") and not ctx.get("aspiration_off") and ctx.get("days_written", 0) >= ASPIRATION_AFTER_DAYS:
         return "aspiration_invite"
+    if "넓혀 보기" in sit and ctx["widen"].get("kind") in ("sun", "axis"):
+        return "widen"
     return ""
 
 
@@ -195,6 +230,10 @@ def base_question(kind, ctx):
         return next((q for q in FIRST_QUESTIONS if q not in past), FIRST_QUESTIONS[0])
     if kind == "aspiration_invite":
         return INVITE
+    if kind == "widen":   # LLM 이 비워 두거나 기본 문장으로 갈 때
+        w = ctx.get("widen") or {}
+        return (f"한동안 '{w.get('name')}' 이야기는 없었네요. 요즘은 어때요?" if w.get("kind") == "sun"
+                else f"'{w.get('name')}' 쪽은 요즘 어때요? 떠오르는 게 있으면 가볍게 들려줘요.")
     return ""
 
 
@@ -241,6 +280,12 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
         sl.append("오늘 지켜 낸 다짐을 기록의 행동으로 알아준다.")
     if "되고 싶은 모습에 닿음" in sit:
         sl.append("되고 싶은 모습에 닿은 순간을 원문을 짧게 따옴표로 인용해 인정한다.")
+    if "생각이 바뀜" in sit:
+        sl.append("같은 영역의 생각이 바뀜(changes): '예전엔 ~라고 하셨는데'처럼 지난 생각과 오늘 생각을 이어 변화를 비춰 준다. "
+                  "바뀐 것을 잘못처럼 말하지 않는다.")
+    if "넓혀 보기" in sit and ctx["widen"].get("kind") == "twin":
+        sl.append("오늘 생각과 맞서는 지난 생각(widen)이 있다: 지난 생각을 가볍게 떠올려 둘 다 마음에 있는 것으로 비춰 준다. "
+                  "어느 쪽이 맞다고 정하지 않는다.")
     if "오늘은 살살" in sit:
         sl.append(next(f"오늘은 살살: {f['changes']}" for f in o["feedback"] if f["name"] == "오늘은 살살")
                   + " 반말은 두되 '야' · 거친 표현 · 몰아세우는 명령은 빼고, 다음 걸음은 권하는 말로.")
@@ -248,8 +293,11 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
               else "이번 한마디에는 다음 걸음 제안을 넣지 않는다(질문 · 명령 · '~만 해 보기' 모두 없이).")
     sys.append("[오늘 상황]\n" + _lines(sl))
 
+    w = ctx.get("widen") or {}
     nq = {"commitment": "next_question 에는 기한 지난 다짐의 안부를 묻는 질문 하나를 쓴다.",
-          "open_question": "next_question 에는 남겨 둔 질문을 오늘 글과 이어 묻는 질문 하나를 쓴다."
+          "open_question": "next_question 에는 남겨 둔 질문을 오늘 글과 이어 묻는 질문 하나를 쓴다.",
+          "widen": f"next_question 에는 {'한동안 쓰지 않은' if w.get('kind') == 'sun' else '아직 써 본 적 없는'} "
+                   f"'{w.get('name', '')}' 쪽 이야기를 가볍게 묻는 질문 하나를 쓴다(오늘 글과 억지로 잇지 않고, 답하지 않아도 되게)."
           }.get(kind, "next_question 은 빈 글로 둔다.")
     sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(2~4문장), \"next_question\": 다음 질문}. "
                "따옴표 안에는 아래 원문을 글자 그대로 옮긴다(바꿔 말하면 따옴표 없이). 지난 한마디와 표현을 겹치지 않는다. " + nq)
@@ -258,6 +306,12 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
 
     u = {k: ctx.get(k) for k in ("summary", "weather", "addressee", "reached", "commitments",
                                  "kept", "open_questions", "person_history") if ctx.get(k)}
+    if "생각이 바뀜" in sit:
+        u["changes"] = ctx["changes"]
+    if ctx.get("past_thoughts"):
+        u["past_thoughts"] = ctx["past_thoughts"][:PAST_THOUGHTS_IN_PROMPT]
+    if "넓혀 보기" in sit:
+        u["widen"] = {k: v for k, v in ctx["widen"].items() if k != "key"}
     if ctx.get("reached"):  # 되고 싶은 모습은 닿은 날에만 보여 준다(다른 날엔 그 말로 몰아세우기 쉬움)
         u["aspiration"] = ctx.get("aspiration")
     u["thoughts"] = [{k: t[k] for k in ("thought", "kind", "quote") if t.get(k)} for t in ctx.get("thoughts") or []]
@@ -283,7 +337,10 @@ def _sources(ctx):
     return ([ctx.get("text") or ""] + [r.get("quote") or "" for r in ctx.get("reached") or []]
             + [(ctx.get("aspiration") or {}).get("said") or ""]
             + [c.get("text") or "" for c in ctx.get("commitments") or []] + list(ctx.get("kept") or [])
-            + list(ctx.get("open_questions") or []) + list(ctx.get("person_history") or []))
+            + list(ctx.get("open_questions") or []) + list(ctx.get("person_history") or [])
+            + [f"{t.get('thought') or ''} {t.get('quote') or ''}" for t in ctx.get("past_thoughts") or []]
+            + [f"{c.get('before') or ''} {c.get('after') or ''}" for c in ctx.get("changes") or []]
+            + [(ctx.get("widen") or {}).get("past") or ""])
 
 
 def generate(ctx):
@@ -301,7 +358,7 @@ def generate(ctx):
     log, avoid = [], []
     for attempt in (1, 2):  # 한 번 다시 만들고, 그래도 문제면 안전한 기본 문장
         msg, nq = _parse(llm.chat(build_messages(ctx, kind, sit, suggest, avoid), temperature=0.8))
-        if kind not in ("commitment", "open_question"):
+        if kind not in ("commitment", "open_question", "widen") or (kind == "widen" and not nq):
             nq = base_question(kind, ctx)  # 정해 둔 질문(날씨 · 되고 싶은 모습 · 첫 만남)은 그대로
         # 제안 빈도는 선호라 검사로 막지 않는다. 무거운 날만 제안을 막는다(checks.problems).
         probs = checks.problems(msg, nq, sources=_sources(ctx), past=ctx.get("past_messages"),
@@ -325,5 +382,7 @@ def generate(ctx):
         nq = "" if comfort or not kind else base_question(kind, ctx)
         log.append({"attempt": "기본 문장", "problems": []})
     check_in = check_in_line(ctx.get("tone"), ctx.get("past_check_ins")) if ctx.get("crisis") or ctx.get("crisis_unsure") else ""
+    w = ctx.get("widen") or {}
+    used = "넓혀 보기" in sit and (w.get("kind") == "twin" or (kind == "widen" and bool(nq)))   # 실제로 쓴 재료만 남긴다
     return {"message": msg, "next_question": nq, "mode": "comfort" if comfort else "normal", "tone": ctx.get("tone"),
-            "check_in": check_in, "checks": log, "situations": sit, "next_kind": kind}
+            "check_in": check_in, "checks": log, "situations": sit, "next_kind": kind, "widen": w.get("key", "") if used else ""}

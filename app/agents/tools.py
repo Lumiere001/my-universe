@@ -129,7 +129,7 @@ def search_past(repo, uid, entry_id, today):
 ##################################################
 
 VOICE_TEXT = ("text", "summary", "thoughts", "reached", "aspiration", "commitments", "kept", "open_questions",
-              "person_history", "past_messages")
+              "person_history", "past_messages", "past_thoughts", "changes", "widen")
 
 
 def speak(ctx, people):

@@ -69,6 +69,8 @@ def advance(states, thoughts, relations, record_id):
             _ev(src, "실수", "열린 다짐 뒤 같은 주제의 반성(다짐은 닫지 않음)", new_day, **ev)
         if r["type"] == "이어짐" and r.get("vow_kept") and src and src["kind"] == "다짐" and src["state"] == "열림":
             _ev(src, "지켜짐", "다짐을 지켰다는 글", new_day, **ev)
+        if r.get("vow_quit") and src and src["kind"] == "다짐" and src["state"] == "열림":
+            _ev(src, "그만둠", "그만둔다는 글", new_day, **ev)
         if r["type"] == "해소":
             if src and src["kind"] == "질문" and src["state"] == "열림":
                 _ev(src, "해소", "같은 주제의 단정한 생각으로 정리됨", new_day, **ev)
@@ -145,3 +147,11 @@ def due_vows(states, today):
     return [{"thought": k, "due": s["due"], "topic": s.get("topic"), "marks": s["marks"]}
             for k, s in states.items() if s["kind"] == "다짐" and s["state"] == "열림" and s.get("due")
             and s["due"] < today]
+
+
+def reask_trigger(relations, states):
+    """되고 싶은 모습 '이번엔 넘어가기' 뒤 다시 물을 계기(PRD §8.0): 이번 글의 바뀜(관련 생각의 바뀜),
+    또는 이미 '실수'가 있는 주제에 또 어긋남(같은 걸림돌 · 어긋남의 반복). states 는 이번 글 전 상태."""
+    missed = {key(g.get("topic")) for g in (states or {}).values() if g["kind"] == "다짐" and "실수" in g.get("marks", [])}
+    return any(r["type"] == "바뀜" or (r["type"] == "어긋남" and missed & {
+        key(r.get("topic")), key(((states or {}).get(r["from"]) or {}).get("topic"))} - {key(None)}) for r in relations)

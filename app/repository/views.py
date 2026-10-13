@@ -153,7 +153,11 @@ def universe(s):
         "planets": planets,
         "links": [{"id": r["id"], "from_planet": r["from_record"], "to_planet": r["to_record"], "type": r["type"],
                    "line": r["line"], "cross_domain": r["cross_domain"], "needs_confirm": r["needs_confirm"],
-                   "explanation": r.get("explanation") or ""} for r in rels if r["from_record"] != r["to_record"]],
+                   "explanation": r.get("explanation") or "",
+                   # 목표 충돌은 두 다짐 중 하나가 닫히면(지켜짐 · 그만둠) 끝난다(PRD §4.3)
+                   "ended": r["type"] == "목표 충돌" and any((states.get(i) or {}).get("state") in ("지켜짐", "그만둠")
+                                                         for i in (r["from"], r["to"]))}
+                  for r in rels if r["from_record"] != r["to_record"]],
         "twins": twins,
         "blackholes": holes,
         "north_star": {"text": asp["said"], "values": asp["values"],
