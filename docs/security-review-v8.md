@@ -18,6 +18,38 @@
 
 잘 된 것(재현함): 모든 사용자 엔드포인트가 `get_user` 를 거친다(/health · /ontology 만 공개). 다른 사용자의 entry · person · question · relation · thought(다짐) id 로 읽기 · 고치기 · 지우기 · 이어 하기 · 피드백을 보내면 모두 404/409 로 막히고, A 의 /universe · /people · /aspiration 은 그대로였다(34개 확인 중 예상 밖 0개). 모든 표 15개에 RLS(`using` + `with check`)가 있고 anon 은 거부된다. 백엔드는 요청마다 `set local role authenticated` + JWT claim 을 걸어 코드가 user_id 를 빠뜨려도 RLS 가 막는다. 422 응답이 원문을 되돌려 보내지 않는다. Chroma 메타에는 user_id · entry_id · star_id · written_at · kind 만 있고 문서는 비어 있다(tester 61개 확인). git 에 추적되는 파일 · 이력에 키 모양 문자열 없음, .env* 는 추적되지 않음.
 
+## 고친 상태 (2026-10-13 다시 확인, WS24)
+
+master `b38e8ff` + WS24(동의) 기준으로 항목마다 코드 · 시험을 다시 봤다. **고침** = 코드와 시험이 있음, **결정대로 둠** = 동규 결정으로 손잡이만 둠, **남음** = 아직 안 고침. `uv run --frozen pytest -q` → 486 passed(로컬 Supabase 통합 시험 포함).
+
+| # | 상태 | 지금 코드 · 시험 |
+| --- | --- | --- |
+| H1 | 고침 | `supabase/migrations/20261009000000_v8_security.sql`: anon · authenticated 권한 회수, 백엔드 전용 역할 `app_user` + `set local role`(`app/repository/tables.py` pg_session), `runs_nonneg` check. 새 표 `consents`(20261013000200)도 같은 방식. 시험 `test_repo_pg.py::test_data_api_blocked` · `test_consents_rls_append_only_and_data_api` · `test_runs_check_and_lock_across_connections` |
+| M1 | 고침(일부) | `app/service/safety/pseudonym.py` LOOSE 에 `하고 · 와`, LOOSE_B 에 `과 · 하고 · 한테 · 에게 · 의`, 조사 없는 이름 + 사람 행동 말. 위 재현 4문장은 이제 가려짐(10/13 다시 돌림). 남은 한계: 행동 말 없는 "민혁의 말이 맞았다" 같은 문장 · 옛 이름 · 외자 이름은 놓침(골든셋 밖 이름 문장 22개 중 20개). 개인정보처리방침 4장 · 기술 설명서 1.3 에 밝힘. 시험 `test_safety_pseudonym.py::test_unregistered_names_are_hidden` 외 |
+| M2 | 고침 | `app/agents/studio.py` `_once` 의 `finally` 에서 `files.delete`. 시험 `test_graph_flow.py::test_studio_files_deleted_after_success_and_failure`. Upstage 쪽 응답 보관 기간은 여전히 확인 못 함(방침 5장에 '확인 중') |
+| M3 | 고침 | `DELETE /me`(`app/api/routes.py`): 벡터 → DB 모든 행(`diary.WIPE`, 동의 기록 포함) → auth 계정. 화면: 설정 맨 아래. 시험 `test_api_security.py::test_delete_me_*` · `test_repo_pg.py::test_delete_me_real` |
+| M4 | 고침 | 설정 화면 맨 아래 · 초대 목록 밖 안내 · 동의 화면에 `signOut()` 버튼(`infra/frontend/app/settings/page.tsx` · `components/Shell.tsx` · `app/consent/page.tsx`) |
+| M5 | 고침 | `entries.crisis` · `messages.mode` 칸을 지우고 enc 안으로(보안 마이그레이션), 마음 상태 버튼은 평문 칸에 `상태 버튼`만(`diary.MOOD_LABEL`), 설정은 `profiles.enc`, `runs.meta` 는 검사 문제 개수만. `people.relation` 은 평문 그대로(사람 지우기의 관계 말로 씀) — 방침 4장 '평문으로 남는 것'에 밝힘. 시험 `test_api_security.py::test_mood_feedback_and_settings_encrypted` · `test_logger_kst_and_no_mood_fields` |
+| M6 | 결정대로 둠 | 2026-10-08 동규: 구글 로그인한 누구나. 손잡이 `ALLOWED_EMAILS` 만(`app/core/auth.py`, 시험 `test_allowed_emails*`). 클라우드 Email 가입 끄기는 `deploy/MORNING.md` ③-6 순서에 있음 — 운영 설정은 이 갈래에서 열어 보지 않았다(확인 필요) |
+| M7 | 해결 | 동규가 가상 글로 확인(2026-10-08), 조치 없음 |
+| M8 | 고침(손잡이) | 이어 하기도 `_limits`(하루 수 · 이번 달 비용)와 `RESUME_LIMIT` 를 본다(`app/api/diary.py` resume). 상한은 결정대로 기본 0 = 없음. 시험 `test_resume_limits` · `test_caps_off_by_default` |
+| M9 | 고침 | 메모리 `_running` 대신 DB 잠금 `entries.locked_until`(조건부 update, 노드마다 연장, 만료 시 `failed` 로 보임). 시험 `test_lock_is_conditional_and_expires` · `test_running_entry_states` · `test_runs_check_and_lock_across_connections` |
+| M10 | 고침(일부) | `docker-compose.yml` 포트 셋 모두 `127.0.0.1:` 에 묶음. 로컬 Supabase 스택(54321/54322)은 Supabase CLI 기본대로 열려 있음 → 가상 인물 데이터만 넣는다(README · deploy/README §3) |
+| L1 | 결정대로 둠 | `app/core/auth.py` `TTL_S = 60`, 파일 머리 · 기술 설명서 1.3 에 한계로 적음 |
+| L2 | 고침 | Supabase 5xx · 연결 실패 · JSON 아닌 답 → 503 `auth_unavailable`. 시험 `test_auth_errors` |
+| L3 | 고침 | H1 로 같이 닫힘(PostgREST 로 임의 행을 넣을 길이 없음) |
+| L4 | 고침 | 소유 확인(404) 뒤에 잠금(409). 시험 `test_running_entry_states`(남의 잠긴 기록 → 404) |
+| L5 | 고침 | 하루 수 = 오늘 시작 · 이어 한 기록 수(`diary.processed_today`, runs 로 셈 — 지워도 줄지 않음). 시험 `test_daily_limit_counts_started_entries` |
+| L6 | 고침 | `API_DOCS=1` 일 때만 `/docs` · `/openapi.json`(배포는 끔). 시험 `test_docs_off_unless_api_docs` |
+| L7 | 고침 | `app/models` `In` 의 `CONTROL` validator 가 NUL 등 제어 문자를 지움, 경로 id 는 모양 검사(422). 시험 `test_control_chars_removed_and_bad_ids` |
+| L8 | 고침 | `diary.delete_person` 이 `entries.steps_enc` · 피드백 글 · 이름 질문까지 바꿈. Chroma 는 가명 글 벡터라 이름 없음. 시험 `test_delete_person_cleans_steps_feedback_questions` |
+| L9 | 고침 | `diary.delete_entry` 가 그 기록에만 쓰인 작은 별 · 자동 등록 사람 · 피드백(target_id)을 정리. 시험 `test_delete_entry_cleans_feedback_stars_auto_people` |
+| L10 | 남음 | `infra/frontend` 에 `next.config` 보안 헤더(CSP · frame-ancestors) 없음. XSS 길(dangerouslySetInnerHTML · eval)은 여전히 없음 |
+| L11 | 고침 | `deploy/MORNING.md` · `deploy/README.md` 가 코드 이름(`DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD` · `RESUME_LIMIT`)을 씀 |
+| L12 | 정보(남음) | 마스터 키 교체 경로 없음. `DIARY_ENC_KEY` 사본을 비밀번호 관리자에 두는 일은 동규 할 일(아침 보고 2026-10-08) |
+
+**WS24 에서 더한 것(2026-10-13):** 첫 로그인 동의(`/consent`, 필수 · 민감정보 따로 · 만 14세 이상 · 선택: 운영자 피드백 열람). 동의 기록 표 `consents`(RLS, `app_user` 는 select · insert · delete 만 — 고치지 못함, 필수 셋이 빠진 줄은 check 로 거부). 동의가 없거나 옛 판이면 화면은 `/consent` 로 보내고 **백엔드도** 일기 쓰기 · 이어 하기를 403 `consent_required` 로 막는다(토큰으로 API 를 바로 부르는 길 · 동의 전에 열어 둔 탭). 이용약관 `/terms`, 개인정보처리방침에 사진 · 음성 · 대화 줄 · 내려받기(실명 그대로) · 운영자 열람 · 국외 이전 표 · 실명 0건 관문 범위(Studio · Solar 만, 글자 읽기 · 받아쓰기 · 읽어 주기는 예외). 시험 `tests/test_consent.py`(10개) · `test_repo_pg.py::test_consents_rls_append_only_and_data_api` · e2e `infra/frontend/e2e/consent.spec.ts`.
+
 ## 높음
 
 ### H1. PostgREST 로 비용 상한 · 서버 규칙 우회 — 재현함
@@ -102,7 +134,7 @@
 
 | 곳 | 평문 칸 | 무엇이 드러나나 | 암호화된 것(enc) |
 | --- | --- | --- | --- |
-| entries | written_at, weather, status, step, **crisis**, addressee(나 · 특정 인물 …), star_id, sun_id, error_code | 언제 썼는지, 날씨, **위기 글 여부** | title, text, summary, events, addressee_person, past · steps_enc |
+| entries | written_at, weather, status, step, addressee(나 · 특정 인물 …), star_id, sun_id, error_code, locked_until (~~crisis~~ → enc, M5 고침) | 언제 썼는지, 날씨 | title, text, summary, events, addressee_person, past, 위기 여부 · steps_enc |
 | suns | name(기준 축 9개 이름), custom | 삶의 어느 영역에 글이 있는지 | — |
 | stars | sun_id | — | 작은 별(주제) 이름 |
 | thoughts | kind, certainty, value(가치 보기 값), grateful, position | 생각 종류 · 감사 여부 | text, quote, self_change, topic |
@@ -111,19 +143,21 @@
 | relations | type, grp, line, cross_domain, needs_confirm, vow_kept | 관계 종류 | explanation, quote, axis, topic |
 | states | key(생각 · 관계 id), kind, state | 다짐 · 질문이 열림 · 지킴 | 전체 이력 |
 | aspirations | version, values | 고른 가치 | now, said, obstacle, if_then |
-| messages | tone, **mode(care · comfort)**, next_kind | 돌봄 · 위로 응답을 받았는지 | text, next_question |
-| feedback | target, target_id, **value**(오늘은 위로만 …) | 그날 상태 버튼 | 불편한 점 한 줄 |
-| runs | step, ms, calls, est_usd, error_code, **meta.situations**(무거운 날 …) | 그날 마음 상태 이름 | — |
-| profiles | settings, onboarding | 말투 · "오늘은 살살" 날짜 | — |
+| messages | tone, next_kind (~~mode~~ → enc, M5 고침) | 말투 이름 | text, next_question, 위로 여부 · 안부 한 줄 |
+| feedback | target, target_id, value(마음 상태 버튼은 `상태 버튼`으로만, M5 고침) | 누른 버튼(맞아요 · 좋아요 …) | 불편한 점 한 줄, 마음 상태 버튼 값 |
+| runs | step, ms, calls, est_usd, error_code, meta(검사 문제 개수만, M5 고침) | 비용 · 시간 | — |
+| profiles | (settings · onboarding 칸은 비움, M5 고침) | — | 설정 · 첫 만남 상태 전체(enc) |
+| consents (WS24) | version, required, sensitive, age14, operator_read, created_at | 언제 어느 판에 동의했는지, 운영자 열람 선택 여부 | — |
 | Chroma | user_id, entry_id, star_id, written_at, kind + 임베딩(가명 글) | 임베딩에서 대략 뜻을 되살릴 수 있음(이론상) | 문서 없음 |
-| 로그(logger) | 경로 · id · 단계 · 비용 · 검사 · 상황 이름 | 상황 이름(무거운 날) | 원문 · 이름 없음(ALLOWED 목록, 40자 자름) |
+| 로그(logger) | 경로 · id · 단계 · 비용 · 검사 문제 개수 | — (상황 이름 · 위기 여부는 남기지 않음, M5 고침) | 원문 · 이름 없음(ALLOWED 목록, 40자 자름) |
 
 암호화 방식: AES-256-GCM, 사용자 키 = HKDF-SHA256(마스터, salt=user_id, info 고정), 행마다 무작위 12바이트 nonce, AAD = `표:행 id`(단계 저장값은 `entries.steps:id`). 사용자 키가 다르고 AAD 가 행에 묶여 다른 사용자 · 다른 행으로 옮겨 붙이면 풀리지 않는다. 키는 오류 · 로그에 나가지 않는다(EncryptionKeyMissing 문구에 값 없음, 전역 오류 처리는 예외 이름만 기록). 문제 없음.
 
 ## 외부로 나가는 것
 
-- Studio(`studio.run`) 는 guard 밖이면 RuntimeError, 보내기 직전 `m.check(html)`. Solar chat · embed 도 guard 안이면 검사. 그래프의 모든 노드가 `llm.guard(state.people)` 안에서 돈다(코드). 위기 글은 safety 다음 바로 save 로 가서 밖으로 나가지 않는다.
+- Studio(`studio.run`) 는 guard 밖이면 RuntimeError, 보내기 직전 `m.check(html)`. Solar chat · embed 도 guard 안이면 검사. 그래프의 모든 노드가 `llm.guard(state.people)` 안에서 돈다(코드). 위기 글도 시험 단계에서는 평소 길을 돌아 가명 글이 나간다(위 메모, 2026-10-08 동규).
 - 한계: guard 는 "등록된 이름"만 안다(M1). 한마디 만들 때 지난 한마디 · 다짐 · 질문 글도 가명으로 함께 보낸다(설계대로).
+- 실명 0건 관문의 범위(2026-10-13 동규 결정 7): **정리 · 대화 요청(Studio · Solar)** 에만 건다. 사진 글자 읽기(Upstage) · 받아쓰기 · 읽어 주기(ElevenLabs)는 이름을 가린 채 보낼 수 없어 예외이고, 동의 화면 · 개인정보처리방침 4 · 5장에 밝힌다(사진 원본은 저장하지 않고, 녹음은 받아쓴 뒤 바로 버림 — WS18 · WS21 이 지킴).
 - 실행 기록 · 오류 응답 · /stats 에 원문 없음(재현함: 원문 넣은 422 응답과 서버 로그에서 원문 문자열 0건). SSE error 이벤트는 코드 · 정해 둔 문구만.
 
 ## 입력 검증 · 남용
@@ -136,7 +170,7 @@
 ## 화면
 
 - 토큰: supabase-js 기본(localStorage). XSS 길(dangerouslySetInnerHTML · innerHTML · eval · 외부 링크)은 없다.
-- 위기 화면: 109(24시간 · 무료 · 문자 가능) `tel:` 링크, 마들랜(카카오톡 · 앱 · 24시간), 112 · 119 안내. v8.json 과 화면 사본이 같다. 내용은 코드 주석상 2026-10-08 보건복지부 안내로 확인됨(이번 검토에서 바깥 확인은 안 함 — 확인 필요).
+- 위기 화면: 검토 때(10/8 새벽)는 109 · 마들랜 · 112 · 119 안내가 있었으나, 2026-10-08 아침 동규 결정(시험 단계)으로 화면에서 뺐다. 지금은 평소 결과 + 위로 한마디 + 안부 한 줄. 공식 안내는 v8.json 에만 남겨 두고 정식 운영 때 다시 정한다. e2e(`flow.spec.ts` · `consent.spec.ts`)가 화면에 번호 · 단체 이름이 없는지 본다.
 - 가짜 데이터 모드: `NEXT_PUBLIC_MOCK=1` 은 빌드 때 박힌다. 배포는 git 연결 + Vercel 환경변수 `NEXT_PUBLIC_MOCK=0` · `DEV_LOGIN=0`(deploy/MORNING.md)이라 위험 낮음. 로컬 `infra/frontend/.env.local` 은 DEV_LOGIN=1 이지만 gitignore 라 git 배포에는 안 올라간다. Vercel CLI 로 로컬 폴더를 올리면 따라갈 수 있으니 CLI 배포는 하지 않는다.
 
 ## 설정 · 배포
@@ -144,7 +178,8 @@
 - CORS: 화면 주소 하나, credentials 끔, 인증은 Bearer 헤더 → 문제 없음.
 - `.env.example` · `infra/frontend/.env.example` 에 값 없음. `.gitignore` 가 `.env` · `.env.local` · `.env.*.local` · runs · logs 를 뺀다. git 이력에 .env 파일 · 키 모양 문자열 0건.
 - `.vercelignore` 가 `/.env*` · `/data` · `/runs` · `/logs` 를, `vercel.json` excludeFiles 가 data · runs · tests · eval 등을, `.dockerignore` 가 `**/.env*` · data · runs · logs 를 뺀다. 백엔드 이미지는 main.py · app 만 복사.
-- 계정 삭제: 없음(M3).
+- 계정 삭제: `DELETE /me` + 설정 맨 아래 버튼(M3 고침).
+- 동의: 첫 로그인 동의 · 이용약관 · 개인정보처리방침(WS24). 문의 메일은 화면 환경변수 `NEXT_PUBLIC_CONTACT_EMAIL` 한 곳(비면 '준비 중').
 - 이번 검토에서 보지 않은 것: 1차 Streamlit 앱(app.py · streamlit_app.py, v8 배포 대상 아님), 클라우드 Supabase · Vercel 실제 설정.
 
 ## 고치는 순서 제안
