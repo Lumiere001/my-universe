@@ -30,6 +30,8 @@ export type EntryResult = {
   people_questions: { id: string; name: string; question: string; options: string[] }[];
   // 기록 칸(WS11): 글이 다루는 날 · 확실/추정 · 날짜 확인 필요. duplicate = 이미 정리한 같은 글(그 기록의 결과)
   source?: string; day?: string; day_basis?: "확실" | "추정"; day_check?: boolean; duplicate?: boolean;
+  // 관측 보고서(WS15): 관측 상태 · 한계. 끝난 기록에만
+  observation?: { state: string; limits: string[] } | null;
 };
 export type Progress = { entry_id: string; step: string; label: string; done: number; total: number };
 export type StreamError = { entry_id: string | null; code: string; message: string; resumable: boolean };
@@ -192,6 +194,12 @@ export async function setEntryDay(id: string, day: string): Promise<EntryResult>
 export async function deleteDiary(id: string): Promise<void> {
   if (MOCK) return (await mock()).deleteDiary(id);
   await json("DELETE", `/diary/${encodeURIComponent(id)}`);
+}
+// JSON 내려받기(WS15, docs/api-v8.md §2.1): id 가 있으면 기록 하나, 없으면 전체. 다른 사람 이름은 가리지 않는다.
+export async function exportDiary(id?: string): Promise<unknown> {
+  if (MOCK) return { schema: "my-universe-export/1", exported_at: new Date().toISOString(), scope: id ? "entry" : "all",
+    records: id ? [await getDiary(id)] : [], domains: [] };
+  return json("GET", id ? `/export/${encodeURIComponent(id)}` : "/export");
 }
 export async function listDiary(before?: string): Promise<{ entries: EntrySummary[] }> {
   if (MOCK) return (await mock()).listDiary();

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DeleteEntry } from "@/components/EntryTools";
 import ResultCard from "@/components/ResultCard";
+import { DownloadJson } from "@/components/ResultCard";
 import { getDiary, listDiary, type EntryResult, type EntrySummary } from "@/lib/api";
 import { useLoad } from "@/lib/use";
 
@@ -41,6 +42,7 @@ export default function HistoryPage() {
       <h1>지난 기록</h1>
       {gone.length > 0 && <p className="toast" role="status">기록을 지웠어요.</p>}
       {list.length === 0 && <p className="sub">아직 쓴 글이 없어요.</p>}
+      {list.length > 0 && <div style={{ marginBottom: 12 }}><DownloadJson label="전체 기록 JSON 내려받기" /></div>}
       {list.map((e) => (
         <button key={e.id} className="card" style={{ display: "block", width: "100%", textAlign: "left" }} disabled={loading === e.id}
           onClick={async () => { setLoading(e.id); try { setOpen(await getDiary(e.id)); } finally { setLoading(null); } }}>
