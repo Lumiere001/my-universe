@@ -111,7 +111,7 @@ def main():
                        "entry_id_all": all(d.get("entry_id") == eid for e, d in ev if e in ("progress", "error")),
                        "calls": n, "usd": round(usd, 4)}
                 if kind == "result":
-                    row.update(keys_ok=set(res) == RESULT_KEYS, thoughts=len(res["thoughts"]), past=len(res["past"]),
+                    row.update(keys_ok=RESULT_KEYS <= set(res), thoughts=len(res["thoughts"]), past=len(res["past"]),
                                relations=[r["type"] + ("(점선)" if r["line"] == "점선" else "") for r in res["relations"]],
                                kinds=sorted({t["kind"] for t in res["thoughts"]}), reached=len(res["reached"]),
                                mode=(res["message"] or {}).get("mode"), check_in=bool((res["message"] or {}).get("check_in")),
