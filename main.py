@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import exceptions
 from app.agents import tools
-from app.api import diary, routes
+from app.api import diary, people_thoughts, routes
 from app.core import config, logger
 
 docs = config.API_DOCS   # 배포에서는 /docs · /redoc · /openapi.json 을 열지 않는다
@@ -26,6 +26,7 @@ app.add_middleware(CORSMiddleware, allow_origins=[config.FRONTEND_ORIGIN], allow
 exceptions.install(app)
 app.include_router(routes.router)
 app.include_router(diary.router)
+app.include_router(people_thoughts.router)
 tools.sun_vectors()   # 기준 축 벡터 파일(data/ops)이 없으면 시작할 때 sun_vectors_missing 을 남긴다
 
 

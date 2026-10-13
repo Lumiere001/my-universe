@@ -164,6 +164,8 @@ def universe(s):
         "links": [{"id": r["id"], "from_planet": r["from_record"], "to_planet": r["to_record"], "type": r["type"],
                    "line": r["line"], "cross_domain": r["cross_domain"], "needs_confirm": r["needs_confirm"],
                    "explanation": r.get("explanation") or "",
+                   # 원문 인용: 그때(옛 생각) → 지금(새 생각). 행성 카드가 쓴다(PRD §7 474)
+                   "from_quote": ts[r["from"]].get("quote", ""), "to_quote": ts[r["to"]].get("quote", ""),
                    # 목표 충돌은 두 다짐 중 하나가 닫히면(지켜짐 · 그만둠) 끝난다(PRD §4.3)
                    "ended": r["type"] == "목표 충돌" and any((states.get(i) or {}).get("state") in ("지켜짐", "그만둠")
                                                          for i in (r["from"], r["to"]))}
@@ -171,7 +173,9 @@ def universe(s):
         "twins": twins,
         "blackholes": holes,
         "north_star": {"text": asp["said"], "values": asp["values"],
-                       "reached_planets": sorted({x["entry_id"] for x in asp["reached"] if x["entry_id"] in entries})} if asp else None,
+                       "reached_planets": sorted({x["entry_id"] for x in asp["reached"] if x["entry_id"] in entries}),
+                       "reached": [{"entry_id": x["entry_id"], "quote": x.get("quote", ""), "at": diary.iso(x["at"])}
+                                   for x in asp["reached"] if x["entry_id"] in entries]} if asp else None,
         "people": [{"id": p["id"], "name": p["name"], "relation": p["relation"],
                     "planets": sorted({t["record_id"] for t in ts.values() if p["id"] in t["people"]})} for p in people],
     }
@@ -184,6 +188,24 @@ def people_list(s):
         planets.setdefault(tp["person_id"], set()).add(entry_of.get(tp["thought_id"]))
     return [{"id": p["id"], "name": p["name"], "nickname": ", ".join(p.get("nicknames") or []), "relation": p["relation"],
              "auto": p["auto"], "planets": sorted(planets.get(p["id"], []))} for p in diary.people(s)]
+
+
+def person_thoughts(s, pid):
+    """사람 하나와 얽힌 생각(끝난 기록만), 쓴 때 순서. 없는 사람이면 None(PRD §7 우주의 기호 '사람')."""
+    p = next((p for p in diary.people(s) if p["id"] == pid), None)
+    if not p:
+        return None
+    out = {"person": {"id": p["id"], "name": p["name"], "relation": p["relation"]}, "thoughts": []}
+    tids = [x["thought_id"] for x in s.rows("thought_people", person_id=pid)]
+    ts = diary.thoughts(s, id=tids) if tids else []
+    entries = {e["id"]: e for e in diary.entries(s, status="done", id=list({t["entry_id"] for t in ts}))} if ts else {}
+    ts = sorted((t for t in ts if t["entry_id"] in entries), key=lambda t: (entries[t["entry_id"]]["written_at"], t["position"]))
+    if not ts:
+        return out
+    states, rels = diary.states(s), diary.relations(s, to_thought=[t["id"] for t in ts])
+    return {**out, "thoughts": [{**thought_api(t, states, rels), "entry_id": t["entry_id"],
+                                 "written_at": diary.iso(entries[t["entry_id"]]["written_at"]),
+                                 "title": entries[t["entry_id"]]["data"].get("title", "")} for t in ts]}
 
 
 def person_api(p):

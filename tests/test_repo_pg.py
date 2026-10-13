@@ -101,6 +101,11 @@ def test_db_roundtrip_ciphertext_and_rls(repo, users):
     with repo.session(ua) as s:
         assert s.conn.execute("select count(*) as n from entries").fetchone()["n"] == 2
         assert {p["name"] for p in diary.people(s)} >= set(NAMES)
+        mj = next(p for p in diary.people(s) if p["name"] == NAMES[0])   # 사람별 생각(WS14): 두 날 모두, 먼저 쓴 날부터
+        pts = views.person_thoughts(s, mj["id"])["thoughts"]
+        assert [t["entry_id"] for t in pts][0] == r1["id"] and pts[-1]["entry_id"] == r2["id"]
+    with repo.session(ub) as s:
+        assert views.person_thoughts(s, mj["id"]) is None
     # 벡터: 원문 없음, 사용자별
     docs, metas = repo.vectors.documents(ua)
     assert docs and all(d is None for d in docs) and repo.vectors.get(ub) == {}
