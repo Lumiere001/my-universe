@@ -387,7 +387,9 @@ def j_talk_generate(c, people):
     n = len(re.findall(r"[?？]", text))
     p += [f"질문 {n}개(기대 {e['max_questions']}개 이하)"] if "max_questions" in e and n > e["max_questions"] else []
     p += ["안부 한 줄 없음"] if e.get("check_in") and not r["check_in"] else []
-    p += ["못 찾았다고 하지 않음"] if e.get("not_found") and text != chat.NOT_FOUND[chat._tone(raw.get("tone"))] else []
+    # 없으면 없다고: 정해 둔 문장이거나, 없다고 말하면서 인용은 모두 실제 지난 기록 원문(지어낸 기록 없음)
+    p += ["못 찾았다고 하지 않음"] if e.get("not_found") and text != chat.NOT_FOUND[chat._tone(raw.get("tone"))] and not (
+        re.search(r"없|못 찾|있지 않|않아요", text) and not checks.quote_problems(text, [f"{x['thought']} {x['quote']}" for x in past])) else []
     p += [f"'{w}' 없음" for w in e.get("contains", []) if w not in text]
     p += shown_problems(f"{text}\n{r['check_in']}") if raw.get("crisis") else checks.line_problems(text)
     detail = {"message": text, "fallback": bool(r["checks"]) and r["checks"][-1] > 0, "checks": r["checks"]}

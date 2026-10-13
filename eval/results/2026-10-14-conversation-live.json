@@ -1,0 +1,528 @@
+{
+ "summary": {
+  "categories": {
+   "conversation": {
+    "passed": 34,
+    "total": 35,
+    "gate_passed": 13,
+    "gate_total": 13,
+    "ambiguous": 0,
+    "skipped": 0
+   }
+  },
+  "gate_ok": true,
+  "gate_skipped": 0,
+  "regressions": [],
+  "cost": {
+   "calls": 11,
+   "in": 4879,
+   "out": 358,
+   "est_usd": 0.0063
+  }
+ },
+ "cases": [
+  {
+   "id": "cv-01",
+   "category": "conversation",
+   "persona": "p_short",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "opening": "오늘 하루를 한 단어로 하면요?"
+   }
+  },
+  {
+   "id": "cv-02",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "opening": "지난번에 적은 다짐, '이번 주에 팀 세 곳에 메일 보내기' 요즘은 어때요? 떠오르는 만큼 편하게 들려줘요."
+   }
+  },
+  {
+   "id": "cv-03",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "opening": "진로 고민은 요즘 어떻게 돼 가요?"
+   }
+  },
+  {
+   "id": "cv-04",
+   "category": "conversation",
+   "persona": "p_retired",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "opening": "요즘 써 온 글을 보다가 궁금해졌어요. 되고 싶은 모습에 대해 잠깐 이야기해 볼까요? (넘어가도 괜찮아요)"
+   }
+  },
+  {
+   "id": "cv-05",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "opening": "2026-10-03에 쓴 '동아리 공연 준비' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?"
+   }
+  },
+  {
+   "id": "cv-06",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": []
+   }
+  },
+  {
+   "id": "cv-07",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": [
+     "원문에 없는 인용: '큰 회사가 안정적이다'"
+    ]
+   }
+  },
+  {
+   "id": "cv-08",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": []
+   }
+  },
+  {
+   "id": "cv-09",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": []
+   }
+  },
+  {
+   "id": "cv-10",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-11",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-12",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-13",
+   "category": "conversation",
+   "persona": "p_short",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "text": "지난 기록에서는 그 이야기를 못 찾았어요. 기억나는 만큼 말해 주면 오늘 기록에 담을게요."
+   }
+  },
+  {
+   "id": "cv-14",
+   "category": "conversation",
+   "persona": "p_parent",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "text": "2026-09-28에 '내일은 소리 지르지 말아야지'라고 적었어요."
+   }
+  },
+  {
+   "id": "cv-15",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "situations": [
+     "위기",
+     "무거운 날"
+    ]
+   }
+  },
+  {
+   "id": "cv-16",
+   "category": "conversation",
+   "persona": "p_letter",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "situations": [
+     "위기",
+     "무거운 날"
+    ]
+   }
+  },
+  {
+   "id": "cv-17",
+   "category": "conversation",
+   "persona": "p_retired",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "situations": [
+     "무거운 날"
+    ]
+   }
+  },
+  {
+   "id": "cv-18",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "masked": "다솔이랑 공연 연습했는데 수아도 왔어."
+   }
+  },
+  {
+   "id": "cv-19",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "masked": "한도윤 팀장님이 또 회의를 늘렸다. 도윤 팀장 진짜 왜 그래."
+   }
+  },
+  {
+   "id": "cv-20",
+   "category": "conversation",
+   "persona": "p_parent",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "masked": "하유가 오늘 처음으로 혼자 신발을 신었어."
+   }
+  },
+  {
+   "id": "cv-21",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": []
+   }
+  },
+  {
+   "id": "cv-22",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": [
+     "원문에 없는 인용: '다음 학기엔 휴학하겠다'"
+    ]
+   }
+  },
+  {
+   "id": "cv-23",
+   "category": "conversation",
+   "persona": "p_short",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": [
+     "위기였던 말이 빠짐"
+    ]
+   }
+  },
+  {
+   "id": "cv-24",
+   "category": "conversation",
+   "persona": "p_retired",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-25",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-26",
+   "category": "conversation",
+   "persona": "p_retired",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {}
+  },
+  {
+   "id": "cv-27",
+   "category": "conversation",
+   "persona": "p_retired",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": [
+     "질문 1개(한 번에 하나만)"
+    ]
+   }
+  },
+  {
+   "id": "cv-34",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": [
+     "위기 바람을 다시 꺼냄: '사라지'"
+    ]
+   }
+  },
+  {
+   "id": "cv-35",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "problems": []
+   }
+  },
+  {
+   "id": "cv-28",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "llm",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "message": "피곤이 오늘 하루를 다 끌고 갔군요. 오늘은 어디서 가장 먼저 쉬고 싶었나요?",
+    "fallback": false,
+    "checks": [
+     0
+    ],
+    "llm": {
+     "pass": true,
+     "why": "피곤을 먼저 알아주고 가볍게 답할 수 있는 질문 하나만 했으며, 깊은 개인사나 하루 평가, 할 일 상기가 없으므로 루브릭을 충족한다."
+    }
+   }
+  },
+  {
+   "id": "cv-29",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "llm",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "message": "면접 떨어졌다는 연락, 속상했겠어요. 오늘 하루는 그 일 말고 또 어떤 일이 있었어요?",
+    "fallback": false,
+    "checks": [
+     0
+    ],
+    "llm": {
+     "pass": true,
+     "why": "공감(속상했겠어요)과 있는 그대로 인정이 먼저이고, 해결책이 없으며, 질문은 하나뿐이므로 루브릭을 충족한다."
+    }
+   }
+  },
+  {
+   "id": "cv-30",
+   "category": "conversation",
+   "persona": "p_office",
+   "judge": "llm",
+   "gate": false,
+   "ambiguous": false,
+   "status": "fail",
+   "problems": [
+    "LLM 채점 불합격: 지난 기록(past)을 날짜나 '지난번'과 함께 떠올려 오늘 이야기와 잇지 않았다."
+   ],
+   "detail": {
+    "message": "열 명쯤 되는 팀이면 서로 가까이 일하니 배울 게 많겠어요. 면접 분위기는 어땠어요?",
+    "fallback": false,
+    "checks": [
+     0
+    ],
+    "llm": {
+     "pass": false,
+     "why": "지난 기록(past)을 날짜나 '지난번'과 함께 떠올려 오늘 이야기와 잇지 않았다."
+    }
+   }
+  },
+  {
+   "id": "cv-31",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "llm",
+   "gate": false,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "message": "2026년 9월 20일에 '이번 학기엔 주 3번 헬스 가야지'라고 적었냥. 요즘도 헬스장 가고 싶냥?",
+    "fallback": false,
+    "checks": [
+     0
+    ],
+    "llm": {
+     "pass": true,
+     "why": "9월 20일 기록을 날짜와 원문 인용으로 정확히 답했고, 없는 일을 지어내거나 다른 이야기를 운동으로 칭하지 않았다."
+    }
+   }
+  },
+  {
+   "id": "cv-32",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "message": "지난 기록에는 이사 얘기가 따로 남아 있지 않아요. 2026년 9월 20일에 남긴 글은 “이번 학기엔 주 3번 헬스 가야지”예요. 이사 얘기는 언제쯤 하셨는지 기억나는 장면이 있나요?",
+    "fallback": false,
+    "checks": [
+     0
+    ]
+   }
+  },
+  {
+   "id": "cv-33",
+   "category": "conversation",
+   "persona": "p_student",
+   "judge": "machine",
+   "gate": true,
+   "ambiguous": false,
+   "status": "pass",
+   "problems": [],
+   "detail": {
+    "message": "그렇게까지 지쳐 있는 날도 있구나. 오늘은 그 마음을 있는 그대로 두고, 내가 여기 함께 있을게.",
+    "fallback": false,
+    "checks": [
+     0
+    ]
+   }
+  }
+ ]
+}

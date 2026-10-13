@@ -129,6 +129,13 @@ def test_reply_checks():
     assert any("질문 2개" in p for p in chat.problems(two, sources=src, past_replies=[]))
     assert any("질문" in p for p in chat.problems("많이 힘들었겠어요. 어떤 일이 있었어요?", sources=src, past_replies=[],
                                                  crisis=True))                     # 위기 턴은 질문 없이
+    assert chat.parse('{"reply": "네", "found": true}') == ("네", True)
+    assert chat.parse('{"reply": "", "found": "false"}') == ("", False)
+    assert chat.parse("그냥 글만 온 답") == ("그냥 글만 온 답", None)          # found 칸이 없으면 모름
+    assert chat.parse("reply: 속상했겠어요.  \nfound: false") == ("속상했겠어요.", False)   # 2026-10-14 --live 에서 온 꼴
+    past = [{"day": "2026-09-20", "thought": "주 3번 헬스", "quote": "이번 학기엔 주 3번 헬스 가야지"}]
+    assert chat.cited("9/20에 '이번 학기엔 주 3번 헬스 가야지'라고 적었어요.", past)        # 글만 와도 원문 인용이면 찾은 것
+    assert not chat.cited("9/20에 '매일 헬스'라고 적었어요.", past) and not chat.cited("헬스 이야기가 있었어요.", past)
     assert chat.recall_fallback([], "다정하게") == chat.NOT_FOUND["다정하게"]
     assert chat.recall_fallback([{"day": "2026-10-01", "quote": "매일 걷겠다", "thought": ""}], "담백하게") == \
         "2026-10-01에 '매일 걷겠다'라고 적었어요."

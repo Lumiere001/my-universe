@@ -37,8 +37,12 @@ END = re.compile(r"(이제|오늘은|여기서|그럼)\s?(그만|이만|여기�
 RECALL = re.compile(r"(예전|전에|지난번|지난주|지난달|작년|그때|언젠가|처음)[^?.!]{0,30}(뭐라고|뭐라|어떻게|무슨|뭘|뭐)\s?[^?.!]{0,12}"
                     r"(했|썼|적었|말했|얘기했|생각했)[^?.!]{0,6}(지|더라|었나|었어|나|니|까)\s?\??\s*$"
                     r"|(했었나|했던가|썼었나|적었었나|말했었나)\s?\??\s*$")
+# 위기 턴의 답에 그 바람의 낱말을 다시 꺼내지 않는다(따라 말하기 금지, crisis.voice). 위로 문장에는 필요 없는 말들이다.
+# ponytail: 낱말 목록이라 돌려 말한 되받기는 위기 한마디 판정(Solar)이 받친다.
+ECHO = re.compile(r"사라지|사라진|없어지|없어졌|죽|끝내|끝나|곁으로|따라가|따라갈|잠들|깨어나지|눈을\s?감")
 TIRED = re.compile(r"지쳤|지친|피곤|힘들|녹초|고된|고단|기진|탈진|버거")
-HEAVY = re.compile(voice._SAD + "|" + voice._HEAVY_LOSS)
+# 무거운 날: 한마디의 슬픔 · 상실 말 + 대화에서 자주 나오는 마음 말(속상 · 우울 · 비참 · 절망)
+HEAVY = re.compile(voice._SAD + "|" + voice._HEAVY_LOSS + r"|속상|우울|비참|절망")
 
 # 기본 문장(두 번 다 검사에 걸렸을 때). 지난 답과 겹치지 않는 첫 문장을 쓴다.
 SAFE = {
@@ -136,11 +140,13 @@ def situations(text, *, crisis=False, hour=None, recall=False, wrap=False, past=
 LINES = {
     "무거운 날": "마음이 무거운 날: 공감과 있는 그대로 인정. 질문은 하나만. 해결책을 늘어놓거나 '힘내'를 쓰지 않는다.",
     "고된 하루를 마친 밤": "고된 하루를 마친 밤: 수고를 먼저 알아주고 짧게 묻는다. 하루를 평가하거나 할 일을 상기시키지 않는다.",
-    "첫 대화": "첫 대화(기록 없음): 가볍고 한 단어로도 답할 수 있게 묻는다. 깊은 개인사 · 가치관 판단 질문은 하지 않는다.",
+    "첫 대화": "첫 대화(기록 없음): 가볍고 한 단어로도 답할 수 있게 묻는다(예: '오늘 가장 오래 머문 곳은요?'). "
+            "어떤 순간 · 왜 같은 깊은 개인사 질문이나 가치관 판단 질문은 하지 않는다.",
     "지난 기록 물음": "사용자가 지난 기록을 물었다: past 에서 맞는 기록을 찾아 날짜와 원문을 따옴표로 글자 그대로 옮겨 답한다. "
                "맞는 기록이 없으면 found 를 false 로 하고 지어내지 않는다(reply 는 빈 글).",
-    "지난 기록 떠올리기": "past 의 지난 생각이 지금 이야기와 닿을 때만 '지난 (날짜)에 …라고 하셨는데'처럼 날짜와 원문을 따옴표로 "
-                  "글자 그대로 옮겨 이어 묻는다. 닿지 않으면 꺼내지 않는다. 바뀐 생각을 잘못처럼 말하지 않는다.",
+    "지난 기록 떠올리기": "past 는 지금 이야기와 닿을 수 있는 그 사용자의 지난 기록이다. 닿는 것이 있으면 '지난 (날짜)에 …라고 "
+                  "하셨는데'처럼 날짜와 원문을 따옴표로 글자 그대로 옮겨 떠올리고, 오늘 이야기와 이어 묻는다(이 대화에서 이미 꺼낸 "
+                  "기록은 다시 꺼내지 않는다). 억지로 잇지는 않고, 바뀐 생각을 잘못처럼 말하지 않는다.",
     "대화를 마칠 때": "대화를 마칠 때: 오늘 이야기를 한 줄로만 되짚는다. 질문하지 않고 붙잡지 않는다(정리 제안은 코드가 붙인다).",
 }
 
@@ -150,7 +156,8 @@ def _rules(tone, gentle):
     keep = [x for x in o["tone_rules"] if not x.startswith("한마디 구성")]   # 대화는 한 번에 질문 하나(다음 걸음 규칙은 한마디용)
     lines = [x for x in o["fact_bomb"]["never_cross"] if tone == "팩폭" or "살살" not in x]
     return keep + lines + [
-        "대화: 사용자 말에 짧게(1~3문장) 반응하고, 질문은 한 번에 하나만 한다. 한 단어로도 답할 수 있게 묻는다.",
+        "대화: 사용자 말에 짧게(1~3문장) 반응하고, 질문은 한 번에 하나만 짧은 한 문장으로 한다('~인지 ~인지'로 둘을 묶거나 "
+        "'궁금해요'로 돌려 묻지 않는다). 한 단어로도 답할 수 있게 묻는다.",
         "사용자 말과 past(지난 기록)에 없는 일을 지어내지 않는다. 지난 기록을 말할 때는 날짜와 원문을 따옴표로 글자 그대로 옮긴다"
         "(바꿔 말하면 따옴표 없이).",
         "진단 · 평가 · 설교 · 남과 비교 · 과장된 칭찬 · '힘내' 같은 상투어를 쓰지 않는다.",
@@ -187,27 +194,38 @@ def messages(ctx, sit, avoid=()):
 
 
 def parse(raw):
-    """→ (답, found). JSON 이 깨지면 낱말로 읽는다(found 는 거짓 쪽)."""
+    """→ (답, found). JSON 이 깨지면 낱말로 읽는다. found 칸이 없으면(JSON 없이 글만 옴) None."""
     m = re.search(r"\{.*\}", raw or "", re.S)
     try:
         d = json.loads(m.group(0)) if m else {}
     except json.JSONDecodeError:
         d = {}
-    if not d:
-        f = re.search(r'"found"\s*:\s*(true|false)', raw or "")
-        r = re.search(r'"reply"\s*:\s*"(.*?)"\s*[,}]', raw or "", re.S)
-        d = {"reply": r.group(1) if r else (raw or "").strip(), "found": bool(f and f.group(1) == "true")}
-    return str(d.get("reply") or d.get("message") or "").strip(), d.get("found") is True
+    if not d:   # 깨진 JSON · 'reply: … found: false' 꼴 · 글만
+        raw = raw or ""
+        f = re.search(r'"?found"?\s*[:：]\s*"?(true|false)', raw)
+        r = re.search(r'"reply"\s*:\s*"(.*?)"\s*[,}]', raw, re.S)
+        body = r.group(1) if r else re.sub(r'^\s*"?reply"?\s*[:：]\s*', "", raw[:f.start()] if f else raw)
+        d = {"reply": body.strip().rstrip(","), "found": f and f.group(1) == "true"}
+    found = d.get("found")
+    return str(d.get("reply") or d.get("message") or "").strip(), None if found is None else found in (True, "true")
 
 
 def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=False, wrap=False):
     """대화 답의 문제 목록(비면 통과): 한마디와 같은 검사(넘지 않는 선 · 원문에 없는 인용 · 반복 · 사람 판정 · 위기) + 질문 하나만."""
     out = checks.problems(reply, "", sources=sources, past=past_replies, comfort=crisis, aspiration=False, gentle=gentle,
                           tone=tone, crisis=crisis)
+    if crisis and (m := ECHO.search(reply or "")):
+        out.append(f"위기 바람을 다시 꺼냄: '{m.group(0)}'")
     n = len(re.findall(r"[?？]", reply or ""))
     if n > (0 if crisis or wrap else 1):
         out.append(f"질문 {n}개(한 번에 하나만)")
     return out
+
+
+def cited(text, past):
+    """답에 따옴표 인용이 있고 모두 지난 기록(past) 원문에 글자 그대로 있는가."""
+    return bool(checks._QUOTE.findall(text or "")) and not checks.quote_problems(
+        text, [f"{p.get('thought', '')} {p.get('quote', '')}" for p in past or []])
 
 
 def fallback(tone, past_replies=(), crisis=False, heavy=False):
@@ -246,13 +264,18 @@ def respond(ctx):
         return {**base, "text": NOT_FOUND[_tone(tone)], "found": False, "checks": []}
     avoid, log, text, found = [], [], "", False
     for _ in (1, 2):
-        text, found = parse(llm.chat(messages(ctx, sit, avoid), temperature=0.7))
-        if kind == "recall" and not found:
-            break
+        text, found = parse(llm.chat(messages(ctx, sit, avoid), temperature=0.2 if kind == "recall" else 0.5))
+        if kind == "recall":
+            if found is None:   # JSON 없이 글만 옴: 지난 기록 원문을 그대로 인용했을 때만 찾은 것(인용 대조가 근거)
+                found = cited(text, ctx.get("past"))
+            if not found:   # 못 찾았으면 정해 둔 문장(답 글에 무엇을 적었든 쓰지 않음)
+                break
         probs = problems(text, sources=ctx.get("sources") or [], past_replies=ctx.get("past_replies"), tone=tone,
                          crisis=crisis, gentle=bool(ctx.get("gentle")), wrap=kind == "wrap")
         if len(text) > MAX_REPLY:
             probs.append(f"너무 김({len(text)}자)")
+        if checks._norm(text) == checks._norm(ctx.get("text")):   # 사용자 말을 그대로 되풀이한 답(--live 에서 본 꼴)
+            probs.append("사용자 말을 그대로 되풀이함")
         if not probs and crisis:   # 위기 턴은 코드 검사를 지나도 위기 바람 동조를 Solar 로 한 번 더(한마디와 같음)
             probs = checks.llm_crisis_problems(text, "", ctx.get("text") or "")
         elif not probs and tone == "팩폭":
@@ -269,7 +292,7 @@ def respond(ctx):
                 else "" if kind == "wrap" else fallback(tone, ctx.get("past_replies"), crisis, "무거운 날" in sit))
     if kind == "wrap":
         text = f"{text}\n{wrap_line(tone)}".strip()
-    return {**base, "text": text, "found": found, "checks": log}
+    return {**base, "text": text, "found": bool(found), "checks": log}
 
 
 ##################################################
