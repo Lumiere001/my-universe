@@ -42,7 +42,8 @@ def test_match_by_quote_across_splits():
             G("g3", "d2", "요즘 몸이 무겁다.", "감정")]
     pred = [{"id": "p1", "day": "d1", "thought": "", "quote": "직장은 안정이 제일이다", "kind": "해석", "value": "안정"},   # 일부 인용
             {"id": "p2", "day": "d1", "thought": "", "quote": "전혀 다른 문장", "kind": "다짐", "value": ""},
-            {"id": "p3", "day": "d2", "thought": "", "quote": "흔들리지 말고 공채 준비를 시작하자.", "kind": "다짐", "value": ""}]   # 다른 날 → 짝 아님
+            # 다른 날 → 짝 아님
+            {"id": "p3", "day": "d2", "thought": "", "quote": "흔들리지 말고 공채 준비를 시작하자.", "kind": "다짐", "value": ""}]
     m = labels.match(gold, pred)
     assert set(m) == {"g1"} and m["g1"]["id"] == "p1"
 
@@ -93,7 +94,8 @@ def test_e7_form_hides_ai_answers(tmp_path):
     form = tmp_path / "form.csv"
     labels.main(["e7-form", str(src), str(form)])
     rows = labels.read_csv(form)
-    assert rows == [{"id": "a", "day": "d", "thought": "t", "quote": "q", "kind_a": "", "value_a": "", "kind_b": "", "value_b": "", "note": ""}]
+    blank = {"kind_a": "", "value_a": "", "kind_b": "", "value_b": "", "note": ""}
+    assert rows == [{"id": "a", "day": "d", "thought": "t", "quote": "q", **blank}]
     assert "다짐" not in form.read_text(encoding="utf-8-sig")
 
 
@@ -184,7 +186,8 @@ def test_e9_groups_by_setting_and_suggestion():
             {"suggest_setting": "자주", "suggested": True, "reaction": "좋아요", "reason": None, "wrote_next_day": True},
             {"suggest_setting": "안 함", "suggested": False, "reaction": None, "reason": None, "wrote_next_day": True}]
     g = {(r["setting"], r["suggested"]): r for r in exp.e9(rows)}
-    assert g[("자주", "제안 있음")] == {"setting": "자주", "suggested": "제안 있음", "n": 2, "next_day": 0.5, "dislike": 0.5, "preachy": 0.5}
+    assert g[("자주", "제안 있음")] == {"setting": "자주", "suggested": "제안 있음", "n": 2,
+                                         "next_day": 0.5, "dislike": 0.5, "preachy": 0.5}
     assert g[("안 함", "제안 없음")]["next_day"] == 1.0 and exp.e9([]) == []
 
 
