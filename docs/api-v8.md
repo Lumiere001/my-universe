@@ -6,6 +6,8 @@
 
 **시험 단계 위기 대응(2026-10-08 아침, 동규 결정):** 위기 글도 7단계를 다 돌고 평소 EntryResult 를 준다. `care` 칸을 없애고 `message.check_in`(안부 한 줄)을 더했다(§1).
 
+**기록 칸(WS11, 2026-10-13):** 쓰기 본문에 `source` · `source_ref` · `day`, EntryResult · 목록에 `source` · `day` · `day_basis` · `day_check` · `confirmed` · `record_type`, 생각에 `original`, `info.original` 을 더했다(칸 추가만). 같은 글(같은 Studio 설정) · 같은 원본이 다시 오면 Studio 를 부르지 않고 그 기록으로 안내한다(§1). 마이그레이션 `20261013000000_v8_record_fields.sql`(덧붙이기만).
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -16,16 +18,19 @@
   - 로컬: `NEXT_PUBLIC_DEV_LOGIN=1`일 때만 시험용 계정(이메일 · 비밀번호, 로컬 Supabase에만 있음) 로그인 칸을 보인다.
   - 초대 목록(설정했을 때만): 백엔드 환경변수 `ALLOWED_EMAILS`(쉼표 목록)가 있으면 목록 밖 계정은 모든 로그인 요청이 403 `not_allowed`("초대된 사람만 쓸 수 있어요"). 화면은 이때 안내와 로그아웃만 보인다. 없으면 로그인한 누구나(지금 배포, 2026-10-08).
   - 화면(supabase-js)은 로그인에만 쓴다. Supabase Data API(`/rest/v1` · GraphQL)로는 표를 읽고 쓸 수 없다(anon · authenticated 권한 없음). 데이터는 모두 이 API로.
-- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖 — `ALLOWED_EMAILS`를 설정했을 때만) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`를 설정했을 때만) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`를 설정했을 때만) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`를 설정했을 때만. 셋 다 기본 0 = 상한 없음) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
+- 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖 — `ALLOWED_EMAILS`를 설정했을 때만) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `duplicate`(409, `POST /diary` 에 이미 받은 글이 정리 중이거나 멈춤) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`를 설정했을 때만) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`를 설정했을 때만) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`를 설정했을 때만. 셋 다 기본 0 = 상한 없음) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
 - 입력 글의 NUL 등 제어 문자(줄바꿈 · 탭 제외)는 받을 때 지운다.
 - 시각은 ISO 8601(+09:00). id는 문자열.
 - 원문(일기 글 · 인용 · 사람 이름)은 실행 기록 · 오류 메시지 · `/stats`에 절대 넣지 않는다.
 
 ## 1. 일기 쓰기 (SSE)
 
-`POST /diary/stream` 본문 `{"text": "...", "title": "선택", "written_at": "선택, 없으면 지금", "weather": "맑음|구름 조금|흐림|비|천둥|안개|null"}`
+`POST /diary/stream` 본문 `{"text": "...", "title": "선택", "written_at": "선택, 없으면 지금", "weather": "맑음|구름 조금|흐림|비|천둥|안개|null", "source": "텍스트(기본)|사진|지난 글 묶음|대화", "source_ref": "선택, 가져온 원본 표시(게시물 시각 · 파일 이름 등)", "day": "선택, 사용자가 고른 글이 다루는 날 YYYY-MM-DD"}`
 
-입력 검사: `text` 1~8000자(`MAX_TEXT_CHARS`), `title` 120자까지(줄바꿈은 띄어쓰기로), `weather`는 v8.json 보기만, 모르는 칸은 거부(422).
+입력 검사: `text` 1~8000자(`MAX_TEXT_CHARS`), `title` 120자까지(줄바꿈은 띄어쓰기로), `weather`는 v8.json 보기만, `source`는 네 값만, `source_ref` 200자까지, 모르는 칸은 거부(422).
+
+- **글이 다루는 날(`day` · `day_basis`, PRD §4.4 · G2):** `day`를 주면 그날(확실). 없으면 제목 → 본문 첫 줄(30자 이하일 때만) 속 날짜(`3/27` · `3.27` · `3월 27일` · `2026.3.27` · `260327` …, 연도가 없으면 쓴 날에 가장 가까운 해)를 읽어 확실. 날짜처럼 보이는데 못 읽거나(13/45 · 2/30) 서로 다른 날짜가 둘 이상이면 쓴 날 · 추정 + `day_check: true`('날짜 확인 필요'). 날짜가 없으면 쓴 날 · 추정. `source: "대화"`는 대화한 날 · 확실 + `confirmed: "확인 전"`.
+- **같은 글 다시 보내지 않기(PRD §8.5 A, 상한이 아니라 중복 막기):** 사용자별 HMAC(띄어쓰기 · 줄바꿈 차이를 없앤 제목 · 본문 + Studio 설정 번호)을 `entries.content_hash`에 둔다. 같은 글이 다시 오면(또는 같은 `source`의 같은 `source_ref`) 새 기록을 만들지 않고 Studio · Solar 를 부르지 않는다. 그 기록이 끝났으면 `event: result`로 그 기록의 EntryResult + `"duplicate": true`(progress 없음), 끝나지 않았으면 `event: error` `{"entry_id": 그 기록, "code": "duplicate", "resumable": true}`(→ 이어 하기). `POST /diary`는 같은 결과 또는 409 `duplicate`. 설정 번호가 바뀌면 같은 글도 새로 정리한다. `source_ref`는 평문으로 두지 않고 HMAC 으로 저장한다(사용자별 유일).
 
 응답 `text/event-stream`. 화면은 `fetch` + `response.body.getReader()`로 읽는다(EventSource는 POST · 헤더를 못 씀).
 
@@ -56,12 +61,15 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   "id": "e1", "status": "processing|done|failed", "step": "observe",
   "written_at": "2026-10-09T23:10:00+09:00", "title": "...", "weather": "흐림",
   "crisis": false,
-  "info": {"summary": "...", "addressee": "나|특정 인물|신", "addressee_person": "p1|null", "events": ["..."]},
+  "source": "대화|텍스트|사진|지난 글 묶음", "day": "2026-10-09", "day_basis": "확실|추정", "day_check": false,
+  "confirmed": "확인 전|확인됨|null", "record_type": "경험 기록|생각·성찰|창작|기타|null",
+  "info": {"summary": "...", "addressee": "나|특정 인물|신|기타", "addressee_person": "p1|null", "events": ["..."],
+           "original": {"addressee": "목록 밖 원래 말", "record_type": "목록 밖 원래 말"} },
   "thoughts": [
     {"id": "t1", "text": "...", "kind": "다짐", "grateful": false, "certainty": "단정",
      "value": "성취|null", "quote": "원문 그대로", "self_change": "스스로 쓴 변화|null",
      "topic": "작은 별 이름", "star_id": "s1", "sun_id": "d1", "people": ["p1"],
-     "other": "목록 밖 원래 말|null",
+     "other": "목록 밖 원래 말|null", "original": {"kind": "...", "certainty": "...", "value": "..."},
      "state": {"type": "다짐|질문|긴장|바뀜", "status": "열림|지켜짐|그만둠|해소|블랙홀|후보|확정", "mistake": false} }
   ],
   "relations": [
@@ -77,13 +85,15 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 }
 ```
 
+기록 칸: `source` 출처, `day` 글이 다루는 날(이 칸 전에 저장된 기록은 쓴 날 · 추정), `day_check` 날짜 확인 필요(G2), `confirmed` 대화에서 온 글의 요약 확인 상태(그 밖은 null), `record_type` 기록 Agent Classify 가 고른 글 유형(목록 밖이면 `기타` + `info.original.record_type`, 이 칸 전 기록은 null). `thoughts[].original` 은 목록 밖 값의 원래 말(종류 · 확신 · 가치, 없으면 null). `other` 는 예전 화면용으로 종류의 원래 말만.
+
 `crisis`: 위기로 감지된 글이면 true(감지 결과는 기록 enc 안에 남겨 얼마나 자주 걸리는지 본다). 시험 단계(2026-10-08 아침 동규 결정)에는 위기여도 결과 모양이 같다 — `care` 칸은 없앴고(돌봄 화면 · 109 · 마들랜 · 119 · 112 안내 없음), 생각 · 관계 · 우주 행성이 평소처럼 나온다(Studio · Solar 도 평소처럼, 가명 글로). 위기 글의 `message`는 `mode: "comfort"`(제안 · 다음 질문 없음, 팩폭이면 그 글만 `tone: "다정하게"`)이고, `message.check_in`에 안부 한 줄(코드에 둔 고정 문장, 지난 안부와 겹치지 않게)이 온다. 화면은 한마디 아래 작은 줄로 보인다. 위기 2차 판정(Solar)이 실패한 글은 평소 `message` + 같은 `check_in`. 그 밖의 글은 `check_in: null`. 정식 운영 때의 안내(v8.json `crisis.resources`)는 그때 다시 정한다.
 
 그 밖의 칸: `thoughts[].state` 는 그 생각의 다짐 · 질문 상태, 없으면 그 생각이 새 쪽인 바뀜, 없으면 그 생각이 낀 긴장(`열림|블랙홀|해소`). `relations` 는 이 기록이 새 쪽(`to_entry`)인 관계 + 이 기록에서 시작해 뒤 기록으로 이어진 관계. `people_questions[].options`: 동명이인 · 별명은 `["같은 사람", "다른 사람", "사람 이름 아님"]`, 이름인지 낱말인지는 `["사람 이름", "사람 이름 아님"]`. `next_question.kind`: voice 의 weather → `weather`, aspiration · aspiration_invite → `aspiration`, first · commitment · open_question → `free`, 없음 → `none`.
 
 ## 2. 읽기
 
-- `GET /diary?limit=20&before=<written_at>` → `{"entries": [{"id", "written_at", "title", "summary", "weather", "status", "sun", "star"}]}`
+- `GET /diary?limit=20&before=<written_at>` → `{"entries": [{"id", "written_at", "title", "summary", "weather", "status", "sun", "star", "source", "day", "day_basis", "day_check", "confirmed", "record_type"}]}`
 - `GET /diary/{id}` → EntryResult
 - `DELETE /diary/{id}` → 204 (생각 · 관계 · 한마디 · 그 기록 · 생각 · 관계를 가리킨 피드백 · 벡터까지. 남은 기록이 모두 끝난 상태면 이 기록에만 쓰인 작은 별 · 자동 등록 사람도 정리). 정리 중이면 409.
 - `GET /universe` → 아래 Universe
@@ -118,7 +128,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 `POST /feedback` `{"target": "relation|message|vow|question|tension|entry|app|weather", "target_id": "r1|null", "value": "맞아요|아니에요|좋아요|별로|오늘은 위로만|지켰어요|그만둘래요|불편한 점 한 줄|오늘은 살살|날씨 건너뜀", "text": "불편한 점 한 줄일 때만(500자)"}` → `{"ok": true, "state": {"type", "status", "mistake"} 또는 null}`
 
-- 맞아요/아니에요(`target_id` = 관계 id `옛생각id>새생각id`) → 점선을 실선으로 확인(바뀜 후보면 확정) / 관계 지우기, 지켰어요/그만둘래요(`target_id` = 다짐 생각 id) → 닫힘, 오늘은 살살 · 오늘은 위로만 → 오늘 하루 설정(`gentle_today` · `comfort_only_today` = 오늘 날짜), 날씨 건너뜀 → `weather_ask: false`(다음엔 날씨를 묻지 않음). 맞지 않는 대상(이미 닫힌 다짐 등)이면 409 `invalid_target`. 모든 피드백은 맞춤 신호로 저장(불편한 점 한 줄의 글만 암호화).
+- 맞아요/아니에요(`target_id` = 관계 id `옛생각id>새생각id`) → 점선을 실선으로 확인(바뀜 후보면 확정) / 관계 지우기, 지켰어요/그만둘래요(`target_id` = 다짐 생각 id) → 닫힘, 오늘은 살살 · 오늘은 위로만 → 오늘 하루 설정(`gentle_today` · `comfort_only_today` = 오늘 날짜), 날씨 건너뜀 → `weather_ask: false`(다음엔 날씨를 묻지 않음). 맞지 않는 대상(이미 닫힌 다짐 등)이면 409 `invalid_target`. 모든 피드백은 맞춤 신호로 저장(불편한 점 한 줄의 글만 암호화). 피드백 · 실행 기록(runs)에는 그때의 Studio 설정 번호 `studio_config`('기록 판/관측 판', 예 `2/2`)를 남긴다. '아니에요'로 지운 관계는 종류 · 두 생각 id 를 그 피드백의 암호문에 남긴다(오답 재료, 기록을 지우면 같이 지움).
 
 ## 4. 사람
 
