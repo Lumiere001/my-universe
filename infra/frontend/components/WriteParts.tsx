@@ -95,6 +95,7 @@ export function FilePick({ onLoad, disabled }: { onLoad: (f: Loaded) => void; di
       </div>
       <p className="sub" style={{ margin: 0 }}>
         불러온 글은 위 칸에 채워져요. 고친 뒤 띄워도 돼요. · <a href="/samples/haneul-2026-10-03.txt" download="하늘-2026-10-03-일기.txt">예시 일기 받기</a>
+        {" "}· <Link href="/import">인스타그램 글 한꺼번에 가져오기</Link>
       </p>
       {name && <p className="toast" role="status" style={{ margin: 0 }}>‘{name}’을 불러왔어요.</p>}
       {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}

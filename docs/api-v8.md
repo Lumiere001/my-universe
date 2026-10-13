@@ -16,6 +16,8 @@
 
 **사진(손글씨) 입력(WS18, 2026-10-14):** `POST /photo/read`(사진 한 장의 글자만 읽기, 저장 안 함)를 더했다(§1.1). 읽은 글은 지금의 쓰기 본문(`source: "사진"`)으로 보낸다. 새 경로만이고 마이그레이션 · 새 환경변수는 없다(기존 `UPSTAGE_API_KEY`).
 
+**인스타 ZIP 가져오기(WS17, 2026-10-14):** `POST /import/instagram/preview`(저장 · 외부 전송 없는 미리 보기)를 더했다(§9). 가져온 글은 기존 `/diary/stream` 에 `source: "지난 글 묶음"` · `source_ref` · `written_at`(게시 시각)으로 한 편씩 보낸다. 새 경로만이고 마이그레이션은 없다.
+
 **보안 검토 반영(2026-10-09, docs/security-review-v8.md):** 허용 이메일 목록(403 `not_allowed`), `DELETE /me`(계정과 모든 기록 지우기), 이어 하기 상한(429 `resume_limit` · 비용 · 하루 수), 실행 잠금을 DB 로, `/docs` 끔, Data API(/rest/v1) 닫음. 허용 목록 · 상한은 환경변수를 설정했을 때만 건다 — 지금 배포는 둘 다 설정하지 않는다(2026-10-08 아침 동규: 구글 로그인한 누구나 · 상한 없음, plan §2-9).
 
 ## 0. 공통
@@ -251,3 +253,16 @@ Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|cont
 - `POST /diary/stream` 본문의 `confirm: true` 는 어느 출처든 save 앞에서 멈춘다(대화 출처는 늘 멈춤). 기본 false 면 지금과 같다.
 - `POST /diary/{id}/confirm` `{"summary": "고친 요약(안 고쳤으면 빼기)", "fixes": [{"id": "생각 id", "kind": "v8 종류"}, {"id": "생각 id", "remove": true}], "agreed": ["summary", "생각 id"]}` → EntryResult(`status: "done"`, `confirmed: "확인됨"`, 한마디 포함). 원문 인용은 고치지 못한다(G1). 뺀 생각은 그 관계 · 닿은 순간 · 벡터도 뺀다. 고친 것은 `feedback`(target `confirm`, value `확인 고침`, 대상 문장 · 고치기 전후는 암호문), 맞아요는 `확인 맞아요`로 남긴다(오답 재료, 기록을 지우면 같이 지움). 저장하면 그 대화를 지운다. 확인을 기다리는 기록이 아니면 409 `not_waiting`, 모르는 생각 id · 보기 밖 종류는 422, 남의 기록은 404, 정리 중이면 409.
 - 확인 전 초안은 `GET /diary` 목록 · `GET /universe` 에 보이지 않는다(`GET /diary/{id}` 는 `status: "confirm"`). 확인하지 않고 `DRAFT_KEEP_HOURS`(기본 72, 0 = 안 지움)보다 오래 둔 초안은 따로 도는 작업 없이 다음 요청(일기 쓰기 · 새 대화 · 정리하기) 때 오래된 것부터 지운다(대화는 남아 다시 정리할 수 있음).
+
+## 9. 인스타그램 가져오기 (WS17, 2026-10-14)
+
+화면 `/import`(쓰기 화면의 '인스타그램 글 한꺼번에 가져오기'). 순서: ① 브라우저가 '내 정보 다운로드' ZIP(JSON 형식)에서 `posts_N.json` 만 꺼낸다(사진 · 영상은 읽지 않음, ZIP64 포함, `posts_1.json` 을 바로 골라도 됨) ② 미리 보기 ③ 사용자가 '전부 / 최근 N편'을 고름(글 수 · 예상 시간 · 비용을 먼저 보임) ④ 고른 글 중 **오래된 것부터** 한 편씩 `/diary/stream` ⑤ 멈추기(지금 글까지) · 이어 하기(다음 글부터). 새로고침한 뒤에는 ZIP 을 다시 고르면 이미 가져온 글이 표시된다.
+
+- `POST /import/instagram/preview` 본문 `{"posts": [{"title": "캡션", "creation_timestamp": 1774714800, "media": [{"title": "", "creation_timestamp": null}]}]}` — 인스타 게시물 모양에서 캡션 · 시각만(첫 사진 하나, 모르는 칸은 422). 캡션은 인스타가 적은 그대로(깨진 한글, 앞뒤 공백을 떼지 않음). 로그인만 필요(동의 확인 · 위기 판정은 `/diary/stream` 이 함).
+  - 응답 `{"posts": [ImportPost], "max_posts": null | 수, "est_seconds_per_post": 60, "est_usd_per_post": 0.1}`. `posts` 는 최근 것부터.
+  - ImportPost = `{"ref": "ig:<첫 게시물 시각>", "written_at": "게시 시각 ISO(+09:00)", "title", "text", "day", "day_basis": "확실|추정", "day_check", "parts": 묶은 게시물 수, "too_long": 본문이 MAX_TEXT_CHARS 를 넘음(화면이 건너뜀), "imported": 이 원본으로 정리가 끝난 기록이 이미 있음}`.
+  - 정리(`app/service/importer`, 1차 importer.py 에서 옮김): 깨진 한글 복원(UTF-8 바이트가 latin-1 글자로 적힘), 사진만 있는 게시물 뺌, 하루 안에 이어 쓴 게시물('(2)…'로 시작하거나 앞 글이 '이어짐 · => · (계속)'으로 끝남)을 한 편으로(묶인 글의 짧은 표시 줄만 지움), 40자 이하 첫 줄은 제목, 글이 다루는 날은 §1 과 같은 규칙(G2) — 기록을 만들 때 서버가 다시 읽는다.
+  - 상한 없음(결정 12): `IMPORT_MAX_POSTS` 가 비면(기본) 무제한. 값이 있으면 `max_posts` 로 내려 주고 화면이 고를 수 있는 편수를 그만큼으로 묶는다(서버 쪽 지킴은 `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD`).
+  - 화면은 배포 서버의 요청 · 응답 크기 한도(4.5MB) 때문에 게시물 200개 남짓씩 나눠 부른다(하루 넘게 떨어진 곳에서만 잘라 이어 쓴 게시물이 갈라지지 않게).
+- 글 보내기: `POST /diary/stream` `{"title", "text", "written_at": ImportPost.written_at, "source": "지난 글 묶음", "source_ref": ImportPost.ref}`. 같은 원본이 다시 오면 §1 대로 새 기록 없이 그 기록으로 안내(`duplicate: true`, 정리가 멈춘 기록이면 `duplicate` 오류 → 화면이 이어 하기). 한 편이 `real_name_leak` · `invalid_input` 이면 그 글만 '못 한 글'로 두고 다음 글로, 연결 · 동의 · 한도 오류면 멈추고 '이어 하기'.
+- 시험: `tests/test_ws17_import.py`, 입력 4종 스크립트 `scripts/test_inputs.py`(ZIP · MD · TXT · 직접 쓰기, `--base` 로 미리보기 배포에도), 화면 `infra/frontend/e2e-real/ws17.spec.ts`(가짜 Upstage). 예시 ZIP(가상 인물 도담): `infra/frontend/public/samples/instagram-virtual-dodam.zip`.
