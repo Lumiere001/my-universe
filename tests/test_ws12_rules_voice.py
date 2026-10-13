@@ -62,7 +62,7 @@ def test_positive_self_eval_after_open_vow_is_kept_vow():
 
 def test_quit_text_closes_vow():
     v = T("v", "2026-03-20", "다짐", thought="매일 아침 30분 걷겠다")
-    q = T("q", "2026-04-10", "다짐", thought="아침 걷기는 그만두기로 했다", quote="아침 걷기는 그만두기로 했다.")
+    q = T("q", "2026-04-10", "해석", thought="아침 걷기는 그만두기로 했다", quote="아침 걷기는 그만두기로 했다.")
     kept, _ = run([{"a": "v", "b": "q", "type": "해소"}], v, q)
     r = kept[0]
     assert (r["type"], r["vow_quit"], r["vow_kept"]) == ("이어짐", True, False)   # 해소 → 지켜짐 으로 잘못 닫지 않음
@@ -79,8 +79,21 @@ def test_quit_text_closes_vow():
         assert not kept[0]["vow_quit"], text
         st = advance(advance({}, {"v": v}, [], "R2026-03-20"), {"v": v, "x": x}, kept, "R2026-04-10")
         assert st["v"]["state"] == "열림", text
-    x = T("x", "2026-04-10", "다짐", thought="걷기는 안 하기로 했다")     # 부정 꼴이 아닌 '안 하기로'는 그대로 그만둠
+    x = T("x", "2026-04-10", "해석", thought="걷기는 안 하기로 했다")     # 부정 꼴이 아닌 '안 하기로'는 그대로 그만둠
     assert run([{"a": "v", "b": "x", "type": "이어짐"}], v, x)[0][0]["vow_quit"]
+
+
+def test_new_vow_in_quit_form_keeps_old_vow_open():
+    """새 생각이 그 자체로 다짐이면(같은 주제의 새 다짐) 그만두는 꼴이어도 앞 다짐을 그만둠 · 지켜짐으로 닫지 않는다."""
+    v = T("v", "2026-03-20", "다짐", topic="야근", domain="일", thought="야근을 줄이겠다")
+    for text in ("주중엔 야근을 안 하기로 했다", "야근은 이제 그만하기로 했다"):
+        n = T("n", "2026-04-10", "다짐", topic="야근", domain="일", thought=text, quote=text)
+        for rtype in ("이어짐", "해소"):
+            kept, _ = run([{"a": "v", "b": "n", "type": rtype}], v, n)
+            r = kept[0]
+            assert (r["type"], r["vow_quit"], r["vow_kept"]) == ("이어짐", False, False), (text, rtype)
+            st = advance(advance({}, {"v": v}, [], "R2026-03-20"), {"v": v, "n": n}, kept, "R2026-04-10")
+            assert st["v"]["state"] == "열림" and st["n"]["state"] == "열림", (text, rtype)
 
 
 def test_reask_trigger():

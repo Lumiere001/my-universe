@@ -6,7 +6,8 @@
   (같은 글: 이어 쓴 흐름 + 원문 인용 → 실선 / 다른 날: 원문 설명 → 점선 + 사용자 확인 필요).
 - 같은 두 생각 사이 관계는 하나(relation_priority). 감정끼리는 바뀜 · 해소가 아니다.
 - 다짐(WS12): 열린 다짐 뒤 다른 글의 같은 주제 자기평가(긍정)가 이어지면 '지켜짐'(vow_kept),
-  같은 주제의 그만둔다는 글이 이어지면 '그만둠'(vow_quit). 상태는 states.advance 가 바꾼다.
+  같은 주제의 그만둔다는 글이 이어지면 '그만둠'(vow_quit, 새 생각이 그 자체로 다짐이면 새 다짐이라 닫지 않음).
+  상태는 states.advance 가 바꾼다.
 - 설명 글은 G3(사람 판정 · 진단)를 거르고 관측 입력의 내부 번호(T1 · P3)를 지운다(gate.clean_text).
 """
 
@@ -67,8 +68,13 @@ def filter_relations(cands, thoughts, states=None):
         # 종류로 정해지는 바로잡기
         vow_quit = False
         later = pa["kind"] == "다짐" and pa["record_id"] != pb["record_id"] and same_topic and _open(states, pa["id"])
-        if later and pb["kind"] not in (NEG, "소망", "질문") and not is_question(pb) \
-                and QUIT.search(NOT_QUIT.sub("", f"{pb.get('thought', '')} {pb.get('quote', '')}")):
+        said_quit = later and QUIT.search(NOT_QUIT.sub("", f"{pb.get('thought', '')} {pb.get('quote', '')}"))
+        if said_quit and pb["kind"] == "다짐":
+            # 새 생각이 그 자체로 다짐('주중엔 야근을 안 하기로 했다')이면 앞 다짐을 그만둔 게 아니라 새 다짐. 닫지 않는다
+            notes.append("그만두는 꼴의 새 다짐(앞 다짐은 닫지 않음)")
+            if rtype == "해소":
+                rtype = "이어짐"
+        elif said_quit and pb["kind"] not in (NEG, "소망", "질문") and not is_question(pb):
             notes.append("그만둔다는 글(다짐 → 그만둠)")
             vow_quit = True
             if rtype == "해소":
