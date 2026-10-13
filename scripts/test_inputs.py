@@ -136,9 +136,10 @@ def run(client, n_zip=None, only=None):
     return rows, checks
 
 
-def write_doc(rows, checks, base, spent):
+def write_doc(rows, checks, base, spent, fake=False):
     L = ["# WS17 입력 4종 시험 결과", "",
-         f"실행 {datetime.now():%Y-%m-%d %H:%M} · `uv run --frozen python scripts/test_inputs.py` · 서버 {base} · "
+         f"실행 {datetime.now():%Y-%m-%d %H:%M} · `uv run --frozen python scripts/test_inputs.py` · 서버 {base}"
+         f"{'(가짜 Upstage, 정리 결과는 가짜 · 유료 호출 0)' if fake else '(실제 Studio · Solar)'} · "
          "가상 인물 도담(골든셋 p_student)의 지어낸 글. 이 문서에는 원문을 넣지 않는다.", "",
          "| 입력 | 결과 | 출처 | 글이 다루는 날 | 쓴 시각 | 묶은 게시물 | 생각 | 관계 | 한마디 |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     L += [f"| {r['input']} | {r['event'] if r['event'] == 'result' else '오류 `' + str(r['code']) + '`'}{' (이미 있던 글)' if r['duplicate'] else ''} | "
@@ -180,7 +181,7 @@ def main():
     for r in rows:
         print(json.dumps(r, ensure_ascii=False))
     print(json.dumps(checks, ensure_ascii=False, indent=1))
-    write_doc(rows, checks, a.base, spent)
+    write_doc(rows, checks, a.base, spent, fake=a.no_ledger)
     sys.exit(0 if all(checks.values()) else 1)
 
 

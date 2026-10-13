@@ -35,6 +35,7 @@ uv run --frozen pytest -q                                 # 467개(로컬 Supaba
 uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
 uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
 uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
+uv run --frozen python scripts/test_inputs.py --zip 2        # 입력 4종(인스타 ZIP · MD · TXT · 직접 쓰기)을 API 로 끝까지(서버가 실제면 유료, 편당 약 $0.10)
 FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_upstage.py 8013   # 화면 확인용 백엔드: 로컬 DB · Chroma 그대로, Upstage 만 가짜($0)
 ```
 
@@ -42,6 +43,7 @@ FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_up
 
 - 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 지금은 운영 상한 없이 구글 로그인한 누구나 쓴다(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` 같은 손잡이는 넣지 않음 — 실제 배포 · 수익화를 생각할 때 사용량을 보고 정함, [plan §2-9](docs/plan-v8-1017.md)).
 - 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호는 규칙 + Solar 2단으로 감지해 암호문 안에 남기고, 시험 단계(2026-10-08 동규 결정)에는 단체 연결 · 따로 뜨는 화면 없이 평소 결과에 위로 한마디 + 안부 한 줄을 준다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
+- 인스타 가져오기(`/import`, WS17): 브라우저가 '내 정보 다운로드' ZIP 에서 글만 꺼내 미리 보기(`POST /import/instagram/preview`, `app/service/importer`)로 글 수 · 예상 시간 · 비용을 보여 주고, 고른 글을 오래된 것부터 한 편씩 `/diary/stream` 으로 보낸다(같은 원본은 다시 정리하지 않음, 멈추기 · 이어 하기). 상한 없음(`IMPORT_MAX_POSTS` 비움). 예시 ZIP: 가상 인물 도담.
 - 동의: 첫 로그인 때 `/consent`에서 필수 · 민감정보(따로) · 만 14세 이상 · 선택(운영자 피드백 열람)을 받는다. 동의 전에는 기록을 만들 수 없다(백엔드도 403 `consent_required`). 문구 판은 `app/api/consent.py`의 `VERSION`, 이용약관 `/terms` · 개인정보처리방침 `/privacy`, 문의 메일은 화면 환경변수 `NEXT_PUBLIC_CONTACT_EMAIL`(비우면 '준비 중').
 
 ### GHCR 이미지
