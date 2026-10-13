@@ -14,6 +14,7 @@ from app import exceptions
 from app.agents import tools
 from app.api import consent, diary, people_thoughts, routes
 from app.api import write   # WS13
+from app.api import upload  # WS18
 from app.core import config, logger
 
 docs = config.API_DOCS   # 배포에서는 /docs · /redoc · /openapi.json 을 열지 않는다
@@ -30,6 +31,7 @@ app.include_router(write.router)   # diary.router 보다 먼저: GET /diary/prom
 app.include_router(diary.router)
 app.include_router(consent.router)
 app.include_router(people_thoughts.router)
+app.include_router(upload.router)   # WS18 사진 글자 읽기
 tools.sun_vectors()   # 기준 축 벡터 파일(data/ops)이 없으면 시작할 때 sun_vectors_missing 을 남긴다
 
 
