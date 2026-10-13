@@ -260,3 +260,33 @@ def test_ambiguous_particle_registers_only_name_like_words():
     assert find_new_names("준혁이랑 밥 먹었다.", [])["auto"] == ["준혁"]
     r = find_new_names("학원이랑 연락이 안 됐다.", [])   # 이름답지 않은 말 + 행동 낱말 → 묻기만(자동 등록 ✗)
     assert r["auto"] == [] and [a["name"] for a in r["ask"]] == ["학원"]
+
+
+##################################################
+# 직함 · 직분이 붙은 이름(민석 팀장님 · 지원 집사님). 사람 목록에 없어도 가명으로 가야 한다
+##################################################
+
+@pytest.mark.parametrize("text,name", [
+    ("민석 팀장님이 숫자를 다시 보자고 했다.", "민석"),
+    ("고민석 팀장님이 칭찬했다.", "고민석"),
+    ("오늘 민석 과장님한테 혼났다.", "민석"),
+    ("준호 대리가 자료를 넘겨줬다.", "준호"),
+    ("수현 부장님께 보고했다.", "수현"),
+    ("정우 집사님과 기도 모임을 했다.", "정우"),
+    ("혜진 간사님이 밥을 사 주셨다.", "혜진"),
+])
+def test_titled_names_are_hidden(text, name):
+    assert name in find_new_names(text, [])["auto"]
+    masked, table = mask(text, [])
+    assert name not in masked and unmask(masked, table) == text
+
+
+@pytest.mark.parametrize("text", ["오늘 이사했다.", "다음 주에 이사 간다.", "주일 대표 기도를 맡았다.", "영업 팀장이 바뀌었다.",
+                                  "회의 끝나고 팀장님께 말했다.", "정말 간사해서 싫다.", "담임 목사님 설교가 길었다."])
+def test_titles_without_names(text):
+    assert find_new_names(text, []) == {"auto": [], "ask": []}
+
+
+def test_forget_drops_title_with_name():
+    person = {"name": "고민석", "nicknames": ["민석"], "relation": "팀장"}
+    assert forget("민석 팀장님이 칭찬했다. 고민석 팀장님은 말이 짧다.", person) == "팀장이 칭찬했다. 팀장은 말이 짧다."
