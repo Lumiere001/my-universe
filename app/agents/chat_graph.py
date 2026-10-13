@@ -109,7 +109,9 @@ def past(state, ctx):
     lead = state.get("lead") or []
     found = find_past(ctx.repo, ctx.uid, state["text"], state["people"], chat.is_recall(state["text"]))
     ids = {p["id"] for p in lead}
-    return {"past": lead + [p for p in found if p["id"] not in ids]}
+    out = lead + [p for p in found if p["id"] not in ids]
+    # 지난 기록 문장에만 나온 이름 후보(사람 목록에 없는 '이름인지 낱말인지' 이름)도 보내기 직전 실명 검사 표에 넣는다
+    return {"past": out, "people": chat.mask_people(state["people"], [f"{p['thought']} {p['quote']}" for p in out])}
 
 
 def _who(t):

@@ -75,5 +75,11 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await expect(talk).toContainText("3/14 진로 상담");
     await expect(talk).toContainText("이어 해 볼까요");
   });
+
+  await test.step("좁은 휴대폰(360px)에서도 아래 막대 7개가 가로로 넘치지 않음", async () => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+    if (dev === "mobile") await shot("06-nav-360");
+  });
   expect(errors).toEqual([]);
 });

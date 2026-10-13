@@ -51,6 +51,8 @@ main.wide { max-width: 1280px; }
   .top .nav { position: fixed; bottom: 0; left: 0; right: 0; justify-content: space-around; gap: 0;
     background: rgba(7, 16, 42, .96); border-top: 1px solid var(--line); padding: 4px 2px calc(4px + env(safe-area-inset-bottom)); }
   .nav a { font-size: .78rem; padding: 8px 4px; text-align: center; flex: 1; }
+  /* 화면이 7개라 좁은 휴대폰(360px)에서는 두 줄로(가로로 넘치지 않게, 낱말 단위로 줄바꿈) */
+  .nav a { white-space: normal; overflow-wrap: normal; line-height: 1.25; padding: 6px 2px; flex: 1 1 auto; }
   /* 입력 칸에 초점이 갈 때 위 막대 · 아래 막대에 가리지 않게 */
   html { scroll-padding: 64px 0 80px; }
 }
