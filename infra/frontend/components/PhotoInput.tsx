@@ -17,7 +17,7 @@ type Page = { id: number; file: File; url: string };
 export async function shrink(file: File): Promise<Blob> {
   let bmp: ImageBitmap;
   try {
-    bmp = await createImageBitmap(file);
+    bmp = await createImageBitmap(file, { imageOrientation: "from-image" });   // 폰 사진의 회전 정보(EXIF)대로 세워 그림
   } catch {
     if (isHeic(file) && file.size <= LIMIT) return file;
     throw new Error(isHeic(file)
