@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from app.api import consent
 from app.api import diary as diary_api
 from app.core import config
 from app.deps import get_repo, get_user
@@ -31,6 +32,9 @@ def client(env):  # noqa: F811
 
     main.app.dependency_overrides[get_user] = fake_user
     main.app.dependency_overrides[get_repo] = lambda: env.repo
+    for u in TOKENS.values():   # 시험 계정은 이미 동의함(seed 와 같음). 동의 전 흐름은 test_consent.py
+        with env.repo.session(u["id"]) as s:
+            consent.save(s)
     yield TestClient(main.app)
     main.app.dependency_overrides.clear()
 

@@ -228,3 +228,13 @@ export async function patchSettings(s: Partial<Settings>): Promise<Settings> {
 export async function deleteMe(): Promise<void> {
   if (!MOCK) await json("DELETE", "/me");
 }
+
+/* ---------- 동의 (WS24, docs/api-v8.md §6.1) ---------- */
+export type Consent = { version: string; needed: boolean; agreed: { version: string; operator_read: boolean; at: string } | null };
+export type ConsentInput = { version: string; required: boolean; sensitive: boolean; age14: boolean; operator_read: boolean };
+export async function getConsent(): Promise<Consent> {
+  return MOCK ? (await mock()).getConsent() : json("GET", "/consent");
+}
+export async function saveConsent(c: ConsentInput): Promise<Consent> {
+  return MOCK ? (await mock()).saveConsent(c) : json("POST", "/consent", c);
+}

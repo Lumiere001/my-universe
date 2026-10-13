@@ -19,6 +19,7 @@
   - 초대 목록(설정했을 때만): 백엔드 환경변수 `ALLOWED_EMAILS`(쉼표 목록)가 있으면 목록 밖 계정은 모든 로그인 요청이 403 `not_allowed`("초대된 사람만 쓸 수 있어요"). 화면은 이때 안내와 로그아웃만 보인다. 없으면 로그인한 누구나(지금 배포, 2026-10-08).
   - 화면(supabase-js)은 로그인에만 쓴다. Supabase Data API(`/rest/v1` · GraphQL)로는 표를 읽고 쓸 수 없다(anon · authenticated 권한 없음). 데이터는 모두 이 API로.
 - 오류: HTTP 상태 + `{"error": {"code": "영문_코드", "message": "한국어 안내"}}`. 코드: `unauthorized`(401) · `not_allowed`(403, 초대 목록 밖 — `ALLOWED_EMAILS`를 설정했을 때만) · `invalid_input`(422, 틀린 칸 이름만 알림, 입력값은 되돌려 보내지 않음. 경로의 id 가 영문 · 숫자 · `_` · `-` 가 아니어도 422) · `not_found`(404) · `already_running`(409) · `duplicate`(409, `POST /diary` 에 이미 받은 글이 정리 중이거나 멈춤) · `invalid_target`(409, 버튼을 누를 수 없는 대상) · `fact_bomb_ack_required`(409) · `daily_limit`(429, 사용자별 하루 처리 글 수 `DAILY_ENTRY_LIMIT`를 설정했을 때만) · `monthly_budget`(429, 사용자별 이번 달 추정 비용 `MONTHLY_COST_CAP_USD`를 설정했을 때만) · `resume_limit`(429, 기록 하나당 이어 하기 `RESUME_LIMIT`를 설정했을 때만. 셋 다 기본 0 = 상한 없음) · `account_delete_failed`(502) · `auth_unavailable` · `db_unconfigured` · `account_delete_unconfigured` · `vector_delete_failed`(503) · `internal`(500).
+- 동의(WS24, §6.1): 지금 판에 동의하지 않은 사용자의 기록 만들기(`POST /diary` · `/diary/stream` · 이어 하기)는 403 `consent_required`. 읽기 · 지우기 · `/me` · 설정 · 계정 지우기는 동의 없이도 된다.
 - 입력 글의 NUL 등 제어 문자(줄바꿈 · 탭 제외)는 받을 때 지운다.
 - 시각은 ISO 8601(+09:00). id는 문자열.
 - 원문(일기 글 · 인용 · 사람 이름)은 실행 기록 · 오류 메시지 · `/stats`에 절대 넣지 않는다.
@@ -157,6 +158,17 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
 - `GET /health` → `{"status": "ok", "version": "0.8.0"}`
 - `GET /stats` → 원문 없는 운영 숫자(본인 것만): `{"entries", "entries_done", "days_written", "suns_with_entries", "feedback": {값: 수}, "yes_ratio": 맞아요/(맞아요+아니에요) 또는 null, "month_cost_usd"}`.
+
+## 6.1 동의 (WS24, 2026-10-13)
+
+첫 로그인 동의. 문구는 화면(`infra/frontend/app/consent` · `privacy` · `terms`)에, 판 번호는 백엔드 `app/api/consent.py` 의 `VERSION` 에 둔다. 문구를 바꾸면 `VERSION` 을 올려 모두에게 다시 묻는다.
+
+- `GET /consent` → `{"version": "2026-10-13", "needed": true, "agreed": null | {"version", "operator_read": false, "at": "ISO"}}`. `needed` = 동의가 없거나 가장 최근 동의가 옛 판. 화면은 로그인 뒤 `needed` 면 `/consent` 로 보낸다(동의 없이 열리는 화면: `/consent` · `/privacy` · `/terms` · `/settings`).
+- `POST /consent` 본문 `{"version": "<GET 의 version>", "required": true, "sensitive": true, "age14": true, "operator_read": false}` → GET 과 같은 모양.
+  - `required` = 이용약관 · 개인정보 수집 · 이용 · 외부 처리(국외 이전 포함), `sensitive` = 민감정보(건강 · 신앙 등) 따로, `age14` = 만 14세 이상, `operator_read`(선택) = 품질 개선을 위해 운영자가 내가 남긴 피드백과 그 대상 문장을 읽을 수 있음.
+  - 오류: 판이 다르면 409 `consent_outdated`(화면을 새로 고침), `age14` 가 거짓이면 403 `under_14`(아무것도 저장 안 함), `required` · `sensitive` 가 거짓이면 422 `consent_missing`.
+  - 동의할 때마다 `consents` 표에 한 줄 덧붙인다(고치지 않음, 계정 지우기 때 같이 지움). 선택 동의를 거두려면 `operator_read: false` 로 다시 보낸다.
+- 운영 화면(WS22)은 `consent.operator_read(s)` 가 참인 사용자의 피드백 원문만 풀어 보인다(다른 사람 이름은 가명, 열람 기록은 WS22).
 
 ## 7. WS5 구현 메모
 
