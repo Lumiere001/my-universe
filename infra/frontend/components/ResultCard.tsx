@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { answerPersonQuestion, sendFeedback, type EntryResult, type Feedback } from "@/lib/api";
 import { useKindName } from "@/lib/use";
+import { DayFix, WeatherSkip } from "./EntryTools";
+import { useKeeperName } from "./Keeper";
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
+const PRE = { whiteSpace: "pre-line" } as const;   // 요약 · 한마디의 줄바꿈을 그대로
 // 인용에 따옴표가 이미 붙어 오면 떼고 화면에서 한 번만 감싼다(“"…"” 방지)
 export const unquote = (s: string) => s.trim().replace(/^["“'‘](.*)["”'’]$/s, "$1");
 
@@ -53,8 +56,10 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
   );
 }
 
-export default function ResultCard({ r }: { r: EntryResult }) {
+// onChange: 날짜를 고치면 고친 결과로 바꿔 그린다
+export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?: (r: EntryResult) => void }) {
   const kindName = useKindName();
+  const keeper = useKeeperName();
   const [vows, setVows] = useState<Record<string, string>>({});
   const [answered, setAnswered] = useState<Record<string, string>>({});
 
@@ -67,11 +72,11 @@ export default function ResultCard({ r }: { r: EntryResult }) {
       {m && m.text && (
         <section className="card stack" aria-label="별지기 한마디">
           <div className="voice">
-            <span className="who" aria-hidden>별</span>
+            <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
             <div>
-              <div className="sub">별지기 · {m.tone}{m.mode === "comfort" ? " · 오늘은 위로만" : ""}</div>
-              <div className="bubble"><p style={{ margin: 0 }}>{m.text}</p></div>
-              {m.check_in && <p className="sub" data-testid="check-in" style={{ margin: "6px 0 0" }}>{m.check_in}</p>}
+              <div className="sub">{keeper} · {m.tone}{m.mode === "comfort" ? " · 오늘은 위로만" : ""}</div>
+              <div className="bubble"><p style={{ margin: 0, ...PRE }}>{m.text}</p></div>
+              {m.check_in && <p className="sub" data-testid="check-in" style={{ margin: "6px 0 0", ...PRE }}>{m.check_in}</p>}
             </div>
           </div>
           <FeedbackButtons label="한마디 피드백" target="message" targetId={r.id} values={["좋아요", "별로", "오늘은 위로만"]} />
@@ -90,8 +95,9 @@ export default function ResultCard({ r }: { r: EntryResult }) {
       {r.info && (
         <section className="card" aria-label="글 정보">
           <h2>{r.title || "오늘의 글"}</h2>
-          <p className="sub">{day(r.written_at)}{r.weather ? ` · 마음 날씨 ${r.weather}` : ""} · 말 거는 대상: {r.info.addressee}</p>
-          <p>{r.info.summary}</p>
+          <p className="sub" data-testid="entry-day">{r.day ?? day(r.written_at)}{r.weather ? ` · 마음 날씨 ${r.weather}` : ""} · 말 거는 대상: {r.info.addressee}</p>
+          {r.day_check && <DayFix r={r} onFixed={onChange} />}
+          <p style={PRE}>{r.info.summary}</p>
           {r.info.events.length > 0 && <p className="sub" style={{ margin: 0 }}>있었던 일: {r.info.events.join(" · ")}</p>}
         </section>
       )}
@@ -165,11 +171,12 @@ export default function ResultCard({ r }: { r: EntryResult }) {
       {r.next_question && r.next_question.kind !== "none" && (
         <section className="card" aria-label="다음 질문">
           <div className="voice">
-            <span className="who" aria-hidden>별</span>
+            <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
             <div className="bubble">
-              <p style={{ margin: 0 }}>{r.next_question.text}</p>
+              <p style={{ margin: 0, ...PRE }}>{r.next_question.text}</p>
               {r.next_question.kind === "aspiration" && <p style={{ margin: "8px 0 0" }}><Link href="/aspiration">되고 싶은 모습 적어 보기</Link></p>}
               {r.next_question.kind === "weather" && <p className="sub" style={{ margin: "8px 0 0" }}>다음 글을 쓸 때 마음 날씨를 골라 주세요. 고르지 않아도 괜찮아요.</p>}
+              {r.next_question.kind === "weather" && <WeatherSkip />}
             </div>
           </div>
         </section>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
+import { KeeperNameField, KEEPER, rememberKeeperName } from "@/components/Keeper";
 import { OneLine } from "@/components/ResultCard";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
@@ -31,7 +32,11 @@ export default function SettingsPage() {
   if (!s || !onto) return <main><p className="sub">불러오는 중…</p></main>;
 
   const save = async (p: Partial<Settings>) => {
-    try { setS(await patchSettings(p)); setMsg("저장했어요."); } catch (e) { setMsg((e as Error).message); }
+    try {
+      const n = await patchSettings(p);
+      setS(n); setMsg("저장했어요.");
+      if (n.keeper_name) rememberKeeperName(n.keeper_name);
+    } catch (e) { setMsg((e as Error).message); }
   };
   const pickTone = (t: Tone) => {
     setPreview(t);
@@ -46,6 +51,7 @@ export default function SettingsPage() {
       {msg && <p className="toast" role="status">{msg}</p>}
 
       <section className="card stack" aria-label="말투">
+        <KeeperNameField value={s.keeper_name ?? KEEPER} onSave={(n) => save({ keeper_name: n })} />
         <h2>별지기 말투</h2>
         <div className="row" role="group" aria-label="말투 고르기">
           {onto.tones.map((t) => (

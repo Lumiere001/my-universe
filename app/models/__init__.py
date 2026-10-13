@@ -101,6 +101,10 @@ class AspirationIn(In):
         return [_one_of("values", x, allow_none=False) for x in v]
 
 
+class DayIn(In):
+    day: date   # 글이 다루는 날(사용자가 고침)
+
+
 class DeclineIn(In):
     mode: Literal["skip", "stop"]
 
@@ -113,6 +117,7 @@ class SettingsPatch(In):
     suggestions: Optional[Literal["적게", "보통", "많이"]] = None
     cross_links: Optional[Literal["숨김", "눌렀을 때", "항상"]] = None
     weather_ask: Optional[bool] = None
+    keeper_name: Optional[str] = Field(default=None, min_length=1, max_length=12)   # 별지기 이름(화면에만 씀)
 
     @field_validator("tone")
     @classmethod

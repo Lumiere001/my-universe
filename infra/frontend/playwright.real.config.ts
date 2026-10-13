@@ -4,14 +4,16 @@
 import { defineConfig } from "@playwright/test";
 import base from "./playwright.config";
 
+const PORT = Number(process.env.E2E_PORT) || 3000; // 다른 갈래와 겹치면 E2E_PORT(+ 백엔드 FRONTEND_ORIGIN)로 바꿈
+
 export default defineConfig({
   ...base,
   testDir: "e2e-real",
   timeout: 600_000,
-  use: { ...base.use, baseURL: "http://localhost:3000" },
+  use: { ...base.use, baseURL: `http://localhost:${PORT}` },
   webServer: {
-    command: "npx next build && npx next start -p 3000",
-    url: "http://localhost:3000",
+    command: `npx next build && npx next start -p ${PORT}`,
+    url: `http://localhost:${PORT}`,
     env: { NEXT_PUBLIC_MOCK: "0" },
     timeout: 300_000,
     reuseExistingServer: false,
