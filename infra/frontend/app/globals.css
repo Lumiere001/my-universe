@@ -120,3 +120,19 @@ fieldset.card > legend + * { clear: both; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .toast { color: var(--green); font-size: .9rem; }
 .err { color: var(--orange); }
+
+/* 소개(로그인 전 첫 화면, components/Landing.tsx) */
+.landing img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); }
+.landing h1 { font-size: 2rem; }
+.landing .lead { font-size: 1.1rem; }
+.landing ul { margin: 0 0 .6em; padding-left: 20px; }
+.landing > section { margin-bottom: 28px; }
+.hero { display: grid; gap: 20px; align-items: center; padding-top: 12px; }
+.how { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.how img { max-height: 360px; object-fit: cover; object-position: top; }
+@media (min-width: 900px) {
+  .hero { grid-template-columns: 2fr 3fr; gap: 32px; padding-top: 32px; }
+  .landing h1 { font-size: 2.6rem; }
+  .how { grid-template-columns: repeat(3, 1fr); }
+  .how img { max-height: 420px; }
+}

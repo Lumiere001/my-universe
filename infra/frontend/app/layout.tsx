@@ -1,8 +1,9 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 import Shell from "@/components/Shell";
+import { siteMeta } from "@/lib/site";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "나의 우주", description: "생각 단위로 나눠 우주로 보여 주고 말을 거는 일기장" };
+export const metadata = siteMeta; // 공유 미리보기 · manifest · 아이콘(lib/site.ts)
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#07102a" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
