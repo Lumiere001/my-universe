@@ -29,7 +29,8 @@ export default function UniversePage() {
 
   // 빛남: 북극성을 누르면 닿은 순간이 있는 행성, 아니면 고른 사람이 나온 행성
   const glow = useMemo(() => {
-    if (pick.kind === "north" && data?.north_star) return new Set(data.north_star.reached_planets ?? []);
+    // 닿은 순간이 아직 없으면 아무것도 흐리게 하지 않는다
+    if (pick.kind === "north" && data?.north_star) return data.north_star.reached_planets?.length ? new Set(data.north_star.reached_planets) : null;
     const p = data?.people.find((x) => x.id === person);
     return p ? new Set(p.planets) : null;
   }, [data, person, pick.kind]);
