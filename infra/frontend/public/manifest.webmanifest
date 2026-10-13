@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "나의 우주",
+  "short_name": "나의 우주",
+  "description": "일기를 생각 단위로 나눠 나만의 우주로 보여 주고, 별지기가 지난 기록을 기억해 말을 거는 일기장",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07102a",
+  "theme_color": "#07102a",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
