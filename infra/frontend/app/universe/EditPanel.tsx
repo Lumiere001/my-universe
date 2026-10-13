@@ -46,9 +46,11 @@ export default function EditPanel({ data, onChanged }: { data: Universe; onChang
           <h3 style={{ margin: 0, fontSize: "1rem" }}>해 추가</h3>
           <p className="sub" style={{ margin: 0 }}>내 삶의 영역을 직접 띄워요(예: 통일 사역). 작은 별을 옮겨 오면 그 해를 돌아요.</p>
           <div className="row">
-            <input aria-label="새 해 이름" value={name} maxLength={20} placeholder="새 해 이름" onChange={(e) => setName(e.target.value)} style={{ flex: "1 1 160px", width: "auto" }} />
+            <input aria-label="새 해 이름" aria-describedby="sun-name-hint" value={name} maxLength={20} placeholder="새 해 이름" onChange={(e) => setName(e.target.value)} style={{ flex: "1 1 160px", width: "auto" }} />
             <button type="submit" className="small primary" disabled={busy || !name.trim()}>해 추가</button>
           </div>
+          {/* 해 이름은 암호화하지 않고 그대로 둔다(2026-10-14 결정) — 그래서 사람 이름을 넣지 않게 안내 */}
+          <p className="sub" id="sun-name-hint" style={{ margin: 0 }}>사람 이름은 빼 주세요. 해 이름은 암호화하지 않고 그대로 저장해요.</p>
         </form>
 
         {own.length > 0 && (

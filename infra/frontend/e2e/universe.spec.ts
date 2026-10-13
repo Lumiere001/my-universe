@@ -114,6 +114,12 @@ test("우주 화면", async ({ page }, info) => {
     await expect(page.getByTestId("planet-card")).toContainText("5/30 선배와 대화");
   });
 
+  await test.step("우주 고치기: 해 이름 칸 아래 '사람 이름은 빼 주세요'(2026-10-14 결정)", async () => {
+    const panel = page.getByTestId("edit-panel");
+    await panel.locator("summary").click();
+    await expect(panel.getByLabel("새 해 이름")).toHaveAccessibleDescription(/사람 이름은 빼 주세요/);
+  });
+
   await test.step("사람 목록 화면에서도 얽힌 생각", async () => {
     await page.goto("/people");
     await page.getByRole("button", { name: "민수과(와) 얽힌 생각" }).click();
