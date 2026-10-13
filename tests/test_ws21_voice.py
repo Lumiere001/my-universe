@@ -177,3 +177,22 @@ def test_speak_reads_keeper_line(client, env, eleven):  # noqa: F811
     assert client.post("/voice/speak", headers=H1, json={"text": "가" * 2001}).status_code == 422
     eleven.fail = True
     assert client.post("/voice/speak", headers=H1, json={"text": "안녕"}).json()["error"]["code"] == "tts_failed"
+
+
+def test_long_story_summary_is_cut_at_sentence_end(monkeypatch):
+    """긴 녹음 이야기의 '지금까지 정리'가 600자를 넘으면 버리지 않고 문장 끝에서 자른다(e2e 에서 정리가 비던 것).
+    긴 이야기 턴은 '긴 이야기' 상황(다 되짚지 않고 한 가지만 짧게 이어 묻기) — e2e 에서 답이 300자를 넘어 기본 문장이 되던 것."""
+    from app.service import chat
+    long = " ".join(f"{i}번째로 나는 아침에 공원을 걸었다." for i in range(40))
+    outs = [long]
+    monkeypatch.setattr(chat.llm, "chat", lambda msgs, **kw: outs.pop(0))
+    got = chat.summarize("", [long])
+    assert got and len(got) <= chat.MAX_SUMMARY and got.startswith("0번째로") and got.endswith("걸었다.")
+    outs[:] = ["짧은 정리"]
+    assert chat.summarize("", ["짧은 정리"]) == "짧은 정리"
+    outs[:] = ["가" * 700]
+    assert chat.summarize("", ["x"]) is None                                                       # 문장 끝이 없으면 앞 정리 그대로
+    assert "긴 이야기" in chat.situations("가" * chat.LONG_TURN) and "긴 이야기" not in chat.situations("짧은 말")
+    assert "긴 이야기" not in chat.situations("가" * chat.LONG_TURN, crisis=True)                    # 위기 턴은 위로만(묻지 않음)
+    sys_prompt = chat.messages({"tone": "다정하게", "text": "가" * chat.LONG_TURN}, chat.situations("가" * chat.LONG_TURN))[0]["content"]
+    assert chat.LINES["긴 이야기"] in sys_prompt

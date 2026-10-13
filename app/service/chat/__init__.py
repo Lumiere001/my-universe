@@ -150,6 +150,8 @@ def situations(text, *, crisis=False, hour=None, recall=False, wrap=False, past=
         out.append("지난 기록 물음")
     elif past and "무거운 날" not in out:
         out.append("지난 기록 떠올리기")
+    if len(text or "") >= LONG_TURN and not crisis:   # 녹음 등으로 한 번에 들려준 긴 이야기(WS21)
+        out.append("긴 이야기")
     if wrap:
         out.append("대화를 마칠 때")
     return out
@@ -166,6 +168,8 @@ LINES = {
                   "하셨는데'처럼 날짜와 원문을 따옴표로 글자 그대로 옮겨 떠올리고, 오늘 이야기와 이어 묻는다(이 대화에서 이미 꺼낸 "
                   "기록은 다시 꺼내지 않는다). 억지로 잇지는 않고, 바뀐 생각을 잘못처럼 말하지 않는다.",
     "대화를 마칠 때": "대화를 마칠 때: 오늘 이야기를 한 줄로만 되짚는다. 질문하지 않고 붙잡지 않는다(정리 제안은 코드가 붙인다).",
+    "긴 이야기": "사용자가 한 번에 긴 이야기를 들려줬다(말로 한 녹음 등): 다 되짚지 않는다. 들었다는 걸 한 문장으로 알리고, "
+              "가장 마음이 실린 한 가지만 받아 그것만 짧게 이어 묻는다. 모두 세 문장 · 200자 안.",
 }
 
 
@@ -323,7 +327,7 @@ def respond(ctx):
 SUMMARY_SYS = ("너는 일기장 '나의 우주'의 정리 담당이다. 대화에서 사용자(나)가 한 말만 근거로 '지금까지 정리'를 3~5줄로 쓴다. "
                "앞 정리가 있으면 이어서 고쳐 쓴다. 별지기가 한 말 · 지난 기록 · 짐작은 넣지 않는다. 사용자가 쓴 표현을 살리고, "
                "평가 · 진단 · 조언 없이 1인칭(나)으로 쓴다. 별지기에게 한 물음('예전에 뭐라고 했지?')과 대화를 끝내는 말('이만 잘게요')은 "
-               "넣지 않는다. 정리 글만 답한다(JSON · 머리말 없이).")
+               "넣지 않는다. 긴 이야기도 줄여서 모두 합쳐 400자 안. 정리 글만 답한다(JSON · 머리말 없이).")
 DRAFT_SYS = ("너는 일기장 '나의 우주'의 정리 담당이다. 대화에서 사용자(나)가 한 말만 근거로 오늘의 일기 초안을 쓴다. "
              "1인칭(나)으로, 사용자가 쓴 표현 · 낱말을 되도록 그대로 살린다. 별지기의 말 · 질문, 지난 기록, 짐작 · 평가 · 조언은 넣지 않는다. "
              "사용자가 말한 마음(힘듦 · 슬픔 등)은 빼거나 누그러뜨리지 않고, 말한 날짜 · 사람 이름은 그대로 둔다. "
@@ -338,10 +342,18 @@ def due_summary(user_turns, text):
 
 
 def summarize(summary, user_texts):
-    """가명 글 → 새 정리(가명). 사용자 말에 없는 인용 · 사람 판정이 있거나 비면 None(앞 정리를 그대로 둠)."""
+    """가명 글 → 새 정리(가명). 사용자 말에 없는 인용 · 사람 판정이 있거나 비면 None(앞 정리를 그대로 둠).
+    너무 길면 문장 끝에서 자른다(3분 녹음 이야기에서 600자를 넘어 정리가 비던 것 — 다시 쓰게 해도 Solar 는 830~950자로 답함, WS21 e2e)."""
     out = llm.chat([{"role": "system", "content": SUMMARY_SYS},
                     {"role": "user", "content": f"앞 정리:\n{summary or '(없음)'}\n\n사용자 말:\n" + voice._lines(user_texts)}],
                    temperature=0.3).strip()
+    if len(out) > MAX_SUMMARY:   # ponytail: 뒷이야기는 화면 정리에서만 빠짐(초안은 사용자 말 전체로 만든다)
+        keep = ""
+        for x in re.split(r"(?<=[.!?。])\s+", out):
+            if len(keep) + len(x) + 1 > MAX_SUMMARY:
+                break
+            keep = f"{keep} {x}".strip()
+        out = keep
     if not out or len(out) > MAX_SUMMARY or judged(out) or checks.quote_problems(out, user_texts):
         return None
     return out
