@@ -113,16 +113,21 @@ def people_of(raw, people=()):
 
 def clean_record(raw, people=(), topics=None, suns=(), aliases=None):
     """기록 Agent 출력 한 편 → v8 형태.
-    raw: {summary, addressee, events, thoughts: [{thought, kind, certainty, value, quote, self_change, topic, people}]}
+    raw: {summary, addressee, (addressee_original), (record_type), events,
+          thoughts: [{thought, kind, certainty, value, quote, self_change, topic, people}]}
     people: 사용자 사람 목록 [{name, nicknames, relation}], topics: 기존 작은 별 {이름: 해}, suns: 사용자가 추가한 해 이름.
-    돌려줌: {summary, addressee, events, original, thoughts: [...], new_people}. 생각마다 flags(감사) · problems(해 이름) · original.
+    돌려줌: {summary, addressee, record_type, events, original, thoughts: [...], new_people}.
+    original = 목록 밖 원래 말 {addressee, record_type}. 생각마다 flags(감사) · problems(해 이름) · original.
+    record_type 은 Classify 결과가 없으면 None.
     """
     from app.service.rules.topics import link_domain, match_topic
     topics = topics or {}
-    addressee, a_orig = normalize("addressee", raw.get("addressee"))
-    out = {"summary": _first(raw.get("summary")), "addressee": addressee,
+    addressee, a_orig = normalize("addressee", raw.get("addressee_original") or raw.get("addressee"))
+    rtype, r_orig = normalize("record_type", raw["record_type"]) if _first(raw.get("record_type")) else (None, None)
+    out = {"summary": _first(raw.get("summary")), "addressee": addressee, "record_type": rtype,
            "events": [e for e in (raw.get("events") or []) if str(e).strip()],
-           "original": {"addressee": a_orig} if a_orig else {}, "thoughts": [], "new_people": []}
+           "original": {k: v for k, v in {"addressee": a_orig, "record_type": r_orig}.items() if v},
+           "thoughts": [], "new_people": []}
     for t in raw.get("thoughts") or []:
         text = f"{_first(t.get('thought'))} {_first(t.get('quote'))}"
         orig, row = {}, {}

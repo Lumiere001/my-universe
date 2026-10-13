@@ -15,7 +15,8 @@ U2 = "22222222-2222-2222-2222-222222222222"
 TOKENS = {"tok1": {"id": U1, "email": "jiho@my-universe.test"}, "tok2": {"id": U2, "email": "other@my-universe.test"}}
 H1, H2 = {"Authorization": "Bearer tok1"}, {"Authorization": "Bearer tok2"}
 RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations",
-               "past", "reached", "message", "next_question", "people_questions"}
+               "past", "reached", "message", "next_question", "people_questions",
+               "source", "day", "day_basis", "day_check", "confirmed", "record_type"}   # 기록 칸(WS11)
 
 
 @pytest.fixture

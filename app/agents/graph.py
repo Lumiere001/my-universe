@@ -219,7 +219,7 @@ def record_clean(state, ctx):
                                            | {pid for n, pid in people_id.items() if n in t["thought"] + t["quote"]})})
     ctx.repo.vectors.upsert(ctx.uid, [{"id": t["id"], "emb": v, "entry_id": ctx.entry_id, "star_id": t["star_id"],
                                        "written_at": state["written_at"], "kind": t["kind"]} for t, v in zip(today, tvecs)])
-    info = {k: rec[k] for k in ("summary", "addressee", "events")}
+    info = {k: rec[k] for k in ("summary", "addressee", "events", "record_type", "original")}
     info["summary"] = clean_text(info["summary"], source)   # G3 + 내부 번호
     return {"record": info, "today": today, "dropped_quotes": len(rec["thoughts"]) - len(kept)}
 
@@ -411,12 +411,12 @@ def save(state, ctx):
         info = state["record"]
         person = _addressee_person(state)
         data = {**e["data"], "summary": info.get("summary", ""), "events": info.get("events", []), "addressee_person": person,
-                "past": [p["id"] for p in state["past"]]}
+                "past": [p["id"] for p in state["past"]], "original": info.get("original") or {}}
         if state.get("crisis"):
             data["crisis"] = True   # 위기 표시는 enc 안에만(얼마나 자주 걸리는지 보려고 남김)
         s.update("entries", {"status": "done", "step": "save", "star_id": star, "sun_id": sun, "addressee": info.get("addressee"),
                              "enc": diary.seal(s, "entries", eid, data), "steps_enc": None, "error_code": None,
-                             "updated_at": diary.now()}, id=eid)
+                             "record_type": info.get("record_type"), "updated_at": diary.now()}, id=eid)
         ob = {"weather_asked": True} if v["next_kind"] == "weather" else {}
         if v.get("reask"):
             ob["aspiration"] = "none"   # 이번엔 넘어가기 뒤 계기가 생김 → 되고 싶은 모습을 다시 묻는다(GET /aspiration should_ask)

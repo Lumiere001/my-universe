@@ -3,6 +3,7 @@ app/agents/studio.py
 
 Upstage Studio 기록 · 관측 Agent 실행(1차 agent_client.py 를 옮김). 1차 에이전트는 그대로 두고 도구로 감싸 부른다.
 Files 업로드 → responses.create(model=agent_id, include=["all"], extra_body={"config_id"}) → 끝날 때까지 조회 → 단계 결과.
+돌려주는 dict = Extract JSON + "_classify"(Classify 단계가 고른 갈래 글자).
 보내기 전 llm.guard 의 실명 검사를 반드시 거친다(guard 밖에서 부르면 오류). 캐시는 두지 않는다(원문이 디스크에 남음).
 올린 입력 파일은 실행이 끝나면(성공 · 실패 · 시간 초과 모두) 지운다.
 """
@@ -62,6 +63,7 @@ def _once(agent_id, config_id, html, timeout):
         parse, data = json.loads(steps[0]), json.loads(steps[-1])
     except json.JSONDecodeError:
         raise StudioError("studio_bad_output")
+    data["_classify"] = steps[1].strip()   # Classify 갈래(기록: 글 유형 4갈래, 관측: 관측 상태). 단계 순서 = Parse · Classify · Extract
     pages = max([e.get("page", 1) for e in parse.get("elements", [])] or [1])
     return data, pages
 

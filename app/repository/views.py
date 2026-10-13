@@ -37,6 +37,7 @@ def thought_api(t, states, relations):
             "certainty": t["certainty"], "value": t["value"] or None, "quote": t.get("quote", ""),
             "self_change": t.get("self_change") or None, "topic": t.get("topic", ""), "star_id": t["star_id"],
             "sun_id": t["sun_id"], "people": t["people"], "other": t.get("other") or None,
+            "original": t.get("original") or ({"kind": t["other"]} if t.get("other") else None),   # 목록 밖 원래 말
             "state": thought_state(t, states, relations)}
 
 
@@ -46,12 +47,20 @@ def relation_api(r):
             "needs_confirm": r["needs_confirm"], "explanation": r.get("explanation") or "", "quote": r.get("quote") or None}
 
 
+def record_fields(e):
+    """기록 칸(PRD §4.1 · §4.4). 이 칸이 생기기 전의 행은 출처 텍스트 · 쓴 날(추정)."""
+    return {"source": e.get("source") or "텍스트", "day": str(e["day"]) if e.get("day") else diary.local_day(e["written_at"]),
+            "day_basis": e.get("day_basis") or "추정", "day_check": bool(e["data"].get("day_check")),
+            "confirmed": e.get("confirmed"), "record_type": e.get("record_type")}
+
+
 def entry_result(s, eid):
     e = diary.entry(s, eid)
     if not e:
         return None
     d = e["data"]
     base = {"id": eid, "status": e["status"], "step": e["step"] or "", "written_at": diary.iso(e["written_at"]),
+            **record_fields(e),
             "title": d.get("title", ""), "weather": e["weather"], "crisis": e["crisis"], "info": None,
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
             "people_questions": []}
@@ -76,7 +85,8 @@ def entry_result(s, eid):
           for q in diary.questions(s, entry_id=eid) if not q["answer"]]
     return {**base,
             "info": {"summary": d.get("summary", ""), "addressee": e["addressee"] or "나",
-                     "addressee_person": d.get("addressee_person"), "events": d.get("events", [])},
+                     "addressee_person": d.get("addressee_person"), "events": d.get("events", []),
+                     "original": d.get("original") or None},
             "thoughts": [thought_api(t, states, rels) for t in ts],
             "relations": [relation_api(r) for r in rels],
             "past": past,
@@ -93,7 +103,7 @@ def entry_list(s, limit=20, before=None):
     star = {x["id"]: x["name"] for x in diary.stars(s)}
     return [{"id": e["id"], "written_at": diary.iso(e["written_at"]), "title": e["data"].get("title", ""),
              "summary": e["data"].get("summary", ""), "weather": e["weather"], "status": e["status"],
-             "sun": sun.get(e["sun_id"]), "star": star.get(e["star_id"])}
+             "sun": sun.get(e["sun_id"]), "star": star.get(e["star_id"]), **record_fields(e)}
             for e in diary.entries(s, limit=limit, before=before)]
 
 

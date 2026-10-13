@@ -5,6 +5,7 @@ app/api/diary.py
 그래프는 백그라운드 스레드에서 돌고, 응답은 그 진행을 SSE 로 흘린다(event: progress/result/error, 약 10초마다 ': keep-alive').
 손님이 끊어도 스레드는 끝까지 간다(로컬 · Docker). 끊긴 뒤에는 GET /diary/{id} → POST /diary/{id}/resume/stream.
 같은 기록을 두 번 돌리지 않게 DB 잠금(entries.locked_until, 조건부 update)을 쓴다 — 인스턴스가 여러 개여도 하나만 돈다.
+같은 글(같은 설정) · 같은 원본이 다시 오면 Studio 를 부르지 않고 그 기록으로 안내한다(PRD §8.5 A, 상한이 아니라 중복 막기).
 """
 
 import json
@@ -33,6 +34,7 @@ MESSAGES = {
     "llm_failed": "별지기가 잠깐 대답하지 못했어요. '이어서 하기'를 눌러 주세요.",
     "real_name_leak": "이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 글은 안전하게 저장돼 있어요.",
     "internal": "처리하다 멈췄어요. '이어서 하기'를 눌러 주세요.",
+    "duplicate": "이미 보낸 글이에요. 정리가 끝나지 않았으니 '이어서 하기'를 눌러 주세요.",
 }
 
 
@@ -89,36 +91,57 @@ def _limits(s, eid=None):
         raise ApiError(429, "monthly_budget", "이번 달 정리 한도에 닿았어요. 운영자에게 알려 주세요.")
 
 
+def _same(repo, uid, eid):
+    """이미 받은 글: 끝났으면 그 결과(duplicate: true), 아니면 그 기록을 이어 하라는 error(409 성격)."""
+    with repo.session(uid) as s:
+        r = views.entry_result(s, eid)
+    if r["status"] == "done":
+        return "result", {**r, "duplicate": True}
+    return "error", {"entry_id": eid, "code": "duplicate", "message": MESSAGES["duplicate"], "resumable": True}
+
+
 def _create(repo, uid, body: DiaryIn):
+    """→ (기록 id, 이미 있던 같은 글인지)."""
     with repo.session(uid) as s:
         diary.profile(s)
+        same = diary.same_entry(s, body.title, body.text, body.source, body.source_ref)
+        if same:
+            return same, True
         _limits(s)
         eid = diary.new_id("e")
         written = body.written_at or datetime.now(diary.TZ)
         if not written.tzinfo:
             written = written.replace(tzinfo=diary.TZ)
-        diary.create_entry(s, eid, written, body.weather, body.title, body.text)
+        diary.create_entry(s, eid, written, body.weather, body.title, body.text, body.source, body.source_ref, body.day)
         diary.lock(s, eid)
         diary.add_run(s, eid, "start")
-    return eid
+    return eid, False
 
 
 @router.post("/diary/stream", summary="일기 쓰기(SSE 진행)")
 def write_stream(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
-    eid = _create(repo, user["id"], body)
+    eid, dup = _create(repo, user["id"], body)
+    if dup:
+        q = queue.Queue()
+        q.put(_same(repo, user["id"], eid))
+        q.put(None)
+        return _stream(q)
     return _stream(_start(repo, user["id"], eid))
 
 
 @router.post("/diary", summary="일기 쓰기(스트림 없이, 시험 · curl용)")
 def write(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
-    eid = _create(repo, user["id"], body)
-    q = _start(repo, user["id"], eid)
-    out = None
-    while (item := q.get()) is not None:
-        out = item
-    ev, data = out
+    eid, dup = _create(repo, user["id"], body)
+    if dup:
+        ev, data = _same(repo, user["id"], eid)
+    else:
+        q = _start(repo, user["id"], eid)
+        out = None
+        while (item := q.get()) is not None:
+            out = item
+        ev, data = out
     if ev == "error":
-        raise ApiError(502, data["code"], data["message"])
+        raise ApiError(409 if dup else 502, data["code"], data["message"])
     return data
 
 

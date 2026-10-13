@@ -6,11 +6,13 @@ app/repository/diary.py
 """
 
 import secrets
+import unicodedata
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.core import config, security
+from app.service.rules.dates import read_day
 from app.service.safety import forget
 
 TZ = ZoneInfo(config.TIMEZONE)
@@ -59,6 +61,22 @@ def seal(s, table, rid, data):
 
 def unseal(s, table, rid, blob):
     return security.unseal(s.uid, f"{table}:{rid}", blob)
+
+
+def studio_config():
+    """지금 쓰는 Studio 설정 번호 '기록 판/관측 판'(예: 2/2). runs · feedback · 같은 글 HMAC 에 붙인다."""
+    return f"{config.V8_RECORD_CONFIG_ID}/{config.V8_OBSERVE_CONFIG_ID}"
+
+
+def content_hash(s, title, text):
+    """같은 글 · 같은 설정이면 같은 값(띄어쓰기 · 줄바꿈 · 유니코드 조합 차이는 무시). 사용자별 HMAC 이라 글을 되살릴 수 없다."""
+    norm = unicodedata.normalize("NFC", " ".join(f"{title or ''}\n{text}".split()))
+    return security.digest(s.uid, f"content\n{studio_config()}\n{norm}")
+
+
+def ref_hash(s, source, ref):
+    """가져온 원본 표시(게시물 시각 · 파일 이름 …)는 평문으로 두지 않는다."""
+    return security.digest(s.uid, f"ref\n{source}\n{ref}") if ref else None
 
 
 def _rid(table, row):
@@ -197,11 +215,27 @@ def add_star(s, sid, name, sun_id):
 # 기록
 ##################################################
 
-def create_entry(s, eid, written_at, weather, title, text):
+def create_entry(s, eid, written_at, weather, title, text, source="텍스트", source_ref=None, day=None):
+    """source: 대화 / 텍스트 / 사진 / 지난 글 묶음. day: 사용자가 고른 글이 다루는 날(date · 'YYYY-MM-DD' · None).
+    고르지 않았으면 제목 · 본문 첫 줄 속 날짜(G2), 없으면 쓴 날(추정). 대화는 대화한 날(확실) + 확인 전."""
+    written = written_at.astimezone(TZ).date()
+    picked = date.fromisoformat(day) if isinstance(day, str) else day
+    d, basis, check = read_day(title, text, written, picked or (written if source == "대화" else None))
+    data = {"title": title, "text": text, **({"day_check": True} if check else {})}
     s.insert("entries", {"id": eid, "written_at": written_at, "weather": weather, "status": "processing", "step": None,
                          "addressee": None, "star_id": None, "sun_id": None, "steps_enc": None,
-                         "error_code": None, "enc": seal(s, "entries", eid, {"title": title, "text": text}),
-                         "updated_at": now()})
+                         "error_code": None, "enc": seal(s, "entries", eid, data), "updated_at": now(),
+                         "source": source, "source_ref": ref_hash(s, source, source_ref), "day": d, "day_basis": basis,
+                         "confirmed": "확인 전" if source == "대화" else None, "record_type": None,
+                         "content_hash": content_hash(s, title, text)})
+
+
+def same_entry(s, title, text, source="텍스트", source_ref=None):
+    """같은 글(같은 설정) 또는 같은 원본을 이미 받은 기록 id. 없으면 None(PRD §8.5 A: 다시 보내지 않기)."""
+    hit = s.rows("entries", content_hash=content_hash(s, title, text), limit=1)
+    if not hit and source_ref:
+        hit = s.rows("entries", source_ref=ref_hash(s, source, source_ref), limit=1)
+    return hit[0]["id"] if hit else None
 
 
 def entry(s, eid):
@@ -267,6 +301,9 @@ def delete_entry(s, vectors, eid):
     for table in ("thoughts", "messages", "aspiration_reached", "people_questions"):
         s.delete(table, entry_id=eid)
     s.delete("feedback", target_id=[eid, *tids, *rids])
+    for f in s.rows("feedback", target="relation"):   # '아니에요'로 이미 지운 관계의 피드백(관계 id = 옛생각id>새생각id)
+        if any(t in (f["target_id"] or "").split(">") for t in tids):
+            s.delete("feedback", id=f["id"])
     s.delete("entries", id=eid)
     rest = entries(s)
     if all(e["status"] == "done" for e in rest):
@@ -315,7 +352,8 @@ def save_thought(s, eid, t):
                           "value": t["value"] or None, "grateful": "감사" in t["flags"],
                           "enc": seal(s, "thoughts", t["id"], {"text": t["thought"], "quote": t["quote"],
                                                                "self_change": t["self_change"] or None,
-                                                               "other": t["original"].get("kind"), "topic": t["topic"]})})
+                                                               "other": t["original"].get("kind"), "topic": t["topic"],
+                                                               "original": t["original"]})})
     for pid in t["people"]:
         s.insert("thought_people", {"thought_id": t["id"], "person_id": pid})
 
@@ -374,12 +412,13 @@ def add_aspiration(s, now_text, said, obstacle, if_then, values):
     return aid
 
 
-def add_feedback(s, target, target_id, value, text=None):
+def add_feedback(s, target, target_id, value, text=None, relation=None):
+    """relation: '아니에요'로 지운 관계 {type, from, to}(오답 재료, 암호문에만)."""
     fid = new_id("f")
     mood = value in MOOD_FEEDBACK
-    data = {k: v for k, v in {"text": text, "value": value if mood else None}.items() if v}
+    data = {k: v for k, v in {"text": text, "value": value if mood else None, "relation": relation}.items() if v}
     s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": MOOD_LABEL if mood else value,
-                          "enc": seal(s, "feedback", fid, data) if data else None})
+                          "enc": seal(s, "feedback", fid, data) if data else None, "studio_config": studio_config()})
 
 
 def feedback_counts(s):
@@ -389,7 +428,7 @@ def feedback_counts(s):
 
 def add_run(s, entry_id, step, ms=0, calls=0, est_usd=0.0, code=None, meta=None):
     s.insert("runs", {"entry_id": entry_id, "step": step, "ms": int(ms), "calls": calls, "est_usd": round(est_usd, 5),
-                      "error_code": code, "meta": meta or {}})
+                      "error_code": code, "meta": meta or {}, "studio_config": studio_config()})
 
 
 def month_cost(s):

@@ -51,7 +51,7 @@ TODAY_FLAGS = {"오늘은 살살": "gentle_today", "오늘은 위로만": "comfo
 
 @router.post("/feedback", tags=["피드백"])
 def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
-    changed = None
+    changed = removed = None
     with repo.session(user["id"]) as s:
         if body.value in ("맞아요", "아니에요", "지켰어요", "그만둘래요"):
             if not body.target_id:
@@ -66,6 +66,7 @@ def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
             for r in rels:
                 if r["id"] not in after:
                     s.delete("relations", id=r["id"])
+                    removed = {k: r[k] for k in ("type", "from", "to")}   # 오답 재료(피드백 암호문에만)
                 elif after[r["id"]] != r:
                     diary.save_relation(s, after[r["id"]])
             diary.save_states(s, new, old)
@@ -75,7 +76,7 @@ def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
         elif body.value == "날씨 건너뜀":
             diary.save_profile(s, settings={"weather_ask": False}, onboarding={"weather_asked": True})
         diary.add_feedback(s, body.target, body.target_id, body.value,
-                           body.text if body.value == "불편한 점 한 줄" else None)
+                           body.text if body.value == "불편한 점 한 줄" else None, relation=removed)
     return {"ok": True, "state": changed and {"type": changed["kind"], "status": changed.get("state"),
                                               "mistake": "실수" in changed.get("marks", [])}}
 
