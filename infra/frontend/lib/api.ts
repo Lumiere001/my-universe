@@ -70,7 +70,8 @@ export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean } };
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
-export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string };
+export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string;
+  source?: "텍스트" | "지난 글 묶음" };   // WS17: 인스타 가져오기는 '지난 글 묶음' + source_ref + written_at(게시 시각)
 // 쓰기 화면 위 별지기 말풍선(GET /diary/prompt)
 export type Prompt = { kind: "first" | "weather" | "aspiration" | "free" | "none"; text: string;
   vow: { thought_id: string; text: string; overdue: boolean } | null };
@@ -263,4 +264,13 @@ export async function getConsent(): Promise<Consent> {
 }
 export async function saveConsent(c: ConsentInput): Promise<Consent> {
   return MOCK ? (await mock()).saveConsent(c) : json("POST", "/consent", c);
+}
+
+/* ---------- 인스타그램 가져오기 (WS17, docs/api-v8.md §8) ---------- */
+export type ImportPost = { ref: string; written_at: string; title: string; text: string; day: string; day_basis: "확실" | "추정";
+  day_check: boolean; parts: number; too_long: boolean; imported: boolean };
+export type ImportPreview = { posts: ImportPost[]; max_posts: number | null; est_seconds_per_post: number; est_usd_per_post: number };
+// 게시물(캡션 · 시각) → 가져올 글 목록(최근 것부터). 저장 · 외부 전송 없음
+export async function previewInstagram(posts: unknown[]): Promise<ImportPreview> {
+  return json("POST", "/import/instagram/preview", { posts });
 }
