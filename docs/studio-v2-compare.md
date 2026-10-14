@@ -158,3 +158,7 @@ Studio 확정 번호: 기록 #3 = 3판 A, #4 = 3판 B(`solar-pro4`, 견본 9/20 
 
 가져오기 · 측정: 기록 Agent 에 `Record Agent v4.json`(→ 번호 N), 관측 Agent 에 `Observe Agent v4.json`(→ M, 또는 #3) 을 가져와 확정한 뒤
 `uv run --frozen python tools/quality_v3.py run --record-config N --observe-config M --tag v4` + `tools/stability_v2.py --record-config N`(약 $2.8 + $0.45). 비교 기준은 같은 날 2판 기준선(`eval/results/2026-10-14-quality-v2.json` · `-links-v2.csv`).
+
+### 4판 결과 (2026-10-14)
+
+Studio 확정: 기록 #5 = `Record Agent v4.json`, 관측 #4 = `Observe Agent v4.json`. 서비스 길 결과는 `docs/eval-v8.md` '품질 4판': 화면 거짓 연결 0.57 → 0.27 로 크게 줄었지만 작은 별이 13 → 25 개로 쪼개져 대표 바뀜(3/14 → 9/20)을 놓치고 맞는 관계도 26 → 23 이라 **지금은 운영 전환하지 않는다**(V8_* = 2 / 2). 다음은 쪼개짐을 막는 4b.
