@@ -49,3 +49,22 @@ def test_limit_from_ops_only():
     past = [P(f"p{i}", "진로", [1, i / 100]) for i in range(n + 5)]
     assert len(pick_past(today, past)) == n
     assert pick_past([], past) == [] and pick_past(today, []) == []
+
+
+def test_each_thought_keeps_nearest_other_topic():
+    """품질 4b: 다른 주제 후보는 낙폭에서 잘려도, 오늘 생각마다 가장 가까운 것 하나는 남긴다.
+    (4판 9/20: '마음이 무겁다'끼리 0.91 뒤 낙폭에서 잘려 변화 서술에 가장 가까운 3/14 를 놓침)"""
+    today = [P("T1", "작은 팀", [1, 0, 0], rid="R0"), P("T2", "취업 생각", [0, 1, 0], rid="R0")]
+    past = [P("s", "취업 생각", [0, 0.2, 1]),        # 같은 주제
+            P("x", "인턴 면접", [0, 1, 0]),           # T2 와 거의 같음(감정 문장) → 다른 주제 1등
+            P("y", "직장 안정", [0.5, 0, 0.86]),      # T1 에 가장 가까운 다른 주제, x 뒤 큰 낙폭에서 잘리던 것
+            P("z", "기록", [0.3, 0, 0.95])]
+    got = [g["id"] for g in pick_past(today, past)]
+    assert "y" in got and "x" in got and "s" in got and "z" not in got
+
+
+def test_nearest_slots_survive_limit():
+    today = [P("T1", "진로", [1, 0], rid="R0")]
+    past = [P(f"p{i}", "진로", [0, 1]) for i in range(12)] + [P("o", "배움", [1, 0])]
+    got = pick_past(today, past, limit=5)
+    assert len(got) == 5 and "o" in [g["id"] for g in got]   # 같은 주제로 한도가 차도 가까운 다른 주제 자리는 남음

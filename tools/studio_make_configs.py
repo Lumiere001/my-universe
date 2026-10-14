@@ -1,4 +1,4 @@
-"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b · v4.json
+"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b · v4 · v4b.json
 
     uv run --frozen python tools/studio_make_configs.py
 
@@ -8,6 +8,7 @@ Classify 갈래 · Extract 칸 설명만 v8.json 에서 다시 채운다. 목록
 2판 설명에 규칙 셋(① 시 · 창작 글에는 관계를 잇지 않기 ② 사건 서술은 생각에 넣지 않기 ③ 가치 이름을 주제로 쓰지 않기)을 더한다.
 v3 = 모델 칸 비움(Studio 기본 전용 모델, 2판과 같음), v3b = v3 + Classify · Extract 모델 solar-pro4.
 4판: 3판 A + 기록 주제 칸 '기존 작은 별은 같은 일 · 같은 대상일 때만 다시 쓴다', 관측 관계 칸 '주제 이름만 같다고 잇지 않는다'.
+4b: 4판 + 기록 주제 칸 '같은 결정 · 같은 고민을 이어 쓰면 같은 대상 → 기존 별을 다시 쓴다'(관측은 4판 그대로).
 """
 import copy
 import json
@@ -209,6 +210,15 @@ RECORD_PROPS_V4 = _set(RECORD_PROPS_V3, ("thoughts", "topic"),
                        " ".join(O["topic_rules"][:3]) + f" 해 이름(쓰지 않는다): {domain_names}. {V4_REUSE} {V3_VALUES}")
 OBS_PROPS_V4 = _add(OBS_PROPS_V3, ("relations",), V4_SAME_TOPIC)
 
+# ---------------- 4b: 4판 + 같은 고민은 같은 별 ----------------
+# 4판 측정: 작은 별이 13 → 25 개로 쪼개져(진로 고민 하나가 '직장 안정' · '대기업 취업' · '취업 생각' …) 대표 바뀜을 놓침.
+# '같은 일 · 같은 대상일 때만'의 '같은 대상'에 이어지는 결정 · 고민을 넣어 부딪치지 않게 한다. 관측은 4판(#4) 그대로.
+V4B_SAME_DECISION = ("같은 결정 · 같은 고민을 이어 쓰는 생각(예: 몇 달째 이어지는 이직 고민)도 같은 대상이다. "
+                     "그때는 표현이 조금 달라도 그 기존 별 이름을 다시 쓴다.")
+V4B_REUSE = V4_REUSE.replace("글자 그대로 다시 쓴다. ", f"글자 그대로 다시 쓴다. {V4B_SAME_DECISION} ", 1)
+RECORD_PROPS_V4B = _set(RECORD_PROPS_V3, ("thoughts", "topic"),
+                        " ".join(O["topic_rules"][:3]) + f" 해 이름(쓰지 않는다): {domain_names}. {V4B_REUSE} {V3_VALUES}")
+
 
 def build():
     out = {"Record Agent v2.json": agent("Record Agent.json", RECORD_TYPES, RECORD_PROPS, "Extract_Record"),
@@ -220,6 +230,7 @@ def build():
                                                "Extract_Observe", model)
     out["Record Agent v4.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V4, "Extract_Record")
     out["Observe Agent v4.json"] = agent("Observe Agent v2.exported.json", observe_states(), OBS_PROPS_V4, "Extract_Observe")
+    out["Record Agent v4b.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V4B, "Extract_Record")
     return out
 
 

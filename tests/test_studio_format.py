@@ -59,7 +59,8 @@ def test_v3_follows_exported_v2_shape_and_adds_rules():
     for agent in ("Record", "Observe"):
         ex = _cfg(f"{agent} Agent v2.exported.json")
         ex["exportedFrom"].pop("configId"), ex["exportedFrom"].pop("configVer")
-        for v, model in (("v3", ""), ("v3b", "solar-pro4"), ("v4", "")):
+        versions = [("v3", ""), ("v3b", "solar-pro4"), ("v4", "")] + ([("v4b", "")] if agent == "Record" else [])
+        for v, model in versions:
             c = _cfg(f"{agent} Agent {v}.json")
             assert (c["kind"], c["schemaVersion"]) == (ex["kind"], ex["schemaVersion"]) and _keys(c) == _keys(ex), (agent, v)
             w = c["workflowConfig"]
@@ -87,6 +88,20 @@ def test_v4_reuses_known_star_only_for_same_thing():
     assert v4["description"] == v3["description"]                                   # 그 밖은 3판 A 그대로
     obs = _props(_cfg("Observe Agent v4.json"))["relations"]["description"]
     assert "글 유형: 창작" in obs and "주제 이름이 같아도" in obs
+
+
+def test_v4b_adds_same_decision_to_v4():
+    """4b: 4판 주제 칸에 '같은 결정 · 같은 고민을 이어 쓰면 같은 대상 → 기존 별'만 더함(그 밖은 4판과 같음)."""
+    v4, v4b = _cfg("Record Agent v4.json"), _cfg("Record Agent v4b.json")
+    t4 = _props(v4)["thoughts"]["items"]["properties"]["topic"]["description"]
+    t4b = _props(v4b)["thoughts"]["items"]["properties"]["topic"]["description"]
+    assert "같은 고민을 이어 쓰는 생각" in t4b and "기존 별 이름을 다시 쓴다" in t4b and "같은 일 · 같은 대상을 말할 때만" in t4b
+    assert t4b.index("같은 일 · 같은 대상을 말할 때만") < t4b.index("같은 고민을 이어 쓰는") < t4b.index("다른 일에 붙이지 않는다")
+    for c in (v4, v4b):
+        c.pop("exportedAt")
+        for x in c["workflowConfig"]["informationExtractConfiguration"]["schemas"]:
+            x["json_schema"]["schema"]["properties"]["thoughts"]["items"]["properties"]["topic"]["description"] = ""
+    assert v4 == v4b
 
 
 def test_record_v2_fields():
