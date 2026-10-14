@@ -1,4 +1,4 @@
-"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b.json
+"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b · v4.json
 
     uv run --frozen python tools/studio_make_configs.py
 
@@ -7,6 +7,7 @@ Classify 갈래 · Extract 칸 설명만 v8.json 에서 다시 채운다. 목록
 3판(품질 3판, 2026-10-14 동규 '전부 추천대로'): Studio 가 내보낸 #2(`* v2.exported.json`, schemaVersion 4)를 틀로
 2판 설명에 규칙 셋(① 시 · 창작 글에는 관계를 잇지 않기 ② 사건 서술은 생각에 넣지 않기 ③ 가치 이름을 주제로 쓰지 않기)을 더한다.
 v3 = 모델 칸 비움(Studio 기본 전용 모델, 2판과 같음), v3b = v3 + Classify · Extract 모델 solar-pro4.
+4판: 3판 A + 기록 주제 칸 '기존 작은 별은 같은 일 · 같은 대상일 때만 다시 쓴다', 관측 관계 칸 '주제 이름만 같다고 잇지 않는다'.
 """
 import copy
 import json
@@ -187,6 +188,28 @@ RECORD_PROPS_V3 = _add(_add(RECORD_PROPS, ("thoughts",), V3_EVENTS), ("thoughts"
 OBS_PROPS_V3 = _add(OBS_PROPS, ("relations",), V3_NO_LINK)
 
 
+# ---------------- 4판: 3판 A + 작은 별 다시 쓰기 규칙 ----------------
+# 품질 3판 측정(docs/eval-v8.md '품질 3판'): 거짓 연결의 주된 원인 = 기록 Agent 가 기존 작은 별 이름을 다른 일에 붙임
+# (2판 틀림 20 중 10, 3판 A 19 중 17). 작은 별이 셋뿐일 때도 일어나 목록 길이가 아니라 '맞으면 다시 쓴다' 규칙 탓으로 본다.
+V4_REUSE = ("입력의 '참고: 기존 작은 별' 목록의 이름은 이 생각과 같은 일 · 같은 대상을 말할 때만 글자 그대로 다시 쓴다. "
+            "비슷한 영역이라는 이유로 다른 일에 붙이지 않는다(예: '아침 운동' 별이 있어도 식단 이야기는 새 이름, "
+            "'이직 고민' 별이 있어도 시험 공부는 새 이름). 맞는 이름이 없으면 새 이름을 짓는다. 주제는 이름 하나만 쓴다.")
+V4_SAME_TOPIC = "주제 이름이 같아도 두 생각이 같은 일 · 같은 대상을 말하지 않으면 잇지 않는다(주제 이름은 기록 Agent 가 붙여 틀릴 수 있다)."
+
+
+def _set(props, path, text):
+    """props 의 표 안 칸(path = (표, 칸)) 설명을 text 로 바꾼 새 props."""
+    props = copy.deepcopy(props)
+    props[path[0]]["items"]["properties"][path[1]]["description"] = text
+    return props
+
+
+# 주제 설명: 2판의 '맞는 이름이 있으면 다시 쓴다'(topic_rules[3] + 끝 문장)를 V4_REUSE 로 바꾸고 ③ 가치 이름은 그대로
+RECORD_PROPS_V4 = _set(RECORD_PROPS_V3, ("thoughts", "topic"),
+                       " ".join(O["topic_rules"][:3]) + f" 해 이름(쓰지 않는다): {domain_names}. {V4_REUSE} {V3_VALUES}")
+OBS_PROPS_V4 = _add(OBS_PROPS_V3, ("relations",), V4_SAME_TOPIC)
+
+
 def build():
     out = {"Record Agent v2.json": agent("Record Agent.json", RECORD_TYPES, RECORD_PROPS, "Extract_Record"),
            "Observe Agent v2.json": agent("Observe Agent.json", observe_states(), OBS_PROPS, "Extract_Observe")}
@@ -195,10 +218,21 @@ def build():
                                               "Extract_Record", model)
         out[f"Observe Agent {v}.json"] = agent("Observe Agent v2.exported.json", observe_states(), OBS_PROPS_V3,
                                                "Extract_Observe", model)
+    out["Record Agent v4.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V4, "Extract_Record")
+    out["Observe Agent v4.json"] = agent("Observe Agent v2.exported.json", observe_states(), OBS_PROPS_V4, "Extract_Observe")
     return out
+
+
+def _same(path, cfg):
+    """이미 있는 파일과 내보낸 시각만 다르면 다시 쓰지 않는다(판이 늘 때 옛 파일이 바뀌지 않게)."""
+    if not path.exists():
+        return False
+    old = json.loads(path.read_text(encoding="utf-8"))
+    return {**old, "exportedAt": None} == {**cfg, "exportedAt": None}
 
 
 if __name__ == "__main__":
     for fname, cfg in build().items():
-        (OUT / fname).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
-        print("wrote", OUT / fname)
+        if not _same(OUT / fname, cfg):
+            (OUT / fname).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+            print("wrote", OUT / fname)

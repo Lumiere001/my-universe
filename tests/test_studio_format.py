@@ -59,7 +59,7 @@ def test_v3_follows_exported_v2_shape_and_adds_rules():
     for agent in ("Record", "Observe"):
         ex = _cfg(f"{agent} Agent v2.exported.json")
         ex["exportedFrom"].pop("configId"), ex["exportedFrom"].pop("configVer")
-        for v, model in (("v3", ""), ("v3b", "solar-pro4")):
+        for v, model in (("v3", ""), ("v3b", "solar-pro4"), ("v4", "")):
             c = _cfg(f"{agent} Agent {v}.json")
             assert (c["kind"], c["schemaVersion"]) == (ex["kind"], ex["schemaVersion"]) and _keys(c) == _keys(ex), (agent, v)
             w = c["workflowConfig"]
@@ -74,6 +74,19 @@ def test_v3_follows_exported_v2_shape_and_adds_rules():
     assert "글 유형: 창작" in _props(_cfg("Observe Agent v3.json"))["relations"]["description"]     # ①
     assert "글 유형: 창작" in sf.observe_html("d", [{"id": "x", "topic": "봄", "kind": "해석", "certainty": "단정",
                                                     "quote": "q", "record_type": "창작"}], [])[0]
+
+
+def test_v4_reuses_known_star_only_for_same_thing():
+    """품질 4판: 기록 주제 칸의 '맞는 이름이 있으면 다시 쓴다'를 '같은 일 · 같은 대상일 때만'으로 바꾸고, 관측은 주제 이름만으로 잇지 않음."""
+    v3 = _props(_cfg("Record Agent v3.json"))["thoughts"]
+    v4 = _props(_cfg("Record Agent v4.json"))["thoughts"]
+    topic = v4["items"]["properties"]["topic"]["description"]
+    assert "같은 일 · 같은 대상을 말할 때만" in topic and "다른 일에 붙이지 않는다" in topic and "이름 하나만" in topic
+    assert "맞는 이름이 있으면 그 이름을 다시 쓴다" not in topic and "뜻이 맞는 이름이 있으면" not in topic
+    assert all(v["name"] in topic for v in load()["values"]) and all(d in topic for d in choices("domains"))
+    assert v4["description"] == v3["description"]                                   # 그 밖은 3판 A 그대로
+    obs = _props(_cfg("Observe Agent v4.json"))["relations"]["description"]
+    assert "글 유형: 창작" in obs and "주제 이름이 같아도" in obs
 
 
 def test_record_v2_fields():

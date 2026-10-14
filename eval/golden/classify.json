@@ -50,5 +50,9 @@
    "basis": "결정 11", "ambiguous": false, "ambiguous_reason": ""},
   {"id": "cl-20", "persona": "p_student", "category": "classify", "input": {"op": "people_of", "raw": "재재, 하늘"},
    "expected": {"names": ["윤재", "하늘"], "new": []}, "judge": "machine", "how": "rules.people_of(사람 칸, 사람 목록): 별명은 목록의 이름으로",
-   "basis": "결정 11(사람 칸은 사람 목록과 잇는다)", "ambiguous": false, "ambiguous_reason": ""}
+   "basis": "결정 11(사람 칸은 사람 목록과 잇는다)", "ambiguous": false, "ambiguous_reason": ""},
+  {"id": "cl-21", "persona": "p_student", "category": "classify",
+   "input": {"op": "clean_record", "raw": {"summary": "혼자 보낸 주말", "addressee": "나", "thoughts": [{"thought": "모임을 줄이고 내 시간을 지키고 싶다", "kind": "다짐", "certainty": "단정", "value": "자율", "quote": "당분간은 모임을 줄이고 내 시간을 지키고 싶다", "topic": "독서 습관, 진로 선택, 혼자 있는 시간"}]}},
+   "expected": {"thought": {"topic": "혼자 있는 시간"}}, "judge": "machine", "how": "rules.clean_record(one_topic): 주제 칸에 쉼표로 여럿 쓰면 글에 낱말이 나오는 이름 하나",
+   "basis": "품질 4판(2026-10-14, 2판 서비스 길 4/5 다짐 주제 '독서노트 습관, 진로 선택, 혼자 있는 시간')", "ambiguous": false, "ambiguous_reason": ""}
 ]

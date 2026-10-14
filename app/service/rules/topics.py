@@ -7,6 +7,7 @@
 """
 
 import math
+import re
 
 from app.core.ontology import load
 from app.service.rules.normalize import key
@@ -34,6 +35,20 @@ def topic_input(topics):
     """기록 Agent 입력에 넣을 기존 작은 별 안내 두 줄. topics: 이름 목록 또는 {이름: 해}."""
     names = list(dict.fromkeys(topics or []))
     return f"{O['topic_rules'][3]}\n기존 작은 별: {', '.join(names) if names else '없음'}"
+
+
+MANY = re.compile(r"\s*[,，、]\s*")   # 가운뎃점은 나누지 않는다: '영성·신앙' · '학업·동아리'처럼 이름 하나 안에 쓰임
+
+
+def one_topic(topic, text=""):
+    """주제 칸에 이름을 쉼표로 여럿 쓴 값(예: '독서노트 습관, 진로 선택, 혼자 있는 시간') → 이름 하나.
+    생각 · 인용에 낱말이 가장 많이 나오는 이름, 같으면 앞 이름. 여럿을 그대로 두면 없는 작은 별이 생기고,
+    앞 이름만 쓰면 기존 별에 잘못 붙는다(품질 3판 측정, 2판 4/5 '내 시간을 지키고 싶다' → 앞 이름 '독서노트 습관')."""
+    names = [n for n in MANY.split(topic or "") if n.strip()]
+    if len(names) < 2:
+        return topic
+    t = key(text)
+    return max(names, key=lambda n: sum(len(key(w)) >= 2 and key(w) in t for w in n.split()))
 
 
 def match_topic(topic, topics=None, suns=(), aliases=None):

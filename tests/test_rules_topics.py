@@ -1,5 +1,5 @@
 """주제 재사용 입력 · 해 이름 금지 · 합치기 후보 · 삶의 영역(혼합형)."""
-from app.service.rules import link_domain, match_topic, merge_candidates, sun_list, topic_input
+from app.service.rules import clean_record, link_domain, match_topic, merge_candidates, sun_list, topic_input
 
 
 def test_topic_input_lists_existing_stars():
@@ -68,3 +68,16 @@ def test_merge_candidates():
     pairs = {(g["a"], g["b"]) for g in got}
     assert ("부모님", "엄마") in pairs
     assert not any("진로" in p for p in pairs)   # 다른 해와는 합치지 않음
+
+
+def test_many_topics_become_one():
+    """품질 4판: 주제 칸에 이름을 쉼표로 여럿 쓰면 글에 낱말이 나오는 이름 하나로(같으면 앞 이름). 가운뎃점은 나누지 않음."""
+    from app.service.rules.topics import one_topic
+    assert one_topic("독서노트 습관, 진로 선택, 혼자 있는 시간", "당분간은 모임을 줄이고 내 시간을 지키고 싶다") == "혼자 있는 시간"
+    assert one_topic("진로 선택, 공채 준비", "오늘은 쉬었다") == "진로 선택"
+    assert one_topic("학업·동아리", "x") == "학업·동아리" and one_topic("", "x") == ""
+    raw = {"summary": "", "addressee": "나", "events": [], "thoughts": [
+        {"thought": "내 시간을 지키고 싶다", "kind": "다짐", "certainty": "단정", "value": "", "quote": "내 시간을 지키고 싶다",
+         "topic": "독서노트 습관, 진로 선택, 혼자 있는 시간", "people": ""}]}
+    t = clean_record(raw, topics={"독서노트 습관": "배움", "혼자 있는 시간": "관계"})["thoughts"][0]
+    assert (t["topic"], t["domain"]) == ("혼자 있는 시간", "관계")

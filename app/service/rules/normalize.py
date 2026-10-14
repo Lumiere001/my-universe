@@ -120,7 +120,7 @@ def clean_record(raw, people=(), topics=None, suns=(), aliases=None):
     original = 목록 밖 원래 말 {addressee, record_type}. 생각마다 flags(감사) · problems(해 이름) · original.
     record_type 은 Classify 결과가 없으면 None.
     """
-    from app.service.rules.topics import link_domain, match_topic
+    from app.service.rules.topics import link_domain, match_topic, one_topic
     topics = topics or {}
     addressee, a_orig = normalize("addressee", raw.get("addressee_original") or raw.get("addressee"))
     rtype, r_orig = normalize("record_type", raw["record_type"]) if _first(raw.get("record_type")) else (None, None)
@@ -138,7 +138,7 @@ def clean_record(raw, people=(), topics=None, suns=(), aliases=None):
         flags = []
         if row["kind"] == EMOTION and (key(_first(t.get("kind"))) in ("감사", "고마움") or re.search("고마|감사", text)):
             flags.append(THANKS)
-        topic, problem = match_topic(_first(t.get("topic")), topics, suns, aliases)
+        topic, problem = match_topic(one_topic(_first(t.get("topic")), text), topics, suns, aliases)
         names, new = people_of(t.get("people"), people)
         out["new_people"] += [n for n in new if n not in out["new_people"]]
         out["thoughts"].append({
