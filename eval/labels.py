@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT))
 from app.service.rules import normalize  # noqa: E402
 
 E7_COLS = ["id", "day", "thought", "quote", "kind_a", "value_a", "kind_b", "value_b", "note"]
-LINK_COLS = ["id", "type", "from_day", "to_day", "topic", "same_target", "explanation", "verdict", "note"]
+LINK_COLS = ["id", "type", "from_day", "to_day", "topic", "same_target", "explanation", "service", "verdict", "note"]
 LINK_FALSE = ("약함", "틀림")
 REVIEW_COLS = ["id", "category", "gate", "machine", "problems", "shown", "human", "note"]
 
@@ -151,7 +151,8 @@ def e7_score(rows, preds):
 ##################################################
 
 def links_form_rows(result, days):
-    """studio_v2_result.json 의 다른 글끼리 관계 중 설계(expected.json) 밖 것 → 판정 양식 줄."""
+    """studio_v2_result.json(또는 tools/quality_v3.py 결과)의 다른 글끼리 관계 중 설계(expected.json) 밖 것 → 판정 양식 줄.
+    service: 서비스 관계 규칙을 거친 뒤 '남음 → 종류' 또는 '버림: 이유'(quality_v3 결과에만)."""
     exp = json.loads((ROOT / "data/virtual/expected.json").read_text(encoding="utf-8"))
     designed = {(e["past"], e["today"]) for e in exp["relations"]}
     rows = []
@@ -159,7 +160,8 @@ def links_form_rows(result, days):
         a, b = days[r["from"].split("-")[0]], days[r["to"].split("-")[0]]
         if a != b and (a, b) not in designed:
             rows.append({"id": f"L{i}", "type": r["type"], "from_day": a, "to_day": b, "topic": r["topic"],
-                         "same_target": r["same_target"], "explanation": r["explanation"], "verdict": "", "note": ""})
+                         "same_target": r["same_target"], "explanation": r["explanation"], "service": r.get("service", ""),
+                         "verdict": "", "note": ""})
     return rows
 
 
@@ -167,9 +169,12 @@ def links_score(rows):
     judged = [r for r in rows if r["verdict"]]
     c = Counter(r["verdict"] for r in judged)
     false = sum(c[v] for v in LINK_FALSE)
+    shown = [r for r in judged if (r.get("service") or "").startswith("남음")]   # 서비스 규칙을 지나 화면에 나가는 것
     return {"off_design": len(rows), "judged": len(judged), "verdicts": dict(c),
             "false_rate": round(false / len(judged), 3) if judged else None,
-            "false_by_type": dict(Counter(r["type"] for r in judged if r["verdict"] in LINK_FALSE))}
+            "false_by_type": dict(Counter(r["type"] for r in judged if r["verdict"] in LINK_FALSE)),
+            "shown": len(shown),
+            "false_rate_shown": round(sum(r["verdict"] in LINK_FALSE for r in shown) / len(shown), 3) if shown else None}
 
 
 ##################################################

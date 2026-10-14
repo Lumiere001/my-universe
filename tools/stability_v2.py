@@ -1,12 +1,14 @@
 """흔들림 측정 2판(WS23, PRD §8.5 F): 서비스와 같은 길(app/agents/studio.py, 설정 V8_RECORD_CONFIG_ID)로
 같은 글을 여러 번 돌려 기록 Agent 결과가 얼마나 같은지 잰다. 1판 도구(tools/stability.py)는 그대로 둔다.
 
-    uv run --frozen python tools/stability_v2.py          # 유료: 하늘 3편 × 3번 = Studio 9번(약 $0.45)
+    uv run --frozen python tools/stability_v2.py          # 유료: 하늘 3편 × 3번 = Studio 9번(약 $0.45), 설정 V8_RECORD_CONFIG_ID
+    uv run --frozen python tools/stability_v2.py --record-config 3   # 품질 3판: 설정 번호를 정해 같은 측정(원장 갈래 Q3-흔들림)
     uv run --frozen python tools/stability_v2.py --dry    # 네트워크 없이 입력만 확인
 
 가상 인물 하늘의 글만, 서비스처럼 가명 처리(tools.mask_obj) 뒤 보낸다(llm.guard 가 보내기 직전 실명 검사).
 Studio 가 같은 파일을 캐시할 수 있어 실행마다 보이지 않는 meta 표시를 단다.
-실행마다 runs/cost_ledger.jsonl(원본 저장소)에 한 줄, 결과는 eval/results/<날짜>-stability-v2.json.
+실행마다 runs/cost_ledger.jsonl(원본 저장소)에 한 줄, 결과는 eval/results/<날짜>-stability-v2.json
+(--record-config N 이면 <날짜>-stability-cN.json).
 """
 import json
 import re
@@ -26,6 +28,7 @@ MAIN = Path("/Users/east_star/Projects/my-universe")       # 원장은 본 저�
 LEDGER = MAIN / "runs" / "cost_ledger.jsonl"
 PICK = ["9/20", "4/12", "6/14"]   # 1판 기준선과 같은 3편: 변화 서술 · 긴장 · 이어진 게시물
 RUNS, CAP_USD = 3, 1.0
+WS, OUT_NAME = "WS23", "stability-v2"   # --record-config 를 주면 Q3-흔들림 · stability-c<번호>(상한도 그 갈래에 따로)
 PEOPLE = [{"id": f"P{i}", "name": n, "nicknames": [], "relation": "친구"}
           for i, n in enumerate(json.loads((ROOT / "data/virtual/expected.json").read_text(encoding="utf-8"))["names"], 1)]
 squash = lambda s: re.sub(r"\s+", "", s or "")   # noqa: E731
@@ -41,7 +44,7 @@ def once(rec, n):
     """서비스 run_record_agent 와 같은 길 + meta 표시. → (parse_record 결과 | None, 호출 수, 추정 $, 오류 코드).
     Studio 가 실패해도(시간 초과 등) 부른 횟수 · 비용은 돌려줘 원장에 남긴다."""
     m_obj, table = tools.mask_obj({"title": rec["title"], "text": rec["body"]}, PEOPLE)
-    html = sf.record_html(m_obj["title"], m_obj["text"]).replace("<head>", f'<head><meta name="run" content="ws23-stability-{n}">')
+    html = sf.record_html(m_obj["title"], m_obj["text"]).replace("<head>", f'<head><meta name="run" content="stability-c{config.V8_RECORD_CONFIG_ID}-{date.today()}-{n}">')
     with llm.guard(PEOPLE) as m:
         try:
             return sf.parse_record(tools.unmask_obj(studio.run("record", html), table)), m.calls, m.usd, None
@@ -50,16 +53,16 @@ def once(rec, n):
 
 
 def spent_so_far():
-    """원장에서 이 갈래(WS23)가 이미 쓴 돈. 상한은 갈래 전체에 건다(다시 돌려도 넘지 않게)."""
+    """원장에서 이 갈래(WS)가 이미 쓴 돈. 상한은 갈래 전체에 건다(다시 돌려도 넘지 않게)."""
     if not LEDGER.exists():
         return 0.0
     lines = [json.loads(x) for x in LEDGER.read_text(encoding="utf-8").splitlines() if x.strip()]
-    return sum(d.get("est_usd") or 0 for d in lines if d.get("ws") == "WS23")
+    return sum(d.get("est_usd") or 0 for d in lines if d.get("ws") == WS)
 
 
 def ledger(what, calls, usd):
     with LEDGER.open("a", encoding="utf-8") as f:
-        f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), "ws": "WS23", "what": what,
+        f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), "ws": WS, "what": what,
                             "calls": calls, "est_usd": round(usd, 3)}, ensure_ascii=False) + "\n")
 
 
@@ -103,12 +106,12 @@ def main(dry=False):
                 print("Studio 가 연달아 실패해 멈춤", flush=True)
                 break
             if spent + 2 * config.PRICE_STUDIO_PAGE > CAP_USD:   # 다시 시도까지 2번 값이 남아야 보낸다
-                raise SystemExit(f"비용 상한 ${CAP_USD} — 멈춤(WS23 지금까지 ${spent:.2f})")
+                raise SystemExit(f"비용 상한 ${CAP_USD} — 멈춤({WS} 지금까지 ${spent:.2f})")
             t0 = time.time()
             r, c, usd, err = once(rec, n)
             secs.append(round(time.time() - t0, 1))
             spent, calls = spent + usd, calls + c
-            ledger(f"흔들림 2판 하늘 {rec['day']} {n + 1}/{RUNS}번째(가상 인물, 기록 Agent)" + (f" — 실패 {err}" if err else ""), c, usd)
+            ledger(f"흔들림 설정 #{config.V8_RECORD_CONFIG_ID} 하늘 {rec['day']} {n + 1}/{RUNS}번째(가상 인물, 기록 Agent)" + (f" — 실패 {err}" if err else ""), c, usd)
             streak = streak + 1 if r is None else 0
             if r is None:
                 failed.append(err)
@@ -127,11 +130,14 @@ def main(dry=False):
     ok = [r for r in results if r["runs"]]
     out = {**summarize(ok), "records_failed": len(results) - len(ok), "failed_runs": sum(len(r["failed_runs"]) for r in results),
            "studio_calls": calls, "est_usd": round(spent - start, 3), "detail": results}
-    path = ROOT / "eval/results" / f"{date.today().isoformat()}-stability-v2.json"
+    path = ROOT / "eval/results" / f"{date.today().isoformat()}-{OUT_NAME}.json"
     path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in out.items() if k != "detail"}, ensure_ascii=False, indent=1), "→", path.name)
     return out
 
 
 if __name__ == "__main__":
+    if "--record-config" in sys.argv:
+        config.V8_RECORD_CONFIG_ID = sys.argv[sys.argv.index("--record-config") + 1]
+        WS, OUT_NAME = "Q3-흔들림", f"stability-c{config.V8_RECORD_CONFIG_ID}"
     main(dry="--dry" in sys.argv)

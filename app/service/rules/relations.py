@@ -9,6 +9,8 @@
   같은 주제의 그만둔다는 글이 이어지면 '그만둠'(vow_quit, 새 생각이 그 자체로 다짐이면 새 다짐이라 닫지 않음).
   상태는 states.advance 가 바꾼다.
 - 설명 글은 G3(사람 판정 · 진단)를 거르고 관측 입력의 내부 번호(T1 · P3)를 지운다(gate.clean_text).
+- 시 · 창작 글(글 유형 '창작')의 생각에는 관계를 잇지 않는다(품질 3판, 2026-10-14 동규 '전부 추천대로':
+  설정 #2 틀린 연결 10개 중 7개가 4/26 시에 붙음). 비유를 생각으로 읽어 다른 글과 엮는 것을 막는다.
 """
 
 import re
@@ -23,6 +25,7 @@ PRIORITY = O["relation_priority"]
 # 같은 글 안에서 '이어 쓴 흐름'을 보여 주는 말(cross_domain.same_record의 '그래도 · 그래서 · 때문에'와 같은 무리)
 FLOW = ("그래도", "그래서", "때문에", "그런데", "하지만", "그러니", "그러나", "그렇지만", "그러면서")
 YES = (True, "예", "yes", "true", "1")
+CREATIVE = "창작"   # 글 유형(v8.json record_types, 기록 Agent Classify 갈래)
 POS = "자기평가(긍정)"
 # 그만둔다는 글: 결정한 꼴만(그만두고 싶다 · 그만둘까 는 소망 · 질문이라 아님)
 # ponytail: 낱말 꼴 목록이라 돌려 말한 그만둠은 놓친다. 놓치면 '그만둘래요' 버튼이 받친다.
@@ -48,7 +51,7 @@ def _yes(v):
 
 def filter_relations(cands, thoughts, states=None):
     """cands: [{a, b (또는 past_id · today_id), type, explanation, quoted, author_stated, axis, topic}]
-    thoughts: {id: {record_id, day, kind, certainty, topic, domain, quote, thought, self_change}}
+    thoughts: {id: {record_id, day, kind, certainty, topic, domain, quote, thought, self_change, (record_type)}}
     states: 상태 모델(다짐이 열려 있는지 볼 때). 없으면 모두 열림으로 본다.
     돌려줌: (남은 관계들, 버린 것 [{cand, reason}])."""
     kept, dropped = [], []
@@ -57,6 +60,9 @@ def filter_relations(cands, thoughts, states=None):
         a, b = thoughts.get(c.get("a") or c.get("past_id")), thoughts.get(c.get("b") or c.get("today_id"))
         if rtype not in REL or not a or not b or a is b:
             dropped.append({"cand": c, "reason": "ID · 종류 확인 안 됨"})
+            continue
+        if CREATIVE in (a.get("record_type"), b.get("record_type")):
+            dropped.append({"cand": c, "reason": "시 · 창작 글에는 관계를 잇지 않음"})
             continue
         pa, pb = sorted([a, b], key=lambda t: (t["day"], t["id"]))   # 옛 생각 → 새 생각
         same_topic = key(pa.get("topic")) == key(pb.get("topic"))

@@ -92,5 +92,12 @@
      "cands": [{"a": "a", "b": "b", "type": "바뀜", "explanation": "혼자에서 함께로", "quoted": true, "author_stated": true}], "advance": true},
    "expected": {"kept": [{"type": "바뀜"}], "dropped": 0, "states": {"a>b": {"state": "후보"}}}, "judge": "machine",
    "how": "새 생각이 아직 열린 질문이면 직접 쓴 변화라도 바뀜 후보(확정 아님)",
-   "basis": "PRD §4.3 상태(하늘 4/5 → 4/12 예), 결정 13", "ambiguous": false, "ambiguous_reason": ""}
+   "basis": "PRD §4.3 상태(하늘 4/5 → 4/12 예), 결정 13", "ambiguous": false, "ambiguous_reason": ""},
+  {"id": "rl-14", "persona": "p_student", "category": "relations",
+   "input": {"thoughts": [
+     {"id": "a", "record_id": "r1", "day": "2026-09-01", "kind": "해석", "certainty": "단정", "topic": "혼자와 함께", "domain": "관계", "thought": "혼자 있는 시간이 편하다", "quote": "혼자 있는 시간이 편하다", "record_type": "생각·성찰"},
+     {"id": "b", "record_id": "r2", "day": "2026-09-08", "kind": "해석", "certainty": "단정", "topic": "혼자와 함께", "domain": "관계", "thought": "닫힌 마음이 비에 젖는다", "quote": "닫힌 마음이 비에 젖는다", "record_type": "창작"}],
+     "cands": [{"a": "a", "b": "b", "type": "바뀜", "explanation": "혼자를 편하게 보던 데서 젖는 마음으로", "quoted": true}]},
+   "expected": {"kept": [], "dropped": 1}, "judge": "machine", "how": "rules.filter_relations: 시 · 창작 글(글 유형 '창작')의 생각에는 관계를 잇지 않음",
+   "basis": "품질 3판(2026-10-14 동규 '전부 추천대로'), 설정 #2 틀린 연결 10개 중 7개가 4/26 시", "ambiguous": false, "ambiguous_reason": ""}
 ]

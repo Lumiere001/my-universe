@@ -82,3 +82,61 @@ RECORD_CONFIG_ID=2 · OBSERVE_CONFIG_ID=2(새 백엔드 env 이름은 V8_RECORD_
 - 관측 상태 `처음 쓰는 주제` 의 정의가 v8.json 에 없어 1판 설명을 그대로 쓴다.
 - PRD §5.4 의 관측 `encouragement`(한마디) 칸은 넣지 않았다. 말 걸기는 WS7(Solar)이 만든다.
 - 목록 밖 값 "뜻이 하나면 바로잡기"(예: 확실함 → 단정)는 v8.json 에 바꿈 표가 없어 WS3 rules 가 맡는다. `parse_record` 는 값을 그대로 둔다.
+
+## Studio 에서 내보낸 #2 vs 저장소 v2 (2026-10-14)
+
+동규가 Studio 에서 두 에이전트의 Config #2 를 내보냈다: `agent_configs/Record Agent v2.exported.json`(configId `cfg_WNf2RbyPzFj27XDHh28NXQ`, configVer 2) · `agent_configs/Observe Agent v2.exported.json`(`cfg_MMFH7sjBv2ohtJLS6CgjVE`, configVer 2). 저장소의 생성기 결과(`Record Agent v2.json` · `Observe Agent v2.json`)와 키 하나하나 견줬다.
+
+| 항목 | 저장소 v2(생성기) | 내보낸 #2 |
+| --- | --- | --- |
+| `kind` | studio.workflow-config-draft | 같음 |
+| `schemaVersion` | 3 | **4** |
+| `exportedFrom` | workflowId · workflowName | + `configId` · `configVer: 2` |
+| `exportedAt` | 2026-10-07 | 2026-10-14 |
+| `workflowConfig` 전체 | | **같음** — Parse 설정, Classify 갈래(기록 4 · 관측 6)와 설명, Extract 칸 · 설명 글, 갈래 → Extract 연결, 표 배치까지 한 글자도 다르지 않음 |
+| 모델 칸 | Parse `document-parse`, Classify · Extract(공통 칸 + 갈래별 칸) `""` | 같음(Studio 기본 전용 모델, 화면에 고르는 칸 없음) |
+
+- 읽기: Studio 에 올라가 있는 #2 = 저장소 v2 그대로다. 그러니 2판 숫자(WS2 29편 · WS23 흔들림 · 거짓 연결 17/33)는 이 설정의 결과다. `schemaVersion` 4 는 Studio 내보내기 형식 번호가 오른 것뿐이고 키 구조는 같다.
+- 3판 파일은 이 내보낸 #2 를 틀로 만든다(아래).
+
+## 품질 3판 설정 (2026-10-14, 동규 '전부 추천대로')
+
+설정 #2 거짓 연결(약함 + 틀림) 17/33 = 0.52, 틀림 10개 중 7개가 4/26 시(창작)에 붙은 관계(`docs/eval-v8.md` '설정 #2 거짓 연결 판정'). 3판 후보 규칙 셋을 Studio 설명과 코드 양쪽에 넣었다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `agent_configs/Record Agent v3.json` · `Observe Agent v3.json` | **3판 A**: 2판 + 규칙 ①②③, 모델 칸은 2판처럼 비움(Studio 기본) |
+| `agent_configs/Record Agent v3b.json` · `Observe Agent v3b.json` | **3판 B**: A 와 같고 Classify · Extract 의 `modelName` 만 `solar-pro4`(Classify 칸, Extract 공통 칸, 갈래별 Extract 칸 모두. Parse 는 `document-parse` 그대로) |
+
+틀 = 내보낸 #2(`kind` · `schemaVersion` 4 · `workflowConfig` 키 구조 그대로, 설정 번호 `configId` · `configVer` 만 지움 → 가져오면 새 초안). `tests/test_studio_format.py` 가 내보낸 #2 와 키 구조가 같은지, 모델 칸, 규칙 글을 확인하고, 파일 = 생성기 결과(`uv run --frozen python tools/studio_make_configs.py`)인지도 본다.
+
+| 규칙 | 어디에 | 더한 것 |
+| --- | --- | --- |
+| ① 시 · 창작 글에는 관계를 잇지 않기 | 기록 Classify '창작' 갈래 설명 | "줄을 나눈 짧은 시 한 편(계절 · 비 · 꽃 · 풍경을 노래한 시)도 창작이다." |
+| | 관측 Extract `relations` 설명 | "'글 유형: 창작'이 붙은 생각(시 · 가사 · 소설)은 어떤 생각과도 잇지 않는다(비유는 글쓴이의 생각이 아니다)." 관측 입력 줄에 `글 유형: 창작` 을 붙인다(`studio_format._line`, 창작일 때만) |
+| | **코드(설정과 상관없이)** | `rules.filter_relations`: 글 유형 '창작' 생각에 닿는 관계는 버림("시 · 창작 글에는 관계를 잇지 않음"). 오늘 생각은 기록 Agent Classify 결과, 지난 생각은 `entries.record_type`(`tools.search_past`)에서 받는다. 생각 · 행성은 그대로 남는다 |
+| ② 사건 서술은 생각에 넣지 않기 | 기록 Extract `thoughts` 설명 | "있었던 일만 적은 문장(예: '오늘 시험이 끝났다', '저녁에 친구를 만났다')은 생각이 아니라 사건(events)에 넣는다. 그 일에 대한 해석 · 판단 · 다짐 · 감정이 함께 적혀 있을 때만 생각으로 만든다." 예시는 평가 글(하늘)이 아닌 일반 문장 |
+| ③ 가치 이름을 주제로 쓰지 않기 | 기록 Extract `topic` 설명 | "가치 이름(쓰지 않는다): 자율 / 도전 / 즐거움 / 성취 / 영향력 / 안정 / 규범 / 전통·신앙 / 배려 / 공익." |
+| | 코드 | 이미 있음: `rules.match_topic` 이 '가치 이름' · '빈 주제'를 표시 → `graph.record_clean` 이 '기타 생각' 작은 별로 모음(2026-10-08 결정, `tests/test_graph_flow.py::test_value_or_empty_topic_goes_to_other_star`) |
+
+코드 한 겹 시험: `tests/test_rules_relations.py::test_creative_record_never_links`, `tests/test_graph_flow.py::test_creative_record_gets_no_relations`(가짜 Studio 가 첫 글을 '창작'으로 → 둘째 글에서 그 생각을 지난 생각으로 고르되 관계는 0개, 관측 입력에 '글 유형: 창작'), 골든셋 `rl-14`. 규칙을 끄면 앞의 둘이 실패하고, 지난 생각에 글 유형을 넘기지 않아도 그래프 시험이 실패한다.
+
+### 3판 가져오기 (동규)
+
+위 "Studio 화면 경로"와 같다. 기록 Agent 에 `Record Agent v3.json` → 샘플 Run → 번호 확정, 이어서 `Record Agent v3b.json` → 번호 확정. 관측 Agent 도 `Observe Agent v3.json` · `v3b.json`. 네 번호를 알려 주면 아래 측정을 돈다. v3b 의 `solar-pro4` 는 화면에 고르는 칸이 없어 Studio 가 받아들이는지 모른다 — 확정 뒤 다시 내보내 `modelName` 이 남았는지 확인할 것(지워졌으면 B 는 A 와 같은 설정이다).
+
+### 3판 측정 (유료, 번호를 받은 뒤)
+
+```bash
+uv run --frozen python tools/quality_v3.py dry                                                    # 글 수 · 예상 비용만
+uv run --frozen python tools/quality_v3.py run --record-config 2 --observe-config 2 --tag v2      # 2판 기준선(같은 서비스 길)
+uv run --frozen python tools/quality_v3.py run --record-config <A기록> --observe-config <A관측> --tag v3a
+uv run --frozen python tools/quality_v3.py run --record-config <B기록> --observe-config <B관측> --tag v3b
+uv run --frozen python tools/stability_v2.py --record-config <A기록>                               # 흔들림(B 도 같은 방법)
+uv run --frozen python eval/labels.py links-score eval/results/<날짜>-links-<tag>.csv               # verdict 칸을 채운 뒤
+```
+
+- 길: 하늘 29편을 날짜 순으로 `app/agents/graph`(safety → names → 기록 → 지난 생각 → 관측 → 규칙 → 한마디 → 저장) 그대로, 로컬 Supabase · ChromaDB 의 시험 계정 `e2e@my-universe.test`(돌기 전에 비우고 하늘의 사람을 등록). 운영 DB · Chroma Cloud 를 가리키면 멈춘다. 실패한 글은 '이어서 하기' 한 번만 다시.
+- 결과: `eval/results/<날짜>-quality-<tag>.json` — ① 관계 날것(관측 Agent 가 낸 그대로) · 화면(서비스 규칙을 지난 것)마다 설계 짝 · 종류, 금지 관계 위반, 설계 밖 수, 버린 이유 ② 생각 수 · 종류 · 글 유형 분포, '기타 생각' 수, 주제 수 ③ 첫 실행 실패 · 이어 하기 뒤 실패 · 오류 코드, 글 한 편 · 기록 · 관측 단계 시간(중앙값 · 90%), 호출 수 · 비용(runs 표). `-links-<tag>.csv` — 거짓 연결 판정 양식(설계 밖 다른 글끼리 날것 관계, `service` 칸 = '남음 → 종류' / '버림: 이유'). `links-score` 가 날것 거짓 연결률(2판 0.52 와 같은 잣대)과 화면에 나가는 것만의 거짓 연결률(`false_rate_shown`)을 함께 낸다.
+- 2판 0.52 는 WS2 실행기(지난 생각을 '같은 주제 먼저 + 최근 순'으로 고름) 숫자라 서비스 길과 바로 견줄 수 없다 → 같은 명령으로 `v2` 기준선을 함께 낸다.
+- **비용(판당):** Studio 58번(29편 × 기록 · 관측, 생각이 없는 글은 관측 없음) ≈ $2.90 + Solar 위기 · 한마디 · 임베딩 ≈ $0.06 → **약 $3.0**(다시 시도는 번당 $0.05, 판 상한 $4, 원장 누적 $45 넘으면 멈춤). 흔들림은 설정마다 Studio 9번 ≈ $0.45. v2 기준선 · v3a · v3b 세 판 + 흔들림 둘 ≈ $9.9(원장 지금 $6.98). 글마다 원장 `runs/cost_ledger.jsonl` 에 한 줄(갈래 `Q3`, 흔들림은 `Q3-흔들림`).

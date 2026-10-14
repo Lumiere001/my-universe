@@ -216,6 +216,7 @@ def record_clean(state, ctx):
             today.append({**{k: t[k] for k in ("thought", "kind", "certainty", "value", "quote", "self_change", "flags",
                                                "original")},
                           "topic": name, "domain": domain, "id": diary.thought_id(ctx.entry_id, i), "record_id": ctx.entry_id,
+                          "record_type": rec["record_type"],   # 시 · 창작이면 관계를 잇지 않는다(rules.filter_relations)
                           "day": state["day"], "written_at": state["written_at"], "position": i, "star_id": stars[name],
                           "sun_id": sun_id,   # 기록 Agent 의 사람 칸 + 생각 · 인용에 이름이 그대로 나온 사람
                           "people": sorted({people_id[n] for n in t["people"] if n in people_id}

@@ -1,9 +1,12 @@
-"""Studio 기록 · 관측 Agent 설정 2판을 v8 온톨로지에서 만든다 → agent_configs/* v2.json
+"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b.json
 
     uv run --frozen python tools/studio_make_configs.py
 
-1판 파일(Studio 가 내보낸 모양, studio.workflow-config-draft)을 틀로 쓰고
+2판: 1판 파일(Studio 가 내보낸 모양, studio.workflow-config-draft)을 틀로 쓰고
 Classify 갈래 · Extract 칸 설명만 v8.json 에서 다시 채운다. 목록 · 정의는 여기 적지 않는다.
+3판(품질 3판, 2026-10-14 동규 '전부 추천대로'): Studio 가 내보낸 #2(`* v2.exported.json`, schemaVersion 4)를 틀로
+2판 설명에 규칙 셋(① 시 · 창작 글에는 관계를 잇지 않기 ② 사건 서술은 생각에 넣지 않기 ③ 가치 이름을 주제로 쓰지 않기)을 더한다.
+v3 = 모델 칸 비움(Studio 기본 전용 모델, 2판과 같음), v3b = v3 + Classify · Extract 모델 solar-pro4.
 """
 import copy
 import json
@@ -132,9 +135,10 @@ def layout(props):
     return {"version": 1, "columns": cols}
 
 
-def agent(v1_file, categories, props, prefix):
-    """1판 파일을 틀로 갈래 · 칸만 바꾼다. 1판 설정 번호(configId · configVer)는 지운다."""
-    cfg = copy.deepcopy(json.loads((OUT / v1_file).read_text(encoding="utf-8")))
+def agent(template, categories, props, prefix, model=""):
+    """Studio 가 내보낸 파일을 틀로 갈래 · 칸만 바꾼다. 틀의 설정 번호(configId · configVer)는 지운다(덮어쓰지 않게).
+    model: Classify · Extract 단계 모델 이름(빈 문자열 = Studio 기본)."""
+    cfg = copy.deepcopy(json.loads((OUT / template).read_text(encoding="utf-8")))
     cfg["exportedAt"] = datetime.now(timezone.utc).isoformat()
     for k in ("configId", "configVer"):
         cfg["exportedFrom"].pop(k, None)
@@ -150,6 +154,9 @@ def agent(v1_file, categories, props, prefix):
         s["schemaLayout"] = layout(props)
         schemas.append(s)
     w["informationExtractConfiguration"].update(schemas=schemas, categorySchemaMapping=names)
+    if model:
+        for c in [w["documentClassifyConfiguration"], w["informationExtractConfiguration"], *schemas]:
+            c["modelName"] = model
     edges = [e for e in w["pipelineEdges"] if e["source"]["nodeType"] == "parse"]
     edges += [{"id": f"e{i + 1}", "source": {"nodeType": "classify", "name": "Classify-1"},
                "target": {"nodeType": "extract", "name": names[c]}, "condition": {"conditionName": c}}
@@ -158,9 +165,37 @@ def agent(v1_file, categories, props, prefix):
     return cfg
 
 
+# ---------------- 3판: 2판 + 규칙 셋 ----------------
+V3_CREATIVE = "줄을 나눈 짧은 시 한 편(계절 · 비 · 꽃 · 풍경을 노래한 시)도 창작이다."                       # ①
+V3_EVENTS = ("있었던 일만 적은 문장(예: '오늘 시험이 끝났다', '저녁에 친구를 만났다')은 생각이 아니라 사건(events)에 넣는다. "
+             "그 일에 대한 해석 · 판단 · 다짐 · 감정이 함께 적혀 있을 때만 생각으로 만든다.")                     # ②
+V3_VALUES = f"가치 이름(쓰지 않는다): {' / '.join(v['name'] for v in O['values'])}."                          # ③
+V3_NO_LINK = "'글 유형: 창작'이 붙은 생각(시 · 가사 · 소설)은 어떤 생각과도 잇지 않는다(비유는 글쓴이의 생각이 아니다)."   # ①
+
+
+def _add(props, path, text):
+    """props 의 한 칸 설명 끝에 text 를 붙인 새 props. path: ('thoughts',) 는 표 설명, ('thoughts', 'topic') 은 표 안 칸."""
+    props = copy.deepcopy(props)
+    node = props[path[0]]
+    node = node["items"]["properties"][path[1]] if len(path) > 1 else node
+    node["description"] += " " + text
+    return props
+
+
+RECORD_TYPES_V3 = [(n, f"{d} {V3_CREATIVE}" if n == "창작" else d) for n, d in RECORD_TYPES]
+RECORD_PROPS_V3 = _add(_add(RECORD_PROPS, ("thoughts",), V3_EVENTS), ("thoughts", "topic"), V3_VALUES)
+OBS_PROPS_V3 = _add(OBS_PROPS, ("relations",), V3_NO_LINK)
+
+
 def build():
-    return {"Record Agent v2.json": agent("Record Agent.json", RECORD_TYPES, RECORD_PROPS, "Extract_Record"),
-            "Observe Agent v2.json": agent("Observe Agent.json", observe_states(), OBS_PROPS, "Extract_Observe")}
+    out = {"Record Agent v2.json": agent("Record Agent.json", RECORD_TYPES, RECORD_PROPS, "Extract_Record"),
+           "Observe Agent v2.json": agent("Observe Agent.json", observe_states(), OBS_PROPS, "Extract_Observe")}
+    for v, model in (("v3", ""), ("v3b", "solar-pro4")):
+        out[f"Record Agent {v}.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V3,
+                                              "Extract_Record", model)
+        out[f"Observe Agent {v}.json"] = agent("Observe Agent v2.exported.json", observe_states(), OBS_PROPS_V3,
+                                               "Extract_Observe", model)
+    return out
 
 
 if __name__ == "__main__":

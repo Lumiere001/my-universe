@@ -29,6 +29,7 @@ class FakeUpstage:
     def __init__(self):
         self.sent, self.store, self.calls = [], {}, {"record": 0, "observe": 0, "chat": 0, "embed": 0}
         self.fail_observe = 0
+        self.classify = "생각·성찰"   # 기록 Agent Classify 갈래(글 유형)
         self.crisis_llm = '{"crisis": false, "reason": "평범한 하루"}'   # 위기 2차 판정 답(예외면 실패)
         self.deleted = []
         self.files = _o(create=self._file, delete=self.deleted.append)
@@ -52,7 +53,7 @@ class FakeUpstage:
             self.fail_observe -= 1
             return _o(status="failed", output=[], id="j")
         data = self._record(html) if kind == "record" else self._observe(html)
-        out = [_o(content=[_o(text=json.dumps({"elements": [{"page": 1}]}))]), _o(content=[_o(text="생각·성찰")]),
+        out = [_o(content=[_o(text=json.dumps({"elements": [{"page": 1}]}))]), _o(content=[_o(text=self.classify)]),
                _o(content=[_o(text=json.dumps(data, ensure_ascii=False))])]
         return _o(status="completed", output=out, id="j")
 
@@ -213,6 +214,18 @@ def test_value_or_empty_topic_goes_to_other_star(env, monkeypatch):
     assert not [h for h in env.fake.sent if f"<li>{graph.OTHER_TOPIC}</li>" in h]
 
 
+def test_creative_record_gets_no_relations(env):
+    """품질 3판: 시 · 창작 글(Classify '창작')의 생각은 다른 글과 잇지 않는다. 지난 생각으로는 고르되 관계는 버리고,
+    관측 입력에 '글 유형: 창작'을 적어 Agent 도 알게 한다."""
+    env.fake.classify = "창작"
+    e1, _, r1 = write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    env.fake.classify = "생각·성찰"
+    _, _, r2 = write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
+    assert r1["record_type"] == "창작" and r1["thoughts"]                     # 생각 · 행성은 그대로 남음
+    assert r2["past"] and r2["past"][0]["entry_id"] == e1 and r2["relations"] == []
+    assert any("글 유형: 창작" in h for h in env.fake.sent if "관측 입력" in h)
+
+
 def test_resume_skips_finished_steps(env):
     env.fake.fail_observe = 2          # 관측 Agent 가 두 번(다시 시도 포함) 실패 → 기록 failed
     eid = diary.new_id("e")
@@ -296,3 +309,30 @@ def test_mood_marks_only_inside_enc(env):
     with env.repo.session(U1) as s:
         assert [e["crisis"] for e in diary.entries(s)].count(True) == 1
         assert {views.entry_result(s, e["id"])["message"]["mode"] for e in diary.entries(s)} == {"comfort", "normal"}
+
+
+def test_quality_tool_measures_service_path(env):
+    """품질 3판 측정 도구(tools/quality_v3.py)가 서비스 길을 끝까지 돌고 생각 · 관계(날것 + 규칙 판정) · 비용 · 판정 양식을 낸다.
+    유료로 29편을 돌리기 전에 끝에서 깨지지 않는지 가짜 Studio 로 본다."""
+    import importlib.util
+    from pathlib import Path
+    from app.agents import tools
+    spec = importlib.util.spec_from_file_location("quality_v3", Path(__file__).resolve().parents[1] / "tools/quality_v3.py")
+    q = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(q)
+    with env.repo.session(U1) as s:
+        for n in NAMES:
+            diary.add_person(s, n, relation="친구")
+    recs = [{"id": f"R{i}", "day": w[:10], "written_at": w, "title": t, "body": b} for i, ((t, b), w) in
+            enumerate([(DAY1, "2026-10-01T22:00:00+09:00"), (DAY2, "2026-10-03T22:00:00+09:00")])]
+    lines, observe = [], tools.run_observe_agent
+    res, rows = q.measure(env.repo, U1, recs, "t", ledger=lambda *a: lines.append(a))
+    assert res["done"] == 2 and res["failed_first_run"] == 0 and len(lines) == 2 and res["est_usd"] > 0.2
+    assert res["thoughts"] == sum(len(r["thoughts"]) for r in res["detail"]) > 0 and "다짐" in res["kinds"]
+    assert res["record_types"] == {"생각·성찰": 2}
+    assert res["detail"][1]["relations_raw"][0]["service"] == "남음 → 이어짐"
+    assert res["relations_raw"]["relations_cross_record"] == res["relations_shown"]["relations_cross_record"] == 1
+    assert [(r["from_day"], r["to_day"], r["service"]) for r in rows] == [("2026-10-01", "2026-10-03", "남음 → 이어짐")]
+    from app.service.rules import filter_relations
+    assert tools.run_observe_agent is observe and graph.filter_relations is filter_relations   # 엿보기를 풀었음
+    assert not [n for n in NAMES if n in "\n".join(env.fake.sent)]

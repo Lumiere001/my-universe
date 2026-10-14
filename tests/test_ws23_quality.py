@@ -114,6 +114,10 @@ def test_links_score_and_committed_judgement():
     s = labels.links_score([{"type": "바뀜", "verdict": "틀림"}, {"type": "이어짐", "verdict": "맞음"},
                             {"type": "해소", "verdict": "약함"}, {"type": "이어짐", "verdict": ""}])
     assert s["judged"] == 3 and s["false_rate"] == round(2 / 3, 3) and s["false_by_type"] == {"바뀜": 1, "해소": 1}
+    shown = labels.links_score([{"type": "바뀜", "verdict": "틀림", "service": "남음 → 바뀜"},
+                                {"type": "이어짐", "verdict": "맞음", "service": "남음 → 이어짐"},
+                                {"type": "해소", "verdict": "틀림", "service": "버림: 시 · 창작 글에는 관계를 잇지 않음"}])
+    assert shown["false_rate"] == round(2 / 3, 3) and shown["shown"] == 2 and shown["false_rate_shown"] == 0.5   # 품질 3판
     done = labels.links_score(labels.read_csv(ROOT / "eval/answers/links_v2.csv"))
     assert done["off_design"] == done["judged"] == 33 and done["false_rate"] is not None
 

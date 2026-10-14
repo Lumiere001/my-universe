@@ -314,7 +314,7 @@ uv run --frozen python eval/labels.py review-form eval/results/<날짜>-all-live
 - 틀림 10개 중 7개가 4/26 시(비 · 꽃, 창작)에 붙은 관계(혼자 있는 시간 · 건강 · 배움). 시 · 창작 글을 다른 생각과 잇지 않는 규칙이 3판 후보. 나머지: 책임 다짐을 '좋은 리더는?' 질문의 해소로 읽음(2개), 비교 · 충분함 글을 혼자 · 함께 바뀜으로 읽음.
 - 종류별 거짓: 바뀜 5 · 해소 4 · 어긋남 4 · 이어짐 3 · 긴장 1. 바뀜 · 해소 · 어긋남(판단형)이 많다.
 - 주의: 2판 실행기는 지난 생각을 '같은 세부 주제 먼저 + 최근 순'으로 골랐고(WS2 `ponytail:`), 서비스는 WS3 `pick_past` + `filter_relations`(판단형은 같은 주제 안에서만, 다른 날은 점선 + 사용자 확인)를 한 번 더 거친다. 그래서 이 비율은 "관측 Agent 날것"의 거짓 연결이고, 서비스 화면에 그대로 나가는 비율은 이보다 낮다. 서비스 길로 다시 재려면 29편 × (기록 + 관측) ≈ $2.9.
-- **Studio 에서 내보낸 #2 설정 파일 보관:** 자리만 둔다. 동규가 Studio 에서 두 에이전트의 Config #2 를 내보내(export) `agent_configs/Record Agent v2.exported.json` · `agent_configs/Observe Agent v2.exported.json` 으로 넣으면, `agent_configs/` 의 생성기 결과(`tools/studio_make_configs.py`)와 `diff` 로 비교해 이 절에 적는다(아직 내보내지 않음).
+- **Studio 에서 내보낸 #2 설정 파일(2026-10-14):** `agent_configs/Record Agent v2.exported.json` · `Observe Agent v2.exported.json`. 생성기 결과와 `workflowConfig` 가 한 글자도 다르지 않다(`schemaVersion` 3 → 4 · 설정 번호만 다름) → `docs/studio-v2-compare.md` '내보낸 #2 vs 저장소 v2'. 3판 후보 규칙 셋은 같은 문서 '품질 3판 설정'(설정 A · B 파일, 코드 한 겹 `rules.filter_relations` 창작 글 관계 버림, 측정 `tools/quality_v3.py`).
 
 ## E7 생각 종류 정확도 · E6 가치 일치율
 

@@ -137,3 +137,13 @@ def test_unknown_ids_or_types_dropped():
     a = T("a", "2026-05-10", "해석", "x", "관계")
     kept, dropped = run([rel("a", "zz", "이어짐"), rel("a", "a", "이어짐"), {"a": "a", "b": "a", "type": "우정"}], a)
     assert kept == [] and len(dropped) == 3
+
+
+def test_creative_record_never_links():
+    """품질 3판(2026-10-14): 시 · 창작 글의 생각은 어느 쪽이든 관계를 잇지 않는다(설정 #2 틀린 연결 7/10 이 4/26 시)."""
+    poem = T("p", "2026-04-26", "해석", "혼자 있는 시간", "관계", record_type="창작", quote="닫힌 마음이 젖는다")
+    a = T("a", "2026-04-05", "해석", "혼자 있는 시간", "관계", record_type="생각·성찰")
+    b = T("b", "2026-05-02", "신념·원칙", "혼자 있는 시간", "관계", record_type="생각·성찰")
+    kept, dropped = run([rel("a", "p", "바뀜"), rel("p", "b", "이어짐"), rel("a", "b", "이어짐")], a, b, poem)
+    assert [(k["from"], k["to"]) for k in kept] == [("a", "b")]
+    assert [d["reason"] for d in dropped] == ["시 · 창작 글에는 관계를 잇지 않음"] * 2

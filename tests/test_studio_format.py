@@ -45,6 +45,37 @@ def test_v2_keeps_v1_shape_and_drops_config_number():
         assert len(cols) == len(set(cols))
 
 
+def _keys(o, path=""):
+    """키 구조(값 · 설명 글은 빼고)."""
+    if isinstance(o, dict):
+        return {f"{path}.{k}" for k in o} | {x for k, v in o.items() for x in _keys(v, f"{path}.{k}")}
+    if isinstance(o, list):
+        return {x for v in o for x in _keys(v, f"{path}[]")}
+    return set()
+
+
+def test_v3_follows_exported_v2_shape_and_adds_rules():
+    """품질 3판: Studio 가 내보낸 #2 와 키 구조가 같고(설정 번호만 없음) 규칙 ① ② ③ 이 설명에 들어감. v3b 는 모델만 다름."""
+    for agent in ("Record", "Observe"):
+        ex = _cfg(f"{agent} Agent v2.exported.json")
+        ex["exportedFrom"].pop("configId"), ex["exportedFrom"].pop("configVer")
+        for v, model in (("v3", ""), ("v3b", "solar-pro4")):
+            c = _cfg(f"{agent} Agent {v}.json")
+            assert (c["kind"], c["schemaVersion"]) == (ex["kind"], ex["schemaVersion"]) and _keys(c) == _keys(ex), (agent, v)
+            w = c["workflowConfig"]
+            models = {w["documentClassifyConfiguration"]["modelName"], w["informationExtractConfiguration"]["modelName"],
+                      *(x["modelName"] for x in w["informationExtractConfiguration"]["schemas"])}
+            assert models == {model} and w["documentParseConfiguration"]["modelName"] == "document-parse"
+    rec = _props(_cfg("Record Agent v3.json"))["thoughts"]
+    assert "사건(events)에 넣는다" in rec["description"]                                         # ②
+    assert all(v["name"] in rec["items"]["properties"]["topic"]["description"] for v in load()["values"])   # ③
+    cats = _cfg("Record Agent v3.json")["workflowConfig"]["documentClassifyConfiguration"]["schema"]["json_schema"]["schema"]["oneOf"]
+    assert "짧은 시 한 편" in next(x["description"] for x in cats if x["const"] == "창작")         # ①
+    assert "글 유형: 창작" in _props(_cfg("Observe Agent v3.json"))["relations"]["description"]     # ①
+    assert "글 유형: 창작" in sf.observe_html("d", [{"id": "x", "topic": "봄", "kind": "해석", "certainty": "단정",
+                                                    "quote": "q", "record_type": "창작"}], [])[0]
+
+
 def test_record_v2_fields():
     p = _props(_cfg("Record Agent v2.json"))
     assert set(p) == {"summary", "addressee", "events", "thoughts"}   # 글 정보 3칸 (계기 · 기간 · 참고 · 관계 삭제)

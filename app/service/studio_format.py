@@ -91,6 +91,7 @@ def parse_record(data):
 def _line(local_id, t, with_day):
     bits = [local_id] + ([t["day"]] if with_day else [])
     bits += [f"주제: {t['topic']}"] + ([f"해: {t['domain']}"] if t.get("domain") else [])
+    bits += ([f"글 유형: {t['record_type']}"] if t.get("record_type") == "창작" else [])   # 관측 3판: 시 · 창작 생각은 잇지 않음
     bits += [t["kind"], t["certainty"], f"원문: \"{t['quote']}\""]
     if t.get("self_change"):
         bits.append(f"스스로 쓴 변화: {t['self_change']}")
@@ -99,7 +100,7 @@ def _line(local_id, t, with_day):
 
 def observe_html(today_day, today, past, aspiration=None):
     """오늘 생각 · 고른 지난 생각(관련 높은 것이 앞) · 되고 싶은 모습 → (HTML, {로컬 ID: 생각 id}).
-    생각 dict: id, topic, kind, certainty, quote, (day, domain, self_change). aspiration: {"said", "value"} 또는 None."""
+    생각 dict: id, topic, kind, certainty, quote, (day, domain, self_change, record_type). aspiration: {"said", "value"} 또는 None."""
     ids = {f"T{i}": t["id"] for i, t in enumerate(today, 1)} | {f"P{i}": p["id"] for i, p in enumerate(past, 1)}
     rows_t = "".join(_line(f"T{i}", t, False) for i, t in enumerate(today, 1))
     rows_p = "".join(_line(f"P{i}", p, True) for i, p in enumerate(past, 1)) or "<li>없음</li>"

@@ -1,0 +1,684 @@
+{
+  "kind": "studio.workflow-config-draft",
+  "schemaVersion": 4,
+  "exportedAt": "2026-10-14T00:02:11.410Z",
+  "exportedFrom": {
+    "workflowId": "agt_gomJkjwWbZ7LkLPh2LSdtC",
+    "workflowName": "나의 우주 기록 Agent",
+    "configId": "cfg_WNf2RbyPzFj27XDHh28NXQ",
+    "configVer": 2
+  },
+  "workflowConfig": {
+    "workflow_name": "나의 우주 기록 Agent",
+    "pipelineType": "classify-extract",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "standard",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": false,
+      "outputFormats": [
+        "html",
+        "text"
+      ],
+      "base64Encoding": [
+        "figure"
+      ]
+    },
+    "documentClassifyConfiguration": {
+      "modelName": "",
+      "schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "document-classify",
+          "schema": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "경험 기록",
+                "description": "있었던 일과 일정을 주로 적은 글. 사건 · 장소 · 사람 위주이고, 생각이나 판단은 거의 없다."
+              },
+              {
+                "const": "생각·성찰",
+                "description": "생각, 깨달음, 신념, 질문, 다짐, 반성, 감정을 다루는 글. 말씀 · 책 묵상과 기도, 회고도 여기에 들어간다. 경험이 함께 있어도 생각을 다루는 부분이 있으면 이 유형이다."
+              },
+              {
+                "const": "창작",
+                "description": "시, 노래 가사, 짧은 소설처럼 비유와 형식을 갖춘 창작물이 중심인 글."
+              },
+              {
+                "const": "기타",
+                "description": "공지, 부탁, 한 줄 글, 사진 설명처럼 위 셋에 들지 않는 글."
+              }
+            ]
+          }
+        }
+      }
+    },
+    "informationExtractConfiguration": {
+      "modelName": "",
+      "schemas": [
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_1",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체 1~2문장. 사람을 평가 · 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. '주님, …'처럼 직접 말할 때만 신, 그 밖의 묵상은 나. 말 걸기에서 기도 · 편지에 맞게 받는 데 쓴다. 다음 중 하나: 나=나에게 쓰거나 대상 없이 쓴 글(대부분의 일기, 묵상 포함). 특정 인물=편지처럼 특정 사람에게 말을 거는 글. 신=기도처럼 신에게 직접 말을 거는 글."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일, 사실만. 짧은 구절 하나씩."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석=무언가의 의미를 읽어 냄. 경계: 일반적인 주장으로 세우면 신념·원칙. 특정 일에 대한 의미 읽기면 해석. 신념·원칙=일반적인 주장을 세움. 경계: '~해야 한다', '사람은 ~다'처럼 일반화하면 신념·원칙. 앞으로 내가 하겠다는 약속이면 다짐. 질문=답을 못 낸 물음. 경계: 물음표가 없어도 답을 못 낸 고민('어느 쪽이 맞는지 모르겠다')이면 질문. 확신은 대개 판단 보류. 다짐=앞으로 하겠다고 스스로 약속함. 지켜짐 · 어긋남을 따진다. 경계: 스스로 하겠다는 약속이 없으면 소망. '~하고 싶다'는 행동 계획이 함께 있을 때만 다짐. 소망=이루어지길 바라지만 스스로 하겠다고 약속하지는 않음. 간구 기도 포함. 지켜짐 · 어긋남을 따지지 않는다. 경계: '~면 좋겠다', '~되길'은 소망. 내가 할 행동을 약속하면 다짐. 자기평가(부정)=기준에 비춰 나를 낮게 평가함(반성). 어긋남 규칙에 쓴다. 경계: 기준에 비춘 자기 판단이 섞인 감정('또 미뤄서 부끄럽다')은 감정이 아니라 자기평가(부정). 자기평가(긍정)=기준에 비춰 나를 인정함. 칭찬 · 인정의 재료로 쓴다. 경계: 기분 좋음만 있으면 감정, '잘했다 · 해냈다'처럼 기준에 비춘 인정이면 자기평가(긍정). 감정=평가 없이 마음 상태만 드러냄. 고마움이면 '감사' 표시를 붙인다. 경계: 기준에 비춘 자기 판단이 섞이면 자기평가. 감정끼리는 바뀜 · 해소가 아니다. 기타=위 어디에도 맞지 않음. AI가 쓴 원래 말을 함께 저장하고, 자주 나오는 말은 새 종류 후보로 올린다. 경계: 다른 종류로 뜻이 하나로 정해지면 그 종류로 바로잡고, 애매할 때만 기타. 고마움을 드러낸 감정이면 '감정(감사)'로 쓴다. 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "얼마나 굳은 생각인지. '정말 · 진짜 · 확실히' 같은 강조어가 아니라 문장 전체의 뜻으로 판단한다. 다음 중 하나: 단정=결론을 내린 생각. 고민 중=한쪽으로 기울었지만 아직 흔들리는 생각. 판단 보류=아직 결론을 내리지 못함. 물음표 없는 미정('잘 모르겠다')도 포함한다(v7의 '질문'에서 이름 바꿈). 강조어('정말 · 진짜 · 확실히')로 단정을 매기지 않는다. 문장 전체의 뜻으로 판단한다. 확신은 3단계를 넘지 않는다(3단계 이하라야 사람끼리도 일관되게 매긴다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치(values 뜻풀이). 드러나지 않으면 비운다. 다음 중 하나: 자율=스스로 생각하고 선택함, 내 방식대로 도전=새로움 · 자극 · 모험 즐거움=기쁨 · 즐김 · 감각의 만족 성취=능력을 보여 인정받음, 잘해 냄 영향력=지위 · 영향력 · 사람과 자원을 움직임 안정=안전 · 안정 · 질서 · 조화 규범=규칙과 기대를 지킴, 남에게 해 끼치지 않음 전통·신앙=전통 · 종교적 관습과 믿음을 존중하고 따름 배려=가까운 사람(가족 · 친구 · 공동체)의 안녕 공익=모든 사람과 자연의 안녕, 정의 · 평등 가치는 드러나지 않으면 비운다(억지로 고르지 않는다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "근거가 되는 일기 문장. 고치지 않고 글자 그대로. 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 바뀌었다고 쓴 경우만 '예전 → 지금'. 실선의 근거. 형식: '예전 생각 → 지금 생각'. 없으면 빈 문자열."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "세부 주제는 해 이름보다 한 단계 구체적인 말이다(예: 관계 해의 '혼자와 함께', '남과 비교', '부모님'). 해 이름(삶의 영역 이름 · 기준 축 이름)은 세부 주제로 쓰지 않는다. 한 번의 행동(예: '6시 기상')은 주제가 아니다. 입력에 그 사용자의 기존 작은 별 이름 목록을 주고, 맞는 이름이 있으면 그 이름을 다시 쓴다. 없을 때만 새 이름. 해 이름(쓰지 않는다): 삶의 성취 / 관계 / 공동체 / 건강 / 생활 수준 / 미래 안정 / 안전 / 영성·신앙 / 여가. 입력의 '참고: 기존 작은 별' 목록에 뜻이 맞는 이름이 있으면 글자 그대로 다시 쓴다."
+                      },
+                      "people": {
+                        "type": "string",
+                        "description": "이 생각에 나오는 사람을 글에 쓰인 이름 · 호칭 그대로(예: 사람1, 엄마). 여러 명이면 쉼표로 나눈다. 없으면 빈 문자열. 사람을 평가하지 않는다."
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. '참고: 기존 작은 별' 절은 일기 내용이 아니므로 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "people",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_2",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체 1~2문장. 사람을 평가 · 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. '주님, …'처럼 직접 말할 때만 신, 그 밖의 묵상은 나. 말 걸기에서 기도 · 편지에 맞게 받는 데 쓴다. 다음 중 하나: 나=나에게 쓰거나 대상 없이 쓴 글(대부분의 일기, 묵상 포함). 특정 인물=편지처럼 특정 사람에게 말을 거는 글. 신=기도처럼 신에게 직접 말을 거는 글."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일, 사실만. 짧은 구절 하나씩."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석=무언가의 의미를 읽어 냄. 경계: 일반적인 주장으로 세우면 신념·원칙. 특정 일에 대한 의미 읽기면 해석. 신념·원칙=일반적인 주장을 세움. 경계: '~해야 한다', '사람은 ~다'처럼 일반화하면 신념·원칙. 앞으로 내가 하겠다는 약속이면 다짐. 질문=답을 못 낸 물음. 경계: 물음표가 없어도 답을 못 낸 고민('어느 쪽이 맞는지 모르겠다')이면 질문. 확신은 대개 판단 보류. 다짐=앞으로 하겠다고 스스로 약속함. 지켜짐 · 어긋남을 따진다. 경계: 스스로 하겠다는 약속이 없으면 소망. '~하고 싶다'는 행동 계획이 함께 있을 때만 다짐. 소망=이루어지길 바라지만 스스로 하겠다고 약속하지는 않음. 간구 기도 포함. 지켜짐 · 어긋남을 따지지 않는다. 경계: '~면 좋겠다', '~되길'은 소망. 내가 할 행동을 약속하면 다짐. 자기평가(부정)=기준에 비춰 나를 낮게 평가함(반성). 어긋남 규칙에 쓴다. 경계: 기준에 비춘 자기 판단이 섞인 감정('또 미뤄서 부끄럽다')은 감정이 아니라 자기평가(부정). 자기평가(긍정)=기준에 비춰 나를 인정함. 칭찬 · 인정의 재료로 쓴다. 경계: 기분 좋음만 있으면 감정, '잘했다 · 해냈다'처럼 기준에 비춘 인정이면 자기평가(긍정). 감정=평가 없이 마음 상태만 드러냄. 고마움이면 '감사' 표시를 붙인다. 경계: 기준에 비춘 자기 판단이 섞이면 자기평가. 감정끼리는 바뀜 · 해소가 아니다. 기타=위 어디에도 맞지 않음. AI가 쓴 원래 말을 함께 저장하고, 자주 나오는 말은 새 종류 후보로 올린다. 경계: 다른 종류로 뜻이 하나로 정해지면 그 종류로 바로잡고, 애매할 때만 기타. 고마움을 드러낸 감정이면 '감정(감사)'로 쓴다. 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "얼마나 굳은 생각인지. '정말 · 진짜 · 확실히' 같은 강조어가 아니라 문장 전체의 뜻으로 판단한다. 다음 중 하나: 단정=결론을 내린 생각. 고민 중=한쪽으로 기울었지만 아직 흔들리는 생각. 판단 보류=아직 결론을 내리지 못함. 물음표 없는 미정('잘 모르겠다')도 포함한다(v7의 '질문'에서 이름 바꿈). 강조어('정말 · 진짜 · 확실히')로 단정을 매기지 않는다. 문장 전체의 뜻으로 판단한다. 확신은 3단계를 넘지 않는다(3단계 이하라야 사람끼리도 일관되게 매긴다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치(values 뜻풀이). 드러나지 않으면 비운다. 다음 중 하나: 자율=스스로 생각하고 선택함, 내 방식대로 도전=새로움 · 자극 · 모험 즐거움=기쁨 · 즐김 · 감각의 만족 성취=능력을 보여 인정받음, 잘해 냄 영향력=지위 · 영향력 · 사람과 자원을 움직임 안정=안전 · 안정 · 질서 · 조화 규범=규칙과 기대를 지킴, 남에게 해 끼치지 않음 전통·신앙=전통 · 종교적 관습과 믿음을 존중하고 따름 배려=가까운 사람(가족 · 친구 · 공동체)의 안녕 공익=모든 사람과 자연의 안녕, 정의 · 평등 가치는 드러나지 않으면 비운다(억지로 고르지 않는다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "근거가 되는 일기 문장. 고치지 않고 글자 그대로. 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 바뀌었다고 쓴 경우만 '예전 → 지금'. 실선의 근거. 형식: '예전 생각 → 지금 생각'. 없으면 빈 문자열."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "세부 주제는 해 이름보다 한 단계 구체적인 말이다(예: 관계 해의 '혼자와 함께', '남과 비교', '부모님'). 해 이름(삶의 영역 이름 · 기준 축 이름)은 세부 주제로 쓰지 않는다. 한 번의 행동(예: '6시 기상')은 주제가 아니다. 입력에 그 사용자의 기존 작은 별 이름 목록을 주고, 맞는 이름이 있으면 그 이름을 다시 쓴다. 없을 때만 새 이름. 해 이름(쓰지 않는다): 삶의 성취 / 관계 / 공동체 / 건강 / 생활 수준 / 미래 안정 / 안전 / 영성·신앙 / 여가. 입력의 '참고: 기존 작은 별' 목록에 뜻이 맞는 이름이 있으면 글자 그대로 다시 쓴다."
+                      },
+                      "people": {
+                        "type": "string",
+                        "description": "이 생각에 나오는 사람을 글에 쓰인 이름 · 호칭 그대로(예: 사람1, 엄마). 여러 명이면 쉼표로 나눈다. 없으면 빈 문자열. 사람을 평가하지 않는다."
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. '참고: 기존 작은 별' 절은 일기 내용이 아니므로 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "people",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_3",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체 1~2문장. 사람을 평가 · 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. '주님, …'처럼 직접 말할 때만 신, 그 밖의 묵상은 나. 말 걸기에서 기도 · 편지에 맞게 받는 데 쓴다. 다음 중 하나: 나=나에게 쓰거나 대상 없이 쓴 글(대부분의 일기, 묵상 포함). 특정 인물=편지처럼 특정 사람에게 말을 거는 글. 신=기도처럼 신에게 직접 말을 거는 글."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일, 사실만. 짧은 구절 하나씩."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석=무언가의 의미를 읽어 냄. 경계: 일반적인 주장으로 세우면 신념·원칙. 특정 일에 대한 의미 읽기면 해석. 신념·원칙=일반적인 주장을 세움. 경계: '~해야 한다', '사람은 ~다'처럼 일반화하면 신념·원칙. 앞으로 내가 하겠다는 약속이면 다짐. 질문=답을 못 낸 물음. 경계: 물음표가 없어도 답을 못 낸 고민('어느 쪽이 맞는지 모르겠다')이면 질문. 확신은 대개 판단 보류. 다짐=앞으로 하겠다고 스스로 약속함. 지켜짐 · 어긋남을 따진다. 경계: 스스로 하겠다는 약속이 없으면 소망. '~하고 싶다'는 행동 계획이 함께 있을 때만 다짐. 소망=이루어지길 바라지만 스스로 하겠다고 약속하지는 않음. 간구 기도 포함. 지켜짐 · 어긋남을 따지지 않는다. 경계: '~면 좋겠다', '~되길'은 소망. 내가 할 행동을 약속하면 다짐. 자기평가(부정)=기준에 비춰 나를 낮게 평가함(반성). 어긋남 규칙에 쓴다. 경계: 기준에 비춘 자기 판단이 섞인 감정('또 미뤄서 부끄럽다')은 감정이 아니라 자기평가(부정). 자기평가(긍정)=기준에 비춰 나를 인정함. 칭찬 · 인정의 재료로 쓴다. 경계: 기분 좋음만 있으면 감정, '잘했다 · 해냈다'처럼 기준에 비춘 인정이면 자기평가(긍정). 감정=평가 없이 마음 상태만 드러냄. 고마움이면 '감사' 표시를 붙인다. 경계: 기준에 비춘 자기 판단이 섞이면 자기평가. 감정끼리는 바뀜 · 해소가 아니다. 기타=위 어디에도 맞지 않음. AI가 쓴 원래 말을 함께 저장하고, 자주 나오는 말은 새 종류 후보로 올린다. 경계: 다른 종류로 뜻이 하나로 정해지면 그 종류로 바로잡고, 애매할 때만 기타. 고마움을 드러낸 감정이면 '감정(감사)'로 쓴다. 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "얼마나 굳은 생각인지. '정말 · 진짜 · 확실히' 같은 강조어가 아니라 문장 전체의 뜻으로 판단한다. 다음 중 하나: 단정=결론을 내린 생각. 고민 중=한쪽으로 기울었지만 아직 흔들리는 생각. 판단 보류=아직 결론을 내리지 못함. 물음표 없는 미정('잘 모르겠다')도 포함한다(v7의 '질문'에서 이름 바꿈). 강조어('정말 · 진짜 · 확실히')로 단정을 매기지 않는다. 문장 전체의 뜻으로 판단한다. 확신은 3단계를 넘지 않는다(3단계 이하라야 사람끼리도 일관되게 매긴다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치(values 뜻풀이). 드러나지 않으면 비운다. 다음 중 하나: 자율=스스로 생각하고 선택함, 내 방식대로 도전=새로움 · 자극 · 모험 즐거움=기쁨 · 즐김 · 감각의 만족 성취=능력을 보여 인정받음, 잘해 냄 영향력=지위 · 영향력 · 사람과 자원을 움직임 안정=안전 · 안정 · 질서 · 조화 규범=규칙과 기대를 지킴, 남에게 해 끼치지 않음 전통·신앙=전통 · 종교적 관습과 믿음을 존중하고 따름 배려=가까운 사람(가족 · 친구 · 공동체)의 안녕 공익=모든 사람과 자연의 안녕, 정의 · 평등 가치는 드러나지 않으면 비운다(억지로 고르지 않는다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "근거가 되는 일기 문장. 고치지 않고 글자 그대로. 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 바뀌었다고 쓴 경우만 '예전 → 지금'. 실선의 근거. 형식: '예전 생각 → 지금 생각'. 없으면 빈 문자열."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "세부 주제는 해 이름보다 한 단계 구체적인 말이다(예: 관계 해의 '혼자와 함께', '남과 비교', '부모님'). 해 이름(삶의 영역 이름 · 기준 축 이름)은 세부 주제로 쓰지 않는다. 한 번의 행동(예: '6시 기상')은 주제가 아니다. 입력에 그 사용자의 기존 작은 별 이름 목록을 주고, 맞는 이름이 있으면 그 이름을 다시 쓴다. 없을 때만 새 이름. 해 이름(쓰지 않는다): 삶의 성취 / 관계 / 공동체 / 건강 / 생활 수준 / 미래 안정 / 안전 / 영성·신앙 / 여가. 입력의 '참고: 기존 작은 별' 목록에 뜻이 맞는 이름이 있으면 글자 그대로 다시 쓴다."
+                      },
+                      "people": {
+                        "type": "string",
+                        "description": "이 생각에 나오는 사람을 글에 쓰인 이름 · 호칭 그대로(예: 사람1, 엄마). 여러 명이면 쉼표로 나눈다. 없으면 빈 문자열. 사람을 평가하지 않는다."
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. '참고: 기존 작은 별' 절은 일기 내용이 아니므로 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "people",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "Extract_Record_4",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글 전체 1~2문장. 사람을 평가 · 단정하지 않는다."
+                  },
+                  "description": ""
+                },
+                "addressee": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "글이 말을 거는 대상. '주님, …'처럼 직접 말할 때만 신, 그 밖의 묵상은 나. 말 걸기에서 기도 · 편지에 맞게 받는 데 쓴다. 다음 중 하나: 나=나에게 쓰거나 대상 없이 쓴 글(대부분의 일기, 묵상 포함). 특정 인물=편지처럼 특정 사람에게 말을 거는 글. 신=기도처럼 신에게 직접 말을 거는 글."
+                  },
+                  "description": ""
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "있었던 일, 사실만. 짧은 구절 하나씩."
+                  },
+                  "description": ""
+                },
+                "thoughts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "thought": {
+                        "type": "string",
+                        "description": "원문에 가까운 한 문장."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "생각의 종류. 다음 중 하나만: 해석=무언가의 의미를 읽어 냄. 경계: 일반적인 주장으로 세우면 신념·원칙. 특정 일에 대한 의미 읽기면 해석. 신념·원칙=일반적인 주장을 세움. 경계: '~해야 한다', '사람은 ~다'처럼 일반화하면 신념·원칙. 앞으로 내가 하겠다는 약속이면 다짐. 질문=답을 못 낸 물음. 경계: 물음표가 없어도 답을 못 낸 고민('어느 쪽이 맞는지 모르겠다')이면 질문. 확신은 대개 판단 보류. 다짐=앞으로 하겠다고 스스로 약속함. 지켜짐 · 어긋남을 따진다. 경계: 스스로 하겠다는 약속이 없으면 소망. '~하고 싶다'는 행동 계획이 함께 있을 때만 다짐. 소망=이루어지길 바라지만 스스로 하겠다고 약속하지는 않음. 간구 기도 포함. 지켜짐 · 어긋남을 따지지 않는다. 경계: '~면 좋겠다', '~되길'은 소망. 내가 할 행동을 약속하면 다짐. 자기평가(부정)=기준에 비춰 나를 낮게 평가함(반성). 어긋남 규칙에 쓴다. 경계: 기준에 비춘 자기 판단이 섞인 감정('또 미뤄서 부끄럽다')은 감정이 아니라 자기평가(부정). 자기평가(긍정)=기준에 비춰 나를 인정함. 칭찬 · 인정의 재료로 쓴다. 경계: 기분 좋음만 있으면 감정, '잘했다 · 해냈다'처럼 기준에 비춘 인정이면 자기평가(긍정). 감정=평가 없이 마음 상태만 드러냄. 고마움이면 '감사' 표시를 붙인다. 경계: 기준에 비춘 자기 판단이 섞이면 자기평가. 감정끼리는 바뀜 · 해소가 아니다. 기타=위 어디에도 맞지 않음. AI가 쓴 원래 말을 함께 저장하고, 자주 나오는 말은 새 종류 후보로 올린다. 경계: 다른 종류로 뜻이 하나로 정해지면 그 종류로 바로잡고, 애매할 때만 기타. 고마움을 드러낸 감정이면 '감정(감사)'로 쓴다. 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "certainty": {
+                        "type": "string",
+                        "description": "얼마나 굳은 생각인지. '정말 · 진짜 · 확실히' 같은 강조어가 아니라 문장 전체의 뜻으로 판단한다. 다음 중 하나: 단정=결론을 내린 생각. 고민 중=한쪽으로 기울었지만 아직 흔들리는 생각. 판단 보류=아직 결론을 내리지 못함. 물음표 없는 미정('잘 모르겠다')도 포함한다(v7의 '질문'에서 이름 바꿈). 강조어('정말 · 진짜 · 확실히')로 단정을 매기지 않는다. 문장 전체의 뜻으로 판단한다. 확신은 3단계를 넘지 않는다(3단계 이하라야 사람끼리도 일관되게 매긴다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "이 생각이 기대는 가치(values 뜻풀이). 드러나지 않으면 비운다. 다음 중 하나: 자율=스스로 생각하고 선택함, 내 방식대로 도전=새로움 · 자극 · 모험 즐거움=기쁨 · 즐김 · 감각의 만족 성취=능력을 보여 인정받음, 잘해 냄 영향력=지위 · 영향력 · 사람과 자원을 움직임 안정=안전 · 안정 · 질서 · 조화 규범=규칙과 기대를 지킴, 남에게 해 끼치지 않음 전통·신앙=전통 · 종교적 관습과 믿음을 존중하고 따름 배려=가까운 사람(가족 · 친구 · 공동체)의 안녕 공익=모든 사람과 자연의 안녕, 정의 · 평등 가치는 드러나지 않으면 비운다(억지로 고르지 않는다). 목록에 없는 값은 쓰지 않는다. 뜻이 하나로 정해지면 목록의 값으로 바로잡고, 애매하면 '기타(원래 말)'로 쓴다(예: 기타(성장))."
+                      },
+                      "quote": {
+                        "type": "string",
+                        "description": "근거가 되는 일기 문장. 고치지 않고 글자 그대로. 원문 그대로 복사한다."
+                      },
+                      "self_change": {
+                        "type": "string",
+                        "description": "글쓴이가 직접 바뀌었다고 쓴 경우만 '예전 → 지금'. 실선의 근거. 형식: '예전 생각 → 지금 생각'. 없으면 빈 문자열."
+                      },
+                      "topic": {
+                        "type": "string",
+                        "description": "세부 주제는 해 이름보다 한 단계 구체적인 말이다(예: 관계 해의 '혼자와 함께', '남과 비교', '부모님'). 해 이름(삶의 영역 이름 · 기준 축 이름)은 세부 주제로 쓰지 않는다. 한 번의 행동(예: '6시 기상')은 주제가 아니다. 입력에 그 사용자의 기존 작은 별 이름 목록을 주고, 맞는 이름이 있으면 그 이름을 다시 쓴다. 없을 때만 새 이름. 해 이름(쓰지 않는다): 삶의 성취 / 관계 / 공동체 / 건강 / 생활 수준 / 미래 안정 / 안전 / 영성·신앙 / 여가. 입력의 '참고: 기존 작은 별' 목록에 뜻이 맞는 이름이 있으면 글자 그대로 다시 쓴다."
+                      },
+                      "people": {
+                        "type": "string",
+                        "description": "이 생각에 나오는 사람을 글에 쓰인 이름 · 호칭 그대로(예: 사람1, 엄마). 여러 명이면 쉼표로 나눈다. 없으면 빈 문자열. 사람을 평가하지 않는다."
+                      }
+                    }
+                  },
+                  "description": "글쓴이가 직접 적은 생각을 하나씩 나눈 목록. 인용한 구절이나 남의 말은 생각으로 만들지 않는다. '참고: 기존 작은 별' 절은 일기 내용이 아니므로 생각으로 만들지 않는다. 사건만 있고 생각이 없으면 비워 둔다."
+                }
+              }
+            }
+          },
+          "mode": "standard",
+          "modelName": "",
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "summary",
+                "source": "root"
+              },
+              {
+                "name": "addressee",
+                "source": "root"
+              },
+              {
+                "name": "events",
+                "source": "root"
+              },
+              {
+                "name": "thought",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "kind",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "certainty",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "value",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "quote",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "self_change",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "topic",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              },
+              {
+                "name": "people",
+                "source": "group_table",
+                "groupTableKey": "thoughts"
+              }
+            ]
+          },
+          "location": false
+        }
+      ],
+      "categorySchemaMapping": {
+        "경험 기록": "Extract_Record_1",
+        "생각·성찰": "Extract_Record_2",
+        "창작": "Extract_Record_3",
+        "기타": "Extract_Record_4"
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        }
+      },
+      {
+        "id": "e1",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_1"
+        },
+        "condition": {
+          "conditionName": "경험 기록"
+        }
+      },
+      {
+        "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_2"
+        },
+        "condition": {
+          "conditionName": "생각·성찰"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_3"
+        },
+        "condition": {
+          "conditionName": "창작"
+        }
+      },
+      {
+        "id": "e4",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "Extract_Record_4"
+        },
+        "condition": {
+          "conditionName": "기타"
+        }
+      }
+    ]
+  }
+}

@@ -69,7 +69,7 @@ def run_record_agent(title, text, topics, people):
     return unmask_obj(data, table)
 
 
-OBS_KEYS = ("id", "topic", "domain", "kind", "certainty", "quote", "self_change", "day")
+OBS_KEYS = ("id", "topic", "domain", "kind", "certainty", "quote", "self_change", "day", "record_type")
 
 
 def run_observe_agent(day, today, past, aspiration, people):
@@ -120,7 +120,8 @@ def search_past(repo, uid, entry_id, today):
     for t in past:
         e = done[t["entry_id"]]
         t.update(record_id=t["entry_id"], day=diary.local_day(e["written_at"]), written_at=diary.iso(e["written_at"]),
-                 domain=sun_name.get(t["sun_id"]), thought=t.get("text", ""), emb=vecs[t["id"]])
+                 domain=sun_name.get(t["sun_id"]), thought=t.get("text", ""), emb=vecs[t["id"]],
+                 record_type=e.get("record_type"))
     today_v = [{"id": t["id"], "record_id": entry_id, "topic": t["topic"], "emb": vecs.get(t["id"])} for t in today]
     center = [sum(c) / len(vecs) for c in zip(*vecs.values())] if len(vecs) >= 2 else None   # 이 사용자 생각 벡터의 평균
     picked = pick_past(today_v, past, center=center)
