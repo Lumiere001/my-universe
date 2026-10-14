@@ -1,0 +1,2397 @@
+{
+ "tag": "v4b",
+ "config": {
+  "record": "6",
+  "observe": "4"
+ },
+ "records": 29,
+ "done": 29,
+ "failed_first_run": 0,
+ "failed_after_resume": 0,
+ "error_codes": {},
+ "seconds_per_post": {
+  "median": 67.4,
+  "p90": 77.9
+ },
+ "record_agent_s_median": 31.0,
+ "observe_s_median": 32.8,
+ "calls": 141,
+ "est_usd": 2.825,
+ "thoughts": 64,
+ "kinds": {
+  "해석": 18,
+  "다짐": 14,
+  "감정": 9,
+  "신념·원칙": 8,
+  "질문": 7,
+  "자기평가(부정)": 4,
+  "소망": 3,
+  "자기평가(긍정)": 1
+ },
+ "record_types": {
+  "생각·성찰": 24,
+  "경험 기록": 3,
+  "창작": 1,
+  "기타": 1
+ },
+ "other_topic": 0,
+ "topics": 23,
+ "relations_raw": {
+  "thoughts": 64,
+  "kinds": {
+   "해석": 18,
+   "다짐": 14,
+   "감정": 9,
+   "신념·원칙": 8,
+   "질문": 7,
+   "자기평가(부정)": 4,
+   "소망": 3,
+   "자기평가(긍정)": 1
+  },
+  "kinds_out_of_list": 0,
+  "topics": 23,
+  "topics_domain_name": [],
+  "relations_all": 66,
+  "relations_cross_record": 50,
+  "relations_off_design": 26,
+  "relations_without_same_target": 0,
+  "expected_pair": "8/8",
+  "expected_type": "7/8",
+  "negatives_violated": 0
+ },
+ "relations_shown": {
+  "thoughts": 64,
+  "kinds": {
+   "해석": 18,
+   "다짐": 14,
+   "감정": 9,
+   "신념·원칙": 8,
+   "질문": 7,
+   "자기평가(부정)": 4,
+   "소망": 3,
+   "자기평가(긍정)": 1
+  },
+  "kinds_out_of_list": 0,
+  "topics": 23,
+  "topics_domain_name": [],
+  "relations_all": 53,
+  "relations_cross_record": 41,
+  "relations_off_design": 19,
+  "relations_without_same_target": null,
+  "expected_pair": "7/8",
+  "expected_type": "5/8",
+  "negatives_violated": 0
+ },
+ "dropped_reasons": {
+  "해소인데 새 생각이 단정이 아님": 3,
+  "영역 넘는 다른 날 관계인데 원문 설명이 없음": 1,
+  "영역 넘는 같은 글 관계인데 이어 쓴 흐름 · 원문 인용이 없음": 2,
+  "어긋남은 열린 다짐 뒤의 반성만": 1,
+  "판단형(어긋남)인데 다른 주제": 1,
+  "목표 충돌은 둘 다 열린 다짐만": 1,
+  "판단형(바뀜)인데 다른 주제": 2,
+  "판단형(해소)인데 다른 주제": 2
+ },
+ "links_form_rows": 26,
+ "detail": [
+  {
+   "entry_id": "e_390ecd590ce7",
+   "day": "2026-03-02",
+   "title": "3/2 월요일 일기",
+   "status": "done",
+   "record_type": "경험 기록",
+   "errors": [],
+   "seconds": 35.8,
+   "calls": 3,
+   "usd": 0.0513,
+   "step_ms": {
+    "record_agent": 32387,
+    "record_clean": 41,
+    "past": 0,
+    "observe": 0,
+    "rules": 8,
+    "voice": 2157,
+    "save": 23,
+    "safety": 934,
+    "names": 13,
+    "record_input": 11
+   },
+   "thoughts": [],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_136d61830222",
+   "day": "2026-03-08",
+   "title": "3/8 일요일 독서노트",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 73.6,
+   "calls": 5,
+   "usd": 0.1015,
+   "step_ms": {
+    "observe": 37180,
+    "rules": 23,
+    "voice": 1818,
+    "save": 29,
+    "safety": 932,
+    "names": 15,
+    "record_input": 10,
+    "record_agent": 33080,
+    "record_clean": 262,
+    "past": 14
+   },
+   "thoughts": [
+    {
+     "id": "e_136d61830222-t00",
+     "kind": "해석",
+     "value": "",
+     "topic": "독서노트 효과",
+     "thought": "해 보니 확실히 다르다.",
+     "quote": "해 보니 확실히 다르다."
+    },
+    {
+     "id": "e_136d61830222-t01",
+     "kind": "신념·원칙",
+     "value": "",
+     "topic": "기록과 배움",
+     "thought": "배움은 기록할 때 비로소 내 것이 된다.",
+     "quote": "배움은 기록할 때 비로소 내 것이 된다."
+    },
+    {
+     "id": "e_136d61830222-t02",
+     "kind": "다짐",
+     "value": "규범",
+     "topic": "매주 독서노트 쓰기",
+     "thought": "이번 학기에는 매주 일요일마다 독서노트를 쓰자.",
+     "quote": "이번 학기에는 매주 일요일마다 독서노트를 쓰자."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_ed0c4bacc726",
+   "day": "2026-03-14",
+   "title": "3/14 진로 상담",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 65.2,
+   "calls": 5,
+   "usd": 0.1017,
+   "step_ms": {
+    "save": 24,
+    "safety": 706,
+    "names": 12,
+    "record_input": 6,
+    "record_agent": 32626,
+    "record_clean": 232,
+    "past": 17,
+    "observe": 29740,
+    "rules": 12,
+    "voice": 1619
+   },
+   "thoughts": [
+    {
+     "id": "e_ed0c4bacc726-t00",
+     "kind": "신념·원칙",
+     "value": "안정",
+     "topic": "직장 안정",
+     "thought": "결국 직장은 안정이 제일이다.",
+     "quote": "결국 직장은 안정이 제일이다."
+    },
+    {
+     "id": "e_ed0c4bacc726-t01",
+     "kind": "해석",
+     "value": "안정",
+     "topic": "대기업 공채 선택",
+     "thought": "큰 회사에 들어가는 게 맞다.",
+     "quote": "큰 회사에 들어가는 게 맞다."
+    },
+    {
+     "id": "e_ed0c4bacc726-t02",
+     "kind": "다짐",
+     "value": "안정",
+     "topic": "대기업 공채 준비",
+     "thought": "흔들리지 말고 공채 준비를 시작하자.",
+     "quote": "흔들리지 말고 공채 준비를 시작하자."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_723844714327",
+   "day": "2026-03-20",
+   "title": "3/20 결심",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 63.4,
+   "calls": 5,
+   "usd": 0.1017,
+   "step_ms": {
+    "safety": 654,
+    "names": 12,
+    "record_input": 9,
+    "record_agent": 29288,
+    "record_clean": 207,
+    "past": 25,
+    "observe": 31963,
+    "rules": 12,
+    "voice": 1006,
+    "save": 24
+   },
+   "thoughts": [
+    {
+     "id": "e_723844714327-t00",
+     "kind": "다짐",
+     "value": "안정",
+     "topic": "아침 걷기",
+     "thought": "내일부터 매일 아침 30분씩 걷기로 했다.",
+     "quote": "내일부터 매일 아침 30분씩 걷기로 했다."
+    },
+    {
+     "id": "e_723844714327-t01",
+     "kind": "다짐",
+     "value": "규범",
+     "topic": "아침 걷기",
+     "thought": "핑계 대지 말자.",
+     "quote": "핑계 대지 말자."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "이어짐",
+     "from": "e_723844714327-t01",
+     "to": "e_723844714327-t00",
+     "same_target": "아침 걷기 실천",
+     "topic": "아침 걷기",
+     "explanation": "두 생각은 모두 아침 걷기를 실제로 이어 가려는 같은 방향의 다짐을 말한다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_5cc2fde384d2",
+   "day": "2026-03-27",
+   "title": "3/27 금요일 일기",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 63.7,
+   "calls": 5,
+   "usd": 0.102,
+   "step_ms": {
+    "record_input": 9,
+    "record_agent": 30941,
+    "record_clean": 241,
+    "past": 20,
+    "observe": 29740,
+    "rules": 12,
+    "voice": 1705,
+    "save": 19,
+    "safety": 807,
+    "names": 13
+   },
+   "thoughts": [
+    {
+     "id": "e_5cc2fde384d2-t00",
+     "kind": "해석",
+     "value": "배려",
+     "topic": "먼저 안부를 묻는 사람",
+     "thought": "먼저 물어봐 주는 사람이 곁에 있다는 게 큰 힘이 된다.",
+     "quote": "먼저 물어봐 주는 사람이 곁에 있다는 게 큰 힘이 된다."
+    },
+    {
+     "id": "e_5cc2fde384d2-t01",
+     "kind": "소망",
+     "value": "배려",
+     "topic": "먼저 안부를 묻는 사람",
+     "thought": "나도 누군가에게 먼저 묻는 사람이 되고 싶다.",
+     "quote": "나도 누군가에게 먼저 묻는 사람이 되고 싶다."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_b2b2740bc921",
+   "day": "2026-04-05",
+   "title": "4/5 혼자 있는 시간",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 62.1,
+   "calls": 5,
+   "usd": 0.1021,
+   "step_ms": {
+    "past": 29,
+    "observe": 29028,
+    "rules": 14,
+    "voice": 1873,
+    "save": 23,
+    "safety": 902,
+    "names": 12,
+    "record_input": 9,
+    "record_agent": 29656,
+    "record_clean": 341
+   },
+   "thoughts": [
+    {
+     "id": "e_b2b2740bc921-t00",
+     "kind": "해석",
+     "value": "안정",
+     "topic": "혼자와 함께",
+     "thought": "솔직히 혼자 있는 시간이 제일 편하다.",
+     "quote": "솔직히 혼자 있는 시간이 제일 편하다."
+    },
+    {
+     "id": "e_b2b2740bc921-t01",
+     "kind": "해석",
+     "value": "안정",
+     "topic": "혼자와 함께",
+     "thought": "사람들 사이에 오래 있으면 금방 지친다.",
+     "quote": "사람들 사이에 오래 있으면 금방 지친다."
+    },
+    {
+     "id": "e_b2b2740bc921-t02",
+     "kind": "소망",
+     "value": "자율",
+     "topic": "혼자와 함께",
+     "thought": "당분간은 모임을 줄이고 내 시간을 지키고 싶다.",
+     "quote": "당분간은 모임을 줄이고 내 시간을 지키고 싶다."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_26c2cd8f6e42",
+   "day": "2026-04-08",
+   "title": "4/8 반성",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 66.1,
+   "calls": 6,
+   "usd": 0.1039,
+   "step_ms": {
+    "voice": 4788,
+    "save": 28,
+    "safety": 815,
+    "names": 13,
+    "record_input": 13,
+    "record_agent": 28636,
+    "record_clean": 209,
+    "past": 26,
+    "observe": 31343,
+    "rules": 13
+   },
+   "thoughts": [
+    {
+     "id": "e_26c2cd8f6e42-t00",
+     "kind": "자기평가(부정)",
+     "value": "성취",
+     "topic": "아침 걷기",
+     "thought": "나는 왜 이렇게 작심삼일일까.",
+     "quote": "나는 왜 이렇게 작심삼일일까."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "어긋남",
+     "from": "e_723844714327-t00",
+     "to": "e_26c2cd8f6e42-t00",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "아침 걷기를 매일 하겠다는 다짐 뒤에, 그 다짐이 잘 지켜지지 않았다는 부정 자기평가가 이어진다.",
+     "service": "남음 → 어긋남"
+    },
+    {
+     "type": "어긋남",
+     "from": "e_723844714327-t01",
+     "to": "e_26c2cd8f6e42-t00",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "핑계를 대지 않겠다는 다짐과, 스스로 작심삼일이라고 적은 현재의 자기평가가 같은 아침 걷기 대상에서 어긋난다.",
+     "service": "남음 → 어긋남"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_b6d275d921d2",
+   "day": "2026-04-12",
+   "title": "4/12 순모임 후",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 77.6,
+   "calls": 6,
+   "usd": 0.1049,
+   "step_ms": {
+    "safety": 692,
+    "names": 14,
+    "record_input": 9,
+    "record_agent": 33989,
+    "record_clean": 211,
+    "past": 34,
+    "observe": 37922,
+    "rules": 17,
+    "voice": 4480,
+    "save": 29
+   },
+   "thoughts": [
+    {
+     "id": "e_b6d275d921d2-t00",
+     "kind": "신념·원칙",
+     "value": "배려",
+     "topic": "혼자와 함께",
+     "thought": "결국 사람은 함께해야 성장한다.",
+     "quote": "결국 사람은 함께해야 성장한다."
+    },
+    {
+     "id": "e_b6d275d921d2-t01",
+     "kind": "신념·원칙",
+     "value": "",
+     "topic": "혼자와 함께",
+     "thought": "혼자서는 내 맹점을 볼 수 없다.",
+     "quote": "혼자서는 내 맹점을 볼 수 없다."
+    },
+    {
+     "id": "e_b6d275d921d2-t02",
+     "kind": "질문",
+     "value": "",
+     "topic": "혼자와 함께",
+     "thought": "지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다. 어느 쪽이 진짜 나일까.",
+     "quote": "그런데 지난주에는 혼자가 편하다고 썼는데, 지금은 함께가 필요하다고 쓰고 있다. 어느 쪽이 진짜 나일까."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "이어짐",
+     "from": "e_b6d275d921d2-t01",
+     "to": "e_b6d275d921d2-t00",
+     "same_target": "사람과 함께하는 관계의 필요",
+     "topic": "혼자와 함께",
+     "explanation": "두 생각 모두 혼자보다 함께함이 필요하다는 방향으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "해소",
+     "from": "e_b6d275d921d2-t02",
+     "to": "e_b6d275d921d2-t00",
+     "same_target": "혼자와 함께 중 어떤 쪽이 필요한가",
+     "topic": "혼자와 함께",
+     "explanation": "열려 있던 질문이 오늘의 단정한 생각으로 함께의 필요 쪽에 정리된다.",
+     "service": "버림: 해소인데 새 생각이 단정이 아님"
+    },
+    {
+     "type": "해소",
+     "from": "e_b6d275d921d2-t02",
+     "to": "e_b6d275d921d2-t01",
+     "same_target": "혼자와 함께 중 어떤 쪽이 필요한가",
+     "topic": "혼자와 함께",
+     "explanation": "열려 있던 질문이 오늘의 단정한 생각으로 함께의 필요 쪽에 정리된다.",
+     "service": "버림: 해소인데 새 생각이 단정이 아님"
+    },
+    {
+     "type": "바뀜",
+     "from": "e_b2b2740bc921-t00",
+     "to": "e_b6d275d921d2-t00",
+     "same_target": "혼자와 함께 중 더 필요한 쪽",
+     "topic": "혼자와 함께",
+     "explanation": "과거에는 혼자가 더 편하다고 보았고 오늘은 함께해야 성장한다고 보아 기준이 달라졌다.",
+     "service": "남음 → 바뀜"
+    },
+    {
+     "type": "바뀜",
+     "from": "e_b2b2740bc921-t00",
+     "to": "e_b6d275d921d2-t01",
+     "same_target": "혼자와 함께 중 더 필요한 쪽",
+     "topic": "혼자와 함께",
+     "explanation": "과거에는 혼자가 더 편하다고 보았고 오늘은 혼자의 한계를 말하며 함께의 필요를 강조한다.",
+     "service": "남음 → 바뀜"
+    },
+    {
+     "type": "바뀜",
+     "from": "e_b2b2740bc921-t00",
+     "to": "e_b6d275d921d2-t02",
+     "same_target": "혼자와 함께 중 더 필요한 쪽",
+     "topic": "혼자와 함께",
+     "explanation": "오늘의 질문은 지난주의 혼자 선호에서 지금의 함께 필요로 이동한 변화를 직접 짚는다.",
+     "service": "남음 → 바뀜"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_b2b2740bc921-t02",
+     "to": "e_b6d275d921d2-t02",
+     "same_target": "혼자 시간을 더 두고 싶은 마음",
+     "topic": "혼자와 함께",
+     "explanation": "오늘의 질문은 지난주에 혼자 쪽을 택했던 흐름을 다시 불러오며 그 연속선 위에서 비교하고 있다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_81726050dc04",
+   "day": "2026-04-20",
+   "title": "4/20 리더십 수업",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 63.1,
+   "calls": 5,
+   "usd": 0.1024,
+   "step_ms": {
+    "names": 15,
+    "record_input": 12,
+    "record_agent": 29286,
+    "record_clean": 273,
+    "past": 33,
+    "observe": 31351,
+    "rules": 15,
+    "voice": 1344,
+    "save": 20,
+    "safety": 608
+   },
+   "thoughts": [
+    {
+     "id": "e_81726050dc04-t00",
+     "kind": "질문",
+     "value": "",
+     "topic": "좋은 리더의 조건",
+     "thought": "좋은 리더는 어떤 사람일까? 앞에서 끄는 사람일까, 뒤에서 받쳐 주는 사람일까?",
+     "quote": "좋은 리더는 어떤 사람일까? 앞에서 끄는 사람일까, 뒤에서 받쳐 주는 사람일까?"
+    },
+    {
+     "id": "e_81726050dc04-t01",
+     "kind": "질문",
+     "value": "",
+     "topic": "좋은 리더의 조건",
+     "thought": "아직은 잘 모르겠다. 답을 정하기 전에 더 지켜보고 싶다.",
+     "quote": "아직은 잘 모르겠다. 답을 정하기 전에 더 지켜보고 싶다."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_75acbe9ea0f2",
+   "day": "2026-04-26",
+   "title": "봄비",
+   "status": "done",
+   "record_type": "창작",
+   "errors": [],
+   "seconds": 67.4,
+   "calls": 5,
+   "usd": 0.1024,
+   "step_ms": {
+    "record_clean": 248,
+    "past": 27,
+    "observe": 32516,
+    "rules": 14,
+    "voice": 1982,
+    "save": 13,
+    "safety": 668,
+    "names": 10,
+    "record_input": 10,
+    "record_agent": 31718
+   },
+   "thoughts": [
+    {
+     "id": "e_75acbe9ea0f2-t00",
+     "kind": "감정",
+     "value": "",
+     "topic": "닫아 둔 마음",
+     "thought": "오래 닫아 둔 마음이 젖는다.",
+     "quote": "오래 닫아 둔 마음이 젖는다"
+    },
+    {
+     "id": "e_75acbe9ea0f2-t01",
+     "kind": "해석",
+     "value": "",
+     "topic": "꽃이 다시 피는 뜻",
+     "thought": "꽃은 지는 게 아니라 땅으로 돌아가 다시 피는 거라고 비가 내게 말한다.",
+     "quote": "꽃은 지는 게 아니라\n땅으로 돌아가 다시 피는 거라고\n비가 내게 말한다"
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_817c4027776d",
+   "day": "2026-05-02",
+   "title": "5/2 설렘",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 66.1,
+   "calls": 5,
+   "usd": 0.1024,
+   "step_ms": {
+    "rules": 14,
+    "voice": 1294,
+    "save": 25,
+    "safety": 589,
+    "names": 14,
+    "record_input": 10,
+    "record_agent": 30825,
+    "record_clean": 231,
+    "past": 36,
+    "observe": 32806
+   },
+   "thoughts": [
+    {
+     "id": "e_817c4027776d-t00",
+     "kind": "감정",
+     "value": "",
+     "topic": "취업에 대한 설렘",
+     "thought": "취업 생각만 하면 설렌다.",
+     "quote": "취업 생각만 하면 설렌다."
+    },
+    {
+     "id": "e_817c4027776d-t01",
+     "kind": "감정",
+     "value": "",
+     "topic": "취업에 대한 설렘",
+     "thought": "뭐든 될 수 있을 것 같은 기분이다.",
+     "quote": "뭐든 될 수 있을 것 같은 기분이다."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_d1c135aa5f56",
+   "day": "2026-05-10",
+   "title": "5/10 중간고사 D-7",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 68.9,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "safety": 692,
+    "names": 10,
+    "record_input": 8,
+    "record_agent": 33114,
+    "record_clean": 259,
+    "past": 40,
+    "observe": 33061,
+    "rules": 14,
+    "voice": 1473,
+    "save": 26
+   },
+   "thoughts": [
+    {
+     "id": "e_d1c135aa5f56-t00",
+     "kind": "다짐",
+     "value": "규범",
+     "topic": "시험 공부 미루지 않기",
+     "thought": "이번에는 미루지 않겠다.",
+     "quote": "시험이 일주일 남았다. 이번에는 미루지 않겠다."
+    },
+    {
+     "id": "e_d1c135aa5f56-t01",
+     "kind": "다짐",
+     "value": "성취",
+     "topic": "중간고사 공부 집중",
+     "thought": "중간고사까지는 공부에만 집중하자.",
+     "quote": "중간고사까지는 공부에만 집중하자. 동아리 일은 잠시 내려놓자."
+    },
+    {
+     "id": "e_d1c135aa5f56-t02",
+     "kind": "다짐",
+     "value": "성취",
+     "topic": "중간고사 공부 집중",
+     "thought": "동아리 일은 잠시 내려놓자.",
+     "quote": "중간고사까지는 공부에만 집중하자. 동아리 일은 잠시 내려놓자."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "목표 충돌",
+     "from": "e_d1c135aa5f56-t01",
+     "to": "e_d1c135aa5f56-t00",
+     "same_target": "시험·중간고사 준비 시간",
+     "topic": "삶의 성취",
+     "explanation": "시험 공부를 미루지 않겠다는 다짐과 중간고사 공부에만 집중하겠다는 다짐은 모두 가까운 시험 준비에 시간과 에너지를 쓰려는 생각으로 함께 진행된다.",
+     "service": "남음 → 목표 충돌"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_d1c135aa5f56-t02",
+     "to": "e_d1c135aa5f56-t01",
+     "same_target": "중간고사 공부 집중",
+     "topic": "중간고사 공부 집중",
+     "explanation": "같은 다짐이 오늘 글 안에서 한 번 더 반복되어 같은 방향의 생각이 이어진다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_d3b359bcb81d",
+   "day": "2026-05-15",
+   "title": "5/15 동아리 회의",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 70.2,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "safety": 761,
+    "names": 15,
+    "record_input": 13,
+    "record_agent": 31011,
+    "record_clean": 240,
+    "past": 37,
+    "observe": 36625,
+    "rules": 16,
+    "voice": 1202,
+    "save": 25
+   },
+   "thoughts": [
+    {
+     "id": "e_d3b359bcb81d-t00",
+     "kind": "다짐",
+     "value": "규범",
+     "topic": "축제 부스 준비",
+     "thought": "이번에는 맡은 일을 끝까지 책임지자.",
+     "quote": "이번에는 맡은 일을 끝까지 책임지자."
+    },
+    {
+     "id": "e_d3b359bcb81d-t01",
+     "kind": "질문",
+     "value": "",
+     "topic": "시험 공부 미루지 않기",
+     "thought": "그런데 시험 공부랑 같이 할 수 있을지 조금 걱정된다.",
+     "quote": "그런데 시험 공부랑 같이 할 수 있을지 조금 걱정된다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "해소",
+     "from": "e_d1c135aa5f56-t00",
+     "to": "e_d3b359bcb81d-t01",
+     "same_target": "시험 공부 미루지 않기",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "과거의 단정한 다짐 뒤에 오늘은 같은 시험 공부를 두고 함께 할 수 있을지 열린 걱정을 적어, 같은 주제가 다시 열려 있다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "목표 충돌",
+     "from": "e_d1c135aa5f56-t01",
+     "to": "e_d3b359bcb81d-t00",
+     "same_target": "축제 부스 준비와 시험 공부",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "부스 준비 책임을 끝까지 지려는 생각과 공부에만 집중하며 동아리 일을 내려놓자는 생각은 같은 시간과 에너지를 두고 충돌한다.",
+     "service": "버림: 영역 넘는 다른 날 관계인데 원문 설명이 없음"
+    },
+    {
+     "type": "긴장",
+     "from": "e_d3b359bcb81d-t01",
+     "to": "e_d3b359bcb81d-t00",
+     "same_target": "축제 부스 준비와 시험 공부 병행",
+     "topic": "축제 부스 준비",
+     "explanation": "오늘 글 안에서 부스 준비를 끝까지 책임지려는 다짐과 시험 공부를 함께 할 수 있을지에 대한 걱정이 동시에 열려 있다.",
+     "service": "버림: 영역 넘는 같은 글 관계인데 이어 쓴 흐름 · 원문 인용이 없음"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_aa9806a3ebaf",
+   "day": "2026-05-23",
+   "title": "[공지] 바자회",
+   "status": "done",
+   "record_type": "기타",
+   "errors": [],
+   "seconds": 33.9,
+   "calls": 3,
+   "usd": 0.0522,
+   "step_ms": {
+    "record_agent": 31023,
+    "record_clean": 30,
+    "past": 0,
+    "observe": 0,
+    "rules": 8,
+    "voice": 1851,
+    "save": 21,
+    "safety": 754,
+    "names": 16,
+    "record_input": 12
+   },
+   "thoughts": [],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_17754668a9f7",
+   "day": "2026-05-30",
+   "title": "5/30 선배와 대화",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 64.3,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "observe": 30540,
+    "rules": 11,
+    "voice": 1759,
+    "save": 16,
+    "safety": 491,
+    "names": 10,
+    "record_input": 7,
+    "record_agent": 31026,
+    "record_clean": 273,
+    "past": 41
+   },
+   "thoughts": [
+    {
+     "id": "e_17754668a9f7-t00",
+     "kind": "질문",
+     "value": "",
+     "topic": "취업 진로 고민",
+     "thought": "큰 회사만 답일까? 작은 팀에서 배우는 것도 괜찮을지 모르겠다.",
+     "quote": "큰 회사만 답일까? 작은 팀에서 배우는 것도 괜찮을지 모르겠다."
+    },
+    {
+     "id": "e_17754668a9f7-t01",
+     "kind": "감정",
+     "value": "",
+     "topic": "취업 진로 고민",
+     "thought": "아직은 마음이 반반이다.",
+     "quote": "아직은 마음이 반반이다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "긴장",
+     "from": "e_ed0c4bacc726-t01",
+     "to": "e_17754668a9f7-t00",
+     "same_target": "진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "과거에는 큰 회사가 맞다고 단정했지만, 오늘은 큰 회사와 작은 팀 사이를 열어 두고 있다.",
+     "service": "남음 → 긴장"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_375d3c88eab2",
+   "day": "2026-06-07",
+   "title": "6/7 시편 23편 묵상",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 69.0,
+   "calls": 5,
+   "usd": 0.1029,
+   "step_ms": {
+    "save": 21,
+    "safety": 686,
+    "names": 11,
+    "record_input": 9,
+    "record_agent": 31733,
+    "record_clean": 278,
+    "past": 63,
+    "observe": 33602,
+    "rules": 18,
+    "voice": 2422
+   },
+   "thoughts": [
+    {
+     "id": "e_375d3c88eab2-t00",
+     "kind": "해석",
+     "value": "전통·신앙",
+     "topic": "꽃이 다시 피는 뜻",
+     "thought": "부족함이 없다는 건 모든 걸 다 가졌다는 뜻이 아니라, 이미 충분하다는 고백인 것 같다.",
+     "quote": "부족함이 없다는 건 모든 걸 다 가졌다는 뜻이 아니라, 이미 충분하다는 고백인 것 같다."
+    },
+    {
+     "id": "e_375d3c88eab2-t01",
+     "kind": "감정",
+     "value": "",
+     "topic": "남과 비교",
+     "thought": "요즘 나는 남들과 비교하느라 늘 모자란다고 느꼈다.",
+     "quote": "요즘 나는 남들과 비교하느라 늘 모자란다고 느꼈다."
+    },
+    {
+     "id": "e_375d3c88eab2-t02",
+     "kind": "다짐",
+     "value": "자율",
+     "topic": "남과 비교",
+     "thought": "이번 주는 비교하지 않고 지내 보기로 했다.",
+     "quote": "이번 주는 비교하지 않고 지내 보기로 했다."
+    },
+    {
+     "id": "e_375d3c88eab2-t03",
+     "kind": "소망",
+     "value": "전통·신앙",
+     "topic": "남과 비교",
+     "thought": "하나님, 제가 가진 것을 먼저 보게 해 주세요.",
+     "quote": "하나님, 제가 가진 것을 먼저 보게 해 주세요."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "이어짐",
+     "from": "e_375d3c88eab2-t02",
+     "to": "e_375d3c88eab2-t01",
+     "same_target": "남과 비교하는 일",
+     "topic": "남과 비교",
+     "explanation": "비교로 모자람을 느낀 생각이 비교하지 않겠다는 다짐으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_375d3c88eab2-t03",
+     "to": "e_375d3c88eab2-t02",
+     "same_target": "남과 비교하는 일",
+     "topic": "남과 비교",
+     "explanation": "비교하지 않겠다는 다짐과 가진 것을 먼저 보게 해 달라는 소망은 같은 주제에서 서로 같은 방향을 가리킨다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_adeac16832c6",
+   "day": "2026-06-14",
+   "title": "6/14 종강 일기 (1)",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 74.8,
+   "calls": 5,
+   "usd": 0.1029,
+   "step_ms": {
+    "safety": 602,
+    "names": 13,
+    "record_input": 8,
+    "record_agent": 33859,
+    "record_clean": 357,
+    "past": 113,
+    "observe": 37815,
+    "rules": 13,
+    "voice": 1850,
+    "save": 24
+   },
+   "thoughts": [
+    {
+     "id": "e_adeac16832c6-t00",
+     "kind": "자기평가(부정)",
+     "value": "성취",
+     "topic": "축제 부스 준비",
+     "thought": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다.",
+     "quote": "축제 준비와 시험을 동시에 하느라 둘 다 제대로 못 했다."
+    },
+    {
+     "id": "e_adeac16832c6-t01",
+     "kind": "자기평가(부정)",
+     "value": "규범",
+     "topic": "시험 공부 미루지 않기",
+     "thought": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다.",
+     "quote": "시험 공부에만 집중하겠다고 해 놓고 결국 부스 일에 끌려다녔다."
+    },
+    {
+     "id": "e_adeac16832c6-t02",
+     "kind": "다짐",
+     "value": "안정",
+     "topic": "한꺼번에 두 가지 맡기",
+     "thought": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다.",
+     "quote": "다음 학기에는 한꺼번에 두 가지를 맡지 않겠다."
+    },
+    {
+     "id": "e_adeac16832c6-t03",
+     "kind": "해석",
+     "value": "",
+     "topic": "축제 부스 준비",
+     "thought": "손님도 생각보다 많았다.",
+     "quote": "손님도 생각보다 많았다."
+    },
+    {
+     "id": "e_adeac16832c6-t04",
+     "kind": "자기평가(긍정)",
+     "value": "성취",
+     "topic": "축제 부스 준비",
+     "thought": "부스는 무사히 끝났다.",
+     "quote": "부스는 무사히 끝났다."
+    },
+    {
+     "id": "e_adeac16832c6-t05",
+     "kind": "감정",
+     "value": "",
+     "topic": "종강",
+     "thought": "드디어 종강.",
+     "quote": "드디어 종강."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "어긋남",
+     "from": "e_d3b359bcb81d-t00",
+     "to": "e_adeac16832c6-t00",
+     "same_target": "축제 부스 맡은 일",
+     "topic": "축제 부스 준비",
+     "explanation": "축제 부스 일을 책임지겠다는 다짐 뒤에, 같은 일에서 충분히 해내지 못했다는 부정적 자기평가가 이어진다.",
+     "service": "남음 → 어긋남"
+    },
+    {
+     "type": "어긋남",
+     "from": "e_d1c135aa5f56-t00",
+     "to": "e_adeac16832c6-t01",
+     "same_target": "시험 공부 미루지 않기",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "시험 공부를 미루지 않겠다는 다짐 뒤에, 그 계획을 지키지 못했다는 부정적 자기평가가 나온다.",
+     "service": "버림: 어긋남은 열린 다짐 뒤의 반성만"
+    },
+    {
+     "type": "어긋남",
+     "from": "e_d1c135aa5f56-t01",
+     "to": "e_adeac16832c6-t01",
+     "same_target": "시험 공부 집중",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "공부에만 집중하겠다는 다짐과, 실제로는 부스 일에 끌려다녔다는 자기평가가 서로 어긋난다.",
+     "service": "버림: 판단형(어긋남)인데 다른 주제"
+    },
+    {
+     "type": "해소",
+     "from": "e_d3b359bcb81d-t01",
+     "to": "e_adeac16832c6-t01",
+     "same_target": "시험 공부와 다른 일 병행 가능성",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "시험 공부와 다른 일을 함께할 수 있을지에 대한 걱정이, 결국 함께 끌려다녔다는 단정적 판단으로 정리된다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "목표 충돌",
+     "from": "e_d3b359bcb81d-t00",
+     "to": "e_adeac16832c6-t01",
+     "same_target": "시험 공부와 축제 부스 준비 병행",
+     "topic": "시험 공부 미루지 않기",
+     "explanation": "축제 부스 일을 책임지겠다는 다짐이 시험 공부에만 집중하려는 계획과 시간과 에너지를 두고 충돌한 모습이 드러난다.",
+     "service": "버림: 목표 충돌은 둘 다 열린 다짐만"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_adeac16832c6-t01",
+     "to": "e_adeac16832c6-t02",
+     "same_target": "한꺼번에 두 가지 맡기",
+     "topic": "한꺼번에 두 가지 맡기",
+     "explanation": "오늘의 반성이 바로 이어져, 다음 학기에는 두 가지를 동시에 맡지 않겠다는 새 다짐으로 연결된다.",
+     "service": "버림: 영역 넘는 같은 글 관계인데 이어 쓴 흐름 · 원문 인용이 없음"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_4c100cdd1fae",
+   "day": "2026-06-20",
+   "title": "6/20 혼자와 함께",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 84.3,
+   "calls": 5,
+   "usd": 0.1029,
+   "step_ms": {
+    "record_input": 9,
+    "record_agent": 34510,
+    "record_clean": 233,
+    "past": 56,
+    "observe": 45664,
+    "rules": 16,
+    "voice": 2751,
+    "save": 68,
+    "safety": 796,
+    "names": 13
+   },
+   "thoughts": [
+    {
+     "id": "e_4c100cdd1fae-t00",
+     "kind": "해석",
+     "value": "",
+     "topic": "혼자와 함께",
+     "thought": "혼자 있는 시간은 충전하는 시간이고, 함께하는 시간은 자라는 시간이다.",
+     "quote": "요즘 그게 정리가 됐다. 혼자 있는 시간은 충전하는 시간이고, 함께하는 시간은 자라는 시간이다."
+    },
+    {
+     "id": "e_4c100cdd1fae-t01",
+     "kind": "신념·원칙",
+     "value": "",
+     "topic": "혼자와 함께",
+     "thought": "둘 중 하나를 고르는 게 아니라 둘 다 필요하다.",
+     "quote": "둘 중 하나를 고르는 게 아니라 둘 다 필요하다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "바뀜",
+     "from": "e_b2b2740bc921-t00",
+     "to": "e_4c100cdd1fae-t00",
+     "same_target": "혼자와 함께의 필요",
+     "topic": "혼자와 함께",
+     "explanation": "예전에는 혼자 있는 시간이 가장 편하다는 쪽에 무게가 있었고, 오늘은 혼자와 함께의 시간을 서로 다른 기능으로 함께 본다.",
+     "service": "남음 → 바뀜"
+    },
+    {
+     "type": "해소",
+     "from": "e_b6d275d921d2-t02",
+     "to": "e_4c100cdd1fae-t01",
+     "same_target": "혼자와 함께 중 무엇이 필요한가",
+     "topic": "혼자와 함께",
+     "explanation": "과거의 열린 질문이 오늘은 둘 중 하나를 고르지 않아도 된다는 결론으로 정리되었다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_b6d275d921d2-t00",
+     "to": "e_4c100cdd1fae-t00",
+     "same_target": "함께함의 의미",
+     "topic": "혼자와 함께",
+     "explanation": "함께함이 성장과 이어진다는 생각이 오늘도 다시 나타난다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_b6d275d921d2-t01",
+     "to": "e_4c100cdd1fae-t00",
+     "same_target": "함께가 필요한 이유",
+     "topic": "혼자와 함께",
+     "explanation": "혼자만으로는 부족하고 함께함이 성장을 돕는다는 방향이 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_b6d275d921d2-t00",
+     "to": "e_4c100cdd1fae-t01",
+     "same_target": "혼자와 함께의 필요",
+     "topic": "혼자와 함께",
+     "explanation": "예전의 함께의 필요를 인정하던 생각이 오늘은 혼자와 함께 모두 필요하다는 정리로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "긴장",
+     "from": "e_b2b2740bc921-t01",
+     "to": "e_4c100cdd1fae-t00",
+     "same_target": "사람들과 함께 있는 시간",
+     "topic": "혼자와 함께",
+     "explanation": "함께하는 시간이 자라는 시간이라는 생각과, 사람들 사이에 오래 있으면 지친다는 경험이 함께 남아 있다.",
+     "service": "남음 → 긴장"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_090d23e16763",
+   "day": "2026-06-28",
+   "title": "6/28 독서노트",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 69.7,
+   "calls": 5,
+   "usd": 0.1026,
+   "step_ms": {
+    "record_clean": 243,
+    "past": 68,
+    "observe": 36512,
+    "rules": 12,
+    "voice": 1864,
+    "save": 33,
+    "safety": 540,
+    "names": 13,
+    "record_input": 12,
+    "record_agent": 30182
+   },
+   "thoughts": [
+    {
+     "id": "e_090d23e16763-t00",
+     "kind": "해석",
+     "value": "",
+     "topic": "독서노트 효과",
+     "thought": "적어 둔 것만 기억에 남아 있었다.",
+     "quote": "지난 석 달 동안 쓴 독서노트를 다시 읽어 보니, 적어 둔 것만 기억에 남아 있었다."
+    },
+    {
+     "id": "e_090d23e16763-t01",
+     "kind": "해석",
+     "value": "",
+     "topic": "기록과 배움",
+     "thought": "배운 걸 글로 남기니 오래 간다.",
+     "quote": "배운 걸 글로 남기니 오래 간다."
+    },
+    {
+     "id": "e_090d23e16763-t02",
+     "kind": "신념·원칙",
+     "value": "",
+     "topic": "기록과 배움",
+     "thought": "결국 배움은 기록이다.",
+     "quote": "결국 배움은 기록이다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t00",
+     "to": "e_090d23e16763-t00",
+     "same_target": "독서노트의 효과",
+     "topic": "독서노트 효과",
+     "explanation": "두 생각은 모두 독서노트를 직접 해 본 뒤 그 효과를 긍정적으로 확인한다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t01",
+     "to": "e_090d23e16763-t01",
+     "same_target": "배움을 기록해 남기는 일",
+     "topic": "기록과 배움",
+     "explanation": "두 생각은 모두 배움을 기록할 때 더 오래 남고 자기 것이 된다는 방향으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t01",
+     "to": "e_090d23e16763-t02",
+     "same_target": "배움을 기록해 남기는 일",
+     "topic": "기록과 배움",
+     "explanation": "과거의 원칙이 오늘 더 단정적인 원칙으로 다시 나타난다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_090d23e16763-t02",
+     "to": "e_090d23e16763-t01",
+     "same_target": "배움을 기록해 남기는 일",
+     "topic": "기록과 배움",
+     "explanation": "하나는 기록의 효과를 말하고 다른 하나는 그 생각을 원칙으로 요약해 같은 방향을 보인다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_090d23e16763-t01",
+     "to": "e_090d23e16763-t00",
+     "same_target": "배움을 기록으로 남기는 일",
+     "topic": "삶의 성취",
+     "explanation": "독서노트의 구체적 경험과 기록의 일반적 효과가 같은 방향으로 연결된다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_090d23e16763-t02",
+     "to": "e_090d23e16763-t00",
+     "same_target": "배움을 기록으로 남기는 일",
+     "topic": "삶의 성취",
+     "explanation": "독서노트 경험이 배움과 기록을 거의 같은 것으로 보는 오늘의 원칙과 맞닿아 있다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t00",
+     "to": "e_090d23e16763-t01",
+     "same_target": "기록의 학습 효과",
+     "topic": "삶의 성취",
+     "explanation": "둘 다 기록하거나 독서노트를 해 본 뒤 학습 효과가 달라진다고 본다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t00",
+     "to": "e_090d23e16763-t02",
+     "same_target": "기록의 학습 효과",
+     "topic": "삶의 성취",
+     "explanation": "독서노트의 효과를 본 과거 경험이 오늘의 더 일반적인 기록 원칙과 이어진다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_7f927fe7527f",
+   "day": "2026-07-05",
+   "title": "7/5 여름 계획",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 77.9,
+   "calls": 5,
+   "usd": 0.1026,
+   "step_ms": {
+    "observe": 36227,
+    "rules": 11,
+    "voice": 1054,
+    "save": 31,
+    "safety": 821,
+    "names": 14,
+    "record_input": 11,
+    "record_agent": 39215,
+    "record_clean": 246,
+    "past": 61
+   },
+   "thoughts": [
+    {
+     "id": "e_7f927fe7527f-t00",
+     "kind": "다짐",
+     "value": "성취",
+     "topic": "취업 진로 고민",
+     "thought": "이번 방학에는 인턴 지원서를 다섯 곳 이상 내기로 했다.",
+     "quote": "방학이 시작됐다. 이번 방학에는 인턴 지원서를 다섯 곳 이상 내기로 했다."
+    },
+    {
+     "id": "e_7f927fe7527f-t01",
+     "kind": "다짐",
+     "value": "성취",
+     "topic": "취업 진로 고민",
+     "thought": "작은 회사도 지원 목록에 넣어 보자.",
+     "quote": "작은 회사도 지원 목록에 넣어 보자."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "해소",
+     "from": "e_17754668a9f7-t00",
+     "to": "e_7f927fe7527f-t01",
+     "same_target": "지원 회사 범위 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "작은 회사도 고려할지 망설이던 질문이 오늘은 지원 목록에 넣어 보자는 쪽으로 정리됐다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "바뀜",
+     "from": "e_ed0c4bacc726-t01",
+     "to": "e_7f927fe7527f-t01",
+     "same_target": "지원 회사 범위 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "예전에는 큰 회사가 맞다고 단정했지만, 오늘은 작은 회사도 지원 대상으로 보려는 판단이 나타난다.",
+     "service": "버림: 판단형(바뀜)인데 다른 주제"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_6f0b1fec0d12",
+   "day": "2026-07-10",
+   "title": "7/10 걷기 2주째",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 69.3,
+   "calls": 5,
+   "usd": 0.1026,
+   "step_ms": {
+    "voice": 1785,
+    "save": 31,
+    "safety": 752,
+    "names": 14,
+    "record_input": 11,
+    "record_agent": 30486,
+    "record_clean": 215,
+    "past": 60,
+    "observe": 35653,
+    "rules": 19
+   },
+   "thoughts": [
+    {
+     "id": "e_6f0b1fec0d12-t00",
+     "kind": "해석",
+     "value": "안정",
+     "topic": "아침 걷기",
+     "thought": "이번에는 진짜 습관이 된 것 같다.",
+     "quote": "3월에는 사흘 만에 멈췄는데, 이번에는 진짜 습관이 된 것 같다."
+    },
+    {
+     "id": "e_6f0b1fec0d12-t01",
+     "kind": "해석",
+     "value": "즐거움",
+     "topic": "아침 걷기",
+     "thought": "걷고 나면 하루가 가볍다.",
+     "quote": "걷고 나면 하루가 가볍다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "바뀜",
+     "from": "e_26c2cd8f6e42-t00",
+     "to": "e_6f0b1fec0d12-t00",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "아침 걷기에 대해 예전의 작심삼일이라는 부정적 자기평가에서, 이번에는 습관이 된 것 같다는 해석으로 달라졌다.",
+     "service": "남음 → 바뀜"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_723844714327-t00",
+     "to": "e_6f0b1fec0d12-t00",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "아침마다 걷겠다는 다짐이 이후 습관이 된 것 같다는 현재의 기록으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_723844714327-t01",
+     "to": "e_6f0b1fec0d12-t00",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "아침 걷기와 관련해 핑계 대지 말자는 다짐이, 이번에는 습관이 된 것 같다는 현재의 기록으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "해소",
+     "from": "e_26c2cd8f6e42-t00",
+     "to": "e_6f0b1fec0d12-t01",
+     "same_target": "아침 걷기",
+     "topic": "아침 걷기",
+     "explanation": "아침 걷기에 대한 판단 보류에 가까운 부정적 자기평가가, 걷고 나면 하루가 가볍다는 단정한 현재 해석으로 정리되었다.",
+     "service": "남음 → 해소"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_30bc8f9c053a",
+   "day": "2026-07-18",
+   "title": "7/18 가족 여행 2일차",
+   "status": "done",
+   "record_type": "경험 기록",
+   "errors": [],
+   "seconds": 33.4,
+   "calls": 3,
+   "usd": 0.0522,
+   "step_ms": {
+    "safety": 569,
+    "names": 16,
+    "record_input": 11,
+    "record_agent": 31101,
+    "record_clean": 18,
+    "past": 0,
+    "observe": 0,
+    "rules": 8,
+    "voice": 1466,
+    "save": 18
+   },
+   "thoughts": [],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_c7e4c1d7ee08",
+   "day": "2026-07-30",
+   "title": "7/30 인턴 면접",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 63.9,
+   "calls": 5,
+   "usd": 0.1024,
+   "step_ms": {
+    "safety": 1238,
+    "names": 11,
+    "record_input": 8,
+    "record_agent": 28960,
+    "record_clean": 229,
+    "past": 67,
+    "observe": 30937,
+    "rules": 17,
+    "voice": 2147,
+    "save": 19
+   },
+   "thoughts": [
+    {
+     "id": "e_c7e4c1d7ee08-t00",
+     "kind": "감정",
+     "value": "",
+     "topic": "인턴 면접",
+     "thought": "오늘은 마음이 무겁다.",
+     "quote": "오늘은 마음이 무겁다."
+    },
+    {
+     "id": "e_c7e4c1d7ee08-t01",
+     "kind": "다짐",
+     "value": "성취",
+     "topic": "인턴 면접",
+     "thought": "다음 면접 전에는 예상 질문을 미리 정리해 가자.",
+     "quote": "다음 면접 전에는 예상 질문을 미리 정리해 가자."
+    }
+   ],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_db85b08e1d71",
+   "day": "2026-08-08",
+   "title": "8/8 독서노트",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 76.5,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "names": 15,
+    "record_input": 14,
+    "rules": 16,
+    "record_agent": 30937,
+    "voice": 1663,
+    "record_clean": 221,
+    "save": 22,
+    "past": 47,
+    "safety": 911,
+    "observe": 42410
+   },
+   "thoughts": [
+    {
+     "id": "e_db85b08e1d71-t00",
+     "kind": "해석",
+     "value": "성취",
+     "topic": "기록과 배움",
+     "thought": "기록하는 사람이 결국 배운다는 말이 또 나왔다. 내가 3월부터 느낀 것과 같다.",
+     "quote": "기록하는 사람이 결국 배운다는 말이 또 나왔다. 내가 3월부터 느낀 것과 같다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "이어짐",
+     "from": "e_090d23e16763-t02",
+     "to": "e_db85b08e1d71-t00",
+     "same_target": "기록과 배움의 관계",
+     "topic": "기록과 배움",
+     "explanation": "두 생각 모두 기록과 배움이 서로 깊이 연결되어 있다는 같은 방향의 판단을 말한다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_136d61830222-t01",
+     "to": "e_db85b08e1d71-t00",
+     "same_target": "기록과 배움의 관계",
+     "topic": "기록과 배움",
+     "explanation": "두 생각 모두 기록이 있어야 배움이 자기 것이 된다는 방향으로 이어진다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_090d23e16763-t01",
+     "to": "e_db85b08e1d71-t00",
+     "same_target": "기록과 배움의 관계",
+     "topic": "기록과 배움",
+     "explanation": "두 생각 모두 기록이 배움을 붙들고 지속하게 만든다는 공통된 해석을 담고 있다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_9baba38b0643",
+   "day": "2026-08-15",
+   "title": "8/15 리더에 대한 생각",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 66.8,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "record_input": 11,
+    "rules": 17,
+    "record_agent": 30381,
+    "voice": 1611,
+    "record_clean": 210,
+    "save": 24,
+    "safety": 629,
+    "past": 70,
+    "names": 15,
+    "observe": 33581
+   },
+   "thoughts": [
+    {
+     "id": "e_9baba38b0643-t00",
+     "kind": "신념·원칙",
+     "value": "배려",
+     "topic": "좋은 리더의 조건",
+     "thought": "좋은 리더는 먼저 듣는 사람이다.",
+     "quote": "좋은 리더는 먼저 듣는 사람이다."
+    },
+    {
+     "id": "e_9baba38b0643-t01",
+     "kind": "신념·원칙",
+     "value": "영향력",
+     "topic": "좋은 리더의 조건",
+     "thought": "앞에서 끄는 힘보다 듣는 힘이 사람을 움직인다.",
+     "quote": "앞에서 끄는 힘보다 듣는 힘이 사람을 움직인다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "해소",
+     "from": "e_81726050dc04-t00",
+     "to": "e_9baba38b0643-t00",
+     "same_target": "좋은 리더의 조건",
+     "topic": "좋은 리더의 조건",
+     "explanation": "과거의 열린 질문이 오늘의 단정한 생각으로 정리되었다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "해소",
+     "from": "e_81726050dc04-t00",
+     "to": "e_9baba38b0643-t01",
+     "same_target": "좋은 리더의 조건",
+     "topic": "좋은 리더의 조건",
+     "explanation": "과거의 비교 질문이 오늘은 듣는 힘을 더 중시하는 생각으로 정리되었다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "해소",
+     "from": "e_81726050dc04-t01",
+     "to": "e_9baba38b0643-t00",
+     "same_target": "좋은 리더의 조건",
+     "topic": "좋은 리더의 조건",
+     "explanation": "과거의 판단 보류가 오늘의 단정한 생각으로 정리되었다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "해소",
+     "from": "e_81726050dc04-t01",
+     "to": "e_9baba38b0643-t01",
+     "same_target": "좋은 리더의 조건",
+     "topic": "좋은 리더의 조건",
+     "explanation": "과거에 답을 미뤄 둔 생각이 오늘은 듣는 힘을 강조하는 방향으로 정리되었다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_9baba38b0643-t01",
+     "to": "e_9baba38b0643-t00",
+     "same_target": "좋은 리더의 조건",
+     "topic": "좋은 리더의 조건",
+     "explanation": "오늘의 두 생각은 모두 리더십에서 듣는 태도의 중요성을 같은 방향으로 말한다.",
+     "service": "남음 → 이어짐"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_2797b98de9b6",
+   "day": "2026-08-28",
+   "title": "8/28 막막함",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 85.5,
+   "calls": 6,
+   "usd": 0.1526,
+   "step_ms": {
+    "names": 17,
+    "past": 68,
+    "save": 33,
+    "record_input": 12,
+    "observe": 37889,
+    "record_agent": 44441,
+    "rules": 17,
+    "safety": 1039,
+    "record_clean": 220,
+    "voice": 1522
+   },
+   "thoughts": [
+    {
+     "id": "e_2797b98de9b6-t00",
+     "kind": "감정",
+     "value": "",
+     "topic": "취업 진로 고민",
+     "thought": "취업 생각만 하면 막막하다.",
+     "quote": "취업 생각만 하면 막막하다."
+    },
+    {
+     "id": "e_2797b98de9b6-t01",
+     "kind": "자기평가(부정)",
+     "value": "성취",
+     "topic": "취업 진로 고민",
+     "thought": "아무것도 준비가 안 된 것 같다.",
+     "quote": "아무것도 준비가 안 된 것 같다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "어긋남",
+     "from": "e_7f927fe7527f-t00",
+     "to": "e_2797b98de9b6-t01",
+     "same_target": "인턴 지원 준비",
+     "topic": "취업 진로 고민",
+     "explanation": "인턴 지원을 하기로 한 다짐 뒤에 준비가 전혀 안 됐다는 부정 자기평가가 이어져 같은 취업 준비에서 어긋남이 보인다.",
+     "service": "남음 → 어긋남"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_17754668a9f7-t01",
+     "to": "e_2797b98de9b6-t00",
+     "same_target": "취업 진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "취업 진로를 두고 확신이 서지 않는 상태가 이전에도 있었고 오늘도 이어져 보인다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "해소",
+     "from": "e_17754668a9f7-t00",
+     "to": "e_2797b98de9b6-t00",
+     "same_target": "회사 규모 선택이 포함된 취업 방향",
+     "topic": "취업 진로 고민",
+     "explanation": "회사 규모 선택을 두고 열려 있던 질문이 오늘은 막막하다는 하나의 정리된 감각으로 나타난다.",
+     "service": "남음 → 해소"
+    },
+    {
+     "type": "긴장",
+     "from": "e_817c4027776d-t00",
+     "to": "e_2797b98de9b6-t00",
+     "same_target": "취업에 대한 마음",
+     "topic": "취업에 대한 설렘",
+     "explanation": "같은 취업 생각에 대해 한쪽에서는 막막함, 다른 쪽에서는 설렘이 나타나 서로 맞서는 감정이 함께 기록돼 있다.",
+     "service": "남음 → 긴장"
+    },
+    {
+     "type": "어긋남",
+     "from": "e_7f927fe7527f-t01",
+     "to": "e_2797b98de9b6-t01",
+     "same_target": "회사 지원 준비",
+     "topic": "취업 진로 고민",
+     "explanation": "지원 대상을 넓히겠다는 다짐이 있었지만 오늘은 준비가 안 됐다는 자기평가가 나와 같은 취업 준비에서 어긋남이 보인다.",
+     "service": "남음 → 어긋남"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_6848c3cf1902",
+   "day": "2026-09-06",
+   "title": "9/6 개강",
+   "status": "done",
+   "record_type": "경험 기록",
+   "errors": [],
+   "seconds": 32.7,
+   "calls": 3,
+   "usd": 0.0522,
+   "step_ms": {
+    "record_agent": 30740,
+    "rules": 7,
+    "safety": 570,
+    "record_clean": 20,
+    "voice": 1148,
+    "names": 14,
+    "past": 0,
+    "save": 24,
+    "record_input": 12,
+    "observe": 0
+   },
+   "thoughts": [],
+   "relations_raw": []
+  },
+  {
+   "entry_id": "e_abc4a1acbcb7",
+   "day": "2026-09-12",
+   "title": "9/12 작은 회사 탐방",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 70.5,
+   "calls": 5,
+   "usd": 0.1025,
+   "step_ms": {
+    "names": 16,
+    "past": 82,
+    "save": 24,
+    "record_input": 12,
+    "observe": 31892,
+    "record_agent": 34904,
+    "rules": 12,
+    "safety": 544,
+    "record_clean": 301,
+    "voice": 2490
+   },
+   "thoughts": [
+    {
+     "id": "e_abc4a1acbcb7-t00",
+     "kind": "해석",
+     "value": "",
+     "topic": "작은 회사 탐방",
+     "thought": "작은 팀은 한 사람이 맡는 범위가 넓다.",
+     "quote": "작은 팀은 한 사람이 맡는 범위가 넓다."
+    },
+    {
+     "id": "e_abc4a1acbcb7-t01",
+     "kind": "해석",
+     "value": "성취",
+     "topic": "작은 회사 탐방",
+     "thought": "그래서 배우는 속도가 빠르다.",
+     "quote": "그래서 배우는 속도가 빠르다."
+    },
+    {
+     "id": "e_abc4a1acbcb7-t02",
+     "kind": "해석",
+     "value": "안정",
+     "topic": "작은 회사 탐방",
+     "thought": "그 대신 안정은 덜할 것이다.",
+     "quote": "그 대신 안정은 덜할 것이다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "긴장",
+     "from": "e_abc4a1acbcb7-t02",
+     "to": "e_abc4a1acbcb7-t01",
+     "same_target": "작은 팀 선택 기준",
+     "topic": "작은 회사 탐방",
+     "explanation": "작은 팀의 빠른 배움과 덜한 안정이 함께 제시되어 선택 기준 사이의 긴장이 드러난다.",
+     "service": "남음 → 긴장"
+    },
+    {
+     "type": "해소",
+     "from": "e_17754668a9f7-t00",
+     "to": "e_abc4a1acbcb7-t00",
+     "same_target": "작은 팀으로의 취업 진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "과거에는 작은 팀이 괜찮을지 질문으로 열려 있었고, 오늘은 작은 팀의 특징을 단정한 해석으로 적으며 그 질문을 더 구체한 판단으로 정리했다.",
+     "service": "버림: 판단형(해소)인데 다른 주제"
+    },
+    {
+     "type": "해소",
+     "from": "e_17754668a9f7-t00",
+     "to": "e_abc4a1acbcb7-t01",
+     "same_target": "작은 팀으로의 취업 진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "과거의 열린 진로 질문이 오늘 작은 팀에서 배우는 속도가 빠르다는 해석으로 부분적으로 정리된다.",
+     "service": "버림: 판단형(해소)인데 다른 주제"
+    }
+   ]
+  },
+  {
+   "entry_id": "e_670669b9bcf3",
+   "day": "2026-09-20",
+   "title": "9/20 토요일 일기",
+   "status": "done",
+   "record_type": "생각·성찰",
+   "errors": [],
+   "seconds": 79.5,
+   "calls": 6,
+   "usd": 0.1058,
+   "step_ms": {
+    "record_agent": 35925,
+    "rules": 20,
+    "safety": 550,
+    "record_clean": 320,
+    "voice": 4545,
+    "names": 18,
+    "past": 111,
+    "save": 29,
+    "record_input": 12,
+    "observe": 37670
+   },
+   "thoughts": [
+    {
+     "id": "e_670669b9bcf3-t00",
+     "kind": "해석",
+     "value": "자율",
+     "topic": "취업 진로 고민",
+     "thought": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다.",
+     "quote": "예전에는 대기업이 안정적이니까 무조건 거기가 답이라고 생각했는데, 요즘은 작은 팀에서 부딪히며 배우는 게 더 나다운 것 같다."
+    },
+    {
+     "id": "e_670669b9bcf3-t01",
+     "kind": "질문",
+     "value": "배려",
+     "topic": "부모님",
+     "thought": "부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다.",
+     "quote": "그래도 부모님께 이 얘기를 어떻게 꺼내야 할지 모르겠다."
+    },
+    {
+     "id": "e_670669b9bcf3-t02",
+     "kind": "질문",
+     "value": "안정",
+     "topic": "취업 진로 고민",
+     "thought": "안정을 포기하는 게 맞는 선택일까?",
+     "quote": "안정을 포기하는 게 맞는 선택일까?"
+    },
+    {
+     "id": "e_670669b9bcf3-t03",
+     "kind": "감정",
+     "value": "",
+     "topic": "취업 진로 고민",
+     "thought": "오늘은 마음이 좀 무겁다.",
+     "quote": "오늘은 마음이 좀 무겁다."
+    },
+    {
+     "id": "e_670669b9bcf3-t04",
+     "kind": "다짐",
+     "value": "자율",
+     "topic": "작은 회사 탐방",
+     "thought": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다.",
+     "quote": "다음 주부터는 관심 있는 팀 세 곳을 직접 찾아보기로 했다."
+    }
+   ],
+   "relations_raw": [
+    {
+     "type": "바뀜",
+     "from": "e_ed0c4bacc726-t00",
+     "to": "e_670669b9bcf3-t00",
+     "same_target": "진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "직장을 고를 기준이 안정 중심에서 작은 팀에서의 배움과 자기다움 쪽으로 바뀌어 있다.",
+     "service": "버림: 판단형(바뀜)인데 다른 주제"
+    },
+    {
+     "type": "해소",
+     "from": "e_17754668a9f7-t00",
+     "to": "e_670669b9bcf3-t00",
+     "same_target": "진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "이전의 열린 질문이 오늘 작은 팀에서 배우는 쪽이 더 자신에게 맞는다는 해석으로 정리되어 있다.",
+     "service": "버림: 해소인데 새 생각이 단정이 아님"
+    },
+    {
+     "type": "긴장",
+     "from": "e_abc4a1acbcb7-t02",
+     "to": "e_670669b9bcf3-t00",
+     "same_target": "작은 회사 선택",
+     "topic": "작은 회사 탐방",
+     "explanation": "작은 팀의 배움과 자기다움에 끌리는 생각과 안정이 덜할 수 있다는 해석이 함께 서 있어 선택의 긴장을 만든다.",
+     "service": "남음 → 긴장"
+    },
+    {
+     "type": "긴장",
+     "from": "e_abc4a1acbcb7-t02",
+     "to": "e_670669b9bcf3-t02",
+     "same_target": "작은 회사 선택",
+     "topic": "작은 회사 탐방",
+     "explanation": "안정을 포기해도 되는지 묻는 오늘의 질문은 작은 팀 선택이 안정과 부딪힌다는 earlier 해석과 같은 축에 놓여 있다.",
+     "service": "남음 → 긴장"
+    },
+    {
+     "type": "이어짐",
+     "from": "e_abc4a1acbcb7-t00",
+     "to": "e_670669b9bcf3-t04",
+     "same_target": "작은 회사 탐방",
+     "topic": "작은 회사 탐방",
+     "explanation": "작은 팀의 특성을 생각한 뒤 오늘은 관심 있는 팀을 직접 찾아보겠다는 행동 계획이 이어지고 있다.",
+     "service": "남음 → 이어짐"
+    },
+    {
+     "type": "긴장",
+     "from": "e_670669b9bcf3-t02",
+     "to": "e_670669b9bcf3-t00",
+     "same_target": "진로 결정",
+     "topic": "취업 진로 고민",
+     "explanation": "작은 팀 쪽으로 기울어 있는 해석과 안정 포기의 타당성을 묻는 질문이 같은 진로 결정 안에서 함께 열려 있다.",
+     "service": "남음 → 긴장"
+    }
+   ]
+  }
+ ],
+ "relations_shown_detail": [
+  {
+   "type": "이어짐",
+   "from": "e_723844714327-t00",
+   "to": "e_723844714327-t01",
+   "line": "점선",
+   "topic": "아침 걷기",
+   "explanation": "두 생각은 모두 아침 걷기를 실제로 이어 가려는 같은 방향의 다짐을 말한다."
+  },
+  {
+   "type": "어긋남",
+   "from": "e_723844714327-t00",
+   "to": "e_26c2cd8f6e42-t00",
+   "line": "점선",
+   "topic": "아침 걷기",
+   "explanation": "아침 걷기를 매일 하겠다는 다짐 뒤에, 그 다짐이 잘 지켜지지 않았다는 부정 자기평가가 이어진다."
+  },
+  {
+   "type": "어긋남",
+   "from": "e_723844714327-t01",
+   "to": "e_26c2cd8f6e42-t00",
+   "line": "점선",
+   "topic": "아침 걷기",
+   "explanation": "핑계를 대지 않겠다는 다짐과, 스스로 작심삼일이라고 적은 현재의 자기평가가 같은 아침 걷기 대상에서 어긋난다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_b6d275d921d2-t00",
+   "to": "e_b6d275d921d2-t01",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "두 생각 모두 혼자보다 함께함이 필요하다는 방향으로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_b2b2740bc921-t02",
+   "to": "e_b6d275d921d2-t02",
+   "line": "실선",
+   "topic": "혼자와 함께",
+   "explanation": "오늘의 질문은 지난주에 혼자 쪽을 택했던 흐름을 다시 불러오며 그 연속선 위에서 비교하고 있다."
+  },
+  {
+   "type": "바뀜",
+   "from": "e_b2b2740bc921-t00",
+   "to": "e_b6d275d921d2-t02",
+   "line": "실선",
+   "topic": "혼자와 함께",
+   "explanation": "오늘의 질문은 지난주의 혼자 선호에서 지금의 함께 필요로 이동한 변화를 직접 짚는다."
+  },
+  {
+   "type": "바뀜",
+   "from": "e_b2b2740bc921-t00",
+   "to": "e_b6d275d921d2-t01",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "과거에는 혼자가 더 편하다고 보았고 오늘은 혼자의 한계를 말하며 함께의 필요를 강조한다."
+  },
+  {
+   "type": "바뀜",
+   "from": "e_b2b2740bc921-t00",
+   "to": "e_b6d275d921d2-t00",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "과거에는 혼자가 더 편하다고 보았고 오늘은 함께해야 성장한다고 보아 기준이 달라졌다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_d1c135aa5f56-t01",
+   "to": "e_d1c135aa5f56-t02",
+   "line": "점선",
+   "topic": "중간고사 공부 집중",
+   "explanation": "같은 다짐이 오늘 글 안에서 한 번 더 반복되어 같은 방향의 생각이 이어진다."
+  },
+  {
+   "type": "목표 충돌",
+   "from": "e_d1c135aa5f56-t00",
+   "to": "e_d1c135aa5f56-t01",
+   "line": "점선",
+   "topic": "삶의 성취",
+   "explanation": "시험 공부를 미루지 않겠다는 다짐과 중간고사 공부에만 집중하겠다는 다짐은 모두 가까운 시험 준비에 시간과 에너지를 쓰려는 생각으로 함께 진행된다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_d1c135aa5f56-t00",
+   "to": "e_d3b359bcb81d-t01",
+   "line": "점선",
+   "topic": "시험 공부 미루지 않기",
+   "explanation": "과거의 단정한 다짐 뒤에 오늘은 같은 시험 공부를 두고 함께 할 수 있을지 열린 걱정을 적어, 같은 주제가 다시 열려 있다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_ed0c4bacc726-t01",
+   "to": "e_17754668a9f7-t00",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "과거에는 큰 회사가 맞다고 단정했지만, 오늘은 큰 회사와 작은 팀 사이를 열어 두고 있다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_375d3c88eab2-t02",
+   "to": "e_375d3c88eab2-t03",
+   "line": "점선",
+   "topic": "남과 비교",
+   "explanation": "비교하지 않겠다는 다짐과 가진 것을 먼저 보게 해 달라는 소망은 같은 주제에서 서로 같은 방향을 가리킨다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_375d3c88eab2-t01",
+   "to": "e_375d3c88eab2-t02",
+   "line": "점선",
+   "topic": "남과 비교",
+   "explanation": "비교로 모자람을 느낀 생각이 비교하지 않겠다는 다짐으로 이어진다."
+  },
+  {
+   "type": "어긋남",
+   "from": "e_d3b359bcb81d-t00",
+   "to": "e_adeac16832c6-t00",
+   "line": "점선",
+   "topic": "축제 부스 준비",
+   "explanation": "축제 부스 일을 책임지겠다는 다짐 뒤에, 같은 일에서 충분히 해내지 못했다는 부정적 자기평가가 이어진다."
+  },
+  {
+   "type": "해소",
+   "from": "e_d3b359bcb81d-t01",
+   "to": "e_adeac16832c6-t01",
+   "line": "점선",
+   "topic": "시험 공부 미루지 않기",
+   "explanation": "시험 공부와 다른 일을 함께할 수 있을지에 대한 걱정이, 결국 함께 끌려다녔다는 단정적 판단으로 정리된다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_b2b2740bc921-t01",
+   "to": "e_4c100cdd1fae-t00",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "함께하는 시간이 자라는 시간이라는 생각과, 사람들 사이에 오래 있으면 지친다는 경험이 함께 남아 있다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_b6d275d921d2-t00",
+   "to": "e_4c100cdd1fae-t00",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "함께함이 성장과 이어진다는 생각이 오늘도 다시 나타난다."
+  },
+  {
+   "type": "해소",
+   "from": "e_b6d275d921d2-t02",
+   "to": "e_4c100cdd1fae-t01",
+   "line": "실선",
+   "topic": "혼자와 함께",
+   "explanation": "과거의 열린 질문이 오늘은 둘 중 하나를 고르지 않아도 된다는 결론으로 정리되었다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_b6d275d921d2-t01",
+   "to": "e_4c100cdd1fae-t00",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "혼자만으로는 부족하고 함께함이 성장을 돕는다는 방향이 이어진다."
+  },
+  {
+   "type": "바뀜",
+   "from": "e_b2b2740bc921-t00",
+   "to": "e_4c100cdd1fae-t00",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "예전에는 혼자 있는 시간이 가장 편하다는 쪽에 무게가 있었고, 오늘은 혼자와 함께의 시간을 서로 다른 기능으로 함께 본다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_b6d275d921d2-t00",
+   "to": "e_4c100cdd1fae-t01",
+   "line": "점선",
+   "topic": "혼자와 함께",
+   "explanation": "예전의 함께의 필요를 인정하던 생각이 오늘은 혼자와 함께 모두 필요하다는 정리로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t01",
+   "to": "e_090d23e16763-t02",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "과거의 원칙이 오늘 더 단정적인 원칙으로 다시 나타난다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t00",
+   "to": "e_090d23e16763-t02",
+   "line": "점선",
+   "topic": "삶의 성취",
+   "explanation": "독서노트의 효과를 본 과거 경험이 오늘의 더 일반적인 기록 원칙과 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t00",
+   "to": "e_090d23e16763-t01",
+   "line": "점선",
+   "topic": "삶의 성취",
+   "explanation": "둘 다 기록하거나 독서노트를 해 본 뒤 학습 효과가 달라진다고 본다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_090d23e16763-t00",
+   "to": "e_090d23e16763-t02",
+   "line": "점선",
+   "topic": "삶의 성취",
+   "explanation": "독서노트 경험이 배움과 기록을 거의 같은 것으로 보는 오늘의 원칙과 맞닿아 있다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t01",
+   "to": "e_090d23e16763-t01",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "두 생각은 모두 배움을 기록할 때 더 오래 남고 자기 것이 된다는 방향으로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t00",
+   "to": "e_090d23e16763-t00",
+   "line": "점선",
+   "topic": "독서노트 효과",
+   "explanation": "두 생각은 모두 독서노트를 직접 해 본 뒤 그 효과를 긍정적으로 확인한다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_090d23e16763-t01",
+   "to": "e_090d23e16763-t02",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "하나는 기록의 효과를 말하고 다른 하나는 그 생각을 원칙으로 요약해 같은 방향을 보인다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_090d23e16763-t00",
+   "to": "e_090d23e16763-t01",
+   "line": "점선",
+   "topic": "삶의 성취",
+   "explanation": "독서노트의 구체적 경험과 기록의 일반적 효과가 같은 방향으로 연결된다."
+  },
+  {
+   "type": "해소",
+   "from": "e_17754668a9f7-t00",
+   "to": "e_7f927fe7527f-t01",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "작은 회사도 고려할지 망설이던 질문이 오늘은 지원 목록에 넣어 보자는 쪽으로 정리됐다."
+  },
+  {
+   "type": "해소",
+   "from": "e_26c2cd8f6e42-t00",
+   "to": "e_6f0b1fec0d12-t01",
+   "line": "점선",
+   "topic": "아침 걷기",
+   "explanation": "아침 걷기에 대한 판단 보류에 가까운 부정적 자기평가가, 걷고 나면 하루가 가볍다는 단정한 현재 해석으로 정리되었다."
+  },
+  {
+   "type": "바뀜",
+   "from": "e_26c2cd8f6e42-t00",
+   "to": "e_6f0b1fec0d12-t00",
+   "line": "실선",
+   "topic": "아침 걷기",
+   "explanation": "아침 걷기에 대해 예전의 작심삼일이라는 부정적 자기평가에서, 이번에는 습관이 된 것 같다는 해석으로 달라졌다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_723844714327-t00",
+   "to": "e_6f0b1fec0d12-t00",
+   "line": "실선",
+   "topic": "아침 걷기",
+   "explanation": "아침마다 걷겠다는 다짐이 이후 습관이 된 것 같다는 현재의 기록으로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_723844714327-t01",
+   "to": "e_6f0b1fec0d12-t00",
+   "line": "실선",
+   "topic": "아침 걷기",
+   "explanation": "아침 걷기와 관련해 핑계 대지 말자는 다짐이, 이번에는 습관이 된 것 같다는 현재의 기록으로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_090d23e16763-t01",
+   "to": "e_db85b08e1d71-t00",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "두 생각 모두 기록이 배움을 붙들고 지속하게 만든다는 공통된 해석을 담고 있다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_136d61830222-t01",
+   "to": "e_db85b08e1d71-t00",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "두 생각 모두 기록이 있어야 배움이 자기 것이 된다는 방향으로 이어진다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_090d23e16763-t02",
+   "to": "e_db85b08e1d71-t00",
+   "line": "점선",
+   "topic": "기록과 배움",
+   "explanation": "두 생각 모두 기록과 배움이 서로 깊이 연결되어 있다는 같은 방향의 판단을 말한다."
+  },
+  {
+   "type": "해소",
+   "from": "e_81726050dc04-t01",
+   "to": "e_9baba38b0643-t00",
+   "line": "점선",
+   "topic": "좋은 리더의 조건",
+   "explanation": "과거의 판단 보류가 오늘의 단정한 생각으로 정리되었다."
+  },
+  {
+   "type": "해소",
+   "from": "e_81726050dc04-t00",
+   "to": "e_9baba38b0643-t00",
+   "line": "점선",
+   "topic": "좋은 리더의 조건",
+   "explanation": "과거의 열린 질문이 오늘의 단정한 생각으로 정리되었다."
+  },
+  {
+   "type": "해소",
+   "from": "e_81726050dc04-t00",
+   "to": "e_9baba38b0643-t01",
+   "line": "점선",
+   "topic": "좋은 리더의 조건",
+   "explanation": "과거의 비교 질문이 오늘은 듣는 힘을 더 중시하는 생각으로 정리되었다."
+  },
+  {
+   "type": "해소",
+   "from": "e_81726050dc04-t01",
+   "to": "e_9baba38b0643-t01",
+   "line": "점선",
+   "topic": "좋은 리더의 조건",
+   "explanation": "과거에 답을 미뤄 둔 생각이 오늘은 듣는 힘을 강조하는 방향으로 정리되었다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_9baba38b0643-t00",
+   "to": "e_9baba38b0643-t01",
+   "line": "점선",
+   "topic": "좋은 리더의 조건",
+   "explanation": "오늘의 두 생각은 모두 리더십에서 듣는 태도의 중요성을 같은 방향으로 말한다."
+  },
+  {
+   "type": "어긋남",
+   "from": "e_7f927fe7527f-t00",
+   "to": "e_2797b98de9b6-t01",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "인턴 지원을 하기로 한 다짐 뒤에 준비가 전혀 안 됐다는 부정 자기평가가 이어져 같은 취업 준비에서 어긋남이 보인다."
+  },
+  {
+   "type": "어긋남",
+   "from": "e_7f927fe7527f-t01",
+   "to": "e_2797b98de9b6-t01",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "지원 대상을 넓히겠다는 다짐이 있었지만 오늘은 준비가 안 됐다는 자기평가가 나와 같은 취업 준비에서 어긋남이 보인다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_817c4027776d-t00",
+   "to": "e_2797b98de9b6-t00",
+   "line": "점선",
+   "topic": "취업에 대한 설렘",
+   "explanation": "같은 취업 생각에 대해 한쪽에서는 막막함, 다른 쪽에서는 설렘이 나타나 서로 맞서는 감정이 함께 기록돼 있다."
+  },
+  {
+   "type": "해소",
+   "from": "e_17754668a9f7-t00",
+   "to": "e_2797b98de9b6-t00",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "회사 규모 선택을 두고 열려 있던 질문이 오늘은 막막하다는 하나의 정리된 감각으로 나타난다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_17754668a9f7-t01",
+   "to": "e_2797b98de9b6-t00",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "취업 진로를 두고 확신이 서지 않는 상태가 이전에도 있었고 오늘도 이어져 보인다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_abc4a1acbcb7-t01",
+   "to": "e_abc4a1acbcb7-t02",
+   "line": "점선",
+   "topic": "작은 회사 탐방",
+   "explanation": "작은 팀의 빠른 배움과 덜한 안정이 함께 제시되어 선택 기준 사이의 긴장이 드러난다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_abc4a1acbcb7-t02",
+   "to": "e_670669b9bcf3-t00",
+   "line": "점선",
+   "topic": "작은 회사 탐방",
+   "explanation": "작은 팀의 배움과 자기다움에 끌리는 생각과 안정이 덜할 수 있다는 해석이 함께 서 있어 선택의 긴장을 만든다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_abc4a1acbcb7-t02",
+   "to": "e_670669b9bcf3-t02",
+   "line": "점선",
+   "topic": "작은 회사 탐방",
+   "explanation": "안정을 포기해도 되는지 묻는 오늘의 질문은 작은 팀 선택이 안정과 부딪힌다는 earlier 해석과 같은 축에 놓여 있다."
+  },
+  {
+   "type": "이어짐",
+   "from": "e_abc4a1acbcb7-t00",
+   "to": "e_670669b9bcf3-t04",
+   "line": "점선",
+   "topic": "작은 회사 탐방",
+   "explanation": "작은 팀의 특성을 생각한 뒤 오늘은 관심 있는 팀을 직접 찾아보겠다는 행동 계획이 이어지고 있다."
+  },
+  {
+   "type": "긴장",
+   "from": "e_670669b9bcf3-t00",
+   "to": "e_670669b9bcf3-t02",
+   "line": "점선",
+   "topic": "취업 진로 고민",
+   "explanation": "작은 팀 쪽으로 기울어 있는 해석과 안정 포기의 타당성을 묻는 질문이 같은 진로 결정 안에서 함께 열려 있다."
+  }
+ ]
+}

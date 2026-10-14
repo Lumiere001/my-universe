@@ -2,7 +2,7 @@
 같은 글을 여러 번 돌려 기록 Agent 결과가 얼마나 같은지 잰다. 1판 도구(tools/stability.py)는 그대로 둔다.
 
     uv run --frozen python tools/stability_v2.py          # 유료: 하늘 3편 × 3번 = Studio 9번(약 $0.45), 설정 V8_RECORD_CONFIG_ID
-    uv run --frozen python tools/stability_v2.py --record-config 3   # 품질 3판: 설정 번호를 정해 같은 측정(원장 갈래 Q3-흔들림)
+    uv run --frozen python tools/stability_v2.py --record-config 3   # 품질 3판: 설정 번호를 정해 같은 측정(원장 갈래 Q3-흔들림-c<번호>)
     uv run --frozen python tools/stability_v2.py --dry    # 네트워크 없이 입력만 확인
 
 가상 인물 하늘의 글만, 서비스처럼 가명 처리(tools.mask_obj) 뒤 보낸다(llm.guard 가 보내기 직전 실명 검사).
@@ -28,7 +28,7 @@ MAIN = Path("/Users/east_star/Projects/my-universe")       # 원장은 본 저�
 LEDGER = MAIN / "runs" / "cost_ledger.jsonl"
 PICK = ["9/20", "4/12", "6/14"]   # 1판 기준선과 같은 3편: 변화 서술 · 긴장 · 이어진 게시물
 RUNS, CAP_USD = 3, 1.0
-WS, OUT_NAME = "WS23", "stability-v2"   # --record-config 를 주면 Q3-흔들림 · stability-c<번호>(상한도 그 갈래에 따로)
+WS, OUT_NAME = "WS23", "stability-v2"   # --record-config 를 주면 Q3-흔들림-c<번호> · stability-c<번호>(상한도 설정마다)
 PEOPLE = [{"id": f"P{i}", "name": n, "nicknames": [], "relation": "친구"}
           for i, n in enumerate(json.loads((ROOT / "data/virtual/expected.json").read_text(encoding="utf-8"))["names"], 1)]
 squash = lambda s: re.sub(r"\s+", "", s or "")   # noqa: E731
@@ -139,5 +139,6 @@ def main(dry=False):
 if __name__ == "__main__":
     if "--record-config" in sys.argv:
         config.V8_RECORD_CONFIG_ID = sys.argv[sys.argv.index("--record-config") + 1]
-        WS, OUT_NAME = "Q3-흔들림", f"stability-c{config.V8_RECORD_CONFIG_ID}"
+        # 상한($1)은 설정마다: 같은 갈래로 묶으면 두 설정을 잰 뒤 셋째가 돌기도 전에 멈춘다(4b 때 그랬음)
+        WS, OUT_NAME = f"Q3-흔들림-c{config.V8_RECORD_CONFIG_ID}", f"stability-c{config.V8_RECORD_CONFIG_ID}"
     main(dry="--dry" in sys.argv)
