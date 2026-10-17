@@ -39,14 +39,19 @@ export function FeedbackButtons({ label, target, targetId, values, onDone }:
   );
 }
 
+// 보이는 글자가 하나라도 있나(서버 routes.py _visible 과 같은 규칙). 폭 없는 글자 · 한글 채움 문자 · 받아쓰기 자리표만이면 빈 글
+const visible = (s: string) => /[^\s\p{Cc}\p{Cf}\u115f\u1160\u3164\uffa0\u2800\ufffc]/u.test(s);
+
 export function OneLine({ target, targetId }: { target: Feedback["target"]; targetId?: string | null }) {
   const [text, setText] = useState("");
   const [done, setDone] = useState(false);
+  const [err, setErr] = useState("");
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    await sendFeedback({ target, target_id: targetId ?? null, value: "불편한 점 한 줄", text: text.trim().slice(0, 200) });
-    setDone(true);
+    if (!visible(text)) return;
+    setErr("");
+    try { await sendFeedback({ target, target_id: targetId ?? null, value: "불편한 점 한 줄", text: text.trim().slice(0, 200) }); setDone(true); }
+    catch { setErr("보내지 못했어요. 다시 보내 주세요."); }
   };
   if (done) return <p className="toast" role="status">불편한 점을 받았어요. 고칠 곳을 찾아볼게요.</p>;
   return (
@@ -56,6 +61,7 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
         <input id={"one-" + targetId} maxLength={200} value={text} onChange={(e) => setText(e.target.value)} placeholder="예: 생각을 잘못 나눴어요" />
       </div>
       <button type="submit" className="small" style={{ alignSelf: "flex-end" }}>보내기</button>
+      {err && <span className="err" role="alert">{err}</span>}
     </form>
   );
 }

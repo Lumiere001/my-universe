@@ -182,7 +182,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 ## 3. 피드백 · 상태 버튼
 
-`POST /feedback` `{"target": "relation|message|vow|question|tension|entry|app|weather", "target_id": "r1|null", "value": "맞아요|아니에요|좋아요|별로|오늘은 위로만|지켰어요|그만둘래요|불편한 점 한 줄|오늘은 살살|날씨 건너뜀", "text": "불편한 점 한 줄일 때만(500자)"}` → `{"ok": true, "state": {"type", "status", "mistake"} 또는 null}`
+`POST /feedback` `{"target": "relation|message|vow|question|tension|entry|app|weather", "target_id": "r1|null", "value": "맞아요|아니에요|좋아요|별로|오늘은 위로만|지켰어요|그만둘래요|불편한 점 한 줄|오늘은 살살|날씨 건너뜀", "text": "불편한 점 한 줄일 때만(500자), 그때는 꼭 — 보이는 글자가 없으면 422 invalid_input"}` → `{"ok": true, "state": {"type", "status", "mistake"} 또는 null}`
 
 - 맞아요/아니에요(`target_id` = 관계 id `옛생각id>새생각id`) → 점선을 실선으로 확인(바뀜 후보면 확정) / 관계 지우기, 지켰어요/그만둘래요(`target_id` = 다짐 생각 id) → 닫힘, 오늘은 살살 · 오늘은 위로만 → 오늘 하루 설정(`gentle_today` · `comfort_only_today` = 오늘 날짜), 날씨 건너뜀 → `weather_ask: false`(다음엔 날씨를 묻지 않음). 맞지 않는 대상(이미 닫힌 다짐 등)이면 409 `invalid_target`. 모든 피드백은 맞춤 신호로 저장(불편한 점 한 줄의 글만 암호화). 실행 기록(runs)에는 그때의 Studio 설정 번호 `studio_config`('기록 판/관측 판', 예 `2/2`)를, 피드백에는 누른 때가 아니라 그 대상(기록 · 생각 · 관계)의 기록을 처리한 마지막 실행의 설정 번호를 남긴다(기록과 상관없는 피드백은 null). '아니에요'로 지운 관계는 종류 · 두 생각 id 를 그 피드백의 암호문에 남긴다(오답 재료, 기록을 지우면 같이 지움).
 

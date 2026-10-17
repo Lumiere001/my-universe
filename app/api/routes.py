@@ -4,6 +4,7 @@ app/api/routes.py
 우주 · 온톨로지 · 피드백 · 사람 · 되고 싶은 모습 · 나 · 설정 · 계정 지우기 · 운영(/health · /stats).
 """
 
+import unicodedata
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response
@@ -47,10 +48,18 @@ def universe(user=Depends(get_user), repo=Depends(get_repo)):
 ##################################################
 
 TODAY_FLAGS = {"오늘은 살살": "gentle_today", "오늘은 위로만": "comfort_only_today"}
+BLANK = "\u115f\u1160\u3164\uffa0\u2800\ufffc"   # 한글 채움 문자 · 점자 빈칸 · 받아쓰기 자리표: 글자지만 보이지 않음
+
+
+def _visible(text):
+    """보이는 글자가 하나라도 있나. 띄어쓰기 · 제어 · 폭 없는 글자 · 채움 문자만이면 빈 글(화면 OneLine 과 같은 규칙)."""
+    return any(not c.isspace() and unicodedata.category(c) not in ("Cc", "Cf") and c not in BLANK for c in text or "")
 
 
 @router.post("/feedback", tags=["피드백"])
 def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
+    if body.value == "불편한 점 한 줄" and not _visible(body.text):   # 그냥 받으면 운영 화면 '남긴 말'이 빈 칸으로 남는다
+        raise ApiError(422, "invalid_input", "불편한 점을 한 줄 적어 주세요.")
     changed = removed = None
     with repo.session(user["id"]) as s:
         if body.value in ("맞아요", "아니에요", "지켰어요", "그만둘래요"):

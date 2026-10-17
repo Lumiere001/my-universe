@@ -148,6 +148,19 @@ def test_feedback_only_consented_masked_and_logged(c, env):  # noqa: F811
     assert len(env.repo.store.tables["ops_reads"]) == 2
 
 
+def test_one_line_needs_visible_text_and_lands_in_its_row(c):
+    """불편한 점 한 줄: 글이 없거나 안 보이는 글자뿐이면 422(남지 않음), 보낸 글은 운영 화면 그 줄의 '남긴 말'에 그대로.
+    (10/15 운영 '남긴 말' 빈 칸 — 서버가 글 없는 한 줄을 받았고, 화면 trim 은 폭 없는 글자 · 채움 문자를 못 걸렀다)"""
+    _, ev = write(c, *DAY1, "2026-10-01T22:00:00+09:00")
+    one = {"target": "entry", "target_id": ev[-1][1]["id"], "value": "불편한 점 한 줄"}
+    for blank in ({}, {"text": ""}, {"text": "  "}, {"text": "\u200b"}, {"text": "\u3164"}, {"text": "\ufffc"}):
+        r = c.post("/feedback", headers=H1, json={**one, **blank})
+        assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_input"
+    assert c.post("/feedback", headers=H1, json={**one, "text": "생각을 너무 잘게 나눈 것 같아요"}).status_code == 200
+    items = c.get("/ops/feedback", headers=HA).json()["items"]
+    assert [(x["target"], x["value"], x["text"]) for x in items] == [("entry", "불편한 점 한 줄", "생각을 너무 잘게 나눈 것 같아요")]
+
+
 def test_other_candidates_from_consented(c, env):  # noqa: F811
     _fill(c)
     with env.repo.session(U1) as s:
