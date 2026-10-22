@@ -127,7 +127,7 @@ scripts/stop_docker.sh                 # 끄기(같은 project 이름이라 그�
 | --- | --- |
 | `UPSTAGE_API_KEY` | Upstage 콘솔 키 |
 | `RECORD_AGENT_ID`, `OBSERVE_AGENT_ID` | Studio 에이전트 ID(1차와 같음) |
-| `V8_RECORD_CONFIG_ID`, `V8_OBSERVE_CONFIG_ID` | `2` (1판 `RECORD_CONFIG_ID=1`은 Streamlit 데모용으로 그대로) |
+| `V8_RECORD_CONFIG_ID`, `V8_OBSERVE_CONFIG_ID` | `5` · `4` (운영 4판, 2026-10-14. 처음 배포 때는 `2` · `2`. 1판 `RECORD_CONFIG_ID=1`은 Streamlit 데모용으로 그대로) |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Supabase Project Settings → API Keys(**Legacy** `anon`, `eyJ…` 모양) |
 | `DATABASE_URL` | Supabase Connect → **Transaction pooler**(포트 6543) 주소. 서버리스라 직접 연결 대신 풀러 |
 | `DIARY_ENC_KEY` | 일기 암호화 키(32바이트 base64, MORNING ⑤의 명령으로 만듦). Vercel과 비밀번호 관리자 두 곳에만 둔다(잃으면 저장된 글을 못 염) |

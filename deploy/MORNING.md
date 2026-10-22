@@ -127,8 +127,8 @@ python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)
 | `UPSTAGE_API_KEY` | Upstage 콘솔 키 |
 | `RECORD_AGENT_ID` | 기록 Agent ID (로컬 `.env`와 같은 값) |
 | `OBSERVE_AGENT_ID` | 관측 Agent ID (로컬 `.env`와 같은 값) |
-| `V8_RECORD_CONFIG_ID` | `2` |
-| `V8_OBSERVE_CONFIG_ID` | `2` |
+| `V8_RECORD_CONFIG_ID` | `2` (2026-10-14 부터 운영은 `5`, deploy/README.md) |
+| `V8_OBSERVE_CONFIG_ID` | `2` (2026-10-14 부터 운영은 `4`) |
 | `SUPABASE_URL` | ② Project URL |
 | `SUPABASE_ANON_KEY` | ② Legacy `anon` 키 |
 | `SUPABASE_SERVICE_ROLE_KEY` | ② Legacy `service_role` 키(계정 지우기 전용. 없으면 설정 화면의 "계정과 모든 기록 지우기"가 503) |
