@@ -1,4 +1,4 @@
-"""PRD 그림 4장 (가이드 그림 스타일: 흰 바탕, 파스텔 카드, 번호 원, 선 아이콘, 남색 화살표).
+"""PRD 그림 6장 (가이드 그림 스타일: 흰 바탕, 파스텔 카드, 번호 원, 선 아이콘, 남색 화살표).
 
     python tools/diagrams/make_diagrams.py   → tools/diagrams/out/*.html → 헤드리스 Chrome으로 PNG
 """
@@ -95,18 +95,18 @@ def page(name, w, h, body):
 # ---------------------------------------------------------------- 1. 서비스 흐름
 def d1():
     W, H = 1440, 790
-    b = '<h1 style="top:22px">나의 우주 — 글 한 편이 별이 되기까지</h1><div class="sub" style="top:78px">Service Workflow · 글을 올리면 두 Studio 에이전트와 코드가 차례로 일한다</div>'
+    b = '<h1 style="top:22px">나의 우주 — 글 한 편이 행성이 되기까지</h1><div class="sub" style="top:78px">Service Workflow · 글을 올리면 두 Studio 에이전트와 코드가 차례로 일한다</div>'
     cw, ch, gx = 300, 262, 46
     xs = [40 + i * (cw + gx) for i in range(4)]
     y1, y2 = 140, 482
-    row1 = [("blue", "대화 · 글 · 사진", "Talk · Write · Photo", "doc_up", "대화로 쓰기(요약 확인 후),<br>텍스트, 손글씨 사진", "MVP: 직접 쓰기 · MD·TXT · 인스타 ZIP"),
-            ("green", "공통 기록 → HTML", "Common Record", "doc_code", "어디서 온 글이든 같은 모양의<br>기록으로 바꾸고, HTML로 Studio에 보냄", "이어진 게시물 묶기 · 제목 날짜 · 소제목"),
+    row1 = [("blue", "대화 · 글 · 사진", "Talk · Write · Photo", "doc_up", "대화로 쓰기(요약 확인 후),<br>텍스트, 손글씨 사진", "이야기하기 · 직접 쓰기 · 사진 · 말 · 인스타 ZIP"),
+            ("green", "공통 기록 → HTML", "Common Record", "doc_code", "어디서 온 글이든 같은 모양의<br>기록으로, 이름은 가명으로 바꿔 Studio에", "보내기 직전 실명 검사 · 이어진 게시물 묶기"),
             ("purple", "기록 Agent", "Studio · Parse → Classify → Extract", "robot", "글 유형을 고르고<br>생각을 하나씩 나눔", "주제 · 종류 · 확신 · 원문 인용 · 가치"),
-            ("orange", "관문 (자동 검사)", "Gates", "shield", "원문에 없는 인용을 붙인 생각은<br>저장 안 함, 날짜 확인, 실명은 ○○", "결과를 내보내기 전에 매번")]
+            ("orange", "관문 (자동 검사)", "Gates", "shield", "원문에 없는 인용을 붙인 생각은<br>저장 안 함, 목록 밖 값 바로잡기", "결과를 내보내기 전에 매번")]
     row2 = [("teal", "영역 연결 · 과거 고르기", "Embedding", "nebula", "주제를 삶의 영역(해)에 붙이고<br>비슷한 과거 생각 최대 10개", "같은 세부 주제 먼저"),
             ("yellow", "관측 Agent", "Studio · Parse → Classify → Extract", "compare", "오늘 생각(T)과 과거 생각(P)을<br>비교해 관계를 판정", "관측 상태 6가지 중 하나"),
-            ("pink", "관계 규칙", "Rules + Gate", "rules", "시간 · 감정 규칙으로 거르고<br>실선/점선을 정함", "감정이 달라진 것은 바뀜이 아님"),
-            ("blue", "보고서 · 우주", "Report · Universe", "stars", "근거 인용이 붙은 보고서,<br>다음 질문, 새 별", "한마디는 11/7 · 기록 파일로 저장")]
+            ("pink", "관계 규칙", "Rules + Gate", "rules", "주제 · 영역 · 상태 규칙으로 거르고<br>실선/점선을 정함", "감정이 달라진 것은 바뀜이 아님"),
+            ("blue", "보고서 · 우주", "Report · Universe", "stars", "별지기 한마디 · 다음 질문,<br>관측 보고서, 새 행성", "Supabase에 암호문으로 저장")]
     for i, r in enumerate(row1):
         b += card(xs[i], y1, cw, ch, r[0], step(i + 1, *r))
     for i, r in enumerate(row2):
@@ -180,28 +180,31 @@ def d3():
         s += node(900, y + 84, 470, 196, "pink", "③ Extract", "갈래마다 같은 스키마", chips(ext_items, "pink") + f'<div class="ex" style="margin-top:8px">{ext_note}</div>')
         return s, [f"M372,{y + 182} L414,{y + 182}", f"M852,{y + 182} L894,{y + 182}"]
 
-    a1, p1 = agent(130, "기록 Agent", "Studio · classify-extract · 글 한 편 → 구조화 JSON", "HTML로 보낸 글을<br>읽을 수 있는 텍스트로",
+    a1, p1 = agent(130, "기록 Agent", "Studio · classify-extract · 글 한 편 → 구조화 JSON · 운영 설정 #5(4판)", "가명으로 바꾼 글(HTML)과<br>기존 작은 별 목록을 텍스트로",
                    ["경험 기록", "생각·성찰", "창작", "기타"], "신앙 묵상 · 기도도 생각·성찰 (종교 유형 없음)",
-                   ["요약", "기간", "계기", "말 거는 대상", "등장 관계(역할)", "참고한 것", "사건", "생각 표 [ ]"],
-                   "생각 표(7칸) = 세부 주제 · 생각 · 종류(해석·신념·질문·다짐·반성·감정) · 확신 · 원문 인용(그대로) · 스스로 쓴 변화 · 가치(10개 중)")
+                   ["요약", "말 거는 대상", "사건", "생각 표 [ ]"],
+                   "생각 표(8칸) = 생각 · 종류 · 확신 · 가치 · 원문 인용(그대로) · 스스로 쓴 변화 · 주제 · 사람<br>"
+                   "종류 9 = 해석 · 신념·원칙 · 질문 · 다짐 · 소망 · 자기평가(부정) · 자기평가(긍정) · 감정 · 기타")
     b += a1
     # 코드 조립
     dark, bg, br = C["yellow"]
     b += f'<div class="c" style="left:40px;top:468px;width:1360px;height:212px;border-color:{br};background:{bg}"><div class="head">{icon("flow", dark, 44)}<div style="margin-left:12px"><div class="t" style="color:{dark}">코드 (Python) — 두 에이전트 사이</div><div class="en" style="color:{dark}">비교할 재료를 준비한다</div></div></div></div>'
-    steps = [("orange", "관문 (자동 검사)", "인용이 원문에 없으면 저장 안 함<br>날짜 확인 · 실명은 ○○"), ("teal", "주제 → 삶의 영역(해)", "이름이 겹치면 그 영역,<br>아니면 가장 가까운 영역"),
-             ("teal", "과거 생각 고르기", "비슷한 생각 최대 10개<br>(같은 세부 주제 먼저)"), ("yellow", "비교 입력 HTML", "오늘 생각 T1, T2 …<br>과거 생각 P1, P2 …")]
+    steps = [("orange", "관문 · 바로잡기", "원문에 없는 인용은 저장 안 함<br>목록 밖 값 바로잡기 · 주제 하나로"), ("teal", "주제 → 삶의 영역(해)", "기존 작은 별이면 그 해,<br>아니면 임베딩으로 가장 가까운 해"),
+             ("teal", "과거 생각 고르기", "같은 세부 주제 먼저 + 유사도 순,<br>크게 떨어지는 곳에서 자름(최대 10개)"), ("yellow", "비교 입력 HTML", "오늘 생각 T1 … · 과거 생각 P1 …<br>+ 되고 싶은 모습")]
     sw = 300
     for i, (col, t, d) in enumerate(steps):
         b += node(70 + i * (sw + 28), 544, sw, 120, col, t, "", f'<div class="ex" style="font-size:14px">{d}</div>')
     p_code = [f"M{70 + i * (sw + 28) + sw + 4},604 L{70 + (i + 1) * (sw + 28) - 6},604" for i in range(3)]
-    a2, p2 = agent(714, "관측 Agent", "Studio · classify-extract · 비교 입력 → 관측 보고서", "T(오늘) · P(과거) 목록을<br>텍스트로",
+    a2, p2 = agent(714, "관측 Agent", "Studio · classify-extract · 비교 입력 → 관계 판정 · 운영 설정 #4(4판)", "T(오늘) · P(과거) 목록을<br>텍스트로",
                    ["해소", "바뀜", "긴장", "어긋남", "이어짐", "처음 쓰는 주제"], "겹치면 해소 > 바뀜 > 긴장 > 어긋남 > 이어짐 > 처음",
-                   ["관측 상태", "요약", "다음 질문", "관계 표 [ ]"],
-                   "관계 표(7칸) = 종류 · 오늘 ID · 과거 ID · 주제 · 설명 · 작성자가 직접 씀 · 긴장 축<br>감정이 달라진 것만으로는 바뀜이 아님")
+                   ["관측 상태", "요약", "다음 질문", "관계 표 [ ]", "닿은 순간 표 [ ]"],
+                   "관계 표(9칸) = 종류 · 오늘 ID · 과거 ID · 함께 말하는 대상 · 주제 · 근거 인용 · 설명 · 작성자가 직접 씀 · 긴장 축<br>"
+                   "같은 대상을 직접 말할 때만 잇는다 · 감정끼리는 바뀜 · 해소가 아님")
     b += a2
     # 결과
-    b += node(40, 1046, 1360, 96, "green", "→ 코드(마무리): 관계 규칙 + 관문 → 관측 보고서 · 우주 별자리", "",
-              '<div class="ex" style="font-size:14.5px">없는 ID 버림 · 같은 영역끼리 · 바뀜은 7일 이상 · 긴장은 30일 이내 · 목표 충돌은 14일 이내 · 감정끼리 바뀜 버림 · 두 에이전트가 모두 확인한 변화만 실선 · 사람 단정 표현은 바꿈</div>')
+    b += node(40, 1046, 1360, 96, "green", "→ 코드(마무리): 관계 규칙 · 상태 바꾸기 → 한마디 · 저장 · 우주", "",
+              '<div class="ex" style="font-size:14.5px">없는 ID 버림 · 시 · 창작 글 관계 버림 · 판단형(바뀜 · 해소 · 어긋남)은 같은 세부 주제 안에서만 · 영역을 넘는 선은 영향형만, 원문 근거가 있을 때 · '
+              '감정끼리 바뀜 · 해소 버림 · 같은 두 생각 사이 관계는 하나 · 두 에이전트가 모두 확인한 변화만 실선 · 사람 단정 표현은 거름</div>')
     paths = p1 + p_code + p2 + ["M720,432 L720,464", "M720,682 L720,710", "M720,1016 L720,1042"]
     b += arrows(W, H, paths)
     page("my-universe-3-agents", W, H, b)
