@@ -30,15 +30,15 @@ def install(app):
 
     @app.exception_handler(RequestValidationError)
     async def _invalid(request: Request, e: RequestValidationError):
-        # 입력값(원문)을 되돌려 보내지 않고 어느 칸이 틀렸는지만 알린다
+        # 입력값(원문)을 되돌려 보내지 않고 어느 칸이 틀렸는지만 알린다(영문 칸 이름은 화면이 C-01 문장으로 바꿔 보인다, lib/api.ts)
         fields = sorted({".".join(str(x) for x in err["loc"][1:]) for err in e.errors()})
         return JSONResponse(body("invalid_input", f"입력을 확인해 주세요: {', '.join(fields) or '본문'}"), status_code=422)
 
     @app.exception_handler(HTTPException)
     async def _http(request: Request, e: HTTPException):
-        return JSONResponse(body(f"http_{e.status_code}", "요청을 처리할 수 없어요."), status_code=e.status_code)
+        return JSONResponse(body(f"http_{e.status_code}", "이 요청은 처리할 수 없어요. 화면을 새로 고친 뒤 다시 해 주세요."), status_code=e.status_code)
 
     @app.exception_handler(Exception)
     async def _any(request: Request, e: Exception):
         logger.log("error", path=request.url.path, code="internal", what=type(e).__name__)
-        return JSONResponse(body("internal", "잠시 뒤 다시 해 주세요."), status_code=500)
+        return JSONResponse(body("internal", "문제가 생겨 멈췄어요. 잠시 뒤 다시 해 주세요."), status_code=500)

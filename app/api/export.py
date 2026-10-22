@@ -25,5 +25,5 @@ def export_one(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         out = views.export(s, eid)
     if out is None:
-        raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        raise ApiError(404, "not_found", "이 기록을 찾지 못했어요. 지워졌을 수 있어요.")
     return out

@@ -21,11 +21,11 @@ from app.service import ocr
 router = APIRouter(tags=["일기"])
 MAX_BYTES = 4_500_000   # Vercel 요청 본문 한도. 화면은 4MB 아래로 줄여 보낸다
 MESSAGES = {
-    "ocr_busy": "글자 읽기가 잠깐 붐벼요. 조금 뒤 다시 눌러 주세요.",
+    "ocr_busy": "글자 읽기가 잠깐 붐벼요. 잠시 뒤 다시 눌러 주세요.",
     "ocr_failed": "사진의 글자를 읽지 못했어요. 잠시 뒤 다시 해 주세요.",
-    "ocr_unconfigured": "글자 읽기 설정이 아직 없어요. 운영자에게 알려 주세요.",
+    "ocr_unconfigured": "지금은 사진 글자 읽기를 쓸 수 없어요. 운영자에게 알려 주세요.",
 }
-TOO_BIG = "사진이 너무 커요(4.5MB까지). 화면에서 줄여 보내지 못한 사진이면 JPG로 바꾸거나 다시 찍어 올려 주세요."
+TOO_BIG = "사진이 너무 커요(4.5MB까지). JPG로 바꾸거나 다시 찍어 올려 주세요."
 
 
 async def photo_bytes(request: Request):

@@ -25,10 +25,10 @@ from app.repository import diary
 from app.service import stt
 
 router = APIRouter(tags=["음성"])
-TOO_LARGE = "녹음 조각이 너무 커요. 화면을 새로 고친 뒤 다시 올려 주세요."
-FAILED = {"unconfigured": (503, "voice_unconfigured", "말로 쓰기 설정이 아직 없어요."),
-          "stt": (502, "stt_failed", "받아쓰지 못했어요. 다시 해 주세요."),
-          "tts": (502, "tts_failed", "읽어 주지 못했어요.")}
+TOO_LARGE = "녹음이 너무 커요. 화면을 새로 고친 뒤 다시 올려 주세요."
+FAILED = {"unconfigured": (503, "voice_unconfigured", "지금은 말로 하기를 쓸 수 없어요. 운영자에게 알려 주세요."),
+          "stt": (502, "stt_failed", "받아쓰지 못했어요. 잠시 뒤 다시 해 주세요."),
+          "tts": (502, "tts_failed", "읽어 주지 못했어요. 글은 그대로 볼 수 있어요.")}
 
 
 class SpeakIn(In):

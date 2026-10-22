@@ -105,7 +105,7 @@ def merge_candidates(topics, vecs=None, center=None):
     for i, a in enumerate(names):
         for b in names[i + 1:]:
             if key(a) == key(b):
-                out.append({"a": a, "b": b, "sun": topics[a], "why": "띄어쓰기만 다름", "sim": None})
+                out.append({"a": a, "b": b, "sun": topics[a], "why": "띄어쓰기만 달라요", "sim": None})
                 seen.add(frozenset((a, b)))
     vecs = vecs or {}
     near = {}
@@ -116,6 +116,6 @@ def merge_candidates(topics, vecs=None, center=None):
     pairs = []
     for a, b in near.items():
         if near.get(b) == a and a < b and frozenset((a, b)) not in seen:
-            pairs.append({"a": a, "b": b, "sun": topics[a], "why": "같은 해에서 서로 가장 가까움",
+            pairs.append({"a": a, "b": b, "sun": topics[a], "why": "같은 해에서 뜻이 가장 가까워요",
                           "sim": round(cos(vecs[a], vecs[b], center), 4)})
     return out + sorted(pairs, key=lambda p: -p["sim"])

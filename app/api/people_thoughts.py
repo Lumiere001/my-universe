@@ -19,5 +19,5 @@ def person_thoughts(pid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         out = views.person_thoughts(s, pid)
     if out is None:
-        raise ApiError(404, "not_found", "사람을 찾지 못했어요.")
+        raise ApiError(404, "not_found", "이 사람을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return out

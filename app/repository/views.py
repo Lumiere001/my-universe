@@ -12,9 +12,10 @@ from app.service.rules import universe_view
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
              "commitment": "free", "open_question": "free", "": "none", None: "none"}
-QUESTION = {"동명이인": "'{n}'은(는) 사람 목록의 같은 이름 중 누구인가요?",
-            "별명": "'{n}'은(는) 사람 목록에 있는 사람을 부르는 말인가요?",
-            "이름인지 낱말인지": "'{n}'은(는) 사람 이름인가요?"}
+# 보기(OPTIONS)는 서버로 돌아오는 값이라 그대로, 물음만 보기와 맞춘다(docs/content/C-02 사람 질문)
+QUESTION = {"동명이인": "글에 나온 '{n}'은(는) 사람 목록에 있는 '{n}'과(와) 같은 사람인가요?",
+            "별명": "글에 나온 '{n}'은(는) 사람 목록에 있는 누군가를 부르는 다른 이름인가요?",
+            "이름인지 낱말인지": "글에 나온 '{n}'은(는) 사람 이름인가요?"}
 OPTIONS = {"동명이인": ["같은 사람", "다른 사람", "사람 이름 아님"], "별명": ["같은 사람", "다른 사람", "사람 이름 아님"],
            "이름인지 낱말인지": ["사람 이름", "사람 이름 아님"]}
 
@@ -74,7 +75,7 @@ def observation(r, ts, rels, past_ids, pts):
         state = "이어진 지난 생각 없음"   # 같은 세부 주제의 지난 생각은 있었지만 이어지지 않음
     else:
         state = "처음 쓰는 주제"
-    limits = ["생각 나누기와 이어진 선은 AI 가 원문 인용을 근거로 한 추정이라 틀릴 수 있어요."] if ts else []
+    limits = ["생각을 나눈 것과 이어진 선은 AI가 원문 인용을 근거로 추정한 것이라 틀릴 수 있어요."] if ts else []
     if past_ids:
         limits.append(f"지난 생각 {len(past_ids)}개와만 비교했어요. 같은 세부 주제와 뜻이 가까운 것을 골랐고, "
                       "이 글을 정리할 때 이미 있던 기록만 봤어요.")

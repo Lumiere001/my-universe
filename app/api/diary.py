@@ -37,7 +37,7 @@ MESSAGES = {
     "studio_bad_output": "생각을 나눈 결과를 읽지 못했어요. '이어서 하기'를 눌러 주세요.",
     "llm_failed": "별지기가 잠깐 대답하지 못했어요. '이어서 하기'를 눌러 주세요.",
     "real_name_leak": "이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 글은 안전하게 저장돼 있어요.",
-    "internal": "처리하다 멈췄어요. '이어서 하기'를 눌러 주세요.",
+    "internal": "정리하다 멈췄어요. '이어서 하기'를 눌러 주세요.",
     "duplicate": "이미 보낸 글이에요. 정리가 끝나지 않았으니 '이어서 하기'를 눌러 주세요.",
     "duplicate_leak": "이미 보낸 글이에요. 이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 글은 안전하게 저장돼 있어요.",
 }
@@ -168,13 +168,13 @@ def write(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
 def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         if not s.rows("entries", id=eid):
-            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "멈춘 기록을 찾지 못했어요. 글을 다시 띄워 주세요.")
         consent.check(s)
         _limits(s, eid)
         if config.RESUME_LIMIT > 0 and diary.resumes(s, eid) >= config.RESUME_LIMIT:
             raise ApiError(429, "resume_limit", f"이 기록은 {config.RESUME_LIMIT}번까지 이어서 할 수 있어요. 운영자에게 알려 주세요.")
         if not diary.lock(s, eid):
-            raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
+            raise ApiError(409, "already_running", "이 글은 지금 정리하고 있어요. 조금만 기다려 주세요.")
         diary.add_run(s, eid, "resume")
     return _stream(_start(repo, user["id"], eid))
 
@@ -203,7 +203,7 @@ def delete_entry(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         row = s.rows("entries", id=eid)
         if not row:
-            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 기록을 찾지 못했어요. 이미 지워졌을 수 있어요.")
         if diary.is_locked(row[0]):
             raise ApiError(409, "already_running", "정리가 끝난 뒤에 지울 수 있어요.")
         diary.delete_entry(s, repo.vectors, eid)
@@ -218,17 +218,17 @@ def confirm(body: ConfirmIn, eid: Id, user=Depends(get_user), repo=Depends(get_r
     with repo.session(uid) as s:
         e = diary.entry(s, eid)
         if not e:
-            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 정리를 찾지 못했어요. '대화 마치고 정리하기'를 다시 눌러 주세요.")
         consent.check(s)
         if not drafts.pending(e):
-            raise ApiError(409, "not_waiting", "확인을 기다리는 기록이 아니에요.")
+            raise ApiError(409, "not_waiting", "이미 저장했거나 확인할 수 없는 정리예요. 화면을 새로 고쳐 주세요.")
         if not diary.lock(s, eid):
-            raise ApiError(409, "already_running", "이 기록은 지금 정리 중이에요.")
+            raise ApiError(409, "already_running", "아직 정리하고 있어요. 조금 뒤 다시 눌러 주세요.")
         try:
             seen = drafts.confirm(s, repo.vectors, e, body.summary, [f.model_dump() for f in body.fixes], body.agreed)
         except KeyError:
             diary.unlock(s, eid)
-            raise ApiError(422, "invalid_input", "고칠 생각을 찾지 못했어요.")
+            raise ApiError(422, "invalid_input", "고칠 생각을 찾지 못했어요. 화면을 새로 고친 뒤 다시 해 주세요.")
         diary.add_run(s, eid, "confirm", meta=seen)   # 운영 지표: 항목 수 · 고친 수(WS22)
     try:
         graph.run(repo, uid, eid)   # 끝난 노드는 건너뛰고 save 만(외부 호출 없음)

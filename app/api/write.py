@@ -57,7 +57,7 @@ def set_day(body: DayIn, eid: Id, user=Depends(get_user), repo=Depends(get_repo)
     with repo.session(user["id"]) as s:
         row = s.rows("entries", id=eid)
         if not row:
-            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 기록을 찾지 못했어요. 지워졌을 수 있어요.")
         if diary.is_locked(row[0]):
             raise ApiError(409, "already_running", "정리가 끝난 뒤에 고칠 수 있어요.")
         diary.set_day(s, eid, body.day)

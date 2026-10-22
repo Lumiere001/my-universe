@@ -107,7 +107,7 @@ def add_sun(body: SunIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         consent.check(s)   # 기준 축 제안이 외부(Solar 임베딩)로 나갈 수 있다
         if s.rows("suns", name=body.name, custom=True):
-            raise ApiError(409, "already_exists", "이미 있는 해예요.")
+            raise ApiError(409, "already_exists", "같은 이름의 해가 이미 있어요.")
         people = diary.people(s)
     axis, basis, run = suggest_axis(body.name, people)   # 트랜잭션 밖에서 부른다
     with repo.session(user["id"]) as s:
@@ -115,7 +115,7 @@ def add_sun(body: SunIn, user=Depends(get_user), repo=Depends(get_repo)):
             diary.add_run(s, None, "suggest_axis", run["ms"], run["calls"], run["est_usd"], run["code"])
         out = edit.add_sun(s, body.name, axis)
     if not out:
-        raise ApiError(409, "already_exists", "이미 있는 해예요.")
+        raise ApiError(409, "already_exists", "같은 이름의 해가 이미 있어요.")
     return {**out, "suggested": {"axis": axis, "basis": basis}}
 
 
@@ -124,9 +124,9 @@ def set_axis(body: AxisIn, sid: Id, user=Depends(get_user), repo=Depends(get_rep
     with repo.session(user["id"]) as s:
         cur = edit.sun(s, sid)
         if not cur:
-            raise ApiError(404, "not_found", "해를 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 해를 찾지 못했어요. 화면을 새로 고쳐 주세요.")
         if cur["name"] in edit.BASE:
-            raise ApiError(409, "base_axis", "기본 영역은 그 자체가 기준 축이에요.")
+            raise ApiError(409, "base_axis", "기본 영역 해는 그 자체가 기준이라 바꿀 수 없어요.")
         return edit.set_axis(s, sid, body.axis)
 
 
@@ -141,7 +141,7 @@ def move_star(body: MoveIn, sid: Id, user=Depends(get_user), repo=Depends(get_re
             raise ApiError(409, "already_running", BUSY)
         out = edit.move_star(s, sid, body.sun_id)
     if not out:
-        raise ApiError(404, "not_found", "작은 별이나 해를 찾지 못했어요.")
+        raise ApiError(404, "not_found", "작은 별이나 해를 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return out
 
 
@@ -178,7 +178,7 @@ def merge(body: MergeIn, user=Depends(get_user), repo=Depends(get_repo)):
             raise ApiError(409, "already_running", BUSY)
         out = edit.merge_stars(s, body.from_id, body.into_id)
     if not out:
-        raise ApiError(404, "not_found", "합칠 작은 별을 찾지 못했어요.")
+        raise ApiError(404, "not_found", "합칠 작은 별을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return out
 
 
@@ -186,7 +186,7 @@ def merge(body: MergeIn, user=Depends(get_user), repo=Depends(get_repo)):
 def decline(body: MergeIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         if not edit.decline_merge(s, body.from_id, body.into_id):
-            raise ApiError(404, "not_found", "작은 별을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 작은 별을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return {"ok": True}
 
 
@@ -199,7 +199,7 @@ def fix_thought(body: ThoughtPatch, tid: Id, user=Depends(get_user), repo=Depend
     patch = body.model_dump(exclude_unset=True)
     with repo.session(user["id"]) as s:
         if not edit.fix_thought(s, tid, patch):
-            raise ApiError(404, "not_found", "생각을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 생각을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
         t = diary.thoughts(s, id=[tid])[0]
         return views.thought_api(t, diary.states(s), diary.relations(s, to_thought=[tid]))
 
@@ -213,7 +213,7 @@ def delete_person_with_thoughts(pid: Id, user=Depends(get_user), repo=Depends(ge
     uid = user["id"]
     with repo.session(uid) as s:
         if not any(p["id"] == pid for p in diary.people(s)):
-            raise ApiError(404, "not_found", "사람을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 사람을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
         if edit.busy(s):
             raise ApiError(409, "already_running", BUSY)
         tids = edit.person_thought_ids(s, pid)

@@ -30,14 +30,14 @@ Id = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,80}$")]
 MESSAGES = {
     "llm_failed": "별지기가 잠깐 대답하지 못했어요. 다시 보내 주세요.",
     "real_name_leak": "이름을 가리는 중에 문제가 생겨 밖으로 보내지 않았어요. 말은 화면에 그대로 있어요.",
-    "internal": "답하다 멈췄어요. 다시 보내 주세요.",
+    "internal": "별지기가 답하다 멈췄어요. 다시 보내 주세요.",
 }
 
 
 def _get(s, cid):
     c = conversations.get(s, cid)
     if not c:
-        raise ApiError(404, "not_found", "대화를 찾지 못했어요.")
+        raise ApiError(404, "not_found", "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.")
     return c
 
 
@@ -89,7 +89,7 @@ def _turn_queue(repo, uid, cid, text, via="text"):
         try:
             v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)), via)
             q.put(("turn", v) if v else ("error", {"conversation_id": cid, "code": "not_found",
-                                                   "message": "대화를 찾지 못했어요.", "resumable": False}))
+                                                   "message": "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.", "resumable": False}))
         except Exception as e:
             code = chat_graph.error_code(e)
             code = code if code in MESSAGES else "internal"
@@ -137,7 +137,7 @@ def finish(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
             raise ApiError(409, "no_turns", "먼저 이야기를 들려주세요.")
         e = diary.entry(s, c["entry_id"]) if c.get("entry_id") else None
         if e and diary.is_locked(e):
-            raise ApiError(409, "already_running", "지금 정리하고 있어요.")
+            raise ApiError(409, "already_running", "지금 정리하고 있어요. 조금만 기다려 주세요.")
         if e and drafts.pending(e) and c.get("drafted") == c["turn_count"]:   # 그 뒤로 말이 없으면 만든 초안 그대로
             return diary_api._stream(_done(views.entry_result(s, e["id"])))
         if e and e.get("confirmed") == drafts.WAITING:   # 이야기가 늘었으면 초안을 다시 만든다

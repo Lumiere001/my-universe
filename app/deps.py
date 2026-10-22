@@ -15,5 +15,5 @@ def _repo():
 
 def get_repo():
     if not config.DATABASE_URL:
-        raise ApiError(503, "db_unconfigured", "저장소 설정이 아직 없어요.")
+        raise ApiError(503, "db_unconfigured", "지금은 기록을 저장할 수 없어요. 운영자에게 알려 주세요.")
     return _repo()

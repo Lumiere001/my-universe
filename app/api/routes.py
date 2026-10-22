@@ -64,13 +64,13 @@ def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         if body.value in ("맞아요", "아니에요", "지켰어요", "그만둘래요"):
             if not body.target_id:
-                raise ApiError(422, "invalid_input", "어느 것에 대한 버튼인지 알려 주세요.")
+                raise ApiError(422, "invalid_input", "어느 항목에 대한 버튼인지 알 수 없어요. 화면을 새로 고친 뒤 다시 눌러 주세요.")
             old = diary.states(s)
             rels = diary.relations(s) if body.value in ("맞아요", "아니에요") else []
             try:
                 new, new_rels = press(old, rels, body.target_id, body.value, diary.today())
             except ValueError:
-                raise ApiError(409, "invalid_target", "이 버튼을 누를 수 있는 대상이 아니에요.")
+                raise ApiError(409, "invalid_target", "이 항목에는 이 버튼을 쓸 수 없어요.")
             after = {r["id"]: r for r in new_rels}
             for r in rels:
                 if r["id"] not in after:
@@ -115,7 +115,7 @@ def update_person(body: PersonPatch, pid: Id, user=Depends(get_user), repo=Depen
     with repo.session(user["id"]) as s:
         p = diary.update_person(s, pid, body.name, None if body.nickname is None else _nicks(body.nickname), body.relation)
     if not p:
-        raise ApiError(404, "not_found", "사람을 찾지 못했어요.")
+        raise ApiError(404, "not_found", "이 사람을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return views.person_api(p)
 
 
@@ -124,7 +124,7 @@ def delete_person(pid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         n = diary.delete_person(s, pid)
     if n is None:
-        raise ApiError(404, "not_found", "사람을 찾지 못했어요.")
+        raise ApiError(404, "not_found", "이 사람을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
     return {"ok": True, "replaced": n}
 
 
@@ -133,7 +133,7 @@ def answer_question(body: AnswerIn, qid: Id, user=Depends(get_user), repo=Depend
     with repo.session(user["id"]) as s:
         q = next(iter(diary.questions(s, id=qid)), None)
         if not q:
-            raise ApiError(404, "not_found", "질문을 찾지 못했어요.")
+            raise ApiError(404, "not_found", "이 질문을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
         people = diary.people(s)
         if body.answer in ("다른 사람", "사람 이름"):
             diary.add_person(s, q["name"])
@@ -190,7 +190,7 @@ def delete_me(user=Depends(get_user), repo=Depends(get_repo)):
     """순서: 벡터(Chroma) → DB 의 모든 행 → auth 계정(관리 API, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 안 지우고 오류."""
     uid = user["id"]
     if not (config.SUPABASE_URL and config.SUPABASE_SERVICE_ROLE_KEY):
-        raise ApiError(503, "account_delete_unconfigured", "계정 지우기 설정이 아직 없어요. 운영자에게 알려 주세요.")
+        raise ApiError(503, "account_delete_unconfigured", "지금은 계정을 지울 수 없어요. 운영자에게 알려 주세요.")
     with repo.session(uid) as s:
         if any(diary.is_locked(e) for e in s.rows("entries")):
             raise ApiError(409, "already_running", "정리 중인 기록이 끝난 뒤에 지울 수 있어요.")

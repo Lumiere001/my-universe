@@ -28,7 +28,7 @@ def verify(token):
         if hit and hit[1] > time.time():
             return hit[0]
     if not config.SUPABASE_URL:
-        raise ApiError(503, "auth_unconfigured", "로그인 설정이 아직 없어요.")
+        raise ApiError(503, "auth_unconfigured", "지금은 로그인할 수 없어요. 운영자에게 알려 주세요.")
     try:
         r = httpx.get(f"{config.SUPABASE_URL}/auth/v1/user", timeout=10,
                       headers={"apikey": config.SUPABASE_ANON_KEY, "Authorization": f"Bearer {token}"})
@@ -41,7 +41,7 @@ def verify(token):
     except ValueError:
         raise ApiError(503, "auth_unavailable", "로그인을 확인하지 못했어요. 잠시 뒤 다시 해 주세요.")
     if not isinstance(body, dict) or not body.get("id"):
-        raise ApiError(401, "unauthorized", "다시 로그인해 주세요.")
+        raise ApiError(401, "unauthorized", "로그인이 풀렸어요. 다시 로그인해 주세요.")
     user = {"id": body["id"], "email": body.get("email") or ""}
     with _lock:
         if len(_cache) > 1000:

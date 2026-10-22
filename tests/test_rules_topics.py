@@ -64,7 +64,7 @@ def test_merge_candidates():
     topics = {"혼자와 함께": "관계", "혼자와함께": "관계", "부모님": "관계", "엄마": "관계", "진로": "삶의 성취"}
     vecs = {"부모님": [1, 0.1], "엄마": [1, 0.2], "혼자와 함께": [0, 1], "진로": [1, 0.15]}
     got = merge_candidates(topics, vecs)
-    assert got[0]["why"] == "띄어쓰기만 다름"
+    assert got[0]["why"] == "띄어쓰기만 달라요"
     pairs = {(g["a"], g["b"]) for g in got}
     assert ("부모님", "엄마") in pairs
     assert not any("진로" in p for p in pairs)   # 다른 해와는 합치지 않음

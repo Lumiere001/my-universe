@@ -68,11 +68,11 @@ def get_consent(user=Depends(get_user), repo=Depends(get_repo)):
 @router.post("/consent", summary="동의하기(필수 셋은 참이어야 함, 선택은 운영자 피드백 열람)")
 def post_consent(body: ConsentIn, user=Depends(get_user), repo=Depends(get_repo)):
     if body.version != VERSION:
-        raise ApiError(409, "consent_outdated", "동의 문구가 바뀌었어요. 화면을 새로 고쳐 다시 읽어 주세요.")
+        raise ApiError(409, "consent_outdated", "동의 문구가 새로 바뀌어 다시 불러왔어요. 바뀐 내용을 읽고 다시 동의해 주세요.")
     if not body.age14:
         raise ApiError(403, "under_14", "만 14세 미만은 지금 쓸 수 없어요.")
     if not (body.required and body.sensitive):
-        raise ApiError(422, "consent_missing", "필수 동의가 빠졌어요.")
+        raise ApiError(422, "consent_missing", "필수 동의가 빠졌어요. 필수 항목 둘과 나이를 골라 주세요.")
     with repo.session(user["id"]) as s:
         save(s, body.operator_read)
         return _view(s)
