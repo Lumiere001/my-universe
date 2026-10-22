@@ -27,8 +27,8 @@ const FOLD = "side-collapsed";   // PC에서 사이드바를 접어 둔 것(이 
 const titleOf = (path: string) => TITLES[path] ?? NAV.find(([h]) => h === path)?.[1] ?? (path.startsWith("/universe/") ? "우주 › 기록" : "");
 const month = (e: EntrySummary) => (e.day ?? e.written_at).slice(0, 7);
 
-// 사이드바 '지난 기록': 최근 20편을 달별 폴더처럼. 기록이 바뀌면(lib/api.ts 의 'entries' 알림) · 화면을 옮기면 다시 읽는다.
-function Recent({ path, onPick }: { path: string; onPick: () => void }) {
+// 사이드바 '지난 기록': 최근 20편을 달별 폴더처럼. 처음 한 번 읽고, 기록이 바뀌면(lib/api.ts 의 'entries' 알림)만 다시 읽는다(화면을 옮길 때마다 부르지 않게).
+function Recent({ onPick }: { onPick: () => void }) {
   const [list, setList] = useState<EntrySummary[] | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -36,7 +36,7 @@ function Recent({ path, onPick }: { path: string; onPick: () => void }) {
     load();
     window.addEventListener("entries", load);
     return () => window.removeEventListener("entries", load);
-  }, [path]);
+  }, []);
   const months = [...new Set((list ?? []).map(month))];
   return (
     <details className="side-sec" open>
@@ -132,7 +132,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <Link key={href} href={href} aria-current={path === href ? "page" : undefined} onClick={() => setDrawer(false)}><Icon name={icon} />{name}</Link>
             ))}
           </nav>
-          <Recent path={path} onPick={() => setDrawer(false)} />
+          <Recent onPick={() => setDrawer(false)} />
         </div>
       </aside>
       <div className="scrim" onClick={() => setDrawer(false)} aria-hidden />
