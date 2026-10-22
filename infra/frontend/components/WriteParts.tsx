@@ -47,7 +47,7 @@ export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWea
   return (
     <>
       <input id="title" className="inline-title" aria-label="제목 (비워도 돼요)" value={title} maxLength={120} disabled={disabled}
-        onChange={(e) => onTitle(e.target.value)} placeholder="예: 10/3 토요일 일기" />
+        onChange={(e) => onTitle(e.target.value)} placeholder="제목 (비워도 돼요)" />
       <div className="props" role="group" aria-label="속성">
         <div className="prop">
           <label htmlFor="day"><Icon name="calendar" size={16} />글이 다루는 날</label>

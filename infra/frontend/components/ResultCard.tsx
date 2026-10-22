@@ -158,7 +158,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
                 {t.grateful && <span className="badge g">감사</span>}
                 <span className="badge">{t.certainty}</span>
                 {t.value && <span className="badge">가치 · {t.value}</span>}
-                <span className="badge">{t.topic}</span>
+                {t.topic && <span className="badge">{t.topic}</span>}
               </div>
               <p style={{ margin: "6px 0 0" }}>{t.text}</p>
               <p className="quote">“{unquote(t.quote)}”</p>
