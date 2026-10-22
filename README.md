@@ -31,7 +31,7 @@ scripts/stop_docker.sh
 시험:
 
 ```bash
-uv run --frozen pytest -q                                 # 467개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 5개는 건너뜀)
+uv run --frozen pytest -q                                 # 711개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 9개는 건너뜀)
 uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
 uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
 uv run --frozen python eval/run.py --check                # CI 와 같은 검사(관문 실패 · 기준선 회귀면 종료 코드 1)
