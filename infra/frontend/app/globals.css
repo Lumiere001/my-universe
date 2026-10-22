@@ -7,9 +7,10 @@
   --hover: #2f2f2f;
   --line: #363636;
   --text: #dadada;
-  --muted: #a3a3a3;
-  --faint: #6e6e6e;
+  --muted: #b3b3b3;
+  --faint: #949494;            /* 작은 글도 읽히게(바탕 대비 4.5:1 이상) */
   --accent: #8b6cef;
+  --accent-text: #a882ff;      /* 링크 · 강조 글자(보라 바탕색보다 밝게, 대비 약 5.8:1) */
   --accent-soft: rgba(139, 108, 239, .14);
   --violet: var(--accent);
   --orange: #e8956f;
@@ -33,7 +34,7 @@ body {
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--accent-text); text-decoration: none; }
 a:hover { text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r); }
 h1, h2, h3 { line-height: 1.35; margin: 0 0 .5em; font-weight: 700; }
@@ -98,7 +99,7 @@ main.wide { max-width: 1280px; }
   .app[data-drawer] .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: rgba(0, 0, 0, .5); }
   .tabbar { display: flex; position: fixed; z-index: 20; bottom: 0; left: 0; right: 0; background: rgba(38, 38, 38, .97); border-top: 1px solid var(--line);
     padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
-  .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; color: var(--faint); font-size: .72rem; border-radius: var(--r); }
+  .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; color: var(--faint); font-size: .75rem; border-radius: var(--r); }
   .tabbar a:hover { text-decoration: none; }
   .tabbar a[aria-current="page"] { color: var(--text); }
   .tabbar a[aria-current="page"] svg { color: var(--accent); }

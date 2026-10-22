@@ -7,8 +7,8 @@
 // 백엔드도 동의 없는 기록 만들기를 403 consent_required 로 막는다. 동의 확인이 실패하면 화면은 열고 백엔드가 막는다.
 // 로그아웃 상태의 다른 화면은 소개(Landing)를 보인다. 서비스 워커(설치형 웹앱, public/sw.js)는 여기서 등록한다.
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import Landing from "@/components/Landing";
 import { KeeperLook } from "@/components/Keeper";
@@ -28,7 +28,11 @@ const titleOf = (path: string) => TITLES[path] ?? NAV.find(([h]) => h === path)?
 const month = (e: EntrySummary) => (e.day ?? e.written_at).slice(0, 7);
 
 // 사이드바 '지난 기록': 최근 20편을 달별 폴더처럼. 처음 한 번 읽고, 기록이 바뀌면(lib/api.ts 의 'entries' 알림)만 다시 읽는다(화면을 옮길 때마다 부르지 않게).
+// 지금 연 기록(/history?id=)은 강조하고, 그 기록이 든 달은 펼친다.
 function Recent({ onPick }: { onPick: () => void }) {
+  const path = usePathname();
+  const id = useSearchParams().get("id");
+  const open = path === "/history" ? id : null;
   const [list, setList] = useState<EntrySummary[] | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -38,6 +42,7 @@ function Recent({ onPick }: { onPick: () => void }) {
     return () => window.removeEventListener("entries", load);
   }, []);
   const months = [...new Set((list ?? []).map(month))];
+  const openMonth = list?.find((e) => e.id === open);
   return (
     <details className="side-sec" open>
       <summary>지난 기록</summary>
@@ -45,10 +50,11 @@ function Recent({ onPick }: { onPick: () => void }) {
         {failed && <p className="none">지난 기록을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.</p>}
         {list?.length === 0 && <p className="none">아직 남긴 기록이 없어요.</p>}
         {months.map((m, i) => (
-          <details key={m} open={i < 2}>
+          <details key={m} open={i < 2 || (openMonth && month(openMonth) === m)}>
             <summary>{+m.slice(0, 4)}년 {+m.slice(5)}월</summary>
             {list!.filter((e) => month(e) === m).map((e) => (
-              <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title} onClick={onPick}>
+              <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title} onClick={onPick}
+                aria-current={e.id === open ? "page" : undefined}>
                 <Icon name="file" size={15} /><span>{e.title || "제목 없는 글"}</span>
               </Link>
             ))}
@@ -132,7 +138,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <Link key={href} href={href} aria-current={path === href ? "page" : undefined} onClick={() => setDrawer(false)}><Icon name={icon} />{name}</Link>
             ))}
           </nav>
-          <Recent onPick={() => setDrawer(false)} />
+          <Suspense fallback={null}><Recent onPick={() => setDrawer(false)} /></Suspense>
         </div>
       </aside>
       <div className="scrim" onClick={() => setDrawer(false)} aria-hidden />

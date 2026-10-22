@@ -190,6 +190,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
                   {rel.cross_domain && <span className="badge">다른 영역</span>}
                 </div>
                 {p && <p className={"quote" + (c ? " o" : "")}>그때 {day(p.written_at)}: “{unquote(rel.quote ?? p.text)}”</p>}
+                {p && p.entry_id !== r.id && <p className="sub" style={{ margin: "0 0 6px" }}><Link href={`/history?id=${encodeURIComponent(p.entry_id)}`}>그때 글 열기</Link></p>}
                 {t && <p className={"quote" + (c ? " o" : "")}>지금: “{unquote(t.quote)}”</p>}
                 <p className="sub">{rel.explanation}</p>
                 {rel.line === "점선" && rel.needs_confirm && (
