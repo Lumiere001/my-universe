@@ -24,9 +24,9 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   await test.step("별지기가 먼저 묻는다(다짐 안부)", async () => {
     await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기하기(2026-10-14 결정), 직접 쓰기는 /write
     await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-    const menu = page.getByRole("navigation", { name: "화면" });
-    await expect(menu.getByRole("link", { name: "이야기하기", exact: true })).toHaveAttribute("aria-current", "page");
-    await expect(menu.getByRole("link", { name: "직접 쓰기", exact: true })).toHaveAttribute("href", "/write");
+    const menu = page.getByRole("navigation", { name: "화면", includeHidden: true });
+    await expect(menu.getByRole("link", { name: "이야기하기", exact: true, includeHidden: true })).toHaveAttribute("aria-current", "page");
+    await expect(menu.getByRole("link", { name: "직접 쓰기", exact: true, includeHidden: true })).toHaveAttribute("href", "/write");
     await expect(talk).toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
     await shot("01-start");
   });
@@ -36,7 +36,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await say("답장은 아직인데 보내고 나니 후련했어.", 2);
     await say("부모님께는 아직 말 못 했어.", 3);
     await page.getByText("지금까지 정리").click();
-    await expect(page.locator("details")).toContainText("메일을 보냈어");
+    await expect(page.locator("main details")).toContainText("메일을 보냈어");
     await say("오늘은 여기까지 할게", 4);
     await expect(talk).toContainText("대화 마치고 정리하기");
     await shot("02-chat", true);

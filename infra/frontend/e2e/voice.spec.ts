@@ -75,7 +75,7 @@ test("말로 이야기하기 → 요약 확인 · 읽어 주기 · 쓰기 칸 �
     expect(Math.round(secs[0] + secs[1])).toBe(180);                               // 소리는 빠짐없이
     await expect(mine.last()).toContainText("포트폴리오를 한 장이라도");
     await page.getByText("지금까지 정리").click();
-    await expect(page.locator("details")).toContainText("동네 공원");
+    await expect(page.locator("main details")).toContainText("동네 공원");
     await shot("02-long-story", true);
   });
 

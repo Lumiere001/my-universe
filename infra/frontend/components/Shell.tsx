@@ -28,7 +28,7 @@ const titleOf = (path: string) => TITLES[path] ?? NAV.find(([h]) => h === path)?
 const month = (e: EntrySummary) => (e.day ?? e.written_at).slice(0, 7);
 
 // 사이드바 '지난 기록': 최근 20편을 달별 폴더처럼. 기록이 바뀌면(lib/api.ts 의 'entries' 알림) · 화면을 옮기면 다시 읽는다.
-function Recent({ path }: { path: string }) {
+function Recent({ path, onPick }: { path: string; onPick: () => void }) {
   const [list, setList] = useState<EntrySummary[] | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -48,13 +48,13 @@ function Recent({ path }: { path: string }) {
           <details key={m} open={i < 2}>
             <summary>{+m.slice(0, 4)}년 {+m.slice(5)}월</summary>
             {list!.filter((e) => month(e) === m).map((e) => (
-              <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title}>
+              <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title} onClick={onPick}>
                 <Icon name="file" size={15} /><span>{e.title || "제목 없는 글"}</span>
               </Link>
             ))}
           </details>
         ))}
-        {(list?.length ?? 0) >= 20 && <Link className="more" href="/history">모든 기록 보기</Link>}
+        {(list?.length ?? 0) >= 20 && <Link className="more" href="/history" onClick={onPick}>모든 기록 보기</Link>}
       </div>
     </details>
   );
@@ -129,10 +129,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <div className="side-body">
           <nav className="nav" aria-label="화면">
             {NAV.map(([href, name, icon]) => (
-              <Link key={href} href={href} aria-current={path === href ? "page" : undefined}><Icon name={icon} />{name}</Link>
+              <Link key={href} href={href} aria-current={path === href ? "page" : undefined} onClick={() => setDrawer(false)}><Icon name={icon} />{name}</Link>
             ))}
           </nav>
-          <Recent path={path} />
+          <Recent path={path} onPick={() => setDrawer(false)} />
         </div>
       </aside>
       <div className="scrim" onClick={() => setDrawer(false)} aria-hidden />
@@ -145,7 +145,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </header>
         {page}
       </div>
-      <nav className="tabbar" aria-label="자주 쓰는 화면">
+      <nav className="tabbar" aria-label="바로 가기">
         {TABS.map(([href, name, icon]) => (
           <Link key={href} href={href} aria-current={path === href ? "page" : undefined}><Icon name={icon} size={22} />{name}</Link>
         ))}
