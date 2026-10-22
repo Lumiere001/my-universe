@@ -12,7 +12,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-talk-${name}.png`, fullPage: full,
-    style: full ? ".top .nav { visibility: hidden; }" : undefined });
+    style: full ? ".tabbar { visibility: hidden; }" : undefined });
   const talk = page.getByRole("region", { name: "대화" });
   const say = async (t: string, n: number) => {
     await page.getByLabel("별지기에게 답하기").fill(t);

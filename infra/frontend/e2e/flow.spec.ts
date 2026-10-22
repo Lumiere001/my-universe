@@ -1,6 +1,7 @@
 // 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 개인정보처리방침 → 위기 글(평소 결과 + 안부 한 줄)
 // → 끊김 뒤 이어서 하기 → 사람 지우기 → 지난 기록. 캡처는 docs/images/v8/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
+import { nav as menuNav } from "./menu";
 import path from "node:path";
 
 const OUT = path.resolve(__dirname, "../../../docs/images/v8");
@@ -21,8 +22,8 @@ test("핵심 흐름", async ({ page }, info) => {
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   // 긴 화면 전체 캡처에서는 고정된 아래 막대가 가운데 찍히므로 그때만 감춘다
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-${name}.png`, fullPage: full,
-    style: full ? ".top .nav { visibility: hidden; }" : undefined });
-  const nav = (name: string) => page.getByRole("navigation", { name: "화면" }).getByRole("link", { name, exact: true }).click();
+    style: full ? ".tabbar { visibility: hidden; }" : undefined });
+  const nav = (name: string) => menuNav(page, name);
   const tapAt = async (id: string) => {
     const { x, y } = await page.evaluate((i) => (window as unknown as { __uni: { xy: (i: string) => { x: number; y: number } } }).__uni.xy(i), id);
     if (info.project.use.hasTouch) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y);

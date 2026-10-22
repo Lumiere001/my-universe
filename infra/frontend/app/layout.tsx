@@ -4,7 +4,7 @@ import { siteMeta } from "@/lib/site";
 import "./globals.css";
 
 export const metadata = siteMeta; // 공유 미리보기 · manifest · 아이콘(lib/site.ts)
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#07102a" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1e1e1e" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

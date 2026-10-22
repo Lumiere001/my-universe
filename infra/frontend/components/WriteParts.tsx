@@ -2,7 +2,8 @@
 // 쓰기 화면 조각(WS13): 별지기 말풍선 · 제목 · 날짜 칸 · MD · TXT 불러오기(+ 예시 일기 받기) · 이미 정리한 글 안내.
 import Link from "next/link";
 import { useState } from "react";
-import { getPrompt } from "@/lib/api";
+import { getPrompt, type Weather } from "@/lib/api";
+import Icon from "./Icon";
 import { useLoad } from "@/lib/use";
 import { localToday, WeatherSkip } from "./EntryTools";
 import { useKeeperName } from "./Keeper";
@@ -37,20 +38,33 @@ export function KeeperPrompt() {
   );
 }
 
-// 제목 · 글이 다루는 날. 날을 비우면 오늘(제목 · 짧은 첫 줄에 날짜가 있으면 그날, 서버 G2)
-export function EntryMeta({ title, day, onTitle, onDay, disabled }:
-  { title: string; day: string; onTitle: (v: string) => void; onDay: (v: string) => void; disabled?: boolean }) {
+// 노트 머리(옵시디언 느낌): 큰 제목 칸 + 속성 줄(글이 다루는 날 · 마음 날씨).
+// 날을 비우면 오늘(제목 · 짧은 첫 줄에 날짜가 있으면 그날, 서버 G2). 마음 날씨는 골라도 되고 건너뛰어도 된다.
+export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWeather, disabled }: {
+  title: string; day: string; weather: Weather | null; weathers: { name: string; words: string[] }[];
+  onTitle: (v: string) => void; onDay: (v: string) => void; onWeather: (w: Weather | null) => void; disabled?: boolean;
+}) {
   return (
-    <div className="row" style={{ alignItems: "flex-end" }}>
-      <div style={{ flex: "2 1 220px" }}>
-        <label htmlFor="title">제목 (비워도 돼요)</label>
-        <input id="title" value={title} maxLength={120} disabled={disabled} onChange={(e) => onTitle(e.target.value)} placeholder="예: 10/3 토요일 일기" />
+    <>
+      <input id="title" className="inline-title" aria-label="제목 (비워도 돼요)" value={title} maxLength={120} disabled={disabled}
+        onChange={(e) => onTitle(e.target.value)} placeholder="제목 없음" />
+      <div className="props" role="group" aria-label="속성">
+        <div className="prop">
+          <label htmlFor="day"><Icon name="calendar" size={16} />글이 다루는 날</label>
+          <input id="day" type="date" value={day} max={localToday()} disabled={disabled} onChange={(e) => onDay(e.target.value)} />
+        </div>
+        <div className="prop">
+          <span className="k" id="weather-k"><Icon name="weather" size={16} />마음 날씨</span>
+          <div className="row" role="group" aria-labelledby="weather-k" style={{ gap: 6 }}>
+            {weathers.map((w) => (
+              <button type="button" key={w.name} className="small" aria-pressed={weather === w.name} disabled={disabled} title={w.words.join(" · ")}
+                onClick={() => onWeather(weather === w.name ? null : (w.name as Weather))}>{w.name}</button>
+            ))}
+          </div>
+        </div>
       </div>
-      <div style={{ flex: "1 1 150px" }}>
-        <label htmlFor="day">글이 다루는 날 (비우면 오늘)</label>
-        <input id="day" type="date" value={day} max={localToday()} disabled={disabled} onChange={(e) => onDay(e.target.value)} />
-      </div>
-    </div>
+      <p className="sub" style={{ margin: 0 }}>날을 비우면 오늘로, 마음 날씨는 고르지 않아도 돼요.</p>
+    </>
   );
 }
 

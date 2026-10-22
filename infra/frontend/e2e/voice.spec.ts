@@ -38,7 +38,7 @@ test("말로 이야기하기 → 요약 확인 · 읽어 주기 · 쓰기 칸 �
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-voice-${name}.png`, fullPage: full,
-    style: full ? ".top .nav { visibility: hidden; }" : undefined });
+    style: full ? ".tabbar { visibility: hidden; }" : undefined });
   const talk = page.getByRole("region", { name: "대화" });
   const mine = talk.locator(".bubble.me");
 

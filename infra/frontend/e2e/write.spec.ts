@@ -2,6 +2,7 @@
 // → .md · .txt 불러와 결과 → 같은 글 다시 보내면 '이미 정리한 글' → 날짜 확인 필요 → 고치기 → 지우면 목록 · 우주에서 사라짐 → 별지기 이름.
 // 캡처는 남기지 않는다(실제 백엔드 캡처는 e2e-real/ws13.spec.ts). 모두 가상 인물 하늘의 글 · 지어낸 글.
 import { expect, test } from "@playwright/test";
+import { nav as menuNav } from "./menu";
 
 const ymd = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 const YESTERDAY = ymd(new Date(Date.now() - 86_400_000));
@@ -11,7 +12,7 @@ const TXT = "산책\n저녁에 동네를 한 바퀴 걸었다. 바람이 시원�
 test("쓰기 화면 작은 묶음", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  const nav = (name: string) => page.getByRole("navigation", { name: "화면" }).getByRole("link", { name, exact: true }).click();
+  const nav = (name: string) => menuNav(page, name);
   const bubble = page.getByRole("region", { name: "별지기 말풍선" });
   const submit = () => page.getByRole("button", { name: "우주에 띄우기" }).click();
   const result = page.getByTestId("result");

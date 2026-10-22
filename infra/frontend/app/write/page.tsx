@@ -88,28 +88,21 @@ export default function WritePage() {
     <main>
       <KeeperPrompt />
       <form onSubmit={submit} className="stack" aria-label="일기 쓰기">
-        <h1>오늘의 일기</h1>
-        <EntryMeta title={title} day={day} disabled={busy} onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} />
+        <h1 className="sr">오늘의 일기</h1>
+        <EntryMeta title={title} day={day} weather={weather} weathers={onto?.weather ?? []} disabled={busy}
+          onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} onWeather={setWeather} />
         <div>
-          <label htmlFor="diary">마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요.</label>
-          <textarea id="diary" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
-            placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
+          <label htmlFor="diary" className="sr">마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요.</label>
+          <textarea id="diary" className="editor" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
+            placeholder="오늘 있었던 일, 떠오른 생각, 다짐… 마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요." />
         </div>
-        <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
-        <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); setPhoto(false); }} />
-        <PhotoInput disabled={busy} onRead={(t) => { setText((x) => (x.trim() ? x.trimEnd() + "\n" + t : t)); setRef(""); setPhoto(true); }} />
-        <fieldset>
-          <legend>마음 날씨 (고르지 않아도 돼요)</legend>
-          <div className="row">
-            {onto?.weather.map((w) => (
-              <button type="button" key={w.name} className="small" aria-pressed={weather === w.name} disabled={busy}
-                onClick={() => setWeather(weather === w.name ? null : (w.name as Weather))}>
-                {w.name} <span className="sub">({w.words.join(" · ")})</span>
-              </button>
-            ))}
-          </div>
-        </fieldset>
         <button type="submit" className="primary" disabled={busy || !text.trim()}>{busy ? "정리하는 중…" : "우주에 띄우기"}</button>
+        <section className="stack tools-row" aria-label="다른 방법으로 쓰기">
+          <h2 className="sub" style={{ margin: 0, fontWeight: 600 }}>말 · 파일 · 사진으로 쓰기</h2>
+          <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
+          <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); setPhoto(false); }} />
+          <PhotoInput disabled={busy} onRead={(t) => { setText((x) => (x.trim() ? x.trimEnd() + "\n" + t : t)); setRef(""); setPhoto(true); }} />
+        </section>
       </form>
 
       {(busy || steps.length > 0 || err) && (

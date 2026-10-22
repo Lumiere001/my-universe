@@ -2,6 +2,7 @@
 // 가짜 데이터 모드는 기본이 '이미 동의한 사용자'라 localStorage mock-consent=none 으로 동의 전 사용자를 만든다.
 // 캡처는 docs/images/v8/<기기>-consent-NN-이름.png
 import { expect, test } from "@playwright/test";
+import { nav as menuNav } from "./menu";
 import path from "node:path";
 
 const OUT = path.resolve(__dirname, "../../../docs/images/v8");
@@ -16,7 +17,7 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
   await page.addInitScript(() => {
     if (!sessionStorage.getItem("ws24")) { localStorage.setItem("mock-consent", "none"); sessionStorage.setItem("ws24", "1"); }
   });
-  const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-consent-${name}.png`, fullPage: true, style: ".top { position: static; } .top .nav { visibility: hidden; }" });
+  const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-consent-${name}.png`, fullPage: true, style: ".top { position: static; } .tabbar { visibility: hidden; }" });
   const start = page.getByRole("button", { name: "동의하고 시작하기" });
 
   await test.step("쓰기 화면 대신 동의 화면", async () => {
@@ -53,11 +54,11 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
     await start.click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "화면" })).toHaveCount(1);
   });
 
   await test.step("설정 → 동의 내용(선택 동의 바꾸기) · 이용약관 · 개인정보처리방침", async () => {
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "설정", exact: true }).click();
+    await menuNav(page, "설정");
     await page.getByRole("link", { name: "동의 내용 보기 · 바꾸기" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "동의 내용" })).toBeVisible();
     await page.getByLabel(/운영자가 내가 남긴 피드백/).check();

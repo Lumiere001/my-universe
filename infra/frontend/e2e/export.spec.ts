@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { nav as menuNav } from "./menu";
 
 const OUT = path.resolve(__dirname, "../../../docs/screens/ws15");
 
@@ -35,7 +36,7 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
   });
 
   await test.step("지난 기록: 전체 JSON", async () => {
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "지난 기록", exact: true }).click();
+    await menuNav(page, "지난 기록");
     await expect(page.getByRole("button", { name: "전체 기록 JSON 내려받기" })).toBeVisible();
     await page.screenshot({ path: `${OUT}/${info.project.name}-02-history-export.png` });
     const j = await saved("전체 기록 JSON 내려받기");

@@ -163,8 +163,10 @@ async function readStream(res: Response, h: StreamHandlers): Promise<EntryResult
 }
 
 /* ---------- 일기 ---------- */
+// 기록이 생기거나 바뀌면 사이드바 '지난 기록'(components/Shell.tsx)이 다시 읽는다
+const changed = <T,>(x: T): T => { window.dispatchEvent(new Event("entries")); return x; };
 export async function writeDiary(input: DiaryInput, h: StreamHandlers): Promise<EntryResult> {
-  if (MOCK) return (await mock()).writeDiary(input, h);
+  if (MOCK) return changed(await (await mock()).writeDiary(input, h));
   const t = await token();
   let res: Response;
   try {
@@ -180,11 +182,11 @@ export async function writeDiary(input: DiaryInput, h: StreamHandlers): Promise<
     const j = await res.json().catch(() => null);
     throw { entry_id: null, code: j?.error?.code ?? "http", message: j?.error?.message ?? "잠시 뒤 다시 해 주세요.", resumable: false } as StreamError;
   }
-  return readStream(res, h);
+  return changed(await readStream(res, h));
 }
 export async function resumeDiary(id: string, h: StreamHandlers): Promise<EntryResult> {
-  if (MOCK) return (await mock()).resumeDiary(id, h);
-  return readStream(await req("POST", `/diary/${encodeURIComponent(id)}/resume/stream`), h);
+  if (MOCK) return changed(await (await mock()).resumeDiary(id, h));
+  return changed(await readStream(await req("POST", `/diary/${encodeURIComponent(id)}/resume/stream`), h));
 }
 export async function getDiary(id: string): Promise<EntryResult> {
   return MOCK ? (await mock()).getDiary(id) : json("GET", `/diary/${encodeURIComponent(id)}`);
@@ -193,11 +195,11 @@ export async function getPrompt(): Promise<Prompt> {
   return MOCK ? (await mock()).getPrompt() : json("GET", "/diary/prompt");
 }
 export async function setEntryDay(id: string, day: string): Promise<EntryResult> {
-  return MOCK ? (await mock()).setEntryDay(id, day) : json("PATCH", `/diary/${encodeURIComponent(id)}/day`, { day });
+  return changed(MOCK ? await (await mock()).setEntryDay(id, day) : await json<EntryResult>("PATCH", `/diary/${encodeURIComponent(id)}/day`, { day }));
 }
 export async function deleteDiary(id: string): Promise<void> {
-  if (MOCK) return (await mock()).deleteDiary(id);
-  await json("DELETE", `/diary/${encodeURIComponent(id)}`);
+  if (MOCK) return changed(await (await mock()).deleteDiary(id));
+  changed(await json("DELETE", `/diary/${encodeURIComponent(id)}`));
 }
 // JSON 내려받기(WS15, docs/api-v8.md §2.1): id 가 있으면 기록 하나, 없으면 전체. 다른 사람 이름은 가리지 않는다.
 export async function exportDiary(id?: string): Promise<unknown> {
@@ -355,7 +357,7 @@ export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryRe
 }
 // 요약 확인: 고친 것을 넣고 우주에 저장 → 저장된 결과(한마디 포함)
 export async function confirmDiary(id: string, c: ConfirmInput): Promise<EntryResult> {
-  return MOCK ? (await mock()).confirmDiary(id, c) : json("POST", `/diary/${encodeURIComponent(id)}/confirm`, c);
+  return changed(MOCK ? await (await mock()).confirmDiary(id, c) : await json<EntryResult>("POST", `/diary/${encodeURIComponent(id)}/confirm`, c));
 }
 
 /* ---------- 사진 글자 읽기 (WS18, docs/api-v8.md) ---------- */

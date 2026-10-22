@@ -1,5 +1,5 @@
 "use client";
-// 결과 카드: 별지기 한마디(+ 안부 한 줄) → 닿은 순간 → 글 정보 → 생각 목록 → 이어진 지난 생각 → 사람 질문 → 다음 질문 → 불편한 점 한 줄.
+// 결과 카드(노트 한 장처럼, docs/DESIGN.md): 별지기 한마디(+ 안부 한 줄) → 닿은 순간 → 글 정보 → 생각 목록 → 이어진 지난 생각 → 사람 질문 → 다음 질문 → 불편한 점 한 줄.
 // 위기 글도 같은 카드다(시험 단계, 2026-10-08 동규): 따로 뜨는 화면 · 단체 안내 없이, 한마디 아래 안부 한 줄만.
 import Link from "next/link";
 import { useState } from "react";
@@ -101,7 +101,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
   const m = r.message;
 
   return (
-    <div data-testid="result">
+    <div className="note" data-testid="result">
       {m && m.text && (
         <section className="card stack" aria-label="별지기 한마디">
           <div className="voice">
@@ -128,7 +128,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
       <UniverseGrew r={r} />
 
       {r.info && (
-        <section className="card" aria-label="글 정보">
+        <section className="card head" aria-label="글 정보">
           <h2>{r.title || "오늘의 글"}</h2>
           <p className="sub" data-testid="entry-day">{r.day ?? day(r.written_at)}{r.weather ? ` · 마음 날씨 ${r.weather}` : ""} · 말 거는 대상: {r.info.addressee}</p>
           {r.day_check && <DayFix r={r} onFixed={onChange} />}
@@ -167,7 +167,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
       )}
 
       {r.relations.length > 0 && (
-        <section className="card stack" aria-label="이어진 지난 생각">
+        <section className="card stack links" aria-label="이어진 지난 생각">
           <h2>지난 생각 {r.relations.length}개와 이어졌어요</h2>
           {r.relations.map((rel) => {
             const p = past(rel.from), t = thought(rel.to), c = CONFLICT.has(rel.type);

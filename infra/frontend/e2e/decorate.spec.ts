@@ -2,6 +2,7 @@
 // 일기에서 처음 나온 해 · 작은 별 · 사람을 결과 카드에서 별지기가 알려 줌(우주 넓히기). 동규가 고를 캡처는 docs/screens/ws25/<기기>-NN-이름.png
 // 가짜 데이터는 브라우저 메모리에 있어 page.goto 하면 설정이 처음으로 돌아간다 → 화면 이동은 위 막대 링크로.
 import { expect, test, type Page } from "@playwright/test";
+import { nav as menuNav } from "./menu";
 import path from "node:path";
 import { COLOR, grewFrom, THEMES, themeColors, type ThemeName } from "../components/universeLook";
 
@@ -43,7 +44,7 @@ test("꾸미기", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-${name}.png` });
-  const nav = (name: string) => page.getByRole("navigation", { name: "화면" }).getByRole("link", { name, exact: true }).click();
+  const nav = (name: string) => menuNav(page, name);
   const deco = page.getByRole("region", { name: "꾸미기" });
 
   await page.goto("/universe");
