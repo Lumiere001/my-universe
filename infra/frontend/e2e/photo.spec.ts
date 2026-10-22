@@ -36,7 +36,7 @@ test("사진으로 쓰기", async ({ page }) => {
     await expect(list.getByRole("listitem")).toHaveCount(3);
     await list.getByRole("button", { name: "3쪽 빼기" }).click();
     await box.getByRole("button", { name: "사진 2장 글자 읽기" }).click();
-    await expect(box.getByRole("status")).toContainText("2쪽을 읽어 위 칸에 채웠어요");
+    await expect(box.getByRole("status")).toContainText("2쪽을 읽어 글 칸에 채웠어요");
     await expect(list).toHaveCount(0);                                 // 읽은 사진은 화면에서도 비움
     const text = await diary.inputValue();
     expect(text.indexOf("1번째 사진")).toBeGreaterThanOrEqual(0);

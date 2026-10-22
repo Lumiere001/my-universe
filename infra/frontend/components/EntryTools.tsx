@@ -1,7 +1,7 @@
 "use client";
 // 기록 하나에 붙는 작은 도구: 날짜 확인(고르기) · 지우기 · 날씨 질문 건너뛰기.
 import { useState } from "react";
-import { deleteDiary, sendFeedback, setEntryDay, type EntryResult } from "@/lib/api";
+import { deleteDiary, sendFeedback, setEntryDay, why, type EntryResult } from "@/lib/api";
 
 export const localToday = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 
@@ -14,7 +14,7 @@ export function DayFix({ r, onFixed }: { r: EntryResult; onFixed?: (r: EntryResu
     e.preventDefault();
     if (!day) return;
     setBusy(true); setErr("");
-    try { onFixed?.(await setEntryDay(r.id, day)); } catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
+    try { onFixed?.(await setEntryDay(r.id, day)); } catch (x) { setErr(why(x, "날짜를 고치지 못했어요. 잠시 뒤 다시 해 주세요.")); } finally { setBusy(false); }
   };
   return (
     <form onSubmit={save} className="stack" aria-label="날짜 확인" data-testid="day-fix" style={{ marginTop: 8 }}>
@@ -37,7 +37,7 @@ export function DeleteEntry({ id, onDeleted }: { id: string; onDeleted: () => vo
   if (!ask) return <button className="danger" onClick={() => setAsk(true)}>이 기록 지우기</button>;
   const go = async () => {
     setBusy(true); setErr("");
-    try { await deleteDiary(id); onDeleted(); } catch (x) { setErr((x as Error).message); setBusy(false); }
+    try { await deleteDiary(id); onDeleted(); } catch (x) { setErr(why(x, "지우지 못했어요. 잠시 뒤 다시 해 주세요.")); setBusy(false); }
   };
   return (
     <section className="card stack" role="alertdialog" aria-label="기록 지우기 확인">
@@ -55,7 +55,7 @@ export function DeleteEntry({ id, onDeleted }: { id: string; onDeleted: () => vo
 export function WeatherSkip({ onDone }: { onDone?: () => void }) {
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
-  if (done) return <p className="toast" role="status" style={{ margin: "8px 0 0" }}>알겠어요. 다음부터 마음 날씨는 묻지 않을게요.</p>;
+  if (done) return <p className="toast" role="status" style={{ margin: "8px 0 0" }}>알겠어요. 다음부터 마음 날씨는 묻지 않을게요. 설정에서 다시 켤 수 있어요.</p>;
   const skip = async () => {
     setErr("");
     try { await sendFeedback({ target: "weather", value: "날씨 건너뜀" }); setDone(true); onDone?.(); }
@@ -63,7 +63,7 @@ export function WeatherSkip({ onDone }: { onDone?: () => void }) {
   };
   return (
     <div className="row" style={{ marginTop: 8 }}>
-      <button type="button" className="small" onClick={skip}>건너뛰기 · 다음부터 묻지 않기</button>
+      <button type="button" className="small" onClick={skip}>다음부터 묻지 않기</button>
       {err && <span className="err" role="alert">{err}</span>}
     </div>
   );

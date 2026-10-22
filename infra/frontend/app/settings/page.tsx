@@ -7,13 +7,15 @@ import { KeeperNameField, KEEPER, rememberSettings } from "@/components/Keeper";
 import PrefSuggest from "@/components/PrefSuggest";   // WS22
 import { OneLine } from "@/components/ResultCard";
 import { KEEPER_LOOKS, KEEPER_SVG, THEME_NAMES, THEMES, themeOf } from "@/components/universeLook";
-import { deleteMe, getMe, MOCK, patchSettings, supabase, type Settings, type Tone } from "@/lib/api";
+import { deleteMe, getMe, MOCK, patchSettings, supabase, why, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
-function Choice<T extends string>({ legend, options, value, onPick }: { legend: string; options: readonly T[]; value: T; onPick: (v: T) => void }) {
+function Choice<T extends string>({ legend, hint, options, value, onPick }:
+  { legend: string; hint?: string; options: readonly T[]; value: T; onPick: (v: T) => void }) {
   return (
     <fieldset className="card">
       <legend>{legend}</legend>
+      {hint && <p className="sub" style={{ margin: "0 0 8px" }}>{hint}</p>}
       <div className="row">
         {options.map((o) => <button key={o} type="button" className="small" aria-pressed={value === o} onClick={() => onPick(o)}>{o}</button>)}
       </div>
@@ -22,23 +24,25 @@ function Choice<T extends string>({ legend, options, value, onPick }: { legend: 
 }
 
 export default function SettingsPage() {
-  const [me, err] = useLoad(getMe);
+  const [me, err] = useLoad(getMe, "설정을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const onto = useOntology();
   const [s, setS] = useState<Settings | null>(null);
   const [preview, setPreview] = useState<Tone | null>(null);
   const [warn, setWarn] = useState(false);
   const [msg, setMsg] = useState("");
+  const [fail, setFail] = useState("");
   useEffect(() => { if (me) setS(me.settings); }, [me]);
 
   if (err) return <main><p className="err" role="alert">{err}</p></main>;
-  if (!s || !onto) return <main><p className="sub">불러오는 중…</p></main>;
+  if (!s || !onto) return <main><p className="sub">설정을 불러오는 중…</p></main>;
 
   const save = async (p: Partial<Settings>) => {
+    setFail("");
     try {
       const n = await patchSettings(p);
       setS(n); setMsg("저장했어요.");
       rememberSettings(n);
-    } catch (e) { setMsg((e as Error).message); }
+    } catch (e) { setMsg(""); setFail(why(e, "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.")); }
   };
   const pickTone = (t: Tone) => {
     setPreview(t);
@@ -50,7 +54,9 @@ export default function SettingsPage() {
   return (
     <main>
       <h1>설정</h1>
+      <p className="sub">별지기의 말투와 우주 보기를 내게 맞게 바꿔요.</p>
       {msg && <p className="toast" role="status">{msg}</p>}
+      {fail && <p className="err" role="alert">{fail}</p>}
       <PrefSuggest onApply={save} />
 
       <section className="card stack" aria-label="말투">
@@ -86,11 +92,12 @@ export default function SettingsPage() {
 
       <Choice legend="다음 걸음 제안 빈도" options={["적게", "보통", "많이"] as const} value={s.suggestions} onPick={(v) => save({ suggestions: v })} />
       <Choice legend="다른 영역과 이어진 선 보이기" options={["숨김", "눌렀을 때", "항상"] as const} value={s.cross_links} onPick={(v) => save({ cross_links: v })} />
-      <Choice legend="마음 날씨 물어보기(첫 만남 · 기분이 안 드러난 글에만)" options={["묻기", "묻지 않기"] as const}
+      <Choice legend="마음 날씨 물어보기" hint="처음 만났을 때와 기분이 드러나지 않은 글에만 물어요." options={["묻기", "묻지 않기"] as const}
         value={s.weather_ask ? "묻기" : "묻지 않기"} onPick={(v) => save({ weather_ask: v === "묻기" })} />
 
       <section className="card">
         <p className="sub" style={{ marginTop: 0 }}>오늘은 살살: {s.gentle_today ? "켜짐(오늘만)" : "꺼짐"} · 오늘은 위로만: {s.comfort_only_today ? "켜짐(오늘만)" : "꺼짐"}</p>
+        <p className="sub">둘 다 별지기 한마디에 붙은 버튼으로 켜고, 그날만 이어져요.</p>
         <OneLine target="app" />
       </section>
 
@@ -109,6 +116,7 @@ function Decorate({ s, onPick }: { s: Settings; onPick: (p: Partial<Settings>) =
   return (
     <section className="card stack" aria-label="꾸미기">
       <h2>꾸미기</h2>
+      <b>우주 테마</b>
       <div className="row" role="group" aria-label="우주 테마">
         {THEME_NAMES.map((t) => (
           <button key={t} className="small look" aria-pressed={theme === t} onClick={() => onPick({ theme: t })}>
@@ -119,6 +127,7 @@ function Decorate({ s, onPick }: { s: Settings; onPick: (p: Partial<Settings>) =
         ))}
       </div>
       <p className="sub" style={{ margin: 0 }}>우주 화면의 바탕 · 해 · 별 · 행성 색이 바뀌어요. 선 · 고리 색은 뜻이 있어 그대로예요.</p>
+      <b>별지기 모습</b>
       <div className="row" role="group" aria-label="별지기 모습">
         {KEEPER_LOOKS.map((k) => (
           <button key={k} className="small look" aria-pressed={look === k} onClick={() => onPick({ keeper_look: k })}>
@@ -139,7 +148,7 @@ function DeleteAccount() {
   const go = async () => {
     setBusy(true); setErr("");
     try { await deleteMe(); await supabase()?.auth.signOut(); }
-    catch (e) { setErr((e as Error).message); setBusy(false); }
+    catch (e) { setErr(why(e, "계정을 지우지 못했어요. 잠시 뒤 다시 해 주세요.")); setBusy(false); }
   };
   return (
     <section className="card stack" aria-label="계정 지우기" style={{ marginTop: 32 }}>

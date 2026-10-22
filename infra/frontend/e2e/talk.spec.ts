@@ -24,7 +24,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   await test.step("별지기가 먼저 묻는다(다짐 안부)", async () => {
     await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기하기(2026-10-14 결정), 직접 쓰기는 /write
     await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-    const menu = page.getByRole("navigation", { name: "화면", includeHidden: true });
+    const menu = page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true });
     await expect(menu.getByRole("link", { name: "이야기하기", exact: true, includeHidden: true })).toHaveAttribute("aria-current", "page");
     await expect(menu.getByRole("link", { name: "직접 쓰기", exact: true, includeHidden: true })).toHaveAttribute("href", "/write");
     await expect(talk).toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
@@ -63,7 +63,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   });
 
   await test.step("위기 말 → 위로 + 안부 한 줄(질문 · 단체 안내 없음)", async () => {
-    await page.getByRole("button", { name: "새 대화" }).last().click();
+    await page.getByRole("button", { name: "새 대화 시작" }).last().click();
     await say("요즘 너무 지쳐서 사라지고 싶다는 생각이 들어.", 1);
     const reply = talk.locator(".voice").last();
     await expect(reply.getByTestId("check-in")).toBeVisible();

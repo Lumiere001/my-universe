@@ -154,10 +154,10 @@ function result(id: string, input: DiaryInput): EntryResult {
       message: "'어디서든 배우는 사람'에 한 걸음 닿은 문장이에요." }],
     message: { text: comfort ? COMFORT : MESSAGES[tone], tone, mode: comfort ? "comfort" : "normal", check_in: crisis ? CHECK_IN : null },
     next_question: comfort ? { kind: "none", text: "" } : { kind: "free", text: "부모님께는 어떤 말부터 꺼내고 싶어요?" },
-    people_questions: [{ id: "q1", name: "민수 형", question: "'민수 형'은 사람 목록의 선배 민수와 같은 사람인가요?",
+    people_questions: [{ id: "q1", name: "민수 형", question: "글에 나온 '민수 형'은(는) 사람 목록에 있는 누군가를 부르는 다른 이름인가요?",
       options: ["같은 사람", "다른 사람", "사람 이름 아님"] }],
     // 관측 보고서(WS15)
-    observation: { state: "바뀜", limits: ["생각 나누기와 이어진 선은 AI 가 원문 인용을 근거로 한 추정이라 틀릴 수 있어요.",
+    observation: { state: "바뀜", limits: ["생각을 나눈 것과 이어진 선은 AI가 원문 인용을 근거로 추정한 것이라 틀릴 수 있어요.",
       "지난 생각 2개와만 비교했어요. 같은 세부 주제와 뜻이 가까운 것을 골랐고, 이 글을 정리할 때 이미 있던 기록만 봤어요.",
       "점선은 글에 직접 쓰지 않은 연결이에요. 맞는지 알려 주세요."] },
   };
@@ -293,7 +293,7 @@ export async function deleteDiary(id: string) {
 export async function getPersonThoughts(id: string): Promise<PersonThoughts> {
   await sleep(100);
   const p = people.find((x) => x.id === id);
-  if (!p) throw new Error("사람을 찾지 못했어요.");
+  if (!p) throw new Error("이 사람을 찾지 못했어요. 화면을 새로 고쳐 주세요.");
   const when = (eid: string) => universe.planets.find((x) => x.id === eid)!;
   const past = Object.entries(PAST_THOUGHTS).flatMap(([eid, ts]) => ts.filter((t) => t.people.includes(id))
     .map((t) => ({ ...t, entry_id: eid, written_at: when(eid).written_at, title: when(eid).title })));
@@ -348,7 +348,7 @@ export async function getConsent(): Promise<Consent> {
 }
 export async function saveConsent(c: ConsentInput): Promise<Consent> {
   if (!c.age14) throw new Error("만 14세 미만은 지금 쓸 수 없어요.");
-  if (!c.required || !c.sensitive) throw new Error("필수 동의가 빠졌어요.");
+  if (!c.required || !c.sensitive) throw new Error("필수 동의가 빠졌어요. 필수 항목 둘과 나이를 골라 주세요.");
   localStorage.setItem("mock-consent", c.operator_read ? "operator_read" : "ok");
   return getConsent();
 }
@@ -374,20 +374,20 @@ export async function startTalk(from?: string): Promise<Conversation> {
 }
 export async function getTalk(id: string) {
   const c = talks.get(id);
-  if (!c) throw new Error("대화를 찾지 못했어요.");
+  if (!c) throw new Error("이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.");
   return structuredClone(c);
 }
 export async function deleteTalk(id: string) { talks.delete(id); }
 export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void, via: "text" | "voice" = "text"): Promise<Conversation> {
   const c = talks.get(id);
-  if (!c) throw { entry_id: null, code: "not_found", message: "대화를 찾지 못했어요.", resumable: false } as StreamError;
+  if (!c) throw { entry_id: null, code: "not_found", message: "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.", resumable: false } as StreamError;
   for (const [step, label] of [["safety", "말을 살펴보는 중"], ["past", "지난 기록을 찾는 중"], ["reply", "별지기가 답을 고르는 중"]]) {
     onProgress({ conversation_id: id, step, label });
     await sleep(STEP_MS);
   }
   const crisis = CRISIS.some((w) => text.includes(w)), wrap = /그만|여기까지|잘게/.test(text) && !crisis;
   const reply = crisis ? "많이 힘들었겠어요. 이렇게 털어놓아 줘서 고마워요. 저는 여기 있을게요."
-    : wrap ? "오늘은 진로 이야기를 차분히 꺼내 줬네요.\n여기까지 정리해 둘까요? 아래 '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요."
+    : wrap ? "오늘은 진로 이야기를 차분히 꺼내 줬네요.\n여기까지 정리해 둘까요? '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요."
     : REPLIES[c.turn_count % REPLIES.length];
   c.turns.push({ role: "user", text, at: now(), via },
     { role: "keeper", kind: wrap ? "wrap" : "reply", text: reply, mode: crisis ? "comfort" : "normal", tone: settings.tone, check_in: crisis ? CHECK_IN : null, at: now() });
@@ -413,7 +413,7 @@ export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryRe
 export async function confirmDiary(id: string, x: ConfirmInput): Promise<EntryResult> {
   await sleep(300);
   const r = entries.get(id);
-  if (!r || r.status !== "confirm") throw new Error("확인을 기다리는 기록이 아니에요.");
+  if (!r || r.status !== "confirm") throw new Error("이미 저장했거나 확인할 수 없는 정리예요. 화면을 새로 고쳐 주세요.");
   const gone = new Set(x.fixes.filter((f) => f.remove).map((f) => f.id));
   const kind = new Map(x.fixes.filter((f) => f.kind).map((f) => [f.id, f.kind!]));
   const done: EntryResult = { ...result(id, { text: "", title: r.title }), source: "대화", confirmed: "확인됨", day_basis: "확실",

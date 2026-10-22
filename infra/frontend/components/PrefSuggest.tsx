@@ -24,8 +24,8 @@ export default function PrefSuggest({ onApply }: { onApply: (p: Partial<Settings
         </p>
       ))}
       <div className="row">
-        <button onClick={() => pick(true)}>바꿀게요</button>
-        <button onClick={() => pick(false)}>그대로 둘게요</button>
+        <button onClick={() => pick(true)}>제안대로 바꾸기</button>
+        <button onClick={() => pick(false)}>그대로 두기</button>
       </div>
     </section>
   );

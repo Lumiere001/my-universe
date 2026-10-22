@@ -216,7 +216,7 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
 
 /* 결과 카드 = 노트 한 장(상자 대신 나눔 선), 이어진 지난 생각 = 백링크 */
 .note > .card { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 18px 0; margin: 0; }
-.note > .card:first-child { border-top: 0; padding-top: 4px; }
+.note > .card:first-of-type { border-top: 0; padding-top: 4px; }
 .note > .card.head h2 { font-size: 1.6rem; margin-bottom: .3em; }
 .note > .card.links { background: rgba(139, 108, 239, .05); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 8px 0; }
 

@@ -56,12 +56,12 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-${name}.png`, fullPage: full, scale: "css",
     style: full ? ".top { position: static !important; } .top .nav { visibility: hidden; }" : undefined });
-  const nav = (name: string) => page.getByRole("navigation", { name: "화면" }).getByRole("link", { name, exact: true }).click();
+  const nav = (name: string) => page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name, exact: true }).click();
   const bubble = page.getByRole("region", { name: "별지기 말풍선" });
   const result = page.getByTestId("result");
   const submit = () => page.getByRole("button", { name: "우주에 띄우기" }).click();
   const again = async () => { await page.getByRole("button", { name: "새 글 쓰기" }).click(); await expect(page.getByLabel(/마음껏 적어/)).toBeVisible(); };
-  const file = page.getByLabel("MD · TXT 파일에서 불러오기");
+  const file = page.getByLabel("글 파일(.txt · .md)에서 불러오기");
 
   await test.step("로그인 → 쓰기 화면 위 말풍선(다짐 안부)", async () => {
     await page.goto("/");
@@ -69,8 +69,8 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
     await form.getByLabel("이메일").fill(EMAIL);
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
-    await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
+    await page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
     await expect(bubble).toBeVisible();
     await shot("01-write-bubble");
   });
@@ -96,7 +96,7 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
     await again();
     await expect(bubble.getByTestId("prompt-question")).toContainText("마음 날씨");
     await shot("04-bubble-last-question");
-    await bubble.getByRole("button", { name: /건너뛰기/ }).click();
+    await bubble.getByRole("button", { name: "다음부터 묻지 않기" }).click();
     await expect(bubble.getByText("다음부터 마음 날씨는 묻지 않을게요")).toBeVisible();
     await shot("05-weather-skipped");
     await page.reload();
@@ -156,7 +156,7 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
     await expect(item).toHaveCount(0);
     expect((await call("GET", "/universe")).planets.map((p: { id: string }) => p.id)).not.toContain(id);
     await nav("우주");
-    await page.getByText("기록 목록으로 고르기").click();
+    await page.getByText("목록에서 기록 고르기").click();
     await expect(page.getByRole("button", { name: /제주 여행/ })).toHaveCount(0);
   });
 

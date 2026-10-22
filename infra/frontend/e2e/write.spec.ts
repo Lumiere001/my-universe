@@ -1,4 +1,4 @@
-// WS13 쓰기 화면 작은 묶음(가짜 데이터 모드): 말풍선(날씨 질문 · 다짐 안부) → 건너뛰기 → 어제 날짜 · 제목으로 쓰기 → 말풍선에 지난 질문
+// WS13 쓰기 화면 작은 묶음(가짜 데이터 모드): 말풍선(날씨 질문 · 다짐 안부) → 다음부터 묻지 않기 → 어제 날짜 · 제목으로 쓰기 → 말풍선에 지난 질문
 // → .md · .txt 불러와 결과 → 같은 글 다시 보내면 '이미 정리한 글' → 날짜 확인 필요 → 고치기 → 지우면 목록 · 우주에서 사라짐 → 별지기 이름.
 // 캡처는 남기지 않는다(실제 백엔드 캡처는 e2e-real/ws13.spec.ts). 모두 가상 인물 하늘의 글 · 지어낸 글.
 import { expect, test } from "@playwright/test";
@@ -22,7 +22,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await page.goto("/write");
     await expect(bubble.getByTestId("prompt-question")).toContainText("마음 날씨");
     await expect(bubble.getByTestId("prompt-vow")).toContainText("팀 세 곳");
-    await bubble.getByRole("button", { name: /건너뛰기/ }).click();
+    await bubble.getByRole("button", { name: "다음부터 묻지 않기" }).click();
     await expect(bubble.getByText("다음부터 마음 날씨는 묻지 않을게요")).toBeVisible();
     await nav("지난 기록"); await nav("직접 쓰기");
     await expect(bubble.getByTestId("prompt-vow")).toBeVisible();
@@ -47,9 +47,9 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
   });
 
   await test.step(".md · .txt 불러와 결과 받기(파일 이름 속 날짜 → 날)", async () => {
-    const file = page.getByLabel("MD · TXT 파일에서 불러오기");
+    const file = page.getByLabel("글 파일(.txt · .md)에서 불러오기");
     await file.setInputFiles({ name: "보고서.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") });
-    await expect(page.getByText("MD · TXT 파일만 불러올 수 있어요.")).toBeVisible();
+    await expect(page.getByText(".txt · .md 파일만 불러올 수 있어요.")).toBeVisible();
     await file.setInputFiles({ name: "2026-09-25-독서노트.md", mimeType: "text/markdown", buffer: Buffer.from(MD) });
     await expect(page.getByLabel(/제목/)).toHaveValue("9/25 독서노트 — 『작은 습관의 힘』");
     await expect(page.getByLabel(/글이 다루는 날/)).toHaveValue("2026-09-25");
@@ -62,12 +62,12 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await submit();
     await expect(result).toBeVisible({ timeout: 15_000 });
     await expect(result.getByRole("heading", { name: "산책" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "예시 일기 받기" })).toHaveCount(0);   // 결과 화면엔 없음
+    await expect(page.getByRole("link", { name: "예시 일기 내려받기" })).toHaveCount(0);   // 결과 화면엔 없음
   });
 
   await test.step("같은 글을 다시 보내면 '이미 정리한 글이에요' + 그 기록으로 가는 링크", async () => {
     await again();
-    await page.getByLabel("MD · TXT 파일에서 불러오기").setInputFiles({ name: "산책.txt", mimeType: "text/plain", buffer: Buffer.from(TXT) });
+    await page.getByLabel("글 파일(.txt · .md)에서 불러오기").setInputFiles({ name: "산책.txt", mimeType: "text/plain", buffer: Buffer.from(TXT) });
     await submit();
     const dup = page.getByRole("status", { name: "이미 정리한 글" });
     await expect(dup).toContainText("이미 정리한 글이에요", { timeout: 15_000 });
@@ -98,7 +98,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await expect(page.getByText("기록을 지웠어요.")).toBeVisible();
     await expect(item).toHaveCount(0);
     await nav("우주");
-    await page.getByText("기록 목록으로 고르기").click();
+    await page.getByText("목록에서 기록 고르기").click();
     await expect(page.getByRole("button", { name: "산책" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /제주 여행/ })).toHaveCount(0);
   });

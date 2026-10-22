@@ -1,5 +1,5 @@
 "use client";
-// 쓰기 화면 조각(WS13): 별지기 말풍선 · 제목 · 날짜 칸 · MD · TXT 불러오기(+ 예시 일기 받기) · 이미 정리한 글 안내.
+// 쓰기 화면 조각(WS13): 별지기 말풍선 · 제목 · 날짜 칸 · 글 파일(.txt · .md) 불러오기(+ 예시 일기 내려받기) · 이미 정리한 글 안내.
 import Link from "next/link";
 import { useState } from "react";
 import { getPrompt, type Weather } from "@/lib/api";
@@ -47,7 +47,7 @@ export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWea
   return (
     <>
       <input id="title" className="inline-title" aria-label="제목 (비워도 돼요)" value={title} maxLength={120} disabled={disabled}
-        onChange={(e) => onTitle(e.target.value)} placeholder="제목 없음" />
+        onChange={(e) => onTitle(e.target.value)} placeholder="예: 10/3 토요일 일기" />
       <div className="props" role="group" aria-label="속성">
         <div className="prop">
           <label htmlFor="day"><Icon name="calendar" size={16} />글이 다루는 날</label>
@@ -93,22 +93,22 @@ export function FilePick({ onLoad, disabled }: { onLoad: (f: Loaded) => void; di
     e.target.value = "";   // 같은 파일을 다시 골라도 다시 읽게
     if (!f) return;
     setErr(""); setName("");
-    if (!/\.(md|txt)$/i.test(f.name)) return setErr("MD · TXT 파일만 불러올 수 있어요.");
+    if (!/\.(md|txt)$/i.test(f.name)) return setErr(".txt · .md 파일만 불러올 수 있어요.");
     if (f.size > MAX_BYTES) return setErr("파일이 너무 커요. 일기 한 편씩 올려 주세요.");
     const r = readDiaryFile(f.name, await f.text());
     if (!r.text) return setErr("파일에 글이 없어요.");
-    if (r.text.length > MAX_TEXT) return setErr(`글이 길어요(${MAX_TEXT.toLocaleString()}자까지). 나눠서 올려 주세요.`);
+    if (r.text.length > MAX_TEXT) return setErr(`글이 너무 길어요(${MAX_TEXT.toLocaleString()}자까지). 나눠서 올려 주세요.`);
     setName(f.name);
     onLoad({ ...r, ref: `파일:${f.name}:${f.size}:${f.lastModified}` });   // 같은 파일 다시 올리기 막기(고치면 지움)
   };
   return (
     <div className="stack">
       <div>
-        <label htmlFor="file">MD · TXT 파일에서 불러오기</label>
+        <label htmlFor="file">글 파일(.txt · .md)에서 불러오기</label>
         <input id="file" type="file" accept=".md,.txt,text/markdown,text/plain" disabled={disabled} onChange={pick} />
       </div>
       <p className="sub" style={{ margin: 0 }}>
-        불러온 글은 위 칸에 채워져요. 고친 뒤 띄워도 돼요. · <a href="/samples/haneul-2026-10-03.txt" download="하늘-2026-10-03-일기.txt">예시 일기 받기</a>
+        불러온 글은 글 칸에 채워져요. 고친 뒤 띄워도 돼요. · <a href="/samples/haneul-2026-10-03.txt" download="하늘-2026-10-03-일기.txt">예시 일기 내려받기</a>
         {" "}· <Link href="/import">인스타그램 글 한꺼번에 가져오기</Link>
       </p>
       {name && <p className="toast" role="status" style={{ margin: 0 }}>‘{name}’을 불러왔어요.</p>}

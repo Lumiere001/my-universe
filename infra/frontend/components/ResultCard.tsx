@@ -3,11 +3,10 @@
 // 위기 글도 같은 카드다(시험 단계, 2026-10-08 동규): 따로 뜨는 화면 · 단체 안내 없이, 한마디 아래 안부 한 줄만.
 import Link from "next/link";
 import { useState } from "react";
-import { answerPersonQuestion, sendFeedback, type EntryResult, type Feedback } from "@/lib/api";
+import { answerPersonQuestion, exportDiary, sendFeedback, why, type EntryResult, type Feedback } from "@/lib/api";
 import { useKindName } from "@/lib/use";
 import { DayFix, WeatherSkip } from "./EntryTools";
 import { useKeeperName } from "./Keeper";
-import { exportDiary } from "@/lib/api";
 import { localToday } from "./EntryTools";
 // 관측 보고서(WS15): 이어진 지난 생각 다음에 관측 상태 · 한계 · 이 기록 JSON 내려받기.
 import UniverseGrew from "./UniverseGrew";
@@ -15,6 +14,10 @@ import UniverseGrew from "./UniverseGrew";
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
 const day = (iso: string) => iso.slice(0, 10);
 const PRE = { whiteSpace: "pre-line" } as const;   // 요약 · 한마디의 줄바꿈을 그대로
+// 다짐 상태: 서버 값 → 보이는 말(docs/content/C-02)
+const VOW: Record<string, string> = { 열림: "진행 중", 지켜짐: "지켰어요", 그만둠: "그만뒀어요" };
+// 받침 있으면 '으로'(ㄹ 받침은 '로'): “같은 사람”으로 · “나”로
+const ro = (w: string) => { const c = (w.charCodeAt(w.length - 1) - 0xac00) % 28; return c > 0 && c !== 8 ? "으로" : "로"; };
 // 인용에 따옴표가 이미 붙어 오면 떼고 화면에서 한 번만 감싼다(“"…"” 방지)
 export const unquote = (s: string) => s.trim().replace(/^["“'‘](.*)["”'’]$/s, "$1");
 
@@ -48,7 +51,7 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
   const [err, setErr] = useState("");
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!visible(text)) return;
+    if (!visible(text)) return setErr("불편한 점을 한 줄 적어 주세요.");
     setErr("");
     try { await sendFeedback({ target, target_id: targetId ?? null, value: "불편한 점 한 줄", text: text.trim().slice(0, 200) }); setDone(true); }
     catch { setErr("보내지 못했어요. 다시 보내 주세요."); }
@@ -79,11 +82,11 @@ export function DownloadJson({ id, label }: { id?: string; label: string }) {
       a.download = `my-universe-${id ?? "all"}-${localToday()}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
+    } catch (x) { setErr(why(x, "내려받지 못했어요. 잠시 뒤 다시 해 주세요.")); } finally { setBusy(false); }
   };
   return (
     <div className="row">
-      <button type="button" className="small" disabled={busy} onClick={go}>{busy ? "준비하는 중…" : label}</button>
+      <button type="button" className="small" disabled={busy} onClick={go}>{busy ? "파일을 만드는 중…" : label}</button>
       {err && <span className="err" role="alert">{err}</span>}
     </div>
   );
@@ -95,13 +98,21 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
   const keeper = useKeeperName();
   const [vows, setVows] = useState<Record<string, string>>({});
   const [answered, setAnswered] = useState<Record<string, string>>({});
+  const [askErr, setAskErr] = useState<Record<string, string>>({});
 
   const thought = (id: string) => r.thoughts.find((t) => t.id === id);
   const past = (id: string) => r.past.find((p) => p.thought_id === id);
   const m = r.message;
+  const answer = async (id: string, o: string) => {
+    setAskErr({ ...askErr, [id]: "" });
+    try { await answerPersonQuestion(id, o); setAnswered({ ...answered, [id]: o }); }
+    catch (e) { setAskErr({ ...askErr, [id]: why(e, "답을 보내지 못했어요. 다시 눌러 주세요.") }); }
+  };
 
   return (
     <div className="note" data-testid="result">
+      <h1 className="sr">정리한 결과</h1>
+      <p className="sub">이 글에서 찾은 생각과, 그 생각이 이어진 지난 기록을 원문 그대로 보여 드려요.</p>
       {m && m.text && (
         <section className="card stack" aria-label="별지기 한마디">
           <div className="voice">
@@ -139,7 +150,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
 
       {r.thoughts.length > 0 && (
         <section className="card stack" aria-label="생각 목록">
-          <h2>생각 {r.thoughts.length}개</h2>
+          <h2>이 글에서 찾은 생각 {r.thoughts.length}개</h2>
           {r.thoughts.map((t) => (
             <article key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>
               <div className="row">
@@ -154,7 +165,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
               {t.self_change && <p className="sub" style={{ margin: 0 }}>스스로 쓴 변화: {t.self_change}</p>}
               {t.state?.type === "다짐" && (
                 <div className="stack" style={{ marginTop: 8 }}>
-                  <span className="sub">금빛 고리 · 다짐 {vows[t.id] ?? t.state.status}{t.state.mistake ? " · 실수 표시" : ""}</span>
+                  <span className="sub">금빛 고리 · 다짐 {VOW[vows[t.id] ?? t.state.status] ?? t.state.status}{t.state.mistake ? " · 지키지 못한 날이 있었어요" : ""}</span>
                   {t.state.status === "열림" && !vows[t.id] && (
                     <FeedbackButtons label="다짐 상태" target="vow" targetId={t.id} values={["지켰어요", "그만둘래요"]}
                       onDone={(v) => setVows({ ...vows, [t.id]: v === "지켰어요" ? "지켜짐" : "그만둠" })} />
@@ -193,27 +204,29 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
       {r.observation && (
         <section className="card stack" aria-label="관측 보고서" data-testid="observation">
           <h2>관측 보고서</h2>
-          <p style={{ margin: 0 }}>관측 상태 <span className="badge v">{r.observation.state}</span></p>
+          <p className="sub" style={{ margin: 0 }}>이 글을 어떻게 읽었는지와, 그렇게 읽은 데서 알아 둘 점이에요.</p>
+          <p style={{ margin: 0 }}>이 글의 흐름 <span className="badge v">{r.observation.state}</span></p>
           {r.observation.limits.length > 0 && (
             <div>
-              <span className="sub">한계</span>
+              <span className="sub">알아 둘 점</span>
               <ul className="sub" style={{ margin: "4px 0 0", paddingLeft: 18 }}>
                 {r.observation.limits.map((x) => <li key={x}>{x}</li>)}
               </ul>
             </div>
           )}
-          <DownloadJson id={r.id} label="이 기록 JSON 내려받기" />
+          <DownloadJson id={r.id} label="이 기록 파일로 내려받기(JSON)" />
         </section>
       )}
 
       {r.people_questions.map((q) => (
         <section key={q.id} className="card stack" aria-label="사람 질문">
           <p style={{ margin: 0 }}>{q.question}</p>
-          {answered[q.id] ? <p className="toast" role="status">“{answered[q.id]}”로 기억할게요.</p> : (
+          {answered[q.id] ? <p className="toast" role="status">“{answered[q.id]}”{ro(answered[q.id])} 기억할게요.</p> : (
             <div className="row" role="group" aria-label={q.name + " 확인"}>
               {q.options.map((o) => (
-                <button key={o} className="small" onClick={async () => { await answerPersonQuestion(q.id, o); setAnswered({ ...answered, [q.id]: o }); }}>{o}</button>
+                <button key={o} className="small" onClick={() => answer(q.id, o)}>{o}</button>
               ))}
+              {askErr[q.id] && <span className="err" role="alert">{askErr[q.id]}</span>}
             </div>
           )}
         </section>

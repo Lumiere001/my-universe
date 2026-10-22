@@ -2,7 +2,7 @@
 // 그 사람과 얽힌 생각(먼저 쓴 기록부터, PRD §7 '사람'). 우주에서 사람을 고르거나 사람 목록에서 펼치면 보인다.
 import { useEffect, useState } from "react";
 import { unquote } from "@/components/ResultCard";
-import { getPersonThoughts, type PersonThoughts as Data } from "@/lib/api";
+import { getPersonThoughts, why, type PersonThoughts as Data } from "@/lib/api";
 import { useKindName } from "@/lib/use";
 
 export default function PersonThoughts({ id, onPlanet }: { id: string; onPlanet?: (entryId: string) => void }) {
@@ -11,12 +11,12 @@ export default function PersonThoughts({ id, onPlanet }: { id: string; onPlanet?
   const kindName = useKindName();
   useEffect(() => {
     setD(null); setErr("");
-    getPersonThoughts(id).then(setD, () => setErr("불러오지 못했어요. 잠시 뒤 다시 해 주세요."));
+    getPersonThoughts(id).then(setD, (e) => setErr(why(e, "얽힌 생각을 불러오지 못했어요. 잠시 뒤 다시 해 주세요.")));
   }, [id]);
 
   if (err) return <p className="err" role="alert">{err}</p>;
-  if (!d) return <p className="sub">불러오는 중…</p>;
-  if (!d.thoughts.length) return <p className="sub">이 사람과 얽힌 생각이 아직 없어요.</p>;
+  if (!d) return <p className="sub">얽힌 생각을 불러오는 중…</p>;
+  if (!d.thoughts.length) return <p className="sub">이 사람과 얽힌 생각이 아직 없어요. 글에 이 사람 이야기가 나오면 여기에 모여요.</p>;
   return (
     <ol data-testid="person-thoughts" style={{ paddingLeft: 18, margin: "6px 0 0" }}>
       {d.thoughts.map((t) => (

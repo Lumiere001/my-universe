@@ -96,9 +96,9 @@ test("꾸미기", async ({ page }, info) => {
 
   await test.step("우주 넓히기: 처음 나온 작은 별 · 사람을 별지기가 알려 줌", async () => {
     await nav("우주");
-    await page.getByText("기록 목록으로 고르기").click();
+    await page.getByText("목록에서 기록 고르기").click();
     await page.getByRole("button", { name: "7/18 가족 여행 2일차" }).click();
-    await page.getByTestId("planet-card").getByRole("link", { name: "결과 카드 보기" }).click();
+    await page.getByTestId("planet-card").getByRole("link", { name: "정리한 결과 보기" }).click();
     const grew = page.getByTestId("universe-grew");
     await expect(grew).toContainText("이 글로 우주가 넓어졌어요. 새 작은 별 「가족」, 처음 나온 사람 지은 · 엄마.");
     await expect(grew).not.toContainText("새 해");                                          // 관계 해는 3/27 글이 먼저
@@ -107,9 +107,9 @@ test("꾸미기", async ({ page }, info) => {
     await shot("06-universe-grew");
     await grew.getByRole("link", { name: "우주에서 보기" }).click();
     await expect(page).toHaveURL(/\/universe$/);
-    await page.getByText("기록 목록으로 고르기").click();
+    await page.getByText("목록에서 기록 고르기").click();
     await page.getByRole("button", { name: "8/28 막막함" }).click();
-    await page.getByTestId("planet-card").getByRole("link", { name: "결과 카드 보기" }).click();
+    await page.getByTestId("planet-card").getByRole("link", { name: "정리한 결과 보기" }).click();
     await expect(page.getByTestId("result")).toBeVisible();
     await expect(page.getByTestId("universe-grew")).toHaveCount(0);                         // 새로 생긴 것이 없으면 말하지 않음
   });

@@ -55,7 +55,7 @@ test("우주 고치기(실제 화면 · 로컬 백엔드)", async ({ page }, inf
     await form.getByLabel("이메일").fill(EMAIL);
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
-    await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
     await page.goto("/universe");
     await expect(page.locator(".uni canvas")).toBeVisible();
     await panel.locator("summary").click();
@@ -64,10 +64,10 @@ test("우주 고치기(실제 화면 · 로컬 백엔드)", async ({ page }, inf
 
   await test.step("해 추가 → AI 가 기준 축 제안 → 우주에 새 해가 뜸 → 축 바꾸기", async () => {
     await panel.getByLabel("새 해 이름").fill("통일 사역");
-    await panel.getByRole("button", { name: "해 추가" }).click();
+    await panel.getByRole("button", { name: "해 띄우기" }).click();
     await expect(toast).toContainText("“통일 사역” 해를 띄웠어요");
     await expect(sunLabel("통일 사역")).toHaveCount(1);
-    const axis = panel.getByLabel("통일 사역의 기준 축");
+    const axis = panel.getByLabel("통일 사역의 기본 영역");
     await axis.selectOption("공동체");
     await expect(toast).toContainText("공동체에 이었어요");
     await expect(axis).toHaveValue("공동체");
@@ -103,8 +103,8 @@ test("우주 고치기(실제 화면 · 로컬 백엔드)", async ({ page }, inf
   });
 
   await test.step("행성 카드에서 생각 종류 · 가치 고치기", async () => {
-    await page.getByText("기록 목록으로 고르기").click();
-    await page.locator("details.card", { hasText: "기록 목록으로 고르기" }).getByRole("button").first().click();
+    await page.getByText("목록에서 기록 고르기").click();
+    await page.locator("details.card", { hasText: "목록에서 기록 고르기" }).getByRole("button").first().click();
     const card = page.getByTestId("planet-card");
     await expect(card.locator("li").first()).toBeVisible();
     await card.getByRole("button", { name: "이 생각의 종류 · 가치 고치기" }).first().click();
@@ -118,7 +118,7 @@ test("우주 고치기(실제 화면 · 로컬 백엔드)", async ({ page }, inf
   });
 
   await test.step("사람 지우기 + 그 사람이 나온 생각도 지우기", async () => {
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "사람", exact: true }).click();
+    await page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name: "사람", exact: true }).click();
     const who = dev === "mobile" ? "지은" : "민수";
     await page.getByRole("button", { name: `${who} 지우기` }).click();
     const dlg = page.getByRole("alertdialog", { name: `${who} 지우기 확인` });

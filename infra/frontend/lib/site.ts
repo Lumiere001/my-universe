@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://my-universe-seven.vercel.app").replace(/\/$/, "");
 const title = "나의 우주";
-const description = "일기를 쓰면 생각 단위로 나눠 나만의 우주에 띄우고, 별지기가 지난 기록을 기억해 말을 걸어요.";
+const description = "말하듯 남긴 일기가 쌓이면, 지난 기록 속에서 내 생각이 어떻게 이어지고 바뀌어 왔는지 비춰 줘요.";
 const image = { url: "/og.jpg", width: 1200, height: 630, alt: "나의 우주 — 일기로 만든 우주 화면" };
 
 export const siteMeta: Metadata = {

@@ -16,10 +16,10 @@ import { ApiError, getConsent, getMe, listDiary, MOCK, supabase, type EntrySumma
 
 const NAV: readonly (readonly [string, string, IconName])[] = [
   ["/", "이야기하기", "talk"], ["/write", "직접 쓰기", "write"], ["/universe", "우주", "universe"], ["/history", "지난 기록", "history"],
-  ["/people", "사람", "people"], ["/aspiration", "되고 싶은 나", "north"], ["/settings", "설정", "settings"],
+  ["/people", "사람", "people"], ["/aspiration", "되고 싶은 모습", "north"], ["/settings", "설정", "settings"],
 ];
 const TABS = NAV.slice(0, 4);   // 휴대폰 아래 막대
-const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "인스타그램 가져오기", "/consent": "동의", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영" };
+const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "인스타그램에서 가져오기", "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영" };
 const PUBLIC = ["/privacy", "/terms"];
 const OPEN = [...PUBLIC, "/consent", "/settings"];   // 동의 전에도 열리는 화면(설정 = 로그아웃 · 계정 지우기)
 const FOLD = "side-collapsed";   // PC에서 사이드바를 접어 둔 것(이 기기에만)
@@ -42,8 +42,8 @@ function Recent({ path, onPick }: { path: string; onPick: () => void }) {
     <details className="side-sec" open>
       <summary>지난 기록</summary>
       <div className="tree">
-        {failed && <p className="none">목록을 불러오지 못했어요.</p>}
-        {list?.length === 0 && <p className="none">아직 쓴 글이 없어요.</p>}
+        {failed && <p className="none">지난 기록을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.</p>}
+        {list?.length === 0 && <p className="none">아직 남긴 기록이 없어요.</p>}
         {months.map((m, i) => (
           <details key={m} open={i < 2}>
             <summary>{+m.slice(0, 4)}년 {+m.slice(5)}월</summary>
@@ -104,10 +104,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     : state === "out" ? <Landing /> : state === "not_allowed" ? (
       <main><div className="card stack" role="alert">
         <h1>초대된 사람만 쓸 수 있어요</h1>
-        <p className="sub">이 계정은 아직 초대 목록에 없어요. 운영자에게 알려 주세요.</p>
+        <p className="sub">이 구글 계정은 아직 초대 목록에 없어요. 초대받은 계정으로 다시 로그인하거나, 운영자에게 알려 주세요.</p>
         <button onClick={() => supabase()?.auth.signOut()}>로그아웃</button>
       </div></main>
-    ) : <main><p className="sub">불러오는 중…</p></main>;
+    ) : <main><p className="sub">로그인을 확인하는 중…</p></main>;
 
   // 로그인 전 · 동의 전: 틀 없이 이름 줄만
   if (state !== "in") return (
@@ -127,7 +127,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <button className="icon only-phone" onClick={() => setDrawer(false)} aria-label="메뉴 닫기"><Icon name="close" /></button>
         </div>
         <div className="side-body">
-          <nav className="nav" aria-label="화면">
+          <nav className="nav" aria-label="메뉴">
             {NAV.map(([href, name, icon]) => (
               <Link key={href} href={href} aria-current={path === href ? "page" : undefined} onClick={() => setDrawer(false)}><Icon name={icon} />{name}</Link>
             ))}

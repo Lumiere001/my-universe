@@ -3,5 +3,5 @@
 const MAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
 export default function Contact() {
-  return MAIL ? <a href={`mailto:${MAIL}`}>{MAIL}</a> : <span data-testid="contact-pending">준비 중(서비스용 메일을 곧 열어요)</span>;
+  return MAIL ? <a href={`mailto:${MAIL}`}>{MAIL}</a> : <span data-testid="contact-pending">준비 중이에요(서비스용 메일을 곧 열어요)</span>;
 }

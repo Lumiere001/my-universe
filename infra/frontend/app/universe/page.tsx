@@ -13,20 +13,32 @@ import { useKindName, useLoad, useOntology } from "@/lib/use";
 import EditPanel, { ThoughtFix } from "./EditPanel";
 
 const Universe3D = dynamic(() => import("@/components/Universe3D"), { ssr: false, loading: () => <div className="uni" /> });
+// 기호 뜻 2판 문장(docs/content/U-03). 온톨로지 legend 는 별지기 규칙과 같은 파일이라 손대지 않고 여기서 덮는다.
+// ponytail: 문장이 두 곳에 있음. 온톨로지 legend 를 2판으로 바꾸기로 정하면 이 표를 지운다.
+const LEGEND: Record<string, string> = {
+  해: "삶의 영역이에요. 기록이 많을수록 커요. 일기에 나온 영역과 내가 추가한 해만 떠요.",
+  "작은 별": "해 곁의 세부 주제예요. 기록 행성들이 그 둘레를 돌아요.",
+  행성: "일기 한 편이에요. 작은 별에 가까울수록 먼저 쓴 기록이고, 생각이 많을수록 크고, 확신이 클수록 밝아요. '?'는 아직 답을 못 낸 질문이 있다는 뜻이에요.",
+  쌍행성: "둘 다 아직 결론이 나지 않은, 서로 맞서는 두 생각이에요.",
+  "금빛 고리": "다짐이 담긴 기록이에요. 다짐을 지키면 고리가 채워져요.",
+  "영역을 넘는 선": "다른 영역과 이어진 선은 처음에는 행성을 눌렀을 때만 보여요. 설정에서 바꿀 수 있어요.",
+  색: "보라는 이어지는 관계(이어짐 · 바뀜 · 해소), 주황은 맞서는 관계(긴장 · 어긋남 · 목표 충돌)예요.",
+};
 
 export default function UniversePage() {
-  const [data, err, reload] = useLoad(getUniverse);
+  const [data, err, reload] = useLoad(getUniverse, "우주를 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const [me] = useLoad(getMe);
   const onto = useOntology();
   const kindName = useKindName();
   const [pick, setPick] = useState<Pick>({ kind: "none", id: null });
   const [person, setPerson] = useState<string | null>(null);
   const [entry, setEntry] = useState<EntryResult | null>(null);
+  const [entryErr, setEntryErr] = useState(false);
 
   const planet = pick.kind === "planet" ? data?.planets.find((p) => p.id === pick.id) : undefined;
   useEffect(() => {
-    setEntry(null);
-    if (planet) getDiary(planet.id).then(setEntry, () => setEntry(null));
+    setEntry(null); setEntryErr(false);
+    if (planet) getDiary(planet.id).then(setEntry, () => setEntryErr(true));
   }, [planet?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 빛남: 북극성을 누르면 닿은 순간이 있는 행성, 아니면 고른 사람이 나온 행성
@@ -51,6 +63,8 @@ export default function UniversePage() {
   return (
     <main className="wide">
       <h1 className="sr">나의 우주</h1>
+      <p className="sub" style={{ marginTop: 0 }}>행성 하나가 일기 한 편이에요. 이어진 선을 따라가면 지난 생각이 어떻게 이어지고 바뀌었는지 보여요.</p>
+      {!data.planets.length && <p className="sub" role="status">아직 우주가 비어 있어요. 이야기하기나 직접 쓰기로 첫 기록을 남기면 첫 행성이 떠요.</p>}
       <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={setPick}
         theme={me?.settings.theme}>
         <div className="tools" role="group" aria-label="사람 고르기">
@@ -66,11 +80,12 @@ export default function UniversePage() {
           <section className="pcard" aria-label="기록 요약" data-testid="planet-card">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <h2 style={{ margin: 0 }}>{planet.title}</h2>
-              <button className="small" onClick={close} aria-label="닫기">닫기</button>
+              <button className="small" onClick={close} aria-label="카드 닫기">닫기</button>
             </div>
             <p className="sub">{planet.written_at.slice(0, 10)}{planet.weather ? ` · ${planet.weather}` : ""}{planet.ring ? " · 금빛 고리(다짐)" : ""}
               {" · "}{data.stars.find((s) => s.id === planet.star_id)?.name}</p>
-            {entry?.info ? <p>{entry.info.summary}</p> : <p className="sub">불러오는 중…</p>}
+            {entry?.info ? <p>{entry.info.summary}</p> : entryErr ? <p className="err" role="alert">이 기록의 요약을 불러오지 못했어요. 잠시 뒤 행성을 다시 눌러 주세요.</p>
+              : <p className="sub">요약을 불러오는 중…</p>}
             {entry && entry.thoughts.length > 0 && (
               <ul style={{ paddingLeft: 18, margin: "0 0 8px" }}>
                 {entry.thoughts.map((t) => (
@@ -82,7 +97,7 @@ export default function UniversePage() {
                 ))}
               </ul>
             )}
-            <Link href={`/universe/${encodeURIComponent(planet.id)}`}>결과 카드 보기</Link>
+            <Link href={`/universe/${encodeURIComponent(planet.id)}`}>정리한 결과 보기</Link>
             {" · "}<Link href={`/?from=${encodeURIComponent(planet.id)}`}>이 이야기 이어 하기</Link>
             {links.map((l) => {
               const other = l.from_planet === planet.id ? l.to_planet : l.from_planet;
@@ -91,8 +106,8 @@ export default function UniversePage() {
                 <div key={l.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 8, marginTop: 8 }}>
                   <div className="row">
                     <span className={"badge " + (l.ended ? "" : CONFLICT.has(l.type) ? "o" : "v")}>{l.type}</span>
-                    {l.ended && <span className="badge">끝난 충돌</span>}
-                    <span className="badge">{l.line}</span>
+                    {l.ended && <span className="badge">끝난 목표 충돌</span>}
+                    <span className="badge">{l.line === "실선" ? "실선 · 글에 직접 씀" : "점선 · AI 추정"}</span>
                     {l.cross_domain && <span className="badge">다른 영역</span>}
                     <span className="sub">{title(other)}</span>
                   </div>
@@ -148,17 +163,17 @@ export default function UniversePage() {
         )}
       </Universe3D>
 
-      <p className="sub" style={{ marginTop: 8 }}>한 손가락으로 돌리고, 두 손가락으로 확대해요. 해를 누르면 그 영역으로 다가가고, 빈 곳을 누르면 전체로 돌아와요.</p>
+      <p className="sub" style={{ marginTop: 8 }}>끌어서 돌리고, 두 손가락이나 마우스 휠로 크게 봐요. 해를 누르면 그 영역으로 다가가고, 빈 곳을 누르면 전체로 돌아와요.</p>
 
       <details className="card">
-        <summary>범례</summary>
+        <summary>기호 뜻 보기</summary>
         <div className="legend" style={{ marginTop: 10 }}>
-          {onto?.universe_symbols.map((s) => <div key={s.name}><b>{s.name}</b> · {s.legend}</div>)}
+          {onto?.universe_symbols.map((s) => <div key={s.name}><b>{s.name}</b> · {LEGEND[s.name] ?? s.legend}</div>)}
         </div>
       </details>
 
       <details className="card">
-        <summary>기록 목록으로 고르기</summary>
+        <summary>목록에서 기록 고르기</summary>
         <div className="row" style={{ marginTop: 10 }}>
           {[...data.planets].sort((a, b) => a.written_at.localeCompare(b.written_at)).map((p) => (
             <button key={p.id} className="small" onClick={() => setPick({ kind: "planet", id: p.id })}>{p.title}</button>

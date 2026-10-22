@@ -23,12 +23,12 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     const obs = result.getByRole("region", { name: "관측 보고서" });
     await expect(obs).toBeVisible({ timeout: 15_000 });
-    await expect(obs).toContainText("관측 상태");
+    await expect(obs).toContainText("이 글의 흐름");
     await expect(obs).toContainText("바뀜");
     await expect(obs.getByRole("listitem")).toHaveCount(3);
     await obs.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${OUT}/${info.project.name}-01-observation.png` });
-    const j = await saved("이 기록 JSON 내려받기");
+    const j = await saved("이 기록 파일로 내려받기(JSON)");
     expect(j.schema).toBe("my-universe-export/1");
     expect(j.scope).toBe("entry");
     expect(j.records).toHaveLength(1);
@@ -37,9 +37,9 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
 
   await test.step("지난 기록: 전체 JSON", async () => {
     await menuNav(page, "지난 기록");
-    await expect(page.getByRole("button", { name: "전체 기록 JSON 내려받기" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "모든 기록 파일로 내려받기(JSON)" })).toBeVisible();
     await page.screenshot({ path: `${OUT}/${info.project.name}-02-history-export.png` });
-    const j = await saved("전체 기록 JSON 내려받기");
+    const j = await saved("모든 기록 파일로 내려받기(JSON)");
     expect(j.scope).toBe("all");
   });
 

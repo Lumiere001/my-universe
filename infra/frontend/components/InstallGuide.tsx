@@ -36,7 +36,7 @@ export default function InstallGuide() {
       {mode === "prompt" ? (
         <>
           <p className="sub" style={{ margin: 0 }}>스토어 없이 바로 설치돼요. 앱처럼 전체 화면으로 열려요.</p>
-          <button className="primary" onClick={install}>앱 설치</button>
+          <button className="primary" onClick={install}>홈 화면에 설치</button>
         </>
       ) : mode === "ios" ? (
         <ol style={{ margin: 0, paddingLeft: 20 }}>

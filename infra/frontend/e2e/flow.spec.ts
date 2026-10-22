@@ -59,9 +59,9 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByRole("group", { name: "한마디 피드백" }).getByText("고마워요")).toBeVisible();
     await page.getByRole("group", { name: "이 연결이 맞나요" }).first().getByRole("button", { name: "맞아요" }).click();
     await page.getByRole("group", { name: "다짐 상태" }).getByRole("button", { name: "지켰어요" }).click();
-    await expect(page.getByText("다짐 지켜짐")).toBeVisible();
+    await expect(page.getByText("다짐 지켰어요")).toBeVisible();
     await page.getByRole("button", { name: "같은 사람" }).click();
-    await expect(page.getByText("“같은 사람”로 기억할게요.")).toBeVisible();
+    await expect(page.getByText("“같은 사람”으로 기억할게요.")).toBeVisible();
     await page.getByRole("textbox", { name: "불편한 점 한 줄" }).fill("생각을 너무 잘게 나눈 것 같아요");
     await page.getByRole("button", { name: "보내기" }).click();
     await expect(page.getByText("불편한 점을 받았어요")).toBeVisible();
@@ -84,7 +84,7 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(card).toContainText("다른 영역"); // 영역 넘는 선은 눌렀을 때만
     await page.waitForTimeout(300);
     await shot("06-planet");
-    await card.getByRole("button", { name: "닫기" }).click();
+    await card.getByRole("button", { name: "카드 닫기" }).click();
   });
 
   await test.step("해 누르기 → 그 태양계로", async () => {
@@ -103,7 +103,7 @@ test("핵심 흐름", async ({ page }, info) => {
   });
 
   await test.step("되고 싶은 모습 대화형 폼", async () => {
-    await nav("되고 싶은 나");
+    await nav("되고 싶은 모습");
     await page.getByRole("button", { name: "새로 적기" }).click();
     const answers = ["바쁘다는 말로 자꾸 미루는 사람", "어디서든 배우고, 한 약속은 지키는 사람", "피곤하면 다 내일로 미룬다", "피곤하면 오 분만 하고 자겠다"];
     for (const [i, a] of answers.entries()) {
@@ -116,7 +116,7 @@ test("핵심 흐름", async ({ page }, info) => {
     await page.getByRole("button", { name: "북극성으로 띄우기" }).click();
     await expect(page.getByText("북극성으로 띄웠어요")).toBeVisible();
     await expect(page.getByRole("region", { name: "지금의 북극성" })).toContainText("어디서든 배우고, 한 약속은 지키는 사람");
-    await page.getByText(/이력 보기/).click();
+    await page.locator("summary", { hasText: "예전 모습 보기" }).click();
     await shot("10-aspiration-saved", true);
   });
 

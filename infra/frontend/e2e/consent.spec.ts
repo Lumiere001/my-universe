@@ -25,7 +25,7 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
     await expect(page).toHaveURL(/\/consent$/);
     await expect(page.getByRole("heading", { level: 1, name: "나의 우주를 쓰기 전에" })).toBeVisible();
     await expect(page.getByLabel(/마음껏 적어/)).toHaveCount(0);
-    await expect(page.getByRole("navigation", { name: "화면", includeHidden: true })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true })).toHaveCount(0);
     for (const where of ["/universe", "/history", "/people", "/aspiration"]) {
       await page.goto(where);
       await expect(page).toHaveURL(/\/consent$/);
@@ -54,7 +54,7 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
     await start.click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "화면", includeHidden: true })).toHaveCount(1);
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true })).toHaveCount(1);
   });
 
   await test.step("설정 → 동의 내용(선택 동의 바꾸기) · 이용약관 · 개인정보처리방침", async () => {

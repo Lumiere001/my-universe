@@ -5,7 +5,7 @@
 // 보낸 뒤 받아쓴 글을 이어 붙인다. 서버는 조각을 모으지 않고 받아쓴 뒤 바로 버린다(녹음 저장 0).
 // 읽어 주기(useReadAloud): 별지기 말을 ElevenLabs 목소리로. 켜고 끔은 이 기기에만 기억(기본 꺼짐).
 import { useEffect, useRef, useState } from "react";
-import { speak, transcribe } from "@/lib/api";
+import { speak, transcribe, why } from "@/lib/api";
 
 const RATE = 16000, PIECE_S = 120, MAX_RAW = 4 * 1024 * 1024;
 const MAX_MIN = 20;   // 입력 검사: 받아쓴 글이 한 번에 보낼 수 있는 8000자를 넘지 않게(한국어 말 약 350자/분)
@@ -84,7 +84,7 @@ export default function MicButton({ onText, disabled }: { onText: (text: string)
         if (x.length > MAX_MIN * 60 * RATE) throw new Error(`한 번에 ${MAX_MIN}분까지 받아요. 나눠서 올려 주세요.`);
         parts = pieces(x);
       } else if (blob.size <= MAX_RAW) parts = [blob];
-      else throw new Error("이 브라우저에서 열 수 없는 녹음이에요. wav · mp3 로 바꾸거나 4MB 아래로 올려 주세요.");
+      else throw new Error("이 브라우저에서 열 수 없는 녹음이에요. wav · mp3로 바꾸거나 4MB보다 작게 줄여 올려 주세요.");
       const said: string[] = [];
       for (let i = 0; i < parts.length; i++) {
         setBusy(parts.length > 1 ? `받아쓰는 중 ${i + 1}/${parts.length}…` : "받아쓰는 중…");
@@ -93,7 +93,7 @@ export default function MicButton({ onText, disabled }: { onText: (text: string)
       const text = said.filter(Boolean).join(" ");
       if (!text) throw new Error("목소리를 알아듣지 못했어요. 조금 더 크게 다시 말해 주세요.");
       onText(text);
-    } catch (e) { setErr((e as Error).message || "받아쓰지 못했어요. 다시 해 주세요."); }
+    } catch (e) { setErr(why(e, "받아쓰지 못했어요. 잠시 뒤 다시 해 주세요.")); }
     finally { setBusy(""); }
   };
 
@@ -137,7 +137,7 @@ export default function MicButton({ onText, disabled }: { onText: (text: string)
         </label>
       </div>
       <p className="sub" style={{ margin: 0 }}>
-        {rec ? "듣고 있어요. 다 말했으면 ‘말 마치기’를 눌러 주세요." : "m4a · mp3 · wav · webm, 긴 이야기도 돼요. 녹음은 받아쓴 뒤 바로 버려요."}
+        {rec ? "듣고 있어요. 다 말했으면 ‘말 마치기’를 눌러 주세요." : "녹음 파일은 m4a · mp3 · wav · webm을 받아요. 길어도 괜찮아요. 녹음은 받아쓴 뒤 바로 버려요."}
       </p>
       {busy && <p className="sub" role="status" style={{ margin: 0 }}>{busy}</p>}
       {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}

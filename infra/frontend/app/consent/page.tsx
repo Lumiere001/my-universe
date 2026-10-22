@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Contact from "@/components/Contact";
-import { getConsent, MOCK, saveConsent, supabase, type Consent } from "@/lib/api";
+import { getConsent, MOCK, saveConsent, supabase, why, type Consent } from "@/lib/api";
 
 const UL = { margin: 0, paddingLeft: 20 } as const;
 const BOX = { width: "auto", marginTop: 4, flex: "none" } as const;
@@ -43,11 +43,11 @@ export default function ConsentPage() {
   const load = () => getConsent().then((x) => {
     setC(x);
     if (x.agreed && !x.needed) { setRequired(true); setSensitive(true); setAge("14+"); setOperator(x.agreed.operator_read); }
-  }, (e) => setErr((e as Error).message));
+  }, (e) => setErr(why(e, "동의 내용을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.")));
   useEffect(() => { load(); }, []);
 
   if (err && !c) return <main><p className="err" role="alert">{err}</p></main>;
-  if (!c) return <main><p className="sub">불러오는 중…</p></main>;
+  if (!c) return <main><p className="sub">동의 내용을 불러오는 중…</p></main>;
   const again = !c.needed;   // 이미 지금 판에 동의함(선택 동의 바꾸기)
   const ok = required && sensitive && age === "14+";
 
@@ -55,10 +55,10 @@ export default function ConsentPage() {
     setBusy(true); setErr(""); setMsg("");
     try {
       const r = await saveConsent({ version: c.version, required, sensitive, age14: age === "14+", operator_read: operator });
-      if (again) { setC(r); setMsg("저장했어요."); setBusy(false); }
+      if (again) { setC(r); setMsg("바꾼 내용을 저장했어요."); setBusy(false); }
       else window.location.assign("/");   // Shell 이 동의를 다시 확인하고 첫 화면(이야기하기)을 연다
     } catch (e) {
-      setErr((e as Error).message); setBusy(false);
+      setErr(why(e, "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.")); setBusy(false);
       load();   // 문구 판이 바뀌었으면(409) 새 판을 다시 받는다
     }
   };
@@ -112,7 +112,7 @@ export default function ConsentPage() {
           <b>[선택]</b> 품질 개선을 위해 운영자가 내가 남긴 피드백(불편한 점 한 줄 · 아니에요 등)과 그 대상 문장을 읽을 수 있어요.
           <span className="sub"> 다른 사람 이름은 가명으로 보이고, 읽을 때마다 기록을 남겨요. 동의하지 않으면 숫자로만 모아요. 언제든 이 화면에서 거둘 수 있어요.</span>
         </Check>
-        <button className="primary" disabled={!ok || busy} onClick={submit}>{busy ? "저장 중…" : again ? "바꾼 내용 저장" : "동의하고 시작하기"}</button>
+        <button className="primary" disabled={!ok || busy} onClick={submit}>{busy ? "저장하는 중…" : again ? "바꾼 내용 저장" : "동의하고 시작하기"}</button>
         {msg && <p className="toast" role="status">{msg}</p>}
         {err && <p className="err" role="alert">{err}</p>}
       </section>

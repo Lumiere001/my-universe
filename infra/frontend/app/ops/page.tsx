@@ -142,7 +142,7 @@ function FeedbackPanel({ counts }: { counts: OpsSummary["feedback_text"] }) {
   const [err, setErr] = useState("");
   const run = async <T,>(what: string, fn: () => Promise<T>, set: (v: T) => void) => {
     setBusy(what); setErr("");
-    try { set(await fn()); } catch (e) { setErr(e instanceof ApiError ? e.message : "불러오지 못했어요."); }
+    try { set(await fn()); } catch (e) { setErr(e instanceof ApiError && e.message ? e.message : "불러오지 못했어요."); }
     setBusy("");
   };
   return (

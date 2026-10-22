@@ -7,23 +7,30 @@ import InstallGuide from "@/components/InstallGuide";
 import { DEV_LOGIN, supabase } from "@/lib/api";
 
 const STEPS = [
-  ["쓰기 · 이야기하기", "오늘 있었던 일, 떠오른 생각, 다짐을 마음껏 적어요. 마음 날씨는 골라도 되고 건너뛰어도 돼요.", "/landing/write.jpg", 390, 668],
+  ["이야기하기 · 쓰기", "별지기와 말로 이야기하거나, 글 · 사진으로 오늘을 남겨요. 마음 날씨는 골라도 되고 건너뛰어도 돼요.", "/landing/write.jpg", 390, 668],
   ["우주", "별지기가 글을 생각 단위로 나눠 삶의 영역(해) 곁에 행성으로 띄워요. 지난 생각과 이어지면 선이 생겨요.", "/landing/universe-mobile.jpg", 390, 624],
   ["별지기 한마디", "지난 기록을 기억하는 별지기가 오늘 글에 맞춰 말을 걸어요. 말투는 다정하게부터 팩폭까지 골라요.", "/landing/message.jpg", 390, 316],
 ] as const;
 
 export default function Landing() {
   const sb = supabase();
-  const google = () => sb?.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
-  const start = sb ? <button className="primary" onClick={google}>구글로 시작하기</button>
-    : <p className="err">로그인 설정이 없어요. NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_ANON_KEY 를 넣어 주세요.</p>;
+  const [fail, setFail] = useState(false);
+  const google = async () => {
+    setFail(false);
+    const r = await sb?.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }).catch(() => null);
+    if (!r || r.error) setFail(true);
+  };
+  const start = sb ? <>
+    <button className="primary" onClick={google}>구글로 시작하기</button>
+    {fail && <p className="err" role="alert">구글 로그인을 열지 못했어요. 잠시 뒤 다시 눌러 주세요.</p>}
+  </> : <p className="err">로그인 설정이 없어요. NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_ANON_KEY 를 넣어 주세요.</p>;
 
   return (
     <main className="wide landing">
       <section className="hero" aria-label="소개">
         <div className="stack">
           <h1>나의 우주</h1>
-          <p className="lead">일기를 쓰면 생각 단위로 나눠 나만의 우주에 띄우고, 별지기가 지난 기록을 기억해 말을 걸어요.</p>
+          <p className="lead">말하듯 남긴 일기가 쌓이면, 지난 기록 속에서 내 생각이 어떻게 이어지고 바뀌어 왔는지 비춰 줘요.</p>
           {start}
           <p className="sub">구글 계정이면 누구나 바로 시작해요. 지금은 시험 단계예요.</p>
         </div>
@@ -58,7 +65,7 @@ export default function Landing() {
       <section className="card" aria-labelledby="beta">
         <h2 id="beta">시험 단계 안내</h2>
         <p style={{ margin: 0 }}>나의 우주는 지금 시험 운영 중이에요. 기능과 화면이 자주 바뀔 수 있어요.
-          일기를 돌아보도록 돕는 도구이고, 의료 · 상담 서비스가 아니에요. 불편한 점은 화면 안 &apos;불편한 점 한 줄&apos;로 알려 주세요.</p>
+          일기를 돌아보도록 돕는 도구이고, 의료 · 상담 서비스가 아니에요. 불편한 점은 정리한 결과나 설정의 &apos;불편한 점 한 줄&apos;로 알려 주세요.</p>
       </section>
 
       <InstallGuide />

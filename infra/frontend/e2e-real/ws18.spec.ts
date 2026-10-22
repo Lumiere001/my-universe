@@ -84,8 +84,8 @@ test("사진으로 쓰기(실제 글자 읽기 · 로컬 백엔드)", async ({ p
     await form.getByLabel("이메일").fill(EMAIL);
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
-    await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
-    await page.getByRole("navigation", { name: "화면" }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
+    await page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
     await expect(diary).toBeVisible();
   });
 
@@ -102,7 +102,7 @@ test("사진으로 쓰기(실제 글자 읽기 · 로컬 백엔드)", async ({ p
     await expect(list.getByRole("listitem").first()).toContainText("p1");
     await shot("02-two-pages");
     await box.getByRole("button", { name: "사진 2장 글자 읽기" }).click();
-    await expect(box.getByRole("status")).toContainText("2쪽을 읽어 위 칸에 채웠어요", { timeout: 60_000 });
+    await expect(box.getByRole("status")).toContainText("2쪽을 읽어 글 칸에 채웠어요", { timeout: 60_000 });
     const text = await diary.inputValue();
     expect(text.split("\n")[0]).toContain("10월 12일");
     expect(text.indexOf("서윤 선배와")).toBeGreaterThan(text.indexOf("민준이가"));   // 1쪽 → 2쪽 순서

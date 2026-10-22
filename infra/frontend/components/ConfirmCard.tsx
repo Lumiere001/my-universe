@@ -3,7 +3,7 @@
 // 항목마다 '맞아요 / 고칠래요'로 보고 '확인하고 우주에 저장'. 고칠 수 있는 것: 요약 문장 · 생각 종류 · 생각 빼기.
 // 원문 인용은 고치지 않는다(원문 근거 G1). 저장한 뒤 한마디는 대화 화면 안의 별지기 말풍선으로 보인다.
 import { useState } from "react";
-import { confirmDiary, type ConfirmInput, type EntryResult } from "@/lib/api";
+import { confirmDiary, why, type ConfirmInput, type EntryResult } from "@/lib/api";
 import { useKindName, useOntology } from "@/lib/use";
 import { unquote } from "./ResultCard";
 
@@ -42,7 +42,7 @@ export default function ConfirmCard({ r, onSaved }: { r: EntryResult; onSaved: (
         .map((t) => (removed[t.id] ? { id: t.id, remove: true } : { id: t.id, kind: kinds[t.id] })),
       agreed: Object.keys(pick).filter((k) => pick[k] === "맞아요"),
     };
-    try { onSaved(await confirmDiary(r.id, body)); } catch (e) { setErr((e as Error).message || "저장하지 못했어요. 다시 눌러 주세요."); }
+    try { onSaved(await confirmDiary(r.id, body)); } catch (e) { setErr(why(e, "저장하지 못했어요. 다시 눌러 주세요.")); }
     finally { setBusy(false); }
   };
 

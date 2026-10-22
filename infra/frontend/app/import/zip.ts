@@ -6,7 +6,7 @@ export type RawPost = { title: string; creation_timestamp: number | null; media:
 type Post = { title?: string; creation_timestamp?: number; media?: { title?: string; creation_timestamp?: number }[] };
 
 const NOT_FOUND = "이 파일에서 게시물(posts_1.json)을 찾지 못했어요. 인스타그램 '내 정보 다운로드'를 JSON 형식으로 받았는지, " +
-  "여러 ZIP 으로 나뉘었다면 다른 ZIP 을 골라 보세요.";
+  "여러 ZIP으로 나뉘었다면 다른 ZIP을 골라 보세요.";
 const POSTS = /(^|\/)posts_\d+\.json$/;
 
 async function bytes(f: Blob, from: number, to: number): Promise<DataView> {
@@ -44,7 +44,7 @@ async function unzipPosts(f: Blob): Promise<string[]> {
     const raw = f.slice(start, start + csize);
     if (method === 0) out.push(await raw.text());
     else if (method === 8) out.push(await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).text());
-    else throw new Error("이 ZIP 의 압축 방식은 읽지 못해요. 인스타그램에서 받은 파일 그대로 골라 주세요.");
+    else throw new Error("이 ZIP의 압축 방식은 읽지 못해요. 인스타그램에서 받은 파일 그대로 골라 주세요.");
   }
   return out;
 }

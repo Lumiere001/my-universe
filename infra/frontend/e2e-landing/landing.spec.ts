@@ -63,7 +63,7 @@ test("로그아웃: 소개 → 구글로 시작하기, 개인정보처리방침 
   await expect(page.getByRole("heading", { name: "시험 단계 안내" })).toBeVisible();
   await expect(page.getByRole("link", { name: "개인정보처리방침", exact: true })).toHaveAttribute("href", "/privacy");
   await expect(page.getByRole("link", { name: "이용약관" })).toHaveAttribute("href", "/terms");
-  await expect(page.getByRole("navigation", { name: "화면" })).toHaveCount(0); // 앱 메뉴는 로그인 뒤에만
+  await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toHaveCount(0); // 앱 메뉴는 로그인 뒤에만
   for (const img of await page.locator(".landing img").all()) { // 캡처 그림이 모두 실제로 뜸
     await img.scrollIntoViewIfNeeded();
     await expect.poll(() => img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth)).toBeGreaterThan(0);
@@ -96,7 +96,7 @@ test("로그인 상태: 소개 없이 바로 이야기하기 화면", async ({ p
   await signedIn(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "구글로 시작하기" })).toHaveCount(0);
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "별지기 말투" })).toBeVisible();
@@ -110,7 +110,7 @@ test("설치형 웹앱: manifest · 아이콘 · 서비스 워커 · 설치 가�
   const href = await page.locator('link[rel="manifest"]').getAttribute("href");
   expect(href).toBe("/manifest.webmanifest");
   const m = await (await request.get(href!)).json();
-  expect(m).toMatchObject({ name: "나의 우주", short_name: "나의 우주", display: "standalone", start_url: "/", scope: "/", theme_color: "#07102a" });
+  expect(m).toMatchObject({ name: "나의 우주", short_name: "나의 우주", display: "standalone", start_url: "/", scope: "/", theme_color: "#1e1e1e" });
   const icons = m.icons as { src: string; sizes: string; type: string; purpose: string }[];
   for (const i of icons.filter((x) => x.type === "image/png")) {
     const r = await request.get(i.src);
@@ -189,9 +189,9 @@ test("설치 안내: 안드로이드 '앱 설치' 버튼 · 아이폰 그림 안
         prompt: async () => { (window as unknown as { asked: boolean }).asked = true; }, userChoice: Promise.resolve({ outcome: "accepted" }) });
       dispatchEvent(e);
     });
-    await expect(guide.getByRole("button", { name: "앱 설치" })).toBeVisible({ timeout: 500 });
+    await expect(guide.getByRole("button", { name: "홈 화면에 설치" })).toBeVisible({ timeout: 500 });
   }).toPass({ timeout: 15_000 });
-  await guide.getByRole("button", { name: "앱 설치" }).click();
+  await guide.getByRole("button", { name: "홈 화면에 설치" }).click();
   expect(await page.evaluate(() => (window as unknown as { asked: boolean }).asked)).toBe(true);
   await expect(guide).toHaveCount(0); // 설치를 받아들이면 숨김
 

@@ -5,7 +5,7 @@ import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아�
 import PhotoInput from "@/components/PhotoInput";
 import ResultCard from "@/components/ResultCard";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt } from "@/components/WriteParts";
-import { getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
+import { FAIL, getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
 import { useOntology } from "@/lib/use";
 
 // 정리 중인 기록 id. 새로고침 · 끊김 뒤에도 '이어서 하기'를 보이려고 이 탭에만 둔다.
@@ -86,17 +86,19 @@ export default function WritePage() {
 
   return (
     <main>
+      <h1 className="sr">직접 쓰기</h1>
+      <p className="sub">글로 적으면 별지기가 생각 단위로 나눠 우주에 띄우고, 지난 기록과 이어 보여 드려요.</p>
       <KeeperPrompt />
       <form onSubmit={submit} className="stack" aria-label="일기 쓰기">
-        <h1 className="sr">오늘의 일기</h1>
         <EntryMeta title={title} day={day} weather={weather} weathers={onto?.weather ?? []} disabled={busy}
           onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} onWeather={setWeather} />
         <div>
-          <label htmlFor="diary" className="sr">마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요.</label>
+          <label htmlFor="diary" className="sr">마음껏 적어 주세요.</label>
           <textarea id="diary" className="editor" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
-            placeholder="오늘 있었던 일, 떠오른 생각, 다짐… 마음껏 적어 주세요. 별지기가 생각 단위로 나눠 우주에 띄워요." />
+            placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
         </div>
         <button type="submit" className="primary" disabled={busy || !text.trim()}>{busy ? "정리하는 중…" : "우주에 띄우기"}</button>
+        {!text.trim() && !busy && <p className="sub" style={{ margin: 0 }}>글을 한 줄이라도 적으면 띄울 수 있어요.</p>}
         <section className="stack tools-row" aria-label="다른 방법으로 쓰기">
           <h2 className="sub" style={{ margin: 0, fontWeight: 600 }}>말 · 파일 · 사진으로 쓰기</h2>
           <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
@@ -115,7 +117,7 @@ export default function WritePage() {
           {waiting && <p className="sub">화면이 끊긴 동안에도 서버에서 계속 정리하고 있어요. 끝나면 바로 보여 드릴게요.</p>}
           {err && (
             <div className="stack" role="alert">
-              <p className="err">{err.message}</p>
+              <p className="err">{err.message || FAIL}</p>
               {err.resumable && err.entry_id ? <button className="primary" onClick={resume} disabled={busy}>이어서 하기</button>
                 : err.code !== "duplicate" && <p className="sub">글은 화면에 그대로 있어요. 잠시 뒤 다시 띄워 주세요.</p>}
             </div>

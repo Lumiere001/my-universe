@@ -75,7 +75,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     await page.screenshot({ path: `${OUT}/${dev}-${name}.png`, fullPage: full, scale: "css",
       style: full ? ".top { position: static !important; } .top .nav { visibility: hidden; }" : undefined });
   };
-  const nav = (name: string) => page.getByRole("navigation", { name: "화면" }).getByRole("link", { name, exact: true }).click();
+  const nav = (name: string) => page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name, exact: true }).click();
   const tapAt = async (id: string) => {
     const { x, y } = await page.evaluate((i) => (window as unknown as { __uni: { xy: (i: string) => { x: number; y: number } } }).__uni.xy(i), id);
     if (touch) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y);
@@ -89,7 +89,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     await form.getByLabel("비밀번호").fill(PASSWORD);
     await shot("01-login");
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
-    await expect(page.getByRole("navigation", { name: "화면" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
   });
 
   await test.step("우주: 해 · 작은 별 · 행성 · 선 · 북극성", async () => {
@@ -114,7 +114,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
       await page.waitForTimeout(500);
       if (!(await card.isVisible())) {
         how = "기록 목록";
-        await page.getByText("기록 목록으로 고르기").click();
+        await page.getByText("목록에서 기록 고르기").click();
         await page.getByRole("button", { name: p.title, exact: true }).first().click();
       }
     }
@@ -150,7 +150,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     await items.first().click();
     await expect(page.getByTestId("result")).toBeVisible();
     await shot("06-history-entry");
-    await page.getByRole("button", { name: "← 목록으로" }).click();
+    await page.getByRole("button", { name: "← 목록으로 돌아가기" }).click();
   });
 
   let entryId = "";
@@ -207,7 +207,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     const rel = r.getByRole("group", { name: "이 연결이 맞나요" });
     if (await rel.count()) { await rel.first().getByRole("button", { name: "맞아요" }).click(); await expect(rel.first().getByText("고마워요")).toBeVisible(); pressed.push("맞아요"); }
     const vow = r.getByRole("group", { name: "다짐 상태" });
-    if (await vow.count()) { await vow.first().getByRole("button", { name: "지켰어요" }).click(); await expect(r.getByText("다짐 지켜짐").first()).toBeVisible(); pressed.push("지켰어요"); }
+    if (await vow.count()) { await vow.first().getByRole("button", { name: "지켰어요" }).click(); await expect(r.getByText("다짐 지켰어요").first()).toBeVisible(); pressed.push("지켰어요"); }
     await r.getByRole("textbox", { name: "불편한 점 한 줄" }).fill("생각을 조금 더 크게 묶어 주면 좋겠어요");
     await r.getByRole("button", { name: "보내기" }).click();
     await expect(r.getByText("불편한 점을 받았어요")).toBeVisible();
@@ -222,7 +222,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     if (pressed.includes("지켰어요")) {
       await nav("지난 기록");
       await page.locator("main button.card").first().click();
-      await expect(page.getByTestId("result").getByText("다짐 지켜짐").first()).toBeVisible();
+      await expect(page.getByTestId("result").getByText("다짐 지켰어요").first()).toBeVisible();
       await expect(page.getByRole("group", { name: "다짐 상태" })).toHaveCount(0);
       await shot("12-reloaded");
       log(dev, "다시 불러온 다짐", "지켜짐(버튼 없음)", thoughtIds.length);
@@ -273,7 +273,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
   });
 
   await test.step("되고 싶은 모습 4단계 저장", async () => {
-    await nav("되고 싶은 나");
+    await nav("되고 싶은 모습");
     await page.getByRole("button", { name: /새로 적기|적어 보기/ }).click();
     const want = touch ? "같이 나누면서도 내 몫은 먼저 끝내는 사람" : "도움을 청할 줄 알고, 맡은 일은 끝까지 하는 사람";
     const answers = ["혼자 다 하려다 미루는 사람", want, "남한테 기대면 안 된다는 생각", "도움이 필요하면 먼저 한 줄로 말하겠다"];
@@ -312,7 +312,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
   await test.step("로그아웃", async () => {
     await page.getByRole("button", { name: "로그아웃" }).click();
     await expect(page.getByRole("form", { name: "시험용 계정 로그인" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "화면" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toHaveCount(0);
     await page.reload();
     await expect(page.getByRole("form", { name: "시험용 계정 로그인" })).toBeVisible();
     await shot("20-logout");

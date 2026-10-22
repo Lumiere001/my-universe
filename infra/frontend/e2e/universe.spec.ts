@@ -70,12 +70,12 @@ test("우주 화면", async ({ page }, info) => {
     await expect(card).toContainText("그때 2026-04-05: “혼자 있는 시간이 가장 편하다”");
     await expect(card).toContainText("지금 2026-06-20: “혼자는 충전, 함께는 성장”");
     await shot("02-planet-quotes");
-    await card.getByRole("link", { name: "결과 카드 보기" }).click();
+    await card.getByRole("link", { name: "정리한 결과 보기" }).click();
     await expect(page).toHaveURL(/\/universe\/e11$/);
     const r = page.getByTestId("result");
     await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("혼자는 충전, 함께는 성장이다.");
     await shot("03-result-card");
-    await page.getByRole("link", { name: "← 우주로" }).click();
+    await page.getByRole("link", { name: "← 우주로 돌아가기" }).click();
     await expect(page.locator(".uni canvas")).toBeVisible();
     await page.waitForTimeout(500);
   });
@@ -84,8 +84,8 @@ test("우주 화면", async ({ page }, info) => {
     await tapAt("e16");
     const card = page.getByTestId("planet-card");
     await expect(card).toContainText("목표 충돌");
-    await expect(card).toContainText("끝난 충돌");
-    await card.getByRole("button", { name: "닫기" }).click();
+    await expect(card).toContainText("끝난 목표 충돌");
+    await card.getByRole("button", { name: "카드 닫기" }).click();
   });
 
   await test.step("북극성 → 닿은 순간 목록 + 그 행성 빛남", async () => {
@@ -114,10 +114,10 @@ test("우주 화면", async ({ page }, info) => {
     await expect(page.getByTestId("planet-card")).toContainText("5/30 선배와 대화");
   });
 
-  await test.step("우주 고치기: 해 이름 칸 아래 '사람 이름은 빼 주세요'(2026-10-14 결정)", async () => {
+  await test.step("우주 고치기: 해 이름 칸에 '사람 이름은 넣지 말아 주세요'(2026-10-14 결정)", async () => {
     const panel = page.getByTestId("edit-panel");
     await panel.locator("summary").click();
-    await expect(panel.getByLabel("새 해 이름")).toHaveAccessibleDescription(/사람 이름은 빼 주세요/);
+    await expect(panel.getByLabel("새 해 이름")).toHaveAccessibleDescription(/사람 이름은 넣지 말아 주세요/);
   });
 
   await test.step("사람 목록 화면에서도 얽힌 생각", async () => {

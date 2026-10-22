@@ -3,7 +3,7 @@
 // 위치 정보 같은 메타데이터도 빠짐) 한 장씩 POST /photo/read → 읽은 글을 쪽 순서대로 이어 쓰기 칸에 채움 → 사용자가 고친 뒤
 // '우주에 띄우기'(source=사진). 사진은 서버에 저장하지 않고, 읽고 나면 화면에서도 비운다.
 import { useEffect, useRef, useState } from "react";
-import { readPhoto } from "@/lib/api";
+import { ApiError, readPhoto, why } from "@/lib/api";
 
 const LIMIT = 4_000_000;   // 서버 한도 4.5MB(Vercel 요청 본문) 아래로
 const LONG_SIDE = 2400;    // 글자 읽기에 넉넉한 긴 변(px)
@@ -59,7 +59,7 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
     e.target.value = "";   // 같은 사진을 다시 골라도 다시 받게
     setErr(""); setNote("");
     const bad = files.filter((f) => !OK_TYPE.test(f.type) && !OK_NAME.test(f.name));
-    if (bad.length) setErr(`jpg · png · heic 사진만 읽을 수 있어요. (‘${bad[0].name}’ 은 빼 두었어요)`);
+    if (bad.length) setErr(`jpg · png · heic 사진만 읽을 수 있어요. (‘${bad[0].name}’은 빼 두었어요)`);
     const add = files.filter((f) => !bad.includes(f)).map((file) => {
       const url = URL.createObjectURL(file);
       urls.current.push(url);
@@ -81,7 +81,7 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
         texts.push((await readPhoto(await shrink(p.file))).text.trim());
       }
     } catch (e) {
-      setErr(e instanceof TypeError ? "서버에 닿지 못했어요. 잠시 뒤 다시 눌러 주세요." : (e as Error).message);
+      setErr(e instanceof ApiError && e.code === "network" ? "서버에 닿지 못했어요. 잠시 뒤 다시 눌러 주세요." : why(e, "사진의 글자를 읽지 못했어요. 잠시 뒤 다시 해 주세요."));
       return;
     } finally {
       setBusy("");
@@ -91,7 +91,7 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
     const empty = texts.map((t, i) => (t ? 0 : i + 1)).filter(Boolean);
     drop(() => false);   // 다 읽은 사진은 화면에서도 비운다
     onRead(text);
-    setNote(`${texts.length}쪽을 읽어 위 칸에 채웠어요. 잘못 읽은 글자를 고친 뒤 띄워 주세요.`
+    setNote(`${texts.length}쪽을 읽어 글 칸에 채웠어요. 잘못 읽은 글자를 고친 뒤 띄워 주세요.`
       + (empty.length ? ` (${empty.join(", ")}쪽에서는 글자를 찾지 못했어요)` : "")
       + (text.length > MAX_TEXT ? ` 글이 ${MAX_TEXT.toLocaleString()}자를 넘어요. 나눠서 띄워 주세요.` : ""));
   };
@@ -100,7 +100,7 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
   return (
     <div className="stack" aria-label="사진으로 쓰기" role="group">
       <div>
-        <label htmlFor="photo">손글씨 · 일기장 사진에서 글자 읽기 (여러 쪽이면 여러 장)</label>
+        <label htmlFor="photo">손글씨 일기장 사진에서 글자 읽기 (여러 쪽이면 여러 장 골라 주세요)</label>
         <input id="photo" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
           disabled={off} onChange={pick} />
       </div>

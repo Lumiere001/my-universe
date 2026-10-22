@@ -98,18 +98,47 @@ async function token(): Promise<string | null> {
 }
 
 /* ---------- 요청 ---------- */
-async function req(method: string, path: string, body?: unknown): Promise<Response> {
+// 화면에 보일 공통 실패 문장(docs/content/C-01 상황별 안내)
+export const NET = "서버에 닿지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.";
+export const FAIL = "문제가 생겨 멈췄어요. 잠시 뒤 다시 해 주세요.";
+const INPUT = "넣은 내용을 다시 확인해 주세요.";
+// 서버가 준 이유. 영문 칸 이름이 붙은 입력 거절(옛 서버)은 C-01 문장으로, 이유 없는 실패(internal · JSON 아님)는 "" → 화면이 고른 문장
+const reason = (code: string, msg?: string) =>
+  msg?.startsWith("입력을 확인해 주세요") ? INPUT : code === "internal" ? "" : msg ?? "";
+// 오류 → 화면 문장: 서버가 준 한국어 이유가 있으면 그것, 없으면 그 자리의 문장(영어 브라우저 오류 'Failed to fetch' 등은 보이지 않음)
+export const why = (e: unknown, fallback = FAIL) => {
+  const m = (e as { message?: string } | null)?.message ?? "";
+  return /[가-힣]/.test(m) ? m : fallback;
+};
+
+// 요청 하나. 닿지 못하면 ApiError(0, "network", NET), 거절되면 서버 코드 · 이유를 담은 ApiError
+async function send(path: string, init: RequestInit): Promise<Response> {
   const t = await token();
-  const res = await fetch(BASE + path, {
-    method,
-    headers: { ...(body !== undefined && { "Content-Type": "application/json" }), ...(t && { Authorization: `Bearer ${t}` }) },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(BASE + path, { ...init, headers: { ...init.headers, ...(t && { Authorization: `Bearer ${t}` }) } });
+  } catch {
+    throw new ApiError(0, "network", NET);
+  }
   if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status, j?.error?.message ?? "잠시 뒤 다시 해 주세요.");
+    const j = await res.json().catch(() => null);   // 배포 앞단이 막은 413 등은 JSON 이 아니다
+    const code = j?.error?.code ?? "http_" + res.status;
+    throw new ApiError(res.status, code, reason(code, j?.error?.message));
   }
   return res;
+}
+const req = (method: string, path: string, body?: unknown) => send(path, {
+  method, headers: body === undefined ? {} : { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body),
+});
+// SSE 를 여는 POST. 닿지 못하거나 거절되면 StreamError 로 던진다(net: 닿지 못했을 때 그 화면의 문장)
+async function postStream(path: string, body: unknown, net: string): Promise<Response> {
+  try {
+    return await send(path, { method: "POST", headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: body === undefined ? undefined : JSON.stringify(body) });
+  } catch (e) {
+    const x = e as ApiError;
+    throw { entry_id: null, code: x.code, message: x.code === "network" ? net : x.message, resumable: false } as StreamError;
+  }
 }
 const json = async <T,>(method: string, path: string, body?: unknown): Promise<T> => {
   const r = await req(method, path, body);
@@ -167,22 +196,7 @@ async function readStream(res: Response, h: StreamHandlers): Promise<EntryResult
 const changed = <T,>(x: T): T => { window.dispatchEvent(new Event("entries")); return x; };
 export async function writeDiary(input: DiaryInput, h: StreamHandlers): Promise<EntryResult> {
   if (MOCK) return changed(await (await mock()).writeDiary(input, h));
-  const t = await token();
-  let res: Response;
-  try {
-    res = await fetch(BASE + "/diary/stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(t && { Authorization: `Bearer ${t}` }) },
-      body: JSON.stringify(input),
-    });
-  } catch {
-    throw { entry_id: null, code: "network", message: "서버에 닿지 못했어요. 글은 화면에 그대로 있어요.", resumable: false } as StreamError;
-  }
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    throw { entry_id: null, code: j?.error?.code ?? "http", message: j?.error?.message ?? "잠시 뒤 다시 해 주세요.", resumable: false } as StreamError;
-  }
-  return changed(await readStream(res, h));
+  return changed(await readStream(await postStream("/diary/stream", input, "서버에 닿지 못했어요. 인터넷 연결을 확인해 주세요."), h));
 }
 export async function resumeDiary(id: string, h: StreamHandlers): Promise<EntryResult> {
   if (MOCK) return changed(await (await mock()).resumeDiary(id, h));
@@ -291,26 +305,7 @@ export type Conversation = {
 export type TalkProgress = { conversation_id: string; step: string; label: string };
 export type ConfirmInput = { summary?: string; fixes: { id: string; kind?: string; remove?: boolean }[]; agreed: string[] };
 
-// SSE 를 여는 POST. 닿지 못하거나 거절되면 StreamError 로 던진다.
-async function postStream(path: string, body?: unknown): Promise<Response> {
-  const t = await token();
-  let res: Response;
-  try {
-    res = await fetch(BASE + path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...(t && { Authorization: `Bearer ${t}` }) },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw { entry_id: null, code: "network", message: "서버에 닿지 못했어요. 말은 화면에 그대로 있어요.", resumable: true } as StreamError;
-  }
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    throw { entry_id: null, code: j?.error?.code ?? "http", message: j?.error?.message ?? "잠시 뒤 다시 해 주세요.", resumable: false } as StreamError;
-  }
-  return res;
-}
-
+const TALK_NET = "서버에 닿지 못했어요. 말은 화면에 그대로 있어요. 인터넷 연결을 확인하고 다시 보내 주세요.";
 export async function listTalks(): Promise<{ conversations: Conversation[] }> {
   return MOCK ? (await mock()).listTalks() : json("GET", "/talk");
 }
@@ -329,7 +324,7 @@ export async function deleteTalk(id: string): Promise<void> {
 export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void,
   via: "text" | "voice" = "text"): Promise<Conversation> {
   if (MOCK) return (await mock()).sayTalk(id, text, onProgress, via);
-  const res = await postStream(`/talk/${encodeURIComponent(id)}/turn/stream`, { text, via });
+  const res = await postStream(`/talk/${encodeURIComponent(id)}/turn/stream`, { text, via }, TALK_NET);
   const reader = res.body!.getReader(), dec = new TextDecoder();
   let buf = "";
   try {
@@ -353,7 +348,7 @@ export async function sayTalk(id: string, text: string, onProgress: (p: TalkProg
 // 대화 마치고 정리하기 → 확인을 기다리는 정리(status "confirm")
 export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryResult> {
   if (MOCK) return (await mock()).finishTalk(id, h);
-  return readStream(await postStream(`/talk/${encodeURIComponent(id)}/finish/stream`), h);
+  return readStream(await postStream(`/talk/${encodeURIComponent(id)}/finish/stream`, undefined, TALK_NET), h);
 }
 // 요약 확인: 고친 것을 넣고 우주에 저장 → 저장된 결과(한마디 포함)
 export async function confirmDiary(id: string, c: ConfirmInput): Promise<EntryResult> {
@@ -365,18 +360,12 @@ export async function confirmDiary(id: string, c: ConfirmInput): Promise<EntryRe
 let mockPage = 0;
 export async function readPhoto(photo: Blob): Promise<{ text: string }> {
   if (MOCK) { await new Promise((ok) => setTimeout(ok, 300)); return { text: `(가짜 글자 읽기 ${++mockPage}번째 사진)\n오늘은 도서관에서 시험 공부를 했다.` }; }
-  const t = await token();
-  const res = await fetch(BASE + "/photo/read", {
-    method: "POST",
-    headers: { "Content-Type": photo.type || "application/octet-stream", ...(t && { Authorization: `Bearer ${t}` }) },
-    body: photo,
-  });
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);   // 배포 앞단이 막은 413 은 JSON 이 아니다
-    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status,
-      j?.error?.message ?? (res.status === 413 ? "사진이 너무 커요(4.5MB까지). JPG로 바꾸거나 다시 찍어 올려 주세요." : "잠시 뒤 다시 해 주세요."));
+  try {
+    return (await send("/photo/read", { method: "POST", headers: { "Content-Type": photo.type || "application/octet-stream" }, body: photo })).json();
+  } catch (e) {   // 배포 앞단이 막은 413 은 이유가 없다
+    throw e instanceof ApiError && e.status === 413 && !e.message
+      ? new ApiError(413, e.code, "사진이 너무 커요(4.5MB까지). JPG로 바꾸거나 다시 찍어 올려 주세요.") : e;
   }
-  return res.json();
 }
 
 /* ---------- 인스타그램 가져오기 (WS17, docs/api-v8.md §9) ---------- */
@@ -482,16 +471,7 @@ export async function markPrefSeen(): Promise<{ ok: boolean }> {
 // 녹음 조각 하나(4MB 아래) → 받아쓴 글. 긴 녹음 나누기 · 이어 붙이기는 components/MicButton.tsx
 export async function transcribe(piece: Blob): Promise<{ text: string; seconds: number }> {
   if (MOCK) return (await mock()).transcribe(piece);
-  const t = await token();
-  const res = await fetch(BASE + "/voice/transcribe", {
-    method: "POST", body: piece,
-    headers: { "Content-Type": piece.type || "application/octet-stream", ...(t && { Authorization: `Bearer ${t}` }) },
-  });
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    throw new ApiError(res.status, j?.error?.code ?? "http_" + res.status, j?.error?.message ?? "받아쓰지 못했어요. 다시 해 주세요.");
-  }
-  return res.json();
+  return (await send("/voice/transcribe", { method: "POST", body: piece, headers: { "Content-Type": piece.type || "application/octet-stream" } })).json();
 }
 // 별지기 말 → mp3
 export async function speak(text: string): Promise<Blob> {
