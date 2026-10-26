@@ -96,7 +96,8 @@ test("로그인 상태: 소개 없이 바로 이야기하기 화면", async ({ p
   await signedIn(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true })).toHaveCount(1);   // 휴대폰은 서랍 안
+  await expect(page.getByRole("navigation", { name: /^(메뉴|바로 가기)$/ }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "구글로 시작하기" })).toHaveCount(0);
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "별지기 말투" })).toBeVisible();
