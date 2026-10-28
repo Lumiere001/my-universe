@@ -61,8 +61,9 @@ test("인스타 ZIP 가져오기(실제 화면 · 로컬 백엔드)", async ({ p
     await form.getByRole("button", { name: "시험용 계정으로 들어가기" }).click();
     await expect(page.getByRole("navigation", { name: "메뉴", exact: true })).toBeVisible();
     await page.getByRole("navigation", { name: "메뉴", exact: true }).getByRole("link", { name: "직접 쓰기", exact: true }).click();   // 첫 화면은 이야기하기
-    await page.getByRole("link", { name: "인스타그램 글 한꺼번에 가져오기" }).click();
-    await expect(page.getByRole("heading", { name: "인스타그램에서 가져오기" })).toBeVisible();
+    await page.getByRole("link", { name: "지난 일기 한꺼번에 가져오기" }).click();
+    await expect(page.getByRole("heading", { name: "지난 일기 가져오기" })).toBeVisible();
+    await page.getByRole("group", { name: "가져올 곳" }).getByRole("button", { name: "인스타그램 ZIP" }).click();   // 처음은 '글 파일 여러 개'(2026-10-28)
     await shot("01-pick");
   });
 
@@ -93,6 +94,7 @@ test("인스타 ZIP 가져오기(실제 화면 · 로컬 백엔드)", async ({ p
 
   await test.step("같은 ZIP 다시 → 2편 '이미 가져옴', 나머지 전부 → 멈추기 → 이어 하기", async () => {
     await page.reload();
+    await page.getByRole("group", { name: "가져올 곳" }).getByRole("button", { name: "인스타그램 ZIP" }).click();
     await page.getByLabel(/ZIP 파일/).setInputFiles(ZIP);
     await expect(page.getByText("이미 가져왔거나 너무 긴 글 2편은 건너뛰어요.")).toBeVisible();
     await expect(page.getByRole("list", { name: "글 목록(최근 것부터)" }).getByText("이미 가져옴")).toHaveCount(2);

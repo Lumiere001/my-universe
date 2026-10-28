@@ -372,8 +372,10 @@ export async function readPhoto(photo: Blob): Promise<{ text: string }> {
 export type ImportPost = { ref: string; written_at: string; title: string; text: string; day: string; day_basis: "확실" | "추정";
   day_check: boolean; parts: number; too_long: boolean; imported: boolean };
 export type ImportPreview = { posts: ImportPost[]; max_posts: number | null; est_seconds_per_post: number; est_usd_per_post: number };
-// 게시물(캡션 · 시각) → 가져올 글 목록(최근 것부터). 저장 · 외부 전송 없음
+// 게시물(캡션 · 시각) → 가져올 글 목록(최근 것부터). 저장 · 외부 전송 없음.
+// 빈 목록이면 어림값(편당 시간 · 비용) · 한도만 받는다(글 파일 가져오기, 2026-10-28). 가짜 데이터 모드는 서버와 같은 어림값만.
 export async function previewInstagram(posts: unknown[]): Promise<ImportPreview> {
+  if (MOCK) return { posts: [], max_posts: null, est_seconds_per_post: 60, est_usd_per_post: 0.15 };
   return json("POST", "/import/instagram/preview", { posts });
 }
 

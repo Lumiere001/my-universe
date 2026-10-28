@@ -245,3 +245,25 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
   .how { grid-template-columns: repeat(3, 1fr); }
   .how img { max-height: 420px; }
 }
+
+/* ---------- A: 가져오기 · 우주 풀스크린 ---------- */
+/* 고르기 둘 이상 중 하나(눌린 채로 남음) = 나뉜 단추. 가져올 곳 · 결과 카드 나눠 보기 */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.seg button { background: none; border: 1px solid transparent; color: var(--muted); }
+.seg button:hover { background: var(--hover); color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+@media (pointer: coarse) { .seg button { min-height: 44px; } }
+
+/* 지난 일기 가져오기(app/import): 단계 표시 + 지금 단계 한 칸만, 목록은 제 칸 안에서 넘김 */
+.imp h1 { margin-bottom: .2em; }
+.imp-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 14px; counter-reset: s; font-size: .88rem; }
+.imp-steps li { counter-increment: s; display: flex; align-items: center; gap: 6px; color: var(--faint); white-space: nowrap; }
+.imp-steps li::before { content: counter(s); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); font-size: .75rem; }
+.imp-steps li + li { padding-left: 24px; background: linear-gradient(var(--line), var(--line)) left center / 16px 1px no-repeat; }
+.imp-steps li.done { color: var(--muted); }
+.imp-steps li.done::before { background: var(--accent-soft); border-color: var(--accent); }
+.imp-steps li[aria-current="step"] { color: var(--text); font-weight: 600; }
+.imp-steps li[aria-current="step"]::before { background: var(--accent); border-color: var(--accent); color: #fff; }
+.imp-list { margin: 0; padding: 6px 8px 6px 30px; max-height: min(34dvh, 300px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.imp-list li { padding: 2px 0; }
+.imp-list li.skip { color: var(--faint); }
