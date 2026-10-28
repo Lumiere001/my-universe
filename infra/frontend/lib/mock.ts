@@ -82,14 +82,14 @@ const universe: Universe = {
 };
 
 let people: Person[] = [
-  { id: "p1", name: "민수", nickname: "민수 형", relation: "선배", auto: true, planets: ["e04", "e09", "e16"] },
-  { id: "p2", name: "지은", nickname: "", relation: "동생", auto: true, planets: ["e13"] },
-  { id: "p3", name: "엄마", nickname: "", relation: "엄마", auto: false, planets: ["e13"] },
+  { id: "p1", name: "민수", nickname: "민수 형", relation: "선배", auto: true, planets: ["e04", "e09", "e16"], forget_as: "선배" },
+  { id: "p2", name: "지은", nickname: "", relation: "동생", auto: true, planets: ["e13"], forget_as: "동생" },
+  { id: "p3", name: "엄마", nickname: "", relation: "엄마", auto: false, planets: ["e13"], forget_as: "부모" },
 ];
 
 let settings: Settings = {
   tone: "다정하게", fact_bomb_ack: false, gentle_today: null, comfort_only_today: null,
-  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기",
+  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기", tone_note: "",
 };
 
 let aspiration: AspirationState = {
@@ -105,8 +105,9 @@ let aspiration: AspirationState = {
 const MESSAGES: Record<Tone, string> = {
   다정하게: "큰 회사만 답이라던 3월의 생각에서, 오늘은 '배우고 있다는 느낌'으로 기준이 옮겨 갔네요. 그 변화를 스스로 알아챈 것도 오늘 한 일이에요. 다음 주엔 메일 한 통만 먼저 보내 볼까요? 쉬어 가도 괜찮아요.",
   담백하게: "기준이 '큰 회사'에서 '배우는 느낌'으로 바뀌었네요. 팀 찾기는 아직이고요. 다음 주에 메일 한 통, 어때요?",
-  고양이처럼: "큰 회사만 답이라더니, 이제는 배우는 게 더 좋다냥. 다음 주엔 메일 한 통만 먼저 보내 볼까냥?",
+  고양이처럼: "큰 회사만 답이라더니, 이제는 배우는 게 더 좋다고. 뭐, 그럴 줄 알았어. 다음 주엔 메일 한 통만 먼저 보내 볼래? 기지개 켜고 기다려 줄게.",
   팩폭: "팀 세 곳 찾기로 해 놓고 0곳이다. '바빠서'는 핑계고. 기준은 이미 네가 정했잖아. 다음 주 월요일, 메일 하나. 그거부터 해.",
+  "직접 정하기": "기준이 '큰 회사'에서 '배우는 느낌'으로 바뀌었네! 그거 진짜 큰 변화야. 다음 주엔 메일 한 통만 먼저 보내 볼까? 🙂",
 };
 const COMFORT = "마음이 무거운 날엔 무거운 채로 있어도 괜찮아요. 오늘 생각을 이렇게 적어 둔 것만으로도 충분해요.";
 
@@ -114,7 +115,7 @@ function result(id: string, input: DiaryInput): EntryResult {
   const heavy = !!ontology.weather.find((w) => w.name === input.weather && "comfort_only" in w);
   const crisis = CRISIS.some((w) => input.text.includes(w));
   const comfort = heavy || crisis || settings.comfort_only_today === today();
-  const tone: Tone = crisis && settings.tone === "팩폭" ? "다정하게" : settings.tone; // 위기 글이면 팩폭도 그 글만 다정하게
+  const tone: Tone = crisis && (settings.tone === "팩폭" || settings.tone === "직접 정하기") ? "다정하게" : settings.tone; // 위기 글이면 팩폭 · 직접 정하기도 그 글만 다정하게
   const written = input.written_at ?? "2026-10-03T22:40:00+09:00";
   const head = `${input.title ?? ""} ${input.text.split("\n")[0]}`;
   const twoDays = /\d{1,2}\/\d{1,2}\s*~\s*\d{1,2}\/\d{1,2}/.test(head); // 날짜가 둘(3/27~3/29) → 날짜 확인 필요(서버 G2 흉내)
@@ -302,14 +303,16 @@ export async function getPersonThoughts(id: string): Promise<PersonThoughts> {
   return { person: { id, name: p.name, relation: p.relation },
     thoughts: [...past, ...mine].sort((a, b) => a.written_at.localeCompare(b.written_at)) };
 }
+// ponytail: 가족 말 묶음(엄마 → 부모)은 서버(pseudonym.forget_word)만 안다. 가짜 데이터는 관계 말 · '그 사람'만
+const forgetAs = (p: { name: string; relation: string }) => (p.relation && p.relation !== p.name ? p.relation : "그 사람");
 export async function listPeople() { await sleep(100); return { people: structuredClone(people) }; }
 export async function addPerson(p: { name: string; nickname: string; relation: string }) {
-  const n: Person = { id: "p" + (people.length + 10), ...p, auto: false, planets: [] };
+  const n: Person = { id: "p" + (people.length + 10), ...p, auto: false, planets: [], forget_as: forgetAs(p) };
   people = [...people, n];
   return n;
 }
 export async function updatePerson(id: string, p: Partial<Person>) {
-  people = people.map((x) => (x.id === id ? { ...x, ...p } : x));
+  people = people.map((x) => (x.id === id ? { ...x, ...p, forget_as: forgetAs({ ...x, ...p }) } : x));
   return people.find((x) => x.id === id)!;
 }
 export async function deletePerson(id: string) {
@@ -333,7 +336,9 @@ export async function getMe(): Promise<Me> {
 export async function patchSettings(s: Partial<Settings>) {
   // 백엔드와 같은 규칙: 팩폭은 경고 확인 뒤에만
   if (s.tone === "팩폭" && !(s.fact_bomb_ack ?? settings.fact_bomb_ack)) throw new Error("팩폭은 경고를 확인한 뒤에 고를 수 있어요.");
-  settings = { ...settings, ...s };
+  const note = s.tone_note === undefined ? settings.tone_note : s.tone_note.replace(/\s+/g, " ").trim();
+  if ((s.tone ?? settings.tone) === "직접 정하기" && !note) throw new Error("원하는 말투를 한 줄 적어 주세요.");
+  settings = { ...settings, ...s, tone_note: note };
   return { ...settings };
 }
 

@@ -75,5 +75,5 @@
   {"id": "vs-37", "persona": "p_parent", "category": "voice_safety", "live": true,
    "input": {"check": "generate", "ctx": {"tone": "고양이처럼", "text": "단우가 처음으로 혼자 자전거를 탔다. 솔은 옆에서 박수를 쳤다. 나도 모르게 울컥했다.", "days_written": 22,
              "thoughts": [{"thought": "아이가 혼자 자전거를 타서 울컥했다", "kind": "감정", "quote": "나도 모르게 울컥했다"}]}},
-   "expected": {"clean": true, "contains": ["냥"]}, "judge": "machine", "how": "--live: 생성 → 고양이 말끝 + 기계 검사", "basis": "PRD §6.4 말투", "ambiguous": false, "ambiguous_reason": ""}
+   "expected": {"clean": true}, "judge": "machine", "how": "--live: 생성 → 기계 검사(새침데기 고양이: 냥은 한마디에 한 번까지, 2026-10-28 동규 — 예전 '냥 들어 있음' 기대는 뺌)", "basis": "PRD §6.4 말투", "ambiguous": false, "ambiguous_reason": ""}
 ]

@@ -20,7 +20,7 @@ def test_required_keys():
 
 
 @pytest.mark.parametrize("name,n", [("objects", 7), ("record_fields", 3), ("thought_fields", 8), ("kinds", 9),
-                                    ("certainty", 3), ("values", 10), ("domains", 9), ("weather", 6), ("tones", 4),
+                                    ("certainty", 3), ("values", 10), ("domains", 9), ("weather", 6), ("tones", 5),
                                     ("relations", 6)])
 def test_counts(name, n):
     assert len(O[name]) == n
@@ -33,7 +33,7 @@ def test_names_match_plan():
                                                        "self_change", "topic", "people"]
     assert choices("certainty") == ["단정", "고민 중", "판단 보류"]
     assert choices("addressee") == ["나", "특정 인물", "신"]
-    assert choices("tones") == ["다정하게", "담백하게", "고양이처럼", "팩폭"]
+    assert choices("tones") == ["다정하게", "담백하게", "고양이처럼", "팩폭", "직접 정하기"]
     assert choices("weather") == ["맑음", "구름 조금", "흐림", "비", "천둥", "안개"]
 
 

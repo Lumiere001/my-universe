@@ -188,8 +188,8 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 ## 4. 사람
 
-- `GET /people` → `{"people": [{"id", "name", "nickname", "relation", "auto": true, "planets": ["e1"]}]}`
-- `POST /people` `{"name", "nickname", "relation"}` · `PATCH /people/{id}` · `DELETE /people/{id}`(지우기 = 저장된 글에서 이름을 관계 말로 바꾸고 문장은 남김) → `{"ok": true, "replaced": 4}`
+- `GET /people` → `{"people": [{"id", "name", "nickname", "relation", "auto": true, "planets": ["e1"], "forget_as": "선배"}]}`. `forget_as`: 지우면 이름 자리에 들어갈 말(2026-10-28) — 이름 · 별명이 가족을 부르는 말이면 묶음 말(엄마 · 어머니 · 어머님 · 아빠 · 아버지 · 아버님 → 부모, 할머니 · 할아버지 → 조부모, 형 · 오빠 · 누나 · 언니 · 동생 · 남동생 · 여동생 → 형제자매), 아니면 관계 말, 관계가 비었거나 이름과 같으면 `그 사람`(`app/service/safety/pseudonym.forget_word`).
+- `POST /people` `{"name", "nickname", "relation"}` · `PATCH /people/{id}` · `DELETE /people/{id}`(지우기 = 저장된 글에서 이름을 `forget_as` 로 바꾸고 문장은 남김) → `{"ok": true, "replaced": 4}`
 - `POST /people/questions/{id}` `{"answer": "같은 사람|다른 사람|사람 이름|사람 이름 아님"}` → `{"ok": true}`. 다른 사람 · 사람 이름 → 사람 목록에 더함, 같은 사람(별명) → 겹치는 사람의 별명으로 더함.
 - `GET /people/{id}/thoughts` → `{"person": {"id", "name", "relation"}, "thoughts": [Thought + {"entry_id", "written_at", "title"}]}`: 그 사람과 얽힌 생각(끝난 기록만), 먼저 쓴 기록부터 · 같은 기록 안은 글 순서. 우주에서 사람을 고르면 나오는 목록. 없는(남의) 사람이면 404.
 - `nickname`은 쉼표로 여러 개. 새 이름은 글을 쓸 때 자동 등록(`auto: true`)된다(가명으로 보내기 위해). 손으로 고치면 `auto: false`.
@@ -221,11 +221,12 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 - `GET /me` → `{"user": {"id", "email"}, "settings": Settings, "onboarding": {"entries": 0, "aspiration": "none|asked|skip|stop|set", "weather_asked": false}}`
 - `PATCH /settings`(일부만) → Settings
-  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true, "keeper_name": "별지기", "theme": "밤하늘", "keeper_look": "글자"}`
+  - Settings = `{"tone": "다정하게|담백하게|고양이처럼|팩폭|직접 정하기", "tone_note": "", "fact_bomb_ack": false, "gentle_today": "YYYY-MM-DD|null", "comfort_only_today": "YYYY-MM-DD|null", "suggestions": "적게|보통|많이", "cross_links": "숨김|눌렀을 때|항상", "weather_ask": true, "keeper_name": "별지기", "theme": "밤하늘", "keeper_look": "글자"}`
   - `keeper_name`: 별지기 이름(1~12자, 화면 말풍선에만 씀 · LLM 에 보내지 않음).
   - `theme`: 우주 테마 `밤하늘|새벽|오로라|먹`(기본 밤하늘 = 예전 색). 우주 화면의 바탕 · 해 · 별 · 행성 색만 바뀌고 선 · 고리처럼 뜻이 있는 색은 그대로. 목록 밖 값은 422.
   - `keeper_look`: 별지기 모습 `글자|별|달|고양이|행성`(기본 글자 = 이름 첫 글자 동그라미, 나머지는 `public/keeper/*.svg`). 화면에만 씀 · LLM 에 보내지 않음. 목록 밖 값은 422.
   - 팩폭은 `fact_bomb_ack: true`(경고 확인) 뒤에만 고를 수 있다(아니면 409 `fact_bomb_ack_required`). 경고 확인을 거두면 말투는 다정하게로.
+  - `tone_note`(2026-10-28): 직접 정하기의 말투 바람. 200자 안(넘으면 422), 줄바꿈 · 탭은 띄어쓰기로, 제어 · 폭 없는 글자는 빼고 한 줄로 저장. 말투가 `직접 정하기`인데 바람이 비면 422 `tone_note_required`. 다른 말투로 바꿔도 남겨 둔다. 말 걸기 · 대화 프롬프트의 `[사용자가 원한 말투]` 절에만 들어가고(가명 처리), 고정 규칙 절(`[지킬 것]` · 상황 · 답 형식)이 늘 이긴다. 위기 글 · 무거운 날엔 쓰지 않고 다정하게(`app/service/voice.custom_note`). 바람을 쓴 말은 넘지 않는 선을 Solar 로 한 번 더 판정한다(팩폭과 같음).
 - `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
 - `GET /health` → `{"status": "ok", "version": "0.8.0"}`
 - `GET /stats` → 원문 없는 운영 숫자(본인 것만): `{"entries", "entries_done", "days_written", "suns_with_entries", "feedback": {값: 수}, "yes_ratio": 맞아요/(맞아요+아니에요) 또는 null, "month_cost_usd"}`.

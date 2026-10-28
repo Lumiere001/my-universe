@@ -8,7 +8,7 @@ const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").repla
 
 /* ---------- 타입 (docs/api-v8.md) ---------- */
 export type Weather = "맑음" | "구름 조금" | "흐림" | "비" | "천둥" | "안개";
-export type Tone = "다정하게" | "담백하게" | "고양이처럼" | "팩폭";
+export type Tone = "다정하게" | "담백하게" | "고양이처럼" | "팩폭" | "직접 정하기";
 export type Thought = {
   id: string; text: string; kind: string; grateful: boolean; certainty: string; value: string | null;
   quote: string; self_change: string | null; topic: string; star_id: string; sun_id: string; people: string[];
@@ -59,14 +59,15 @@ export type Universe = {
 };
 export type PersonThoughts = { person: { id: string; name: string; relation: string };
   thoughts: (Thought & { entry_id: string; written_at: string; title: string })[] };
-export type Person = { id: string; name: string; nickname: string; relation: string; auto: boolean; planets: string[] };
+export type Person = { id: string; name: string; nickname: string; relation: string; auto: boolean; planets: string[];
+  forget_as?: string };   // 지우면 이름 자리에 들어갈 말(서버 pseudonym.forget_word: 엄마 → 부모 …)
 export type Aspiration = {
   id: string; said: string; values: string[]; obstacle: string; if_then: string; said_at: string;
   reached: { entry_id: string; quote: string; at: string }[];
 };
 export type AspirationState = { current: Aspiration | null; history: Aspiration[]; ask: { should_ask: boolean; step: number } };
 export type Settings = {
-  tone: Tone; fact_bomb_ack: boolean; gentle_today: string | null; comfort_only_today: string | null;
+  tone: Tone; tone_note?: string; fact_bomb_ack: boolean; gentle_today: string | null; comfort_only_today: string | null;   // tone_note: 직접 정하기의 말투 바람(200자)
   suggestions: "적게" | "보통" | "많이"; cross_links: "숨김" | "눌렀을 때" | "항상"; weather_ask: boolean;
   keeper_name?: string;
   theme?: string; keeper_look?: string;   // 꾸미기(WS25): 우주 테마 · 별지기 모습(값 목록은 components/universeLook.ts)
