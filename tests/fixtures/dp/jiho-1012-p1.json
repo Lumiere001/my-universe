@@ -1,0 +1,46 @@
+{
+ "api": "2.0",
+ "content": {
+  "html": "<table id='0' style='font-size:14px'><thead></thead><tbody><tr><td></td><td>10월 12일 월요일</td></tr><tr><td></td><td>아침에 늦잠을 자서 축제 부스 회의에 늦었다.</td></tr><tr><td></td><td>민준이가 대신 자리를 맡아 줘서 미안하고 고마웠</td></tr><tr><td></td><td>다.</td></tr><tr><td></td><td>나는 왜 자꾸 중요한 날에 늦을까.</td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+  "markdown": "|  | 10월 12일 월요일 |\n| --- | --- |\n|  | 아침에 늦잠을 자서 축제 부스 회의에 늦었다. |\n|  | 민준이가 대신 자리를 맡아 줘서 미안하고 고마웠 |\n|  | 다. |\n|  | 나는 왜 자꾸 중요한 날에 늦을까. |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |",
+  "text": "|  | 10월 12일 월요일 |\n| --- | --- |\n|  | 아침에 늦잠을 자서 축제 부스 회의에 늦었다. |\n|  | 민준이가 대신 자리를 맡아 줘서 미안하고 고마웠 |\n|  | 다. |\n|  | 나는 왜 자꾸 중요한 날에 늦을까. |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |"
+ },
+ "elements": [
+  {
+   "id": 0,
+   "page": 1,
+   "category": "table",
+   "content": {
+    "html": "<table id='0' style='font-size:14px'><thead></thead><tbody><tr><td></td><td>10월 12일 월요일</td></tr><tr><td></td><td>아침에 늦잠을 자서 축제 부스 회의에 늦었다.</td></tr><tr><td></td><td>민준이가 대신 자리를 맡아 줘서 미안하고 고마웠</td></tr><tr><td></td><td>다.</td></tr><tr><td></td><td>나는 왜 자꾸 중요한 날에 늦을까.</td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+    "markdown": "|  | 10월 12일 월요일 |\n| --- | --- |\n|  | 아침에 늦잠을 자서 축제 부스 회의에 늦었다. |\n|  | 민준이가 대신 자리를 맡아 줘서 미안하고 고마웠 |\n|  | 다. |\n|  | 나는 왜 자꾸 중요한 날에 늦을까. |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n",
+    "text": "|  | 10월 12일 월요일 |\n| --- | --- |\n|  | 아침에 늦잠을 자서 축제 부스 회의에 늦었다. |\n|  | 민준이가 대신 자리를 맡아 줘서 미안하고 고마웠 |\n|  | 다. |\n|  | 나는 왜 자꾸 중요한 날에 늦을까. |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n|  |  |\n"
+   },
+   "coordinates": [
+    {
+     "x": 0.0008,
+     "y": 0.0004
+    },
+    {
+     "x": 0.9993,
+     "y": 0.0004
+    },
+    {
+     "x": 0.9993,
+     "y": 0.9994
+    },
+    {
+     "x": 0.0008,
+     "y": 0.9994
+    }
+   ]
+  }
+ ],
+ "model": "document-parse-260930",
+ "ocr": true,
+ "usage": {
+  "pages": 1,
+  "standard": [
+   1
+  ]
+ }
+}

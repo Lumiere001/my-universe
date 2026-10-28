@@ -16,6 +16,8 @@
 
 **사진(손글씨) 입력(WS18, 2026-10-14):** `POST /photo/read`(사진 한 장의 글자만 읽기, 저장 안 함)를 더했다(§1.1). 읽은 글은 지금의 쓰기 본문(`source: "사진"`)으로 보낸다. 새 경로만이고 마이그레이션 · 새 환경변수는 없다(기존 `UPSTAGE_API_KEY`).
 
+**사진 글자 읽기 모델 → Document Parse(2026-10-28 동규 결정):** `POST /photo/read` 의 모양 · 오류는 그대로이고 읽는 모델만 `document-parse` 로 바꿨다(§1.1). 되돌리기용 선택 환경변수 `PHOTO_READ_MODEL`(`document-parse` 기본 | `ocr`)을 더했다. 보내는 곳(Upstage Document Digitization)은 같다.
+
 **인스타 ZIP 가져오기(WS17, 2026-10-14):** `POST /import/instagram/preview`(저장 · 외부 전송 없는 미리 보기)를 더했다(§9). 가져온 글은 기존 `/diary/stream` 에 `source: "지난 글 묶음"` · `source_ref` · `written_at`(게시 시각)으로 한 편씩 보낸다. 새 경로만이고 마이그레이션은 없다.
 
 **말로 쓰기 · 읽어 주기(WS21, 2026-10-14):** `POST /voice/transcribe`(녹음 받아쓰기, 저장 안 함) · `POST /voice/speak`(별지기 말 mp3)를 더하고(§10), 대화 턴 본문에 `via`(text · voice)를 더했다. 새 경로 · 칸 추가만이고 마이그레이션은 없다(새 환경변수 `ELEVENLABS_*` · `VOICE_MAX_BYTES`).
@@ -75,11 +77,14 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 - 흐름(PRD §3 손글씨 사진, 결정 5): 화면이 사진을 긴 변 2400px JPEG 로 다시 그려 4MB 아래로 줄이고(위치 정보 등 메타데이터도 빠짐) 한 장씩 부른다 → 읽은 글을 쪽 순서대로 쓰기 칸에 채움 → 사용자가 고침 → `POST /diary/stream` 에 `"source": "사진"`. 그 뒤는 텍스트와 같은 길(위기 판정 · 가명 처리 → 기록 · 관측 · 한마디). 글이 다루는 날은 첫 줄 날짜(G2, 확실), 없으면 올린 날 · 추정.
 - 여러 쪽: 한 요청 = 한 장(Vercel 함수 요청 본문 4.5MB 한도). 화면이 순서대로 부르고 줄바꿈으로 이어 붙인다.
-- 저장하지 않는다: 사진은 이 요청의 메모리에서 Upstage Document Digitization(`model=ocr`)으로 보내고 버린다. DB · 디스크 · 실행 기록에 사진 · 읽은 글이 남지 않는다(기록에는 `upstage_ocr` · 쪽 수 · 추정 비용 · 시간만). Upstage 응답 `stored: false`(2026-10-14 확인).
+- 저장하지 않는다: 사진은 이 요청의 메모리에서 Upstage Document Digitization(기본 `model=document-parse`, 아래 '모델')으로 보내고 버린다. DB · 디스크 · 실행 기록에 사진 · 읽은 글이 남지 않는다(기록에는 `upstage_ocr` · 모델 이름 · 쪽 수 · 추정 비용 · 시간만). `ocr` 응답은 `stored: false`(2026-10-14 확인), `document-parse` 동기 응답에는 그 칸이 없다(2026-10-28 확인 — Upstage 쪽 보관은 개인정보처리방침대로 '확인 중').
 - 이름 가리기 예외(결정 7): 사진 속 이름은 가릴 수 없어 그대로 간다(개인정보처리방침 · 첫 사용 동의에 밝힘). 정리 · 대화 요청의 실명 0건 관문은 고친 글을 보낼 때 그대로 건다.
 - 입력 검사(신뢰 경계, 운영 상한 아님): jpg(`FF D8 FF`) · png · heic(`ftyp` heic · heix · hevc · hevx · heim · heis · mif1 · msf1)만. 크롬은 HEIC 를 못 그려서 화면이 4MB 아래 HEIC 는 그대로 보낸다(Upstage 가 읽음).
-- 오류: 403 `consent_required`(동의 전 — 사진이 밖으로 나가기 전에 막음) · 413 `photo_too_big`(4.5MB 넘음, 받는 중에 멈춤) · 415 `photo_type` · 422 `photo_empty` · 502 `ocr_busy`(Upstage 429 를 1.5초 쉬고 두 번 더 물어도 붐빔) · 502 `ocr_failed` · 503 `ocr_unconfigured`(`UPSTAGE_API_KEY` 없음).
-- 모델: `ocr`(쪽당 $0.0015). 2026-10-14 가상 손글씨 사진(`tests/fixtures/photos`, `tools/photo_samples.py measure`)으로 1회씩 재어 정함: ocr 글자 정확도 1.0 · 약 2초, document-parse 는 줄 공책을 표로 읽어 0.35 · 쪽당 $0.01. 글자 읽기 비용은 `runs` 표(이번 달 추정 비용)에 들어가지 않는다(기록이 생기기 전이라) — 실행 기록(`what: upstage_ocr`)의 `est_usd` 로 센다.
+- 오류: 403 `consent_required`(동의 전 — 사진이 밖으로 나가기 전에 막음) · 413 `photo_too_big`(4.5MB 넘음, 받는 중에 멈춤) · 415 `photo_type` · 422 `photo_empty` · 502 `ocr_busy`(Upstage 429 를 1.5초 쉬고 두 번 더 물어도 붐빔) · 502 `ocr_failed` · 503 `ocr_unconfigured`(`UPSTAGE_API_KEY` 없음, 또는 `PHOTO_READ_MODEL` 이 모르는 값).
+- 모델: `document-parse`(standard 모드, 쪽당 $0.01, 2026-10-28 동규 결정). 폼 `ocr=force` · `output_formats=["html", "text"]`. 되돌리려면 환경변수 `PHOTO_READ_MODEL=ocr`(쪽당 $0.0015, 코드 안 고침).
+  - 줄 공책은 Document Parse 가 **표 하나**로 읽는다(줄 = 행, 왼쪽 여백 = 빈 칸, 아래 빈 행). 응답 `content.text` 는 마크다운 표(`|  | 글 |`, `| --- |`)라 그대로 쓰면 글자 정확도가 떨어진다(10-14 의 0.35 가 이것 — 글자는 맞게 읽었음). 그래서 요소를 응답 순서대로 이어 붙이되 표는 `html` 을 행마다 한 줄(칸은 빈칸으로 이음, 빈 행 뺌)로 풀고, `footer`(쪽 번호 등)는 빼고, `header` 는 남긴다(공책 위 날짜 칸이 머리말로 읽혀도 G2 날짜를 잃지 않게) — `app/service/ocr.py` `dp_text`.
+  - 2026-10-28 가상 손글씨 4장(`tests/fixtures/photos`, `tools/photo_samples.py measure`, 모델 `document-parse-260930`) 글자 정확도(띄어쓰기 무시): ocr 1.0 · 1.0 · 0.981 · 1.0(약 1.5초), DP 그대로 0.346 · 0.203 · 0.481 · 0.346, DP 풀기 1.0 · 1.0 · 0.981 · 1.0(약 2.5초, 첫 장 3.6초). 0.981 은 두 모델 모두 '알람'을 '일람'으로 읽은 것. enhanced 모드(쪽당 $0.03)는 표 없이 문단으로 읽어 1.0 이지만 standard + 풀기와 같아 쓰지 않는다.
+  - 글자 읽기 비용은 `runs` 표(이번 달 추정 비용)에 들어가지 않는다(기록이 생기기 전이라) — 실행 기록(`what: upstage_ocr`)의 `est_usd` 로 센다.
 
 ### EntryResult
 

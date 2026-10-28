@@ -18,7 +18,8 @@ from app.core import config
 # 받는 칸. 값은 숫자 · 참거짓 · 짧은 글자(id · 코드 · 단계 이름)만. 마음 상태(상황 이름 · 위로 모드 · 위기 여부)는 받지 않는다.
 ALLOWED = {"step", "ms", "est_usd", "calls", "code", "user_id", "entry_id", "what", "ok", "status",
            "checks", "next_kind", "thoughts", "relations", "dropped", "past", "people_new",
-           "questions", "attempts", "pages", "skipped", "path", "method", "http", "count", "tokens_in", "tokens_out"}
+           "questions", "attempts", "pages", "skipped", "path", "method", "http", "count", "tokens_in", "tokens_out",
+           "model"}
 MAX_STR = 40
 _lock = threading.Lock()
 

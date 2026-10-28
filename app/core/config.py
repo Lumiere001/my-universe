@@ -35,6 +35,8 @@ STUDIO_BASE_URL = os.getenv("STUDIO_BASE_URL", "https://api.upstage.ai/v2")
 CHAT_MODEL = os.getenv("SOLAR_CHAT_MODEL", "solar-pro4")
 EMBED_PASSAGE_MODEL = os.getenv("EMBEDDING_MODEL", "solar-embedding-2-passage")
 EMBED_QUERY_MODEL = os.getenv("EMBEDDING_QUERY_MODEL", EMBED_PASSAGE_MODEL.replace("-passage", "-query"))
+# 사진 글자 읽기(WS18): document-parse(기본, 2026-10-28 동규 결정) | ocr(되돌리기 — 코드 안 고치고 env 로)
+PHOTO_READ_MODEL = os.getenv("PHOTO_READ_MODEL") or "document-parse"
 
 # Studio 기록 · 관측 Agent. 1판(RECORD_CONFIG_ID=1)은 Streamlit 데모가 계속 쓰고, 새 백엔드는 V8_* (기본 2판).
 RECORD_AGENT_ID = os.getenv("RECORD_AGENT_ID", "")
