@@ -21,8 +21,9 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
     await page.goto("/write");
     await page.getByLabel(/마음껏 적어/).fill("민수 형이랑 진로 이야기를 했다. 작은 팀도 알아보고 싶다.");
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
+    await result.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: "더 보기" }).click({ timeout: 15_000 });   // 관측 보고서는 '더 보기' 안
     const obs = result.getByRole("region", { name: "관측 보고서" });
-    await expect(obs).toBeVisible({ timeout: 15_000 });
+    await expect(obs).toBeVisible();
     await expect(obs).toContainText("이 글의 흐름");
     await expect(obs).toContainText("바뀜");
     await expect(obs.getByRole("listitem")).toHaveCount(3);
