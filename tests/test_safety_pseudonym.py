@@ -3,7 +3,7 @@ import re
 
 import pytest
 
-from app.service.safety import RealNameLeak, assert_no_real_names, find_new_names, forget, mask, unmask
+from app.service.safety import RealNameLeak, assert_no_real_names, find_new_names, forget, forget_word, mask, unmask
 from app.service.safety.pseudonym import POOL, _cls
 
 PEOPLE = [
@@ -189,6 +189,32 @@ def test_mask_hides_ask_candidates():
     ("오늘은 혼자 있었다.", PEOPLE[0], "오늘은 혼자 있었다."),
 ])
 def test_forget(text, person, want):
+    assert forget(text, person) == want
+
+
+@pytest.mark.parametrize("person,want", [
+    ({"name": "엄마", "relation": "엄마"}, "부모"),             # 이름 = 관계 말이면 그대로 남던 것(2026-10-28 동규)
+    ({"name": "어머님", "relation": "가족"}, "부모"),
+    ({"name": "아빠", "relation": ""}, "부모"),
+    ({"name": "할머니", "relation": "할머니"}, "조부모"),
+    ({"name": "누나", "relation": "누나"}, "형제자매"),
+    ({"name": "김영숙", "nicknames": ["엄마"], "relation": "엄마"}, "부모"),   # 별명이 가족 말이어도
+    ({"name": "지은", "relation": "동생"}, "동생"),             # 이름이 가족 말이 아니면 관계 말 그대로
+    ({"name": "하늘", "relation": "하늘"}, "그 사람"),
+    ({"name": "하늘", "relation": " "}, "그 사람"),
+])
+def test_forget_word(person, want):
+    assert forget_word(person) == want
+
+
+@pytest.mark.parametrize("text,person,want", [
+    ("엄마가 전화했다. 엄마를 보러 갔다. 엄마랑 밥을 먹었다.", {"name": "엄마", "relation": "엄마"},
+     "부모가 전화했다. 부모를 보러 갔다. 부모랑 밥을 먹었다."),
+    ("할머니는 웃으셨다. 할머니로 정했다.", {"name": "할머니", "relation": ""}, "조부모는 웃으셨다. 조부모로 정했다."),
+    ("언니와 걸었다. 언니가 울었다.", {"name": "언니", "relation": "언니"}, "형제자매와 걸었다. 형제자매가 울었다."),
+    ("하늘이랑 놀았다.", {"name": "하늘", "relation": ""}, "그 사람이랑 놀았다."),
+])
+def test_forget_kin_particles(text, person, want):
     assert forget(text, person) == want
 
 
