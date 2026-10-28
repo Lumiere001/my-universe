@@ -82,6 +82,11 @@ def test_stream_progress_then_result(client):
     assert u["links"] and u["links"][0]["to_planet"] == res2["id"]
     lst = client.get("/diary", headers=H1).json()["entries"]
     assert [e["id"] for e in lst] == [res2["id"], res["id"]] and lst[0]["star"] == "아침 걷기"
+    # 쪽 나누기(옛 화면 limit=20&before=) · 한 번에 모두(달력, 서버 상한 500)
+    page = client.get("/diary", params={"limit": 1, "before": lst[0]["written_at"]}, headers=H1).json()["entries"]
+    assert [e["id"] for e in page] == [res["id"]]
+    assert len(client.get("/diary?limit=500", headers=H1).json()["entries"]) == 2
+    assert client.get("/diary?limit=501", headers=H1).status_code == 422
     assert client.get(f"/diary/{res['id']}", headers=H1).json()["thoughts"] == res["thoughts"]
 
 

@@ -125,6 +125,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 ## 2. 읽기
 
 - `GET /diary?limit=20&before=<written_at>` → `{"entries": [{"id", "written_at", "title", "summary", "weather", "status", "sun", "star", "source", "day", "day_basis", "day_check", "confirmed", "record_type"}]}`
+  쓴 시각(`written_at`) 내림차순, `before` 를 주면 그보다 앞에 쓴 것만. `limit` 기본 20, 1~500(넘으면 422). 지난 기록 화면(달력 · 찾기 · 주제별)과 사이드바 작은 달력은 `limit=500` 으로 모두 읽고, 500편이 꽉 차면 마지막 `written_at` 을 `before` 로 이어 읽는다(2026-10-28). 달력은 글이 다루는 날(`day`, 평문 칸 · 비어 있던 옛 행은 쓴 날의 한국 날짜)로 놓으므로, 쓴 시각으로 나눈 쪽 대신 전체를 받는 쪽을 골랐다(`since`/`until` 날짜 거르기는 `day` 가 빈 옛 행 때문에 쓴 시각 거르기와 어긋나 두지 않음). 확인 전 대화 초안은 빠진다(§8).
 - `GET /diary/{id}` → EntryResult
 - `DELETE /diary/{id}` → 204 (생각 · 관계 · 한마디 · 그 기록 · 생각 · 관계를 가리킨 피드백 · 벡터까지. 남은 기록이 모두 끝난 상태면 이 기록에만 쓰인 작은 별 · 자동 등록 사람도 정리). 정리 중이면 409.
 - `GET /diary/prompt` → `{"kind": "first|weather|aspiration|free|none", "text": "질문", "vow": {"thought_id", "text", "overdue": false} | null}` 쓰기 화면 위 별지기 말풍선(LLM 없음). 기록이 없으면 정해 둔 첫 만남 질문(`first`, PRD §6.2), 있으면 마지막 글의 '다음에 써 볼 질문'(`next_question` 과 같은 종류 · 글). 날씨 질문은 건너뛰었으면(`weather_ask: false`) `none`, 되고 싶은 모습 질문은 넘어감 · 그만 묻기 · 이미 적었으면 `none`. `vow` 는 다짐 안부: 기한이 지났거나(`overdue: true`) 마지막 글에서 나온 열린 다짐 하나(화면은 지켰어요 · 그만둘래요 버튼, 누르면 닫혀 다시 안 나옴). 마지막 글이 위로 모드(무거운 날 · 위기)였거나 오늘은 위로만이면, 또는 지난 질문이 이미 다짐 안부면 `null`. `/diary/{id}` 보다 먼저 등록한다.

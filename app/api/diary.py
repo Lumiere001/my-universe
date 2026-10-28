@@ -179,9 +179,13 @@ def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     return _stream(_start(repo, user["id"], eid))
 
 
+LIST_MAX = 500   # 지난 기록 달력 · 찾기 · 주제별은 기록을 한 번에 모두 읽는다(더 있으면 before 로 이어 읽음, docs/api-v8.md §2)
+
+
 @router.get("/diary", summary="기록 목록")
-def list_entries(limit: int = Query(20, ge=1, le=100), before: datetime | None = None,
+def list_entries(limit: int = Query(20, ge=1, le=LIST_MAX), before: datetime | None = None,
                  user=Depends(get_user), repo=Depends(get_repo)):
+    """먼저 쓴 것이 뒤로(written_at 내림차순), before 보다 앞에 쓴 것만."""
     with repo.session(user["id"]) as s:
         return {"entries": views.entry_list(s, limit, before)}
 
