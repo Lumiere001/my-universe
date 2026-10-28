@@ -2,7 +2,7 @@
 WS18 시험용 가상 손글씨 일기장 사진(가상 인물 지호, 지어낸 글 — 실제 일기 아님)과 글자 읽기 측정.
 
     uv run --frozen --with pillow python tools/photo_samples.py make      # tests/fixtures/photos/ 에 jpg 3장 + heic 1장(macOS sips)
-    uv run --frozen python tools/photo_samples.py measure                 # 유료: ocr · document-parse 를 같은 사진으로 1회씩, 원장에 적음
+    uv run --frozen python tools/photo_samples.py measure [원장 ws]       # 유료(약 $0.046): ocr · document-parse 를 네 장에 1회씩, 원장에 한 줄
 
 사진은 나눔손글씨(펜) 글꼴 + 줄 공책 배경(살짝 기울기 · 그림자 · 종이 결)으로 그린다.
 """
@@ -98,34 +98,32 @@ def _accuracy(got, want):
     return round(1 - prev[-1] / max(len(b), 1), 3)
 
 
-def measure():
+def measure(ws="WS18"):
+    """유료: 네 장을 ocr · document-parse 로 한 번씩(쪽당 $0.0015 · $0.01). DP 는 한 응답으로 그대로(content.text) · 풀기(dp_text)를
+    함께 잰다. 원장에는 이번 실행을 한 줄로."""
     from app.service import ocr
-    rows = []
-    for model in ("ocr", "document-parse"):
-        for name in ("jiho-1010.jpg", HEIC):
-            if model == "document-parse" and name == HEIC:
-                continue   # 비교는 jpg 한 장으로 충분(HEIC 는 ocr 로만 확인)
-            t0 = time.time()
-            text = ocr.read_page((OUT / name).read_bytes(), model=model)
-            sec = round(time.time() - t0, 1)
-            usd = ocr.PRICE_PER_PAGE[model]
-            rows.append({"model": model, "file": name, "seconds": sec, "accuracy": _accuracy(text, PAGES["jiho-1010.jpg"]),
-                         "est_usd": usd, "first_line": text.splitlines()[0] if text else ""})
+    calls, usd = 0, 0.0
+    try:
+        for model in ("ocr", "document-parse"):
+            for name in (*PAGES, HEIC):
+                t0 = time.time()
+                j = ocr.ask((OUT / name).read_bytes(), model)
+                sec = round(time.time() - t0, 1)
+                calls, usd = calls + 1, usd + ocr.PRICE_PER_PAGE[model]
+                got = {"ocr": j.get("text")} if model == "ocr" else \
+                    {"document-parse 그대로": (j.get("content") or {}).get("text"), "document-parse 풀기": ocr.dp_text(j)}
+                for how, text in got.items():
+                    text = ocr.tidy(text)
+                    print(json.dumps({"how": how, "file": name, "seconds": sec, "est_usd": ocr.PRICE_PER_PAGE[model],
+                                      "accuracy": _accuracy(text, PAGES[name.replace(".heic", ".jpg")]),
+                                      "first_line": text.splitlines()[0] if text else ""}, ensure_ascii=False))
+    finally:
+        if calls:
             with LEDGER.open("a") as f:
-                f.write(json.dumps({"ts": datetime.now().astimezone().isoformat(timespec="seconds"), "ws": "WS18",
-                                    "what": f"글자 읽기 측정 {model} {name}(가상 손글씨)", "calls": 1, "est_usd": usd},
-                                   ensure_ascii=False) + "\n")
-            print(json.dumps(rows[-1], ensure_ascii=False))
-    for name in ("jiho-1012-p1.jpg", "jiho-1012-p2.jpg"):
-        t0 = time.time()
-        text = ocr.read_page((OUT / name).read_bytes())
-        print(json.dumps({"model": ocr.MODEL, "file": name, "seconds": round(time.time() - t0, 1),
-                          "accuracy": _accuracy(text, PAGES[name])}, ensure_ascii=False))
-        with LEDGER.open("a") as f:
-            f.write(json.dumps({"ts": datetime.now().astimezone().isoformat(timespec="seconds"), "ws": "WS18",
-                                "what": f"글자 읽기 {ocr.MODEL} {name}(가상 손글씨 두 쪽)", "calls": 1,
-                                "est_usd": ocr.PRICE_PER_PAGE[ocr.MODEL]}, ensure_ascii=False) + "\n")
+                f.write(json.dumps({"ts": datetime.now().astimezone().isoformat(timespec="seconds"), "ws": ws,
+                                    "what": f"글자 읽기 측정 ocr · document-parse(그대로 · 풀기) 가상 손글씨 {len(PAGES) + 1}장",
+                                    "calls": calls, "est_usd": round(usd, 4)}, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
-    {"make": make, "measure": measure}[sys.argv[1] if len(sys.argv) > 1 else "make"]()
+    {"make": make, "measure": measure}[sys.argv[1] if len(sys.argv) > 1 else "make"](*sys.argv[2:])

@@ -136,7 +136,7 @@ scripts/stop_docker.sh                 # 끄기(같은 project 이름이라 그�
 | `DAILY_ENTRY_LIMIT`, `MONTHLY_COST_CAP_USD`, `RESUME_LIMIT` | **넣지 않음** — 운영 상한은 나중에(넣지 않거나 `0`이면 상한 없음, §4) |
 | `ALLOWED_EMAILS` | **넣지 않음** — 구글 로그인한 누구나. 넣으면(쉼표 목록) 목록 밖은 403 `not_allowed` |
 | `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기(`DELETE /me`)에서만 쓰는 Supabase 서비스 키(**Legacy** `service_role`, `eyJ…` 모양. 코드는 새 형식 `sb_secret_…`도 받는다 — `apikey` 헤더로만 보냄, 2026-10-08 고침). 백엔드에만, 화면에는 넣지 않음 |
-| 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `API_DOCS`(없으면 `/docs` 꺼짐), `DEV_TEST_PASSWORD`(로컬 시험 전용) |
+| 넣지 않음 | `LOG_TO_FILE`(기본 `0` = 표준 출력), `CHROMA_HOST` · `CHROMA_PORT`, `RECORD_CONFIG_ID` · `OBSERVE_CONFIG_ID`(1차용), `API_DOCS`(없으면 `/docs` 꺼짐), `DEV_TEST_PASSWORD`(로컬 시험 전용), `PHOTO_READ_MODEL`(없으면 사진 글자 읽기 `document-parse`, `ocr` 로 되돌릴 때만 넣음) |
 
 화면(`my-universe`): `NEXT_PUBLIC_API_BASE`(백엔드 주소), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_DEV_LOGIN=0`, `NEXT_PUBLIC_MOCK=0` (`infra/frontend/.env.example`과 같음).
 

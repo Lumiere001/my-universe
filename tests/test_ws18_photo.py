@@ -2,6 +2,7 @@
 사진은 tools/photo_samples.py 로 만든 가상 손글씨(지호, 지어낸 글). Upstage 글자 읽기는 가짜 httpx, Studio · Solar 는 FakeUpstage."""
 import copy
 import json
+from html import escape
 from pathlib import Path
 
 import httpx
@@ -15,11 +16,21 @@ from tests.test_graph_flow import NAMES, U1, env  # noqa: F401  (env 픽스처)
 from tools.photo_samples import PAGES
 
 PHOTOS = Path(__file__).parent / "fixtures" / "photos"
+# 실제 document-parse 응답(가상 사진 jiho-1012-p1, 2026-10-28, 단어 목록만 뺌)
+DP = json.loads((Path(__file__).parent / "fixtures" / "dp" / "jiho-1012-p1.json").read_text())
 ONE, P1, P2, HEIC = (PHOTOS / n for n in ("jiho-1010.jpg", "jiho-1012-p1.jpg", "jiho-1012-p2.jpg", "jiho-1010.heic"))
 # 실제 Upstage ocr 이 가상 사진에서 읽은 것과 같은 모양(2026-10-14 측정: 두 쪽째 '알람'을 '일람'으로 읽음, 줄 끝 빈칸)
 READ = {ONE.read_bytes(): PAGES[ONE.name], HEIC.read_bytes(): PAGES[ONE.name], P1.read_bytes(): PAGES[P1.name],
         P2.read_bytes(): PAGES[P2.name].replace("알람", "일람").replace(".\n", ". \n"),
         b"\xff\xd8\xff-crisis": "요즘 너무 지쳐서 죽고 싶다는 생각이 든다."}   # 가짜 jpg(앞 바이트만)
+
+
+def dp_body(text):
+    """document-parse 가 줄 공책을 읽는 모양(DP 처럼): 표 하나, 줄 = 행, 왼쪽 여백 = 빈 칸, 아래 빈 행. text 는 마크다운 표."""
+    rows = "".join(f"<tr><td></td><td>{escape(x)}</td></tr>" for x in [*text.splitlines(), "", ""])
+    return {"api": "2.0", "usage": {"pages": 1},
+            "elements": [{"id": 0, "page": 1, "category": "table",
+                          "content": {"html": f"<table><tbody>{rows}</tbody></table>", "text": "|  | 마크다운 표 |"}}]}
 
 
 class FakeOcr:
@@ -31,7 +42,9 @@ class FakeOcr:
     def __call__(self, url, data, files, headers, timeout):
         self.calls.append({"url": url, "form": data, "bytes": files["document"][1], "mime": files["document"][2]})
         st = self.status.pop(0) if len(self.status) > 1 else self.status[0]
-        body = {"text": READ.get(files["document"][1], ""), "numBilledPages": 1, "stored": False} if st == 200 else {}
+        text = READ.get(files["document"][1], "")
+        body = {} if st != 200 else {"text": text, "numBilledPages": 1, "stored": False} if data["model"] == "ocr" \
+            else dp_body(text)
         return httpx.Response(st, json=body, request=httpx.Request("POST", url))
 
 
@@ -71,13 +84,45 @@ def test_read_photo_returns_text_and_keeps_nothing(client, env, fake_ocr):  # no
     assert r.status_code == 200 and r.json() == {"text": PAGES[ONE.name]}
     assert kept() == before                       # 기록 · 사진 · 읽은 글 어느 것도 저장 안 함
     (call,) = fake_ocr.calls
-    assert call["bytes"] == ONE.read_bytes() and call["form"] == {"model": "ocr"} and call["mime"] == "image/jpeg"
+    assert call["bytes"] == ONE.read_bytes() and call["mime"] == "image/jpeg"
+    assert call["form"] == {"model": "document-parse", "ocr": "force", "output_formats": '["html", "text"]'}   # 기본 = DP
     assert call["url"] == f"{config.UPSTAGE_BASE_URL}/document-digitization"
     logs = "".join(p.read_text() for p in env.logs.glob("*.log"))
-    assert '"what": "upstage_ocr"' in logs and '"est_usd": 0.0015' in logs
+    assert '"what": "upstage_ocr"' in logs and '"model": "document-parse"' in logs and '"est_usd": 0.01' in logs
     assert not [w for w in (*NAMES, "도서관", "복습") if w in logs] and "ffd8ff" not in logs
     # 아이폰 HEIC 는 그대로(Upstage 가 읽음)
     assert read(client, HEIC).json()["text"] == PAGES[ONE.name] and fake_ocr.calls[-1]["mime"] == "image/heic"
+
+
+def test_dp_table_becomes_lines():
+    """줄 공책은 DP 에서 표 하나로 옴(그대로 text 는 마크다운 표, 글자 정확도 0.2~0.5) → 행마다 한 줄로 풀어 ocr 과 같은 글자."""
+    assert DP["elements"][0]["category"] == "table" and DP["content"]["text"].startswith("|  | 10월 12일")
+    got = ocr.tidy(ocr.dp_text(DP))
+    assert got.splitlines()[0] == "10월 12일 월요일" and "|" not in got and "---" not in got
+    assert "".join(got.split()) == "".join(PAGES[P1.name].split())   # 쪽 끝에서 넘어간 줄('고마웠 / 다.')만 사진대로 나뉨
+    # 여러 요소: 응답 순서 그대로 · 머리말(공책 위 날짜 칸)은 남기고 꼬리말(쪽 번호)은 뺌 · 칸은 빈칸으로, 칸 안 <br> 은 줄바꿈 ·
+    # &amp; 는 글자로 · 빈 행 · 빈 요소는 빠짐 · 닫는 </td> 가 빠져도 칸을 잃지 않음
+    j = {"elements": [
+        {"category": "header", "content": {"text": "Date 10/12"}},
+        {"category": "paragraph", "content": {"text": "첫 문단"}},
+        {"category": "table", "content": {"html": "<table><thead><tr><th>시간</th><th>한 일</th></tr></thead><tbody>"
+                                                "<tr><td>9시</td><td>회의 &amp; 정리<br>점심</td></tr><tr><td></td><td></td></tr>"
+                                                "<tr><td>3시<td>산책</tr></tbody></table>"}},
+        {"category": "footer", "content": {"text": "- 12 -"}},
+        {"category": "paragraph", "content": {}}]}
+    assert ocr.tidy(ocr.dp_text(j)) == "Date 10/12\n첫 문단\n시간 한 일\n9시 회의 & 정리\n점심\n3시 산책"
+    assert ocr.dp_text({}) == ""
+
+
+def test_read_model_switch_by_env(client, env, fake_ocr, monkeypatch):  # noqa: F811
+    """PHOTO_READ_MODEL=ocr 로 코드 안 고치고 되돌림(쪽당 $0.0015). 모르는 값이면 사진을 보내지 않고 503 설정 없음."""
+    monkeypatch.setattr(config, "PHOTO_READ_MODEL", "ocr")
+    assert read(client, ONE).json() == {"text": PAGES[ONE.name]}
+    assert fake_ocr.calls[-1]["form"] == {"model": "ocr"}
+    assert '"est_usd": 0.0015' in "".join(p.read_text() for p in env.logs.glob("*.log"))
+    monkeypatch.setattr(config, "PHOTO_READ_MODEL", "document-parse-260930")
+    r = read(client, ONE)
+    assert (r.status_code, r.json()["error"]["code"]) == (503, "ocr_unconfigured") and len(fake_ocr.calls) == 1
 
 
 @pytest.mark.parametrize("data,status,code", [

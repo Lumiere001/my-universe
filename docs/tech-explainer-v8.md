@@ -151,7 +151,7 @@ flowchart LR
 | 벡터 저장 | ChromaDB(로컬 · Docker는 컨테이너, 배포는 Chroma Cloud) | 지난 생각 중 비슷한 것을 찾는 데 쓴다. 저장소를 하나로 줄였다 |
 | 기록 · 관측 | Upstage Studio Agent 2개 | 1차 때 만든 에이전트를 그대로 도구로 감싸 부른다 |
 | 대화 · 말 걸기 · 판정 · 임베딩 | Upstage Solar(`solar-pro4`, `solar-embedding-2`) | 이야기하기의 답, 한마디, 위기 2단 판정 · 팩폭 넘지 않는 선 판정, 생각을 벡터로 바꾸기 |
-| 사진 글자 읽기 | Upstage 글자 읽기(OCR) | 가상 손글씨로 재 보니 글자 읽기(OCR)는 정확도 1.0 · 한 쪽 $0.0015, 문서 읽기(Document Parse)는 줄 공책을 표로 읽어 0.35 · $0.01 |
+| 사진 글자 읽기 | Upstage 문서 읽기(Document Parse) | 2026-10-28 동규 결정. 줄 공책을 표로 읽어 그대로는 정확도 0.2~0.5지만 표를 줄마다 풀면 글자 읽기(OCR)와 같은 1.0(가상 손글씨 4장) · 한 쪽 $0.01(OCR $0.0015). OCR 로는 환경변수 하나(`PHOTO_READ_MODEL=ocr`)로 되돌림 |
 | 받아쓰기 · 읽어 주기 | ElevenLabs(Scribe · 목소리) | 한국어 받아쓰기 · 목소리 품질(2026-10-13 동규 결정) |
 | 자동 검사 | GitHub Actions | push · PR마다 테스트와 골든셋을 돌려 고친 것이 다른 곳을 망가뜨리지 않는지 본다 |
 

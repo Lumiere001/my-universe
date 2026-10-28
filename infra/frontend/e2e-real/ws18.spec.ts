@@ -1,4 +1,4 @@
-// WS18 사진(손글씨) 입력 — 실제 화면 + 로컬 백엔드 + 로컬 Supabase(시험용 계정 tester@) + 실제 Upstage 글자 읽기(유료, 쪽당 $0.0015).
+// WS18 사진(손글씨) 입력 — 실제 화면 + 로컬 백엔드 + 로컬 Supabase(시험용 계정 tester@) + 실제 Upstage 글자 읽기(유료, 쪽당 $0.01 — document-parse. PHOTO_READ_MODEL=ocr 면 $0.0015).
 // Studio · Solar 는 가짜(scripts/dev_fake_upstage.py)라 정리 결과는 가짜다. 글자 읽기만 진짜(httpx 로 바로 부름).
 //   FRONTEND_ORIGIN=http://localhost:3018 uv run --frozen python scripts/dev_fake_upstage.py 8018
 //   WS18_REAL_OCR=1 E2E_PORT=3018 NEXT_PUBLIC_API_BASE=http://localhost:8018 npx playwright test -c playwright.real.config.ts e2e-real/ws18.spec.ts
