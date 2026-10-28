@@ -472,6 +472,7 @@ main.set-page, main.ppl-page { max-width: 980px; }
 .set-k label, .set-k b { display: block; color: var(--text); font-size: .95rem; font-weight: 600; margin: 0; }
 .set-k .sub { margin: 2px 0 0; font-size: .84rem; }
 .set-v { min-width: 0; }
+.set-v .row > .seg { margin-left: 0; }   /* 고르기 + 버튼 한 줄(읽어 주기 목소리): 휴대폰에서도 왼쪽부터 */
 .seg { display: flex; flex-wrap: wrap; gap: 4px; }
 .looks .look img, .looks .look .letter { width: 22px; height: 22px; font-size: .7rem; }
 .set .look { gap: 6px; }

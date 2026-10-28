@@ -80,9 +80,10 @@ async def transcribe(request: Request, user=Depends(get_user), repo=Depends(get_
 def speak(body: SpeakIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         consent.check(s)
+        voice = diary.profile(s)[0]["tts_voice"]
     t0 = time.time()
     try:
-        audio, usd = stt.speak(body.text)
+        audio, usd = stt.speak(body.text, voice)
     except stt.SpeechError as e:
         _fail(repo, user["id"], "tts", t0, e)
     with repo.session(user["id"]) as s:
