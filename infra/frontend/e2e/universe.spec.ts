@@ -115,9 +115,29 @@ test("우주 화면", async ({ page }, info) => {
   });
 
   await test.step("우주 고치기: 해 이름 칸에 '사람 이름은 넣지 말아 주세요'(2026-10-14 결정)", async () => {
+    const tools = page.getByRole("group", { name: "우주 도구" });
+    await tools.getByRole("button", { name: "우주 고치기" }).click();
     const panel = page.getByTestId("edit-panel");
-    await panel.locator("summary").click();
     await expect(panel.getByLabel("새 해 이름")).toHaveAccessibleDescription(/사람 이름은 넣지 말아 주세요/);
+    await expect(page.getByTestId("planet-card")).toHaveCount(0);   // 칸은 한 자리: 도구 칸이 열리면 행성 카드는 닫힘
+    await shot("07-edit-panel");
+    await panel.getByRole("button", { name: "닫기" }).click();
+  });
+
+  await test.step("풀스크린: 우주가 작업 칸을 꽉 채우고 페이지는 내려가지 않음 · 떠 있는 단추로 기호 뜻 · 기록 목록", async () => {
+    const box = (await page.getByTestId("universe").boundingBox())!;
+    const vp = page.viewportSize()!;
+    expect(box.y).toBe(49);                                                               // 머리줄 바로 아래부터
+    expect(box.y + box.height).toBeCloseTo(vp.height - (dev === "mobile" ? 64 : 0), -1);   // 휴대폰은 아래 막대 위까지
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBeLessThanOrEqual(1);
+    const tools = page.getByRole("group", { name: "우주 도구" });
+    await expect(tools.getByRole("button", { name: "전체 화면" })).toBeVisible();          // 크로미엄은 Fullscreen API 가 있음
+    await tools.getByRole("button", { name: "기호 뜻" }).click();
+    await expect(page.getByRole("region", { name: "기호 뜻" })).toContainText("행성 하나가 일기 한 편이에요");
+    await tools.getByRole("button", { name: "기록 목록" }).click();
+    await page.getByRole("region", { name: "목록에서 기록 고르기" }).getByRole("button", { name: "6/20 혼자와 함께" }).click();
+    await expect(page.getByTestId("planet-card")).toContainText("6/20 혼자와 함께");
+    await expect(page.getByRole("region", { name: "목록에서 기록 고르기" })).toHaveCount(0);
   });
 
   await test.step("사람 목록 화면에서도 얽힌 생각", async () => {

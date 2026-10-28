@@ -541,3 +541,78 @@ main.set-page, main.ppl-page { max-width: 980px; }
 .asp-dots { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0; }
 .asp-dots li { width: 28px; height: 4px; border-radius: 2px; background: var(--line); }
 .asp-dots li[data-on] { background: var(--gold); }
+
+/* ---------- A: 가져오기 · 우주 풀스크린 ---------- */
+/* 고르기 둘 이상 중 하나(눌린 채로 남음) = 나뉜 단추. 가져올 곳 · 결과 카드 나눠 보기 */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.seg button { background: none; border: 1px solid transparent; color: var(--muted); }
+.seg button:hover { background: var(--hover); color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+@media (pointer: coarse) { .seg button { min-height: 44px; } }
+
+/* 지난 일기 가져오기(app/import): 단계 표시 + 지금 단계 한 칸만, 목록은 제 칸 안에서 넘김 */
+.imp h1 { margin-bottom: .2em; }
+.imp-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 14px; counter-reset: s; font-size: .88rem; }
+.imp-steps li { counter-increment: s; display: flex; align-items: center; gap: 6px; color: var(--faint); white-space: nowrap; }
+.imp-steps li::before { content: counter(s); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); font-size: .75rem; }
+.imp-steps li + li { padding-left: 24px; background: linear-gradient(var(--line), var(--line)) left center / 16px 1px no-repeat; }
+.imp-steps li.done { color: var(--muted); }
+.imp-steps li.done::before { background: var(--accent-soft); border-color: var(--accent); }
+.imp-steps li[aria-current="step"] { color: var(--text); font-weight: 600; }
+.imp-steps li[aria-current="step"]::before { background: var(--accent); border-color: var(--accent); color: #fff; }
+.imp-list { margin: 0; padding: 6px 8px 6px 30px; max-height: min(34dvh, 300px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.imp-list li { padding: 2px 0; }
+.imp-list li.skip { color: var(--faint); }
+
+/* 우주 풀스크린(app/universe): 작업 칸을 꽉 채움 = 머리줄(49px) · 휴대폰 아래 막대(64px)를 뺀 높이. Shell 의 높이를 바꾸면 이 둘도 */
+:root { --uni-top: 49px; --uni-tab: 64px; }
+main.uni-page { max-width: none; padding: 0; }
+.uni-page .uni { height: calc(100dvh - var(--uni-top)); min-height: 320px; border: 0; border-radius: 0; }
+@media (max-width: 899px) { .uni-page .uni { height: calc(100dvh - var(--uni-top) - var(--uni-tab) - env(safe-area-inset-bottom)); } }
+.uni .uni-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 80%; text-align: center; }
+/* 떠 있는 단추(기호 뜻 · 기록 목록 · 우주 고치기 · 전체 화면): PC 왼쪽 아래 한 줄(오른쪽 칸에 가리지 않게),
+   휴대폰 오른쪽 위 세로(아래에서 올라오는 칸에 가리지 않게, 글자는 읽어 주기만) */
+.uni .fabs { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.uni .fab { background: rgba(38, 38, 38, .9); border-color: var(--line); padding: 6px 12px; }
+.uni .fab svg { flex: none; color: var(--muted); }
+.uni .fab[aria-pressed="true"] svg { color: var(--accent); }
+.uni:has(> .pcard) .tools, .uni:has(> .pcard) .fabs { right: 370px; }   /* PC 오른쪽 칸이 열려 있으면 그 옆까지만 */
+.uni .pcard h2 { font-size: 1.05rem; }
+.uni .legend { grid-template-columns: 1fr; }
+@media (max-width: 899px) {
+  .uni .fabs { left: auto; bottom: auto; top: 10px; right: 10px; flex-direction: column; flex-wrap: nowrap; }
+  .uni .fab { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .uni .fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .uni .tools, .uni:has(> .pcard) .tools { right: 64px; }
+  .uni:has(> .pcard) .fabs { right: 10px; }
+  .uni .pcard { max-height: 55%; box-shadow: 0 -8px 32px rgba(0, 0, 0, .45); }
+}
+
+/* 결과 카드(components/ResultCard.tsx): 한 화면에 가깝게 — 위에 한마디 · 글 정보, 있을 때만 작은 알림, 나눠 보기 한 칸 */
+.rc > * + * { margin-top: 12px; }
+.rc .rc-voice .bubble { padding: 8px 12px; }
+.rc-fb { margin-top: 6px; gap: 4px 12px; }
+.rc-fb .row { gap: 4px; }
+.rc-head { border-top: 1px solid var(--line); padding-top: 12px; }
+.rc-head h2 { font-size: 1.45rem; margin: 0 0 2px; }
+.rc-props { margin: 0 0 6px; }
+/* 작은 알림 = 콜아웃(넓어진 우주는 UniverseGrew 의 .card) */
+.rc-call, .note.rc > .card { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; margin: 12px 0 0; }
+.rc-call.g { border-left-color: var(--gold); }
+.rc-call .who, .note.rc > .card .who { width: 24px; height: 24px; font-size: .7rem; }
+.note.rc > .card .bubble { background: none; border: 0; padding: 0; }
+.rc-tabs { margin-top: 16px; }
+.rc-pane { padding: 10px 2px 0; }
+.rc-pane[hidden] { display: none; }
+.rc-pane h2 { font-size: 1rem; margin: 0; }
+.rc-item + .rc-item { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.rc-meta { color: var(--faint); background: none; border-color: var(--line); font-size: .75rem; margin-left: 4px; vertical-align: 1px; }
+.rc .quote { margin: 4px 0; }
+.quote.g { border-color: var(--gold); }
+/* 긴 인용: 두 줄까지만, 누르면 펼침 */
+button.quote { display: block; width: 100%; text-align: left; font: inherit; line-height: 1.6; background: none; border: 0; border-left: 2px solid var(--accent); border-radius: 0;
+  padding: 2px 0 2px 12px; min-height: 0; color: #cfcfcf; }
+button.quote:hover { background: var(--hover); }
+button.quote.clamp[aria-expanded="false"] { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rc-list { margin: 0; padding: 4px 8px 4px 24px; max-height: min(36dvh, 280px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.rc-list li { padding: 2px 0; }

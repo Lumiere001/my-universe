@@ -56,19 +56,31 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(r.getByRole("region", { name: "별지기 한마디" })).toContainText("다정하게");
     await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("아쉬웠던 점"); // 온톨로지 보이는 이름
     await expect(r.getByText("스스로 쓴 변화: 예전에는 큰 회사")).toBeVisible();
-    await expect(r.getByText("지난 생각 3개와 이어졌어요")).toBeVisible();
+    const parts = r.getByRole("group", { name: "나눠 보기" });   // 생각 · 이어진 생각 · 같은 주제 · 더 보기 중 하나만(한 화면에 가깝게)
+    await expect(parts.getByRole("button", { name: "이어진 생각 3" })).toBeVisible();
     await expect(r.getByText("북극성에 닿은 순간")).toBeVisible();
+    await expect(r.getByTestId("entry-day")).toContainText("삶의 성취 › 진로");                 // 이 기록이 도는 해 › 작은 별
     await shot("03-result", true);
+    await parts.getByRole("button", { name: /^같은 주제 \d+$/ }).click();                     // 같은 작은 별의 다른 기록(AI 연결 아님)
+    const same = r.getByRole("region", { name: "같은 주제의 다른 기록" });
+    await expect(same).toContainText("‘진로’의 다른 기록");
+    await expect(same).toContainText("AI가 이어 준 연결은 아니에요");
+    await expect(same.getByRole("link").first()).toHaveAttribute("href", /^\/history\?id=e\d+$/);
+    await expect(r.getByRole("region", { name: "생각 목록" })).toBeHidden();
   });
 
   await test.step("피드백 누르기", async () => {
     await page.getByRole("group", { name: "한마디 피드백" }).getByRole("button", { name: "좋아요" }).click();
     await expect(page.getByRole("group", { name: "한마디 피드백" }).getByText("고마워요")).toBeVisible();
+    const parts = page.getByRole("group", { name: "나눠 보기" });
+    await parts.getByRole("button", { name: /^이어진 생각/ }).click();
     await page.getByRole("group", { name: "이 연결이 맞나요" }).first().getByRole("button", { name: "맞아요" }).click();
+    await parts.getByRole("button", { name: /^생각/ }).click();
     await page.getByRole("group", { name: "다짐 상태" }).getByRole("button", { name: "지켰어요" }).click();
     await expect(page.getByText("다짐 지켰어요")).toBeVisible();
     await page.getByRole("button", { name: "같은 사람" }).click();
     await expect(page.getByText("“같은 사람”으로 기억할게요.")).toBeVisible();
+    await parts.getByRole("button", { name: "더 보기" }).click();
     await page.getByRole("textbox", { name: "불편한 점 한 줄" }).fill("생각을 너무 잘게 나눈 것 같아요");
     await page.getByRole("button", { name: "보내기" }).click();
     await expect(page.getByText("불편한 점을 받았어요")).toBeVisible();
