@@ -59,6 +59,7 @@ test("동의 전에는 쓰기 화면으로 못 감", async ({ page }, info) => {
 
   await test.step("설정 → 동의 내용(선택 동의 바꾸기) · 이용약관 · 개인정보처리방침", async () => {
     await menuNav(page, "설정");
+    await page.getByRole("group", { name: "설정 묶음" }).getByRole("button", { name: "개인정보와 계정" }).click();
     await page.getByRole("link", { name: "동의 내용 보기 · 바꾸기" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "동의 내용" })).toBeVisible();
     await page.getByLabel(/운영자가 내가 남긴 피드백/).check();

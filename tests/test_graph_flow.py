@@ -336,3 +336,14 @@ def test_quality_tool_measures_service_path(env):
     from app.service.rules import filter_relations
     assert tools.run_observe_agent is observe and graph.filter_relations is filter_relations   # 엿보기를 풀었음
     assert not [n for n in NAMES if n in "\n".join(env.fake.sent)]
+
+
+def test_custom_tone_note_is_masked(env):
+    """직접 정하기 말투 바람에 사람 이름이 있어도 외부로는 가명만 나간다(2026-10-28, tools.VOICE_TEXT)."""
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")   # 민준 등록
+    with env.repo.session(U1) as s:
+        diary.save_profile(s, settings={"tone": "직접 정하기", "tone_note": "민준이처럼 다정한 반말로"})
+    env.fake.sent.clear()
+    write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
+    sent = "\n".join(env.fake.sent)
+    assert "[사용자가 원한 말투]" in sent and "다정한 반말로" in sent and not [n for n in NAMES if n in sent]

@@ -9,6 +9,7 @@ from collections import Counter
 from app.core.ontology import load
 from app.repository import diary, drafts
 from app.service.rules import universe_view
+from app.service.safety import forget_word
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
              "commitment": "free", "open_question": "free", "": "none", None: "none"}
@@ -260,7 +261,7 @@ def people_list(s):
     for tp in s.rows("thought_people"):
         planets.setdefault(tp["person_id"], set()).add(entry_of.get(tp["thought_id"]))
     return [{"id": p["id"], "name": p["name"], "nickname": ", ".join(p.get("nicknames") or []), "relation": p["relation"],
-             "auto": p["auto"], "planets": sorted(planets.get(p["id"], []))} for p in diary.people(s)]
+             "auto": p["auto"], "planets": sorted(planets.get(p["id"], [])), "forget_as": forget_word(p)} for p in diary.people(s)]
 
 
 def person_thoughts(s, pid):
@@ -283,7 +284,7 @@ def person_thoughts(s, pid):
 
 def person_api(p):
     return {"id": p["id"], "name": p["name"], "nickname": ", ".join(p.get("nicknames") or []), "relation": p["relation"],
-            "auto": p["auto"], "planets": []}
+            "auto": p["auto"], "planets": [], "forget_as": forget_word(p)}   # forget_as: 지우면 이름 자리에 들어갈 말
 
 
 def aspiration_api(a):

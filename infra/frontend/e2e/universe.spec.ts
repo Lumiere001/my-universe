@@ -122,7 +122,7 @@ test("우주 화면", async ({ page }, info) => {
 
   await test.step("사람 목록 화면에서도 얽힌 생각", async () => {
     await page.goto("/people");
-    await page.getByRole("button", { name: "민수과(와) 얽힌 생각" }).click();
+    await page.getByRole("button", { name: /^민수/ }).click();   // 목록에서 고르면 얽힌 생각이 바로 보인다(2026-10-28)
     await expect(page.getByTestId("person-thoughts").locator("li")).toHaveCount(3);
     await shot("06-people-thoughts");
   });

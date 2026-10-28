@@ -246,9 +246,22 @@ def assert_no_real_names(payload, people):
 # 사람 지우기
 ##################################################
 
+# 이름 자체가 가족을 부르는 말이면(엄마를 '엄마'로 바꾸면 그대로 남는다) 묶음 말로 바꾼다(2026-10-28 동규).
+KIN = {"부모": ("엄마", "어머니", "어머님", "아빠", "아버지", "아버님"), "조부모": ("할머니", "할아버지"),
+       "형제자매": ("형", "오빠", "누나", "언니", "동생", "남동생", "여동생")}
+
+
+def forget_word(person):
+    """지울 때 이름 · 별명 자리에 넣을 말: 가족을 부르는 이름이면 묶음 말, 아니면 관계 말, 관계가 비었거나 이름과 같으면 '그 사람'."""
+    terms = set(_terms(person))
+    rel = (person.get("relation") or "").strip()
+    kin = next((g for g, ws in KIN.items() if terms & set(ws)), None)
+    return kin or (rel if rel and rel not in terms else "그 사람")
+
+
 def forget(text, person):
-    """그 사람의 이름 · 별명을 관계 말("친구")로 바꾸고 문장은 남긴다. 호칭은 떼고 조사는 관계 말 받침에 맞춘다."""
-    rel = person.get("relation") or "그 사람"
+    """그 사람의 이름 · 별명을 forget_word 로 바꾸고 문장은 남긴다. 호칭은 떼고 조사는 바꾼 말의 받침에 맞춘다."""
+    rel = forget_word(person)
     c = _cls(rel)
 
     def put(m):

@@ -48,25 +48,25 @@ HEAVY = re.compile(voice._SAD + "|" + voice._HEAVY_LOSS + r"|속상|우울|비�
 SAFE = {
     "다정하게": ["그랬군요. 그때 마음이 어땠는지 조금 더 들려줄래요?", "이야기해 줘서 고마워요. 그다음엔 어떻게 됐어요?"],
     "담백하게": ["그랬군요. 조금 더 이야기해 줄래요?", "알겠어요. 그다음엔 어떻게 됐어요?"],
-    "고양이처럼": ["그랬구냥. 조금 더 들려줄래냥?", "알겠다냥. 그다음엔 어떻게 됐냥?"],
+    "고양이처럼": ["흠, 그랬구나. 조금 더 들려줘도 돼. 궁금한 건 아니고.", "그래서, 그다음엔 어떻게 됐어? 꼬리가 좀 궁금해하네."],
     "팩폭": ["알겠어. 그래서 그다음엔 어떻게 됐어?", "그래. 조금 더 말해 봐."],
 }
 HEAVY_SAFE = {
     "다정하게": ["많이 무거운 하루였겠어요. 천천히 말해도 괜찮아요.", "그 마음, 그대로 들을게요. 하고 싶은 만큼만 이야기해 줘요."],
     "담백하게": ["무거운 하루였겠어요. 천천히 말해도 돼요.", "들을게요. 하고 싶은 만큼만 말해 줘요."],
-    "고양이처럼": ["많이 무거웠겠다냥. 천천히 말해도 괜찮다냥.", "옆에서 들을게냥. 하고 싶은 만큼만 말해 줘냥."],
+    "고양이처럼": ["많이 무거웠겠다. 천천히 말해도 돼. 옆에 있을게.", "들을게. 하고 싶은 만큼만 말해 줘."],
     "팩폭": ["오늘은 따질 날 아니야. 천천히 말해.", "들을게. 하고 싶은 만큼만 말해."],
 }
 NOT_FOUND = {
     "다정하게": "찾아봤는데, 그 이야기는 지난 기록에서 못 찾았어요. 기억나는 만큼 들려주면 오늘 기록에 담아 둘게요.",
     "담백하게": "지난 기록에서는 그 이야기를 못 찾았어요. 기억나는 만큼 말해 주면 오늘 기록에 담을게요.",
-    "고양이처럼": "찾아봤는데 그 이야기는 지난 기록에 없었다냥. 기억나는 만큼 들려주면 오늘 기록에 담아 둘게냥.",
+    "고양이처럼": "찾아봤는데 그 이야기는 지난 기록에 없었어. 기억나는 만큼 들려주면 오늘 기록에 담아 둘게.",
     "팩폭": "지난 기록엔 그 얘기 없어. 기억나는 만큼 말해. 오늘 기록에 담아 둘게.",
 }
 WRAP = {
     "다정하게": "여기까지 정리해 둘까요? '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요.",
     "담백하게": "여기까지 정리해 둘까요? '대화 마치고 정리하기'를 누르면 일기로 정리해요.",
-    "고양이처럼": "여기까지 정리해 둘까냥? '대화 마치고 정리하기'를 누르면 일기로 정리해 준다냥.",
+    "고양이처럼": "여기까지 정리해 둘까? '대화 마치고 정리하기'를 누르면 일기로 정리해 줄게. 하품 나오기 전에.",
     "팩폭": "여기까지 정리하자. '대화 마치고 정리하기' 눌러.",
 }
 
@@ -188,14 +188,13 @@ def _rules(tone, gentle):
 
 
 def messages(ctx, sit, avoid=()):
-    """ctx(가명 처리됨): tone · gentle · turns [{"who": "너"|"사용자", "text"}] · summary · past [{"day", "thought", "quote"}] · text.
-    → Solar 메시지. 답 형식은 {"reply", "found"}."""
+    """ctx(가명 처리됨): tone · tone_note · gentle · turns [{"who": "너"|"사용자", "text"}] · summary · past [{"day", "thought", "quote"}] · text.
+    → Solar 메시지. 답 형식은 {"reply", "found"}. 말투 줄 · 사용자 말투 바람은 한마디와 같은 것(voice.tone_lines)."""
     o = load()
-    tone = next((t for t in o["tones"] if t["name"] == ctx.get("tone")), o["tones"][0])
     gentle = bool(ctx.get("gentle"))
+    tone, tone_part = voice.tone_lines(ctx, sit, gentle)
     sys = ["너는 일기장 '나의 우주'의 별지기다. 사용자와 오늘 하루를 이야기한다. 대화가 끝나면 사용자의 말로 일기를 정리하니, "
-           "사용자가 자기 이야기를 편하게 더 꺼내도록 돕는다. turns 의 who 가 '너'면 네가 한 말, '사용자'면 사용자의 말이다.",
-           f"[말투] {tone['name']}: {tone['description']}" + ("" if gentle else f"\n예: {tone['example']}")]
+           "사용자가 자기 이야기를 편하게 더 꺼내도록 돕는다. turns 의 who 가 '너'면 네가 한 말, '사용자'면 사용자의 말이다.", *tone_part]
     if tone["name"] == "팩폭" and not gentle:
         sys.append(f"[팩폭 세기] {o['fact_bomb']['strength']}")
     sys.append("[지킬 것]\n" + voice._lines(_rules(tone["name"], gentle)))
@@ -303,7 +302,7 @@ def respond(ctx):
             probs.append("사용자 말을 그대로 되풀이함")
         if not probs and crisis:   # 위기 턴은 코드 검사를 지나도 위기 바람 동조를 Solar 로 한 번 더(한마디와 같음)
             probs = checks.llm_crisis_problems(text, "", ctx.get("text") or "")
-        elif not probs and tone == "팩폭":
+        elif not probs and (tone == "팩폭" or voice.custom_note(ctx, sit)):   # 사용자 말투 바람을 쓴 답도 넘지 않는 선을 한 번 더
             probs = checks.llm_line_problems(text, "", ctx.get("text") or "")
         log.append(len(probs))
         if not probs:

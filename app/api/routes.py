@@ -15,6 +15,7 @@ from app.deps import get_repo, get_user
 from app.exceptions import ApiError
 from app.models import AnswerIn, AspirationIn, DeclineIn, FeedbackIn, PersonIn, PersonPatch, SettingsPatch
 from app.repository import diary, views
+from app.service import voice
 from app.service.rules import press
 
 router = APIRouter()
@@ -215,5 +216,8 @@ def patch_settings(body: SettingsPatch, user=Depends(get_user), repo=Depends(get
             raise ApiError(409, "fact_bomb_ack_required", "팩폭은 경고를 확인한 뒤에 고를 수 있어요.")
         if patch.get("fact_bomb_ack") is False and cur["tone"] == "팩폭" and "tone" not in patch:
             patch["tone"] = "다정하게"   # 경고 확인을 거두면 팩폭도 거둔다
+        new = {**cur, **patch}
+        if new["tone"] == voice.CUSTOM and not new.get("tone_note"):
+            raise ApiError(422, "tone_note_required", "원하는 말투를 한 줄 적어 주세요.")
         st, _ = diary.save_profile(s, settings=patch)
     return st

@@ -3,6 +3,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { nav as menuNav } from "./menu";
 import path from "node:path";
+import { josa, particle } from "../lib/josa";
 
 const OUT = path.resolve(__dirname, "../../../docs/images/v8");
 // 가상 인물 하늘의 10/3 일기(data/samples/하늘-2026-10-03.txt) + 지어낸 한 줄
@@ -14,6 +15,12 @@ const HANEUL = `10/3 토요일 일기
 const CRISIS = "요즘 너무 지쳐서 다 끝내고 싶다는 생각이 자꾸 든다.";
 // 시험 단계(2026-10-08 동규): 위기 글이어도 화면에 단체 이름 · 전화번호가 나오지 않는다
 const HOTLINE = /(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담 ?전화/;
+
+test("조사: 받침에 맞춰 하나만(을(를) 대신, 2026-10-28)", () => {
+  expect([josa("엄마", "을/를"), josa("지은", "을/를"), josa("민수", "과/와"), josa("서윤", "과/와")]).toEqual(["엄마를", "지은을", "민수와", "서윤과"]);
+  expect([particle("부모", "으로/로"), particle("동생", "으로/로"), particle("교실", "으로/로"), particle("형제자매", "이/가")]).toEqual(["로", "으로", "로", "가"]);
+  expect([josa("그 사람", "은/는"), josa("Alex", "을/를")]).toEqual(["그 사람은", "Alex을(를)"]);   // 한글이 아니면 둘 다
+});
 
 test("핵심 흐름", async ({ page }, info) => {
   const dev = info.project.name;
@@ -122,6 +129,7 @@ test("핵심 흐름", async ({ page }, info) => {
 
   await test.step("설정: 팩폭은 경고 확인 뒤에만", async () => {
     await nav("설정");
+    await page.getByRole("group", { name: "설정 묶음" }).getByRole("button", { name: "별지기", exact: true }).click();
     await page.getByRole("button", { name: /^담백하게/ }).click();
     await expect(page.getByText("미리보기")).toBeVisible();
     await page.getByRole("button", { name: /^팩폭/ }).click();
@@ -134,7 +142,21 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
   });
 
-  await test.step("설정 아래 개인정보처리방침", async () => {
+  await test.step("설정 · 직접 정하기: 원하는 말투를 적어야 고름", async () => {
+    await page.getByRole("button", { name: "직접 정하기" }).click();
+    const box = page.getByRole("form", { name: "직접 정하기" });
+    await expect(page.getByRole("button", { name: "직접 정하기" })).toHaveAttribute("aria-pressed", "false");   // 적기 전엔 안 골라짐
+    await expect(box.getByRole("button", { name: "이 말투로 할게요" })).toBeDisabled();
+    await box.getByLabel("원하는 말투를 적어 주세요").fill("친한 언니처럼 반말로, 이모지 하나만");
+    await expect(box).toContainText("20 / 200");
+    await box.getByRole("button", { name: "이 말투로 할게요" }).click();
+    await expect(page.getByRole("button", { name: "직접 정하기" })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: /^팩폭/ }).click();   // 이어지는 흐름은 팩폭으로(경고는 이미 확인함)
+    await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  await test.step("설정 · 개인정보와 계정 → 개인정보처리방침", async () => {
+    await page.getByRole("group", { name: "설정 묶음" }).getByRole("button", { name: "개인정보와 계정" }).click();
     await page.getByRole("link", { name: "개인정보처리방침" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "나의 우주 개인정보처리방침" })).toBeVisible();
   });
@@ -167,15 +189,22 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByRole("region", { name: "별지기 한마디" })).toContainText("팩폭"); // 바꾼 말투가 반영됨
   });
 
-  await test.step("사람 지우기(이름을 관계 말로)", async () => {
+  await test.step("사람 지우기(이름을 관계 말로, 가족을 부르는 이름은 묶음 말로)", async () => {
     await nav("사람");
+    await page.getByRole("button", { name: /^엄마/ }).click();
+    await page.getByRole("button", { name: "엄마 지우기" }).click();
+    const mom = page.getByRole("alertdialog", { name: "엄마 지우기 확인" });
+    await expect(mom).toContainText("엄마를 지우면, 저장된 글 속 “엄마”를 “부모”로 바꿔요.");   // 2026-10-28 동규: 엄마 → 부모
+    await mom.getByRole("button", { name: "취소" }).click();
+    if (info.project.use.isMobile) await page.getByRole("button", { name: "사람 목록으로" }).click();
+    await page.getByRole("button", { name: /^지은/ }).click();
     await page.getByRole("button", { name: "지은 지우기" }).click();
     const dlg = page.getByRole("alertdialog", { name: "지은 지우기 확인" });
-    await expect(dlg).toContainText("관계 말 “동생”");
+    await expect(dlg).toContainText("“지은”을 “동생”으로 바꿔요");
     await expect(dlg).toContainText("문장 · 생각 · 이어진 선은 그대로");
     await shot("14-people-delete", true);
     await dlg.getByRole("button", { name: "지우기" }).click();
-    await expect(page.getByText(/지은을\(를\) 지웠어요/)).toBeVisible();
+    await expect(page.getByText("지은을 지웠어요. 글 1곳의 이름을 “동생”으로 바꿨어요.")).toBeVisible();
   });
 
   await test.step("지난 기록: 달력 → 그날 기록 → 돌아오기 · 사이드바 작은 달력 · 주제별", async () => {

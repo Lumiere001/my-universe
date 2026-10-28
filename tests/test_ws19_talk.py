@@ -298,3 +298,14 @@ def test_continue_from_entry(client, env, talk):  # noqa: F811
     assert client.post("/talk", headers=H1, json={"from_entry": "bad id!"}).status_code == 422
     with env.repo.session(U1) as s:
         assert chat_graph._lead(s, "e_none") == (None, [])
+
+
+def test_turn_uses_custom_tone_note_masked(client, env, talk):  # noqa: F811
+    """직접 정하기 말투 바람이 대화 답 프롬프트에도 들어가고, 바람 속 이름도 가명으로 나간다(2026-10-28)."""
+    with env.repo.session(U1) as s:
+        diary.save_profile(s, settings={"tone": "직접 정하기", "tone_note": "민준이처럼 다정한 반말로"})
+    c = start(client)
+    say(client, c["id"], "아침에 30분 걸었다.")
+    sys_ = talk.reply_calls[-1][0]["content"]
+    assert "[사용자가 원한 말투]" in sys_ and "다정한 반말로" in sys_ and voice.NOTE_RULE in sys_
+    assert not [n for n in NAMES if n in "\n".join(env.fake.sent)]

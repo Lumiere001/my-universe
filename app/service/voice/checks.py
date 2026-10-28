@@ -128,8 +128,10 @@ def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, t
         out.append(f"멀어진 순간을 말함: '{m.group(0)}'")
     if gentle and re.search(r"(^|\s)야[,!]", msg):
         out.append("오늘은 살살인데 거친 부름")
-    if tone == "고양이처럼" and "냥" not in msg:
-        out.append("고양이 말끝(냥) 없음")
+    if tone == "고양이처럼" and len(re.findall(r"(?<!그)냥", msg)) > 1:   # 새침데기 고양이: '냥'은 한마디에 한 번까지('그냥'은 빼고 셈)
+        out.append("냥 남발(한마디에 한 번까지)")
+    if tone == "고양이처럼" and re.search(r"(^|[.?!]\s*)냥(?![가-힣])", msg):   # '냥, 오늘은 …'처럼 따로 떼어 쓴 냥(--live 에서 본 꼴)
+        out.append("냥을 따로 떼어 씀(문장 맨 끝 말꼬리로만)")
     if len(msg) > MAX_LEN:
         out.append(f"너무 김({len(msg)}자, {MAX_LEN}자 안으로)")
     if not msg.strip():

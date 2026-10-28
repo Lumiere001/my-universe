@@ -37,6 +37,7 @@ class TalkState(TypedDict, total=False):
     summary: str
     people: list         # 가명 표(사람 목록 + 이 대화의 새 이름 후보)
     tone: str
+    tone_note: str       # 직접 정하기의 말투 바람(설정, 원래 이름 → reply 에서 가명 처리)
     gentle: bool
     comfort_only: bool
     first: bool          # 끝난 기록이 없음(첫 대화)
@@ -131,9 +132,9 @@ def reply(state, ctx):
                                "turns": [{"who": _who(t), "text": t["text"]} for t in turns][-chat.TURNS_IN_PROMPT:],
                                "past": pick(state.get("past") or []), "sources": list(state.get("sources") or []),
                                "users": [t["text"] for t in turns if t["role"] == "user"],
-                               "keeper": [t["text"] for t in keeper]}, state["people"])
+                               "keeper": [t["text"] for t in keeper], "tone_note": state.get("tone_note") or ""}, state["people"])
     sources = m["users"] + [m["text"]] + m["sources"] + [f"{p['thought']} {p['quote']}" for p in m["past"]]
-    out = chat.respond({**{k: m[k] for k in ("text", "summary", "turns", "past")}, "tone": state["tone"],
+    out = chat.respond({**{k: m[k] for k in ("text", "summary", "turns", "past", "tone_note")}, "tone": state["tone"],
                         "gentle": state.get("gentle"), "comfort_only": state.get("comfort_only"), "first": state.get("first"),
                         "crisis": state.get("crisis"), "crisis_unsure": state.get("crisis_unsure"), "recall": recall,
                         "wrap": wrap, "hour": datetime.now(diary.TZ).hour, "sources": sources, "past_replies": m["keeper"],
@@ -222,7 +223,7 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
         first = not s.rows("entries", status="done", limit=1)
     day = diary.today()
     state = {"text": text, "turns": c["turns"], "summary": c.get("summary", ""), "people": people,
-             "tone": settings["tone"], "gentle": settings.get("gentle_today") == day,
+             "tone": settings["tone"], "tone_note": settings.get("tone_note") or "", "gentle": settings.get("gentle_today") == day,
              "comfort_only": settings.get("comfort_only_today") == day, "first": first, "lead": lead,
              "sources": c.get("sources", [])}
     ctx = TalkCtx(repo, str(uid), cid, emit)

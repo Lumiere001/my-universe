@@ -47,3 +47,16 @@ def test_front_lists_match_backend():
     for f in svg.values():
         text = (FRONT / "public" / "keeper" / f"{f}.svg").read_text(encoding="utf-8")
         assert text.startswith("<svg") and "<script" not in text   # 정적 그림만
+
+
+def test_custom_tone_note(client):  # noqa: F811
+    """직접 정하기(2026-10-28 동규): 바람 없이는 못 고름, 200자 안, 줄바꿈 · 제어 · 폭 없는 글자는 한 줄로 다듬어 저장."""
+    r = client.patch("/settings", headers=H1, json={"tone": "직접 정하기"})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "tone_note_required"
+    r = client.patch("/settings", headers=H1, json={"tone": "직접 정하기", "tone_note": " 친한 언니처럼\n반말로,\u200b 이모지\t하나만\x07 "})
+    assert r.status_code == 200 and (r.json()["tone"], r.json()["tone_note"]) == ("직접 정하기", "친한 언니처럼 반말로, 이모지 하나만")
+    assert client.patch("/settings", headers=H1, json={"tone_note": "가" * 201}).status_code == 422
+    assert client.patch("/settings", headers=H1, json={"tone_note": " \u200b "}).status_code == 422   # 직접 정하기인데 비움
+    st = client.patch("/settings", headers=H1, json={"tone": "다정하게"}).json()
+    assert (st["tone"], st["tone_note"]) == ("다정하게", "친한 언니처럼 반말로, 이모지 하나만")      # 바람은 남겨 두어 다시 고르기 쉽게
+    assert client.get("/me", headers=H2).json()["settings"]["tone_note"] == ""

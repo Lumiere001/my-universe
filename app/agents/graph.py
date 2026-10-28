@@ -345,7 +345,8 @@ def speak(state, ctx):
                     "overdue": bool(v.get("due") and v["due"] < day)}
                    for k, v in states.items() if v["kind"] == "다짐" and v["state"] == "열림" and k not in vow_kept and text_of.get(k)]
     ctx_v = {
-        "tone": settings["tone"], "text": state["text"], "summary": state["record"].get("summary", ""),
+        "tone": settings["tone"], "tone_note": settings.get("tone_note") or "",   # 말투 바람은 tools.speak 가 가명 처리
+        "text": state["text"], "summary": state["record"].get("summary", ""),
         "thoughts": [{k: t[k] for k in ("thought", "kind", "certainty", "quote")} for t in state["today"]],
         "weather": state.get("weather"), "addressee": state["record"].get("addressee"), "written_at": state["written_at"],
         "past_messages": [m.get("text", "") for m in msgs],

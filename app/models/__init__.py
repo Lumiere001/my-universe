@@ -5,6 +5,7 @@ app/models
 """
 
 import re
+import unicodedata
 from datetime import date, datetime
 from typing import Literal, Optional
 
@@ -112,6 +113,7 @@ class DeclineIn(In):
 
 class SettingsPatch(In):
     tone: Optional[str] = None
+    tone_note: Optional[str] = Field(default=None, max_length=200)   # 직접 정하기의 말투 바람(말투만, 규칙은 못 바꿈 — voice.NOTE_RULE)
     fact_bomb_ack: Optional[bool] = None
     gentle_today: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     comfort_only_today: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
@@ -127,6 +129,15 @@ class SettingsPatch(In):
     @classmethod
     def _tone(cls, v):
         return _one_of("tones", v)
+
+    @field_validator("tone_note")
+    @classmethod
+    def _note(cls, v):
+        """프롬프트에 들어가는 글이라 한 줄로: 줄바꿈 · 탭은 띄어쓰기로, 폭 없는 글자 · 방향 바꾸는 글자(Cf)는 뺀다."""
+        if v is None:
+            return v
+        v = "".join(" " if unicodedata.category(c) == "Cc" else c for c in v if unicodedata.category(c) != "Cf")
+        return " ".join(v.split())
 
 
 ##################################################
