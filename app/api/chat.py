@@ -8,6 +8,7 @@ app/api/chat.py
 외부 AI 로 나가는 요청(턴 · 정리)은 동의를 먼저 본다.
 """
 
+import contextvars
 import json
 import queue
 import threading
@@ -20,6 +21,7 @@ from app.agents import chat_graph
 from app.api import consent
 from app.api import diary as diary_api
 from app.api.write import prompt
+from app.core import trace
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
 from app.models import DiaryIn, TalkIn, TurnIn
@@ -87,17 +89,23 @@ def _turn_queue(repo, uid, cid, text, via="text"):
 
     def work():
         try:
+            with trace.span("talk.turn", kind="CHAIN", conversation_id=cid):
+                _work()
+        finally:
+            q.put(None)   # span 을 닫은 뒤 끝을 알린다
+
+    def _work():
+        try:
             v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)), via)
             q.put(("turn", v) if v else ("error", {"conversation_id": cid, "code": "not_found",
                                                    "message": "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.", "resumable": False}))
         except Exception as e:
             code = chat_graph.error_code(e)
+            trace.set(error_code=code)
             code = code if code in MESSAGES else "internal"
             q.put(("error", {"conversation_id": cid, "code": code, "message": MESSAGES[code], "resumable": code != "real_name_leak"}))
-        finally:
-            q.put(None)
 
-    threading.Thread(target=work, name=f"talk-{cid}", daemon=True).start()
+    threading.Thread(target=contextvars.copy_context().run, args=(work,), name=f"talk-{cid}", daemon=True).start()
     return q
 
 
@@ -147,26 +155,39 @@ def finish(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     def gen():
         yield _ev("progress", {"conversation_id": cid, "entry_id": None, "step": "draft", "label": "대화를 일기로 정리하는 중",
                                "done": 0, "total": 7})
+        sp = trace.start("talk.finish", kind="CHAIN", conversation_id=cid)   # yield 를 건너므로 with 대신 직접 끝냄
+        try:
+            with trace.use(sp):   # 일기 그래프 span 이 이 span 아래로(스레드가 문맥을 들고 감)
+                first, q = draft()
+            if first:
+                yield first
+            if q:
+                yield from diary_api._sse(q)
+        finally:
+            sp.end()
+
+    def draft():
+        """→ (먼저 보낼 사건, 일기 그래프 줄). 둘 중 하나만."""
         try:
             d = chat_graph.make_draft(repo, uid, cid)
             eid, dup = diary_api._create(repo, uid, DiaryIn(text=d["text"], title=d["title"], source="대화", confirm=True))
         except ApiError as err:
-            yield _ev("error", {"entry_id": None, "code": err.code, "message": err.message, "resumable": False})
-            return
+            trace.set(error_code=err.code)
+            return _ev("error", {"entry_id": None, "code": err.code, "message": err.message, "resumable": False}), None
         except Exception as err:
             code = chat_graph.error_code(err)
-            yield _ev("error", {"entry_id": None, "code": code, "message": diary_api.MESSAGES.get(code, diary_api.MESSAGES["internal"]),
-                                "resumable": False})
-            return
+            trace.set(error_code=code)
+            return _ev("error", {"entry_id": None, "code": code, "message": diary_api.MESSAGES.get(code, diary_api.MESSAGES["internal"]),
+                                 "resumable": False}), None
+        trace.set(entry_id=eid)
         with repo.session(uid) as s:
             c = conversations.get(s, cid)
             if c:
                 c["entry_id"], c["drafted"] = eid, n
                 conversations.save(s, c)
         if dup:
-            yield _ev(*diary_api._same(repo, uid, eid))
-            return
-        yield from diary_api._sse(diary_api._start(repo, uid, eid))
+            return _ev(*diary_api._same(repo, uid, eid)), None
+        return None, diary_api._start(repo, uid, eid)
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 

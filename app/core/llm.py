@@ -15,7 +15,7 @@ from contextlib import contextmanager
 
 from openai import OpenAI
 
-from app.core import config, logger
+from app.core import config, logger, trace
 from app.service.safety.pseudonym import _strings, assert_no_real_names
 
 _client = None
@@ -69,30 +69,37 @@ def current():
 
 def chat(messages, model=None, **kw):
     """messages: [{"role": ..., "content": ...}] → 답 글."""
-    m = _guard.get()
-    if m:   # 시스템 프롬프트는 코드가 쓴 v8.json 규칙 글이라 사용자 · 도구 입력(user · assistant · tool)만 본다
-        m.check([x["content"] for x in messages if x.get("role") != "system"], "solar_chat")
-    r = client().chat.completions.create(model=model or config.CHAT_MODEL, messages=messages, **kw)
-    if m:
+    model = model or config.CHAT_MODEL
+    with trace.span("solar.chat", kind="LLM", system="upstage", op="chat", model=model):   # 프롬프트 · 답은 넣지 않음
+        m = _guard.get()
+        if m:   # 시스템 프롬프트는 코드가 쓴 v8.json 규칙 글이라 사용자 · 도구 입력(user · assistant · tool)만 본다
+            m.check([x["content"] for x in messages if x.get("role") != "system"], "solar_chat")
+        r = client().chat.completions.create(model=model, messages=messages, **kw)
         u = getattr(r, "usage", None)
         tin, tout = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0) if u else (0, 0)
-        m.add((tin * config.PRICE_CHAT_IN_PER_M + tout * config.PRICE_CHAT_OUT_PER_M) / 1e6)
-        logger.log("external", what="solar_chat", tokens_in=tin, tokens_out=tout)
-    return r.choices[0].message.content or ""
+        usd = (tin * config.PRICE_CHAT_IN_PER_M + tout * config.PRICE_CHAT_OUT_PER_M) / 1e6
+        trace.set(tokens_in=tin, tokens_out=tout, est_usd=usd)
+        if m:
+            m.add(usd)
+            logger.log("external", what="solar_chat", tokens_in=tin, tokens_out=tout)
+        return r.choices[0].message.content or ""
 
 
 def embed(texts, query=False):
     """글 목록 → 벡터 목록. 검색어면 query=True."""
     model = config.EMBED_QUERY_MODEL if query else config.EMBED_PASSAGE_MODEL
     texts = [t if t.strip() else "(빈 글)" for t in texts]
-    m = _guard.get()
-    if m:
-        m.check(texts, "solar_embed")
-    out = []
-    for i in range(0, len(texts), 100):  # 한 번에 100개까지
-        r = client().embeddings.create(model=model, input=texts[i:i + 100])
-        out += [d.embedding for d in r.data]
+    with trace.span("embed", kind="EMBEDDING", system="upstage", op="embeddings", model=model, texts=len(texts)):
+        m = _guard.get()
         if m:
-            u = getattr(r, "usage", None)
-            m.add((getattr(u, "total_tokens", 0) or 0) * config.PRICE_EMBED_PER_M / 1e6)
-    return out
+            m.check(texts, "solar_embed")
+        out, tokens = [], 0
+        for i in range(0, len(texts), 100):  # 한 번에 100개까지
+            r = client().embeddings.create(model=model, input=texts[i:i + 100])
+            out += [d.embedding for d in r.data]
+            n = getattr(getattr(r, "usage", None), "total_tokens", 0) or 0
+            tokens += n
+            if m:
+                m.add(n * config.PRICE_EMBED_PER_M / 1e6)
+        trace.set(tokens_in=tokens, est_usd=tokens * config.PRICE_EMBED_PER_M / 1e6)
+        return out

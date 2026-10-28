@@ -18,7 +18,7 @@ from typing import Any, Callable, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app.agents import studio, tools
-from app.core import llm, logger
+from app.core import llm, logger, trace
 from app.core.ontology import load
 from app.repository import diary
 from app.service import voice as voice_rules
@@ -87,11 +87,16 @@ def node(name, progress=None):
     """노드 감싸기: 진행 알림 → (끝난 노드면 건너뜀) → 실명 검사 guard 안에서 실행 → 상태 암호화 저장 · 원문 없는 실행 기록."""
     def deco(fn):
         def run(state, config):   # LangGraph 는 인자 이름 config 를 보고 실행 설정을 넘긴다(그래서 wraps 를 쓰지 않음)
+            with trace.span(name, kind="CHAIN"):   # 단계 하나 = span 하나(속성은 runs 행과 같은 숫자만)
+                return step(state, config)
+
+        def step(state, config):
             ctx = config["configurable"]["ctx"]
             if progress:
                 ctx.progress(progress)
             if name in state.get("done", []):
                 logger.log("step", step=name, entry_id=ctx.entry_id, skipped=True)
+                trace.set(skipped=True)
                 return {}
             t0 = time.time()
             with llm.guard(state.get("people") or []) as m:
@@ -100,6 +105,7 @@ def node(name, progress=None):
                 except Exception as e:
                     code = error_code(e)
                     logger.log("error", step=name, entry_id=ctx.entry_id, code=code, calls=m.calls, what=type(e).__name__)
+                    trace.set(error_code=code, calls=m.calls, est_usd=m.usd)
                     with ctx.repo.session(ctx.uid) as s:
                         diary.add_run(s, ctx.entry_id, name, (time.time() - t0) * 1000, m.calls, m.usd, code)
                     raise
@@ -112,6 +118,7 @@ def node(name, progress=None):
                 diary.add_run(s, ctx.entry_id, name, ms, m.calls, m.usd, None, meta)
             logger.log("step", step=name, entry_id=ctx.entry_id, ms=int(ms), calls=m.calls, est_usd=round(m.usd, 4),
                        **meta)
+            trace.set(calls=m.calls, est_usd=m.usd, **meta)
             return {**out, "done": done}
         run.__name__ = name
         return run

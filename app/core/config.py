@@ -69,6 +69,9 @@ FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
 LOG_TO_FILE = os.getenv("LOG_TO_FILE", "0") == "1"     # 로컬 · Docker 는 1(logs/agent_flow_YYYYMMDD.log), Vercel 은 0(표준 출력)
 LOG_DIR = Path(os.getenv("LOG_DIR") or BASE_DIR / "logs")
 API_DOCS = os.getenv("API_DOCS", "0") == "1"           # /docs · /openapi.json. 로컬만 1(배포는 끔)
+# 추적(OpenTelemetry, app/core/trace.py): 주소가 있을 때만 켠다(로컬 Phoenix http://localhost:6006). 비우면 꺼짐(운영 기본)
+OTEL_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME") or "my-universe"
 
 # 운영 한도(연구 근거 아님, 크레딧을 지키는 값)
 MAX_TEXT_CHARS = _int("MAX_TEXT_CHARS", 8000)

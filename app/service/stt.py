@@ -12,7 +12,7 @@ import wave
 
 import httpx
 
-from app.core import config, logger
+from app.core import config, logger, trace
 
 BASE = "https://api.elevenlabs.io/v1"
 MIME = {"wav": "audio/wav", "mp3": "audio/mpeg", "m4a": "audio/mp4", "webm": "audio/webm", "ogg": "audio/ogg"}
@@ -65,19 +65,22 @@ def _call(path, **kw):
 
 def transcribe(audio, fmt):
     """녹음 바이트 → {"text", "seconds", "usd"}. seconds 는 WAV 머리말, 아니면 마지막 낱말이 끝난 때."""
-    r = _call("/speech-to-text", files={"file": (f"voice.{fmt}", audio, MIME[fmt])},
-              data={"model_id": config.STT_MODEL, "language_code": "ko", "tag_audio_events": "false", "diarize": "false"}).json()
-    sec = wav_seconds(audio) if fmt == "wav" else 0.0
-    sec = sec or max((w.get("end") or 0 for w in r.get("words") or []), default=0.0)
-    usd = sec / 60 * config.PRICE_STT_PER_MIN
+    with trace.span("stt", kind="TOOL", system="elevenlabs", model=config.STT_MODEL, bytes=len(audio), format=fmt):
+        r = _call("/speech-to-text", files={"file": (f"voice.{fmt}", audio, MIME[fmt])},
+                  data={"model_id": config.STT_MODEL, "language_code": "ko", "tag_audio_events": "false", "diarize": "false"}).json()
+        sec = wav_seconds(audio) if fmt == "wav" else 0.0
+        sec = sec or max((w.get("end") or 0 for w in r.get("words") or []), default=0.0)
+        usd = sec / 60 * config.PRICE_STT_PER_MIN
+        trace.set(seconds=round(sec, 1), est_usd=usd)
     logger.log("external", what="elevenlabs_stt", seconds=round(sec, 1), bytes=len(audio), format=fmt, est_usd=round(usd, 5))
     return {"text": (r.get("text") or "").strip(), "seconds": sec, "usd": usd}
 
 
 def speak(text):
     """글 → (mp3 바이트, 추정 비용)."""
-    r = _call(f"/text-to-speech/{config.TTS_VOICE_ID}", params={"output_format": "mp3_44100_64"},
-              json={"text": text, "model_id": config.TTS_MODEL})
     usd = len(text) / 1000 * config.PRICE_TTS_PER_1K_CHARS
+    with trace.span("tts", kind="TOOL", system="elevenlabs", model=config.TTS_MODEL, chars=len(text), est_usd=usd):
+        r = _call(f"/text-to-speech/{config.TTS_VOICE_ID}", params={"output_format": "mp3_44100_64"},
+                  json={"text": text, "model_id": config.TTS_MODEL})
     logger.log("external", what="elevenlabs_tts", chars=len(text), est_usd=round(usd, 5))
     return r.content, usd

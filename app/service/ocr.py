@@ -14,7 +14,7 @@ import time
 
 import httpx
 
-from app.core import config, logger
+from app.core import config, logger, trace
 
 MODEL = "ocr"
 PRICE_PER_PAGE = {"ocr": 0.0015, "document-parse": 0.01}   # 요금표(2026-10, 부가세 빼고)
@@ -47,6 +47,11 @@ def tidy(text):
 
 def read_page(data, model=MODEL):
     """사진 한 장 → 읽은 글. Upstage 가 바쁘면(429) 두 번까지 잠깐 쉬고 다시 묻는다."""
+    with trace.span("ocr", kind="TOOL", system="upstage", model=model):   # 사진 · 읽은 글은 넣지 않음
+        return _read_page(data, model)
+
+
+def _read_page(data, model):
     if not config.UPSTAGE_API_KEY:
         raise OcrError("ocr_unconfigured")
     k = kind(data)
@@ -63,6 +68,7 @@ def read_page(data, model=MODEL):
         if r.status_code != 429 or attempt == 2:
             break
         time.sleep(1.5)
+    trace.set(http_status=r.status_code)
     if r.status_code >= 400:
         logger.log("external", what="upstage_ocr", ok=False, http=r.status_code, ms=int((time.time() - t0) * 1000))
         raise OcrError("ocr_busy" if r.status_code == 429 else "ocr_failed")
@@ -71,4 +77,5 @@ def read_page(data, model=MODEL):
     pages = j.get("numBilledPages") or (j.get("usage") or {}).get("pages") or 1
     logger.log("external", what="upstage_ocr", ok=True, pages=pages, est_usd=pages * PRICE_PER_PAGE[model],
                ms=int((time.time() - t0) * 1000))
+    trace.set(pages=pages, est_usd=pages * PRICE_PER_PAGE[model])
     return tidy(text)
