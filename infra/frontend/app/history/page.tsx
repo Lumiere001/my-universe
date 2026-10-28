@@ -116,6 +116,7 @@ function History() {
           <button type="button" aria-pressed={view === "topic"} onClick={() => setView("topic")}>주제별</button>
         </div>
         <input type="search" aria-label="찾기" placeholder="제목 · 요약에서 찾기" value={find} onChange={(e) => setFind(e.target.value)} />
+        <Link className="btn primary small" href={view === "cal" && day && day <= localToday() ? `/write?day=${day}` : "/write"}>일기 쓰기</Link>
         {all.length > 0 && (
           <details className="pop">
             <summary aria-label="더 보기">⋯</summary>
@@ -157,7 +158,7 @@ function History() {
             {gone.length > 0 && <p className="toast" role="status">기록을 지웠어요.</p>}
             {items.length > 0
               ? <ul>{items.map((e) => <Item key={e.id} e={e} withDay={withDay} onOpen={openEntry} />)}</ul>
-              : empty && <p className="sub">{empty}</p>}
+              : empty && <p className="sub">{empty}{view === "cal" && !found && day <= localToday() && <> <Link href={`/write?day=${day}`}>이날 일기 쓰기</Link></>}</p>}
           </section>
         </div>
       )}

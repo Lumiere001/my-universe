@@ -8,6 +8,7 @@ import Icon from "@/components/Icon";
 import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아쓴 글을 칸에 채움
 import PhotoInput from "@/components/PhotoInput";
 import ResultCard from "@/components/ResultCard";
+import { localToday } from "@/components/EntryTools";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt, Markdown, WriteHelp } from "@/components/WriteParts";
 import { FAIL, getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
 import { useOntology } from "@/lib/use";
@@ -48,6 +49,11 @@ export default function WritePage() {
     setBusy(true); setErr(null);
     try { setResult(await fn()); keep(null); } catch (e) { await fail(e as StreamError); } finally { setBusy(false); setWaiting(false); }
   };
+  // 지난 기록 달력의 '일기 쓰기'에서 오면(?day=YYYY-MM-DD) 그날을 글이 다루는 날로(오늘 뒤는 버림)
+  useEffect(() => {
+    const d = new URLSearchParams(window.location.search).get("day");
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= localToday()) setDay(d);
+  }, []);
   // 새로고침해서 돌아오면, 정리하던 기록이 있는지 본다
   useEffect(() => {
     let id: string | null = null;

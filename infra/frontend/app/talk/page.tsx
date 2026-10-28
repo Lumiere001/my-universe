@@ -205,12 +205,13 @@ export default function TalkPage() {
           <div className="composer">
             <label htmlFor="talk-input" className="sr">별지기에게 답하기</label>
             <textarea id="talk-input" rows={2} value={text} onChange={(e) => setText(e.target.value)} disabled={!!busy}
-              placeholder="편하게 적어 주세요. Ctrl(⌘) + Enter로 보낼 수 있어요." maxLength={8000}
-              onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(text); } }} />
+              placeholder="편하게 적어 주세요. Enter로 보내고, Shift + Enter로 줄을 바꿔요." maxLength={8000}
+              // Enter 는 보내기, Shift + Enter 는 줄바꿈. 한글 조합 중(isComposing)의 Enter 는 글자 확정이라 보내지 않는다
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(text); } }} />
             <div className="tools">
               <MicButton onText={heard} disabled={!!busy} />
               <button type="submit" className="tbtn send" disabled={!!busy || !text.trim()}
-                aria-label="보내기" title="보내기 (Ctrl(⌘) + Enter)"><Icon name="send" /></button>
+                aria-label="보내기" title="보내기 (Enter)"><Icon name="send" /></button>
             </div>
           </div>
         </form>

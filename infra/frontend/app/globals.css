@@ -510,7 +510,6 @@ main.set-page, main.ppl-page { max-width: 980px; }
 .ppl-list .file { padding: 8px 12px; min-height: 44px; }
 .ppl-list .file b { display: inline; margin-right: 8px; }
 .ppl-list .file[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; }
-.ppl-aux { font-size: .8rem; margin: 12px 0 0; }
 .ppl-detail { min-width: 0; }
 .ppl-back { margin-bottom: 10px; }
 .ppl-h { font-size: .8rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; margin: 14px 0 0; }

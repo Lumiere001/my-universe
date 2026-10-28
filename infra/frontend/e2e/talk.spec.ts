@@ -14,9 +14,18 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-talk-${name}.png`, fullPage: full,
     style: full ? ".tabbar { visibility: hidden; }" : undefined });
   const talk = page.getByRole("region", { name: "대화" });
+  // 첫 말은 Enter 로 보낸다(Shift + Enter 는 줄바꿈, 2026-10-28 동규). 나머지는 보내기 단추로.
   const say = async (t: string, n: number) => {
-    await page.getByLabel("별지기에게 답하기").fill(t);
-    await page.getByRole("button", { name: "보내기" }).click();
+    const box = page.getByLabel("별지기에게 답하기");
+    if (n === 1) {
+      await box.fill(t);
+      await box.press("Shift+Enter");
+      await expect(box).toHaveValue(t + "\n");   // 줄만 바뀌고 보내지 않음
+      await box.press("Enter");
+    } else {
+      await box.fill(t);
+      await page.getByRole("button", { name: "보내기" }).click();
+    }
     await expect(talk.locator(".bubble.me")).toHaveCount(n);
     await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();   // 칸이 비면 보내기는 꺼짐(답이 붙음)
   };

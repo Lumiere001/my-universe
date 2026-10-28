@@ -68,7 +68,6 @@ export default function PeoplePage() {
               ))}
             </ul>
             <button className="small" onClick={() => { pick(null); setMode("add"); }}>사람 추가하기</button>
-            <p className="sub ppl-aux">외부 AI로 보낼 때는 이 목록으로 이름을 가려요. 새 이름은 저절로 올라오고, 헷갈릴 때만 물어봐요.</p>
           </section>
 
           <div className="ppl-detail">
