@@ -2,13 +2,16 @@
 // 사진(손글씨 · 일기장) 글자 읽기(WS18): 사진 여러 장(쪽 순서 바꾸기 · 빼기) → 화면에서 줄여(긴 변 2400px JPEG, 4MB 아래 ·
 // 위치 정보 같은 메타데이터도 빠짐) 한 장씩 POST /photo/read → 읽은 글을 쪽 순서대로 이어 쓰기 칸에 채움 → 사용자가 고친 뒤
 // '우주에 띄우기'(source=사진). 사진은 서버에 저장하지 않고, 읽고 나면 화면에서도 비운다.
-import { useEffect, useRef, useState } from "react";
+// 모양(2026-10-28): 도구 줄의 사진 아이콘 + 고른 사진이 있을 때만 줄 아래로 펼쳐지는 쪽 목록 묶음(사진으로 쓰기).
+import { useEffect, useId, useRef, useState } from "react";
 import { ApiError, readPhoto, why } from "@/lib/api";
+import Icon from "./Icon";
 
 const LIMIT = 4_000_000;   // 서버 한도 4.5MB(Vercel 요청 본문) 아래로
 const LONG_SIDE = 2400;    // 글자 읽기에 넉넉한 긴 변(px)
 const MAX_TEXT = 8000;     // 백엔드 MAX_TEXT_CHARS 기본값
 const OK_TYPE = /^image\/(jpeg|png|heic|heif)$/i, OK_NAME = /\.(jpe?g|png|heic|heif)$/i;
+export const PHOTO_NOTE = "사진은 글자를 읽는 데만 쓰고 저장하지 않아요. 사진 속 이름은 가릴 수 없어 그대로 글자 읽기(Upstage)로 가요.";
 const isHeic = (f: File) => /heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name);
 
 type Page = { id: number; file: File; url: string };
@@ -47,6 +50,7 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
   const [err, setErr] = useState("");
   const [note, setNote] = useState("");
   const seq = useRef(0);
+  const helpId = useId();
   const urls = useRef<string[]>([]);
   useEffect(() => () => urls.current.forEach(URL.revokeObjectURL), []);   // 화면을 떠나면 미리보기도 비움
 
@@ -97,37 +101,43 @@ export default function PhotoInput({ onRead, disabled }: { onRead: (text: string
   };
 
   const off = disabled || !!busy;
+  // 조각으로 돌려줘서 도구 줄에 아이콘으로 서고, 쪽 목록 묶음은 줄 아래로(.tool-msg)
   return (
-    <div className="stack" aria-label="사진으로 쓰기" role="group">
-      <div>
-        <label htmlFor="photo">손글씨 일기장 사진에서 글자 읽기 (여러 쪽이면 여러 장 골라 주세요)</label>
-        <input id="photo" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-          disabled={off} onChange={pick} />
-      </div>
-      {pages.length > 0 && (
-        <ol className="stack" aria-label="읽을 사진(쪽 순서)" style={{ margin: 0, paddingLeft: 22 }}>
-          {pages.map((p, i) => (
-            <li key={p.id}>
-              <div className="row">
-                {/* 크롬은 HEIC 미리보기를 못 그려서 이름만 보인다 */}
-                <img src={p.url} alt="" width={44} height={58} style={{ objectFit: "cover", borderRadius: 6, background: "var(--line)" }} />
-                <span className="sub" style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{p.file.name}</span>
-                <button type="button" className="small" disabled={off || i === 0} onClick={() => move(i, -1)} aria-label={`${i + 1}쪽 앞으로`}>↑</button>
-                <button type="button" className="small" disabled={off || i === pages.length - 1} onClick={() => move(i, 1)} aria-label={`${i + 1}쪽 뒤로`}>↓</button>
-                <button type="button" className="small" disabled={off} onClick={() => drop((x) => x.id !== p.id)} aria-label={`${i + 1}쪽 빼기`}>빼기</button>
-              </div>
-            </li>
-          ))}
-        </ol>
+    <>
+      <label className="tbtn" title={`손글씨 일기장 사진에서 글자 읽기\n${PHOTO_NOTE}`}>
+        <Icon name="image" />
+        <input id="photo" type="file" className="sr" multiple accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+          disabled={off} onChange={pick} aria-label="손글씨 일기장 사진에서 글자 읽기 (여러 쪽이면 여러 장 골라 주세요)" aria-describedby={helpId} />
+      </label>
+      <span id={helpId} className="sr">{PHOTO_NOTE}</span>
+      {(pages.length > 0 || note || err) && (
+        <div className="tool-msg stack" aria-label="사진으로 쓰기" role="group">
+          {pages.length > 0 && (
+            <ol className="stack" aria-label="읽을 사진(쪽 순서)" style={{ margin: 0, paddingLeft: 22 }}>
+              {pages.map((p, i) => (
+                <li key={p.id}>
+                  <div className="row">
+                    {/* 크롬은 HEIC 미리보기를 못 그려서 이름만 보인다 */}
+                    <img src={p.url} alt="" width={44} height={58} style={{ objectFit: "cover", borderRadius: 6, background: "var(--line)" }} />
+                    <span className="sub" style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{p.file.name}</span>
+                    <button type="button" className="small" disabled={off || i === 0} onClick={() => move(i, -1)} aria-label={`${i + 1}쪽 앞으로`}>↑</button>
+                    <button type="button" className="small" disabled={off || i === pages.length - 1} onClick={() => move(i, 1)} aria-label={`${i + 1}쪽 뒤로`}>↓</button>
+                    <button type="button" className="small" disabled={off} onClick={() => drop((x) => x.id !== p.id)} aria-label={`${i + 1}쪽 빼기`}>빼기</button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          {pages.length > 0 && (
+            <div className="row">
+              <button type="button" disabled={off} onClick={read}>{busy || `사진 ${pages.length}장 글자 읽기`}</button>
+              <p className="sub" style={{ margin: 0, flex: "1 1 220px" }}>{PHOTO_NOTE}</p>
+            </div>
+          )}
+          {note && <p className="toast" role="status" style={{ margin: 0 }}>{note}</p>}
+          {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
+        </div>
       )}
-      {pages.length > 0 && (
-        <button type="button" disabled={off} onClick={read}>{busy || `사진 ${pages.length}장 글자 읽기`}</button>
-      )}
-      <p className="sub" style={{ margin: 0 }}>
-        사진은 글자를 읽는 데만 쓰고 저장하지 않아요. 사진 속 이름은 가릴 수 없어 그대로 글자 읽기(Upstage)로 가요.
-      </p>
-      {note && <p className="toast" role="status" style={{ margin: 0 }}>{note}</p>}
-      {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
-    </div>
+    </>
   );
 }

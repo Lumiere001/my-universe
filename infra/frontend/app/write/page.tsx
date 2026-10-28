@@ -1,10 +1,14 @@
 "use client";
 // (가) 일기 쓰기 → 진행 단계 → (나) 결과 카드
-import { useEffect, useRef, useState } from "react";
+// 일기장(2026-10-28, 한 화면 규칙): 별지기 한 줄 · 종이 한 장(날짜 줄 · 제목 · 마음 날씨 · 줄 그은 글 칸 또는 미리보기 · 도구 줄) · 띄우기 줄.
+// 진행 상황은 화면 아래에 뜨는 작은 칸. 별지기에게는 마크다운을 그리기 전의 쓴 글 그대로 보낸다.
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import Icon from "@/components/Icon";
 import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아쓴 글을 칸에 채움
 import PhotoInput from "@/components/PhotoInput";
 import ResultCard from "@/components/ResultCard";
-import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt } from "@/components/WriteParts";
+import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt, Markdown, WriteHelp } from "@/components/WriteParts";
 import { FAIL, getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
 import { useOntology } from "@/lib/use";
 
@@ -26,9 +30,7 @@ export default function WritePage() {
   const [err, setErr] = useState<StreamError | null>(null);
   const [result, setResult] = useState<EntryResult | null>(null);
   const [waiting, setWaiting] = useState(false);
-  const progRef = useRef<HTMLElement>(null);
-  // 휴대폰에서는 진행 상황이 글 칸 아래에 있으니, 시작하거나 멈추면 그쪽으로 내려 보여 준다
-  useEffect(() => { if (busy || err) progRef.current?.scrollIntoView({ block: "center" }); }, [busy, err]);
+  const [preview, setPreview] = useState(false);   // 쓰기 | 미리보기
 
   useEffect(() => { if (result) window.scrollTo(0, 0); }, [result]);
   const onProgress = (p: Progress) => { keep(p.entry_id); setWaiting(false); setProg(p); setSteps((s) => (s.includes(p.label) ? s : [...s, p.label])); };
@@ -74,7 +76,7 @@ export default function WritePage() {
     go(() => writeDiary({ text, title, weather, ...(day && { day }), ...(ref && { source_ref: ref }), ...(photo && { source: "사진" as const }) }, { onProgress }));
   };
   const resume = () => err?.entry_id && go(() => cont(err.entry_id!));
-  const again = () => { setText(""); setTitle(""); setDay(""); setRef(""); setPhoto(false); setWeather(null); setResult(null); setSteps([]); setProg(null); window.scrollTo(0, 0); };
+  const again = () => { setText(""); setTitle(""); setDay(""); setRef(""); setPhoto(false); setWeather(null); setResult(null); setSteps([]); setProg(null); setPreview(false); window.scrollTo(0, 0); };
 
   if (result) return (
     <main>
@@ -84,42 +86,64 @@ export default function WritePage() {
     </main>
   );
 
+  const empty = !text.trim();
   return (
-    <main>
+    <main className="write">
       <h1 className="sr">직접 쓰기</h1>
-      <p className="sub">글로 적으면 별지기가 생각 단위로 나눠 우주에 띄우고, 지난 기록과 이어 보여 드려요.</p>
+      <p className="sub" style={{ margin: 0 }}>글로 적으면 별지기가 생각 단위로 나눠 우주에 띄우고, 지난 기록과 이어 보여 드려요.</p>
       <KeeperPrompt />
-      <form onSubmit={submit} className="stack" aria-label="일기 쓰기">
-        <EntryMeta title={title} day={day} weather={weather} weathers={onto?.weather ?? []} disabled={busy}
-          onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} onWeather={setWeather} />
-        <div>
-          <label htmlFor="diary" className="sr">마음껏 적어 주세요.</label>
-          <textarea id="diary" className="editor" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
-            placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" />
+      <form onSubmit={submit} className="diary-form" aria-label="일기 쓰기">
+        <div className="paper">
+          <EntryMeta title={title} day={day} weather={weather} weathers={onto?.weather ?? []} disabled={busy}
+            onTitle={(v) => { setTitle(v); setRef(""); }} onDay={setDay} onWeather={setWeather}>
+            <div className="seg" role="group" aria-label="보기">
+              <button type="button" aria-pressed={!preview} onClick={() => setPreview(false)}>쓰기</button>
+              <button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>미리보기</button>
+            </div>
+          </EntryMeta>
+          <div className="diary-body">
+            <label htmlFor="diary" className="sr">마음껏 적어 주세요.</label>
+            <textarea id="diary" className="editor diary-text" value={text} onChange={(e) => { setText(e.target.value); setRef(""); }} disabled={busy}
+              placeholder="오늘 있었던 일, 떠오른 생각, 다짐…" hidden={preview} />
+            {preview && (
+              <article className="diary-text diary-view" aria-label="미리보기">
+                {empty ? <p className="sub">오늘 있었던 일, 떠오른 생각, 다짐…</p> : <Markdown text={text} />}
+              </article>
+            )}
+          </div>
+          <div className="tools" role="group" aria-label="다른 방법으로 쓰기">
+            <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
+            <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); setPhoto(false); }} />
+            <PhotoInput disabled={busy} onRead={(t) => { setText((x) => (x.trim() ? x.trimEnd() + "\n" + t : t)); setRef(""); setPhoto(true); }} />
+            <Link className="tbtn import" href="/import" title="지난 일기 한꺼번에 가져오기"><Icon name="files" /><span>지난 일기 한꺼번에 가져오기</span></Link>
+            <WriteHelp />
+          </div>
         </div>
-        <button type="submit" className="primary" disabled={busy || !text.trim()}>{busy ? "정리하는 중…" : "우주에 띄우기"}</button>
-        {!text.trim() && !busy && <p className="sub" style={{ margin: 0 }}>글을 한 줄이라도 적으면 띄울 수 있어요.</p>}
-        <section className="stack tools-row" aria-label="다른 방법으로 쓰기">
-          <h2 className="sub" style={{ margin: 0, fontWeight: 600 }}>말 · 파일 · 사진으로 쓰기</h2>
-          <MicButton disabled={busy} onText={(t) => { setText((v) => (v.trim() ? `${v.trimEnd()}\n${t}` : t)); setRef(""); }} />
-          <FilePick disabled={busy} onLoad={(f) => { setTitle(f.title); setText(f.text); setDay(f.day); setRef(f.ref); setPhoto(false); }} />
-          <PhotoInput disabled={busy} onRead={(t) => { setText((x) => (x.trim() ? x.trimEnd() + "\n" + t : t)); setRef(""); setPhoto(true); }} />
-        </section>
+        <div className="diary-foot">
+          <p className="sub"># 제목 · **굵게** · - 목록처럼 마크다운으로 써도 돼요.</p>
+          <button type="submit" className="primary" disabled={busy || empty} aria-describedby={empty && !busy ? "write-empty" : undefined}
+            title={empty && !busy ? "글을 한 줄이라도 적으면 띄울 수 있어요." : undefined}>{busy ? "정리하는 중…" : "우주에 띄우기"}</button>
+          <span id="write-empty" className="sr">글을 한 줄이라도 적으면 띄울 수 있어요.</span>
+        </div>
       </form>
 
       {(busy || steps.length > 0 || err) && (
-        <section ref={progRef} className="card" style={{ marginTop: 16 }} aria-label="진행 상황" aria-live="polite">
-          <h2>{err && !busy ? (err.resumable ? "정리가 멈췄어요" : "정리하지 못했어요") : "정리하는 중"}</h2>
+        <section className="card progress-pop" aria-label="진행 상황" aria-live="polite">
+          <div className="row" style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
+            <h2 style={{ margin: 0 }}>{err && !busy ? (err.resumable ? "정리가 멈췄어요" : "정리하지 못했어요") : "정리하는 중"}</h2>
+            {!busy && <button type="button" className="tbtn" aria-label="닫기" title="닫기"
+              onClick={() => { setErr(null); setSteps([]); setProg(null); }}><Icon name="close" /></button>}
+          </div>
           <ol className="steps">
             {steps.map((s, i) => <li key={s} className={i < steps.length - 1 || !busy ? "done" : "now"}>{s}</li>)}
           </ol>
-          {prog && <p className="sub">{prog.done} / {prog.total} 단계</p>}
-          {waiting && <p className="sub">화면이 끊긴 동안에도 서버에서 계속 정리하고 있어요. 끝나면 바로 보여 드릴게요.</p>}
+          {prog && <p className="sub" style={{ margin: 0 }}>{prog.done} / {prog.total} 단계</p>}
+          {waiting && <p className="sub" style={{ margin: 0 }}>화면이 끊긴 동안에도 서버에서 계속 정리하고 있어요. 끝나면 바로 보여 드릴게요.</p>}
           {err && (
             <div className="stack" role="alert">
-              <p className="err">{err.message || FAIL}</p>
+              <p className="err" style={{ margin: 0 }}>{err.message || FAIL}</p>
               {err.resumable && err.entry_id ? <button className="primary" onClick={resume} disabled={busy}>이어서 하기</button>
-                : err.code !== "duplicate" && <p className="sub">글은 화면에 그대로 있어요. 잠시 뒤 다시 띄워 주세요.</p>}
+                : err.code !== "duplicate" && <p className="sub" style={{ margin: 0 }}>글은 화면에 그대로 있어요. 잠시 뒤 다시 띄워 주세요.</p>}
             </div>
           )}
         </section>
