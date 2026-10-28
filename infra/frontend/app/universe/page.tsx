@@ -1,6 +1,8 @@
 "use client";
 // (다) 3D 우주 v8 + 행성 요약 카드(원문 인용 · 그때 → 지금 · 결과 카드 링크) + 북극성(닿은 순간) + 사람 고르기(얽힌 생각) + 범례
 // + 우주 고치기(WS16: 해 추가 · 작은 별 옮기기 · 합치기, 행성 카드에서 생각 종류 · 가치 고치기)
+// 풀스크린(2026-10-28): 우주가 작업 칸을 꽉 채우고, 기호 뜻 · 기록 목록 · 우주 고치기는 떠 있는 단추로 여는 칸(PC 오른쪽 · 휴대폰 아래).
+// '전체 화면'은 우주 칸에 Fullscreen API(못 쓰는 브라우저 — 아이폰 사파리 — 에서는 단추를 숨김). 칸 크기가 바뀌면 Universe3D 가 알아서 다시 그린다.
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +27,19 @@ const LEGEND: Record<string, string> = {
   색: "보라는 이어지는 관계(이어짐 · 바뀜 · 해소), 주황은 맞서는 관계(긴장 · 어긋남 · 목표 충돌)예요.",
 };
 
+// 떠 있는 단추의 작은 그림(Lucide 모양, ISC). 단추 이름은 옆 글자(휴대폰에서는 안 보이고 읽어 주기만)
+const ICON = {
+  legend: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 16v-4M12 8h.01",
+  list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z",
+  full: "M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3",
+  exit: "M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3",
+};
+const Svg = ({ d }: { d: string }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>
+);
+type Tool = "legend" | "list" | "edit" | null;
+
 export default function UniversePage() {
   const [data, err, reload] = useLoad(getUniverse, "우주를 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const [me] = useLoad(getMe);
@@ -34,6 +49,15 @@ export default function UniversePage() {
   const [person, setPerson] = useState<string | null>(null);
   const [entry, setEntry] = useState<EntryResult | null>(null);
   const [entryErr, setEntryErr] = useState(false);
+  const [tool, setTool] = useState<Tool>(null);
+  const [canFull, setCanFull] = useState(false);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    setCanFull(!!document.fullscreenEnabled);
+    const on = () => setFull(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", on);
+    return () => document.removeEventListener("fullscreenchange", on);
+  }, []);
 
   const planet = pick.kind === "planet" ? data?.planets.find((p) => p.id === pick.id) : undefined;
   useEffect(() => {
@@ -50,7 +74,7 @@ export default function UniversePage() {
   }, [data, person, pick.kind]);
 
   if (err) return <main><p className="err" role="alert">{err}</p></main>;
-  if (!data) return <main className="wide"><div className="uni" /><p className="sub">우주를 불러오는 중…</p></main>;
+  if (!data) return <main className="wide uni-page"><div className="uni"><p className="sub uni-msg" role="status">우주를 불러오는 중…</p></div></main>;
 
   const title = (id: string) => data.planets.find((p) => p.id === id)?.title ?? id;
   const day = (id: string) => data.planets.find((p) => p.id === id)?.written_at.slice(0, 10) ?? "";
@@ -59,14 +83,31 @@ export default function UniversePage() {
   const links = planet ? data.links.filter((l) => l.from_planet === planet.id || l.to_planet === planet.id) : [];
   const bh = pick.kind === "blackhole" ? data.blackholes.find((b) => b.id === pick.id) : undefined;
   const close = () => setPick({ kind: "none", id: null });
+  const onPick = (p: Pick) => { setTool(null); setPick(p); };   // 우주를 누르면 도구 칸은 닫는다
+  const openTool = (t: Tool) => setTool(tool === t ? null : t);
+  const toggleFull = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else e.currentTarget.closest(".uni")?.requestFullscreen().catch(() => {});
+  };
+  const head = (title: string) => (
+    <div className="row" style={{ justifyContent: "space-between" }}>
+      <h2 style={{ margin: 0 }}>{title}</h2>
+      <button className="small" onClick={() => setTool(null)}>닫기</button>
+    </div>
+  );
 
   return (
-    <main className="wide">
+    <main className="wide uni-page">
       <h1 className="sr">나의 우주</h1>
-      <p className="sub" style={{ marginTop: 0 }}>행성 하나가 일기 한 편이에요. 이어진 선을 따라가면 지난 생각이 어떻게 이어지고 바뀌었는지 보여요.</p>
-      {!data.planets.length && <p className="sub" role="status">아직 우주가 비어 있어요. 이야기하기나 직접 쓰기로 첫 기록을 남기면 첫 행성이 떠요.</p>}
-      <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={setPick}
+      <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={onPick}
         theme={me?.settings.theme}>
+        {!data.planets.length && <p className="sub uni-msg" role="status">아직 우주가 비어 있어요. 이야기하기나 직접 쓰기로 첫 기록을 남기면 첫 행성이 떠요.</p>}
+        <div className="fabs" role="group" aria-label="우주 도구">
+          <button className="fab" aria-pressed={tool === "legend"} onClick={() => openTool("legend")}><Svg d={ICON.legend} /><span>기호 뜻</span></button>
+          <button className="fab" aria-pressed={tool === "list"} onClick={() => openTool("list")}><Svg d={ICON.list} /><span>기록 목록</span></button>
+          <button className="fab" aria-pressed={tool === "edit"} onClick={() => openTool("edit")}><Svg d={ICON.edit} /><span>우주 고치기</span></button>
+          {canFull && <button className="fab" onClick={toggleFull}><Svg d={full ? ICON.exit : ICON.full} /><span>{full ? "전체 화면 끝내기" : "전체 화면"}</span></button>}
+        </div>
         <div className="tools" role="group" aria-label="사람 고르기">
           {data.people.map((p) => (
             <button key={p.id} className="small" aria-pressed={person === p.id} onClick={() => setPerson(person === p.id ? null : p.id)}>
@@ -76,7 +117,29 @@ export default function UniversePage() {
           {glow?.size === 0 && pick.kind !== "north" && <span className="badge" role="status">이 사람이 나온 기록이 아직 없어요</span>}
         </div>
 
-        {planet && (
+        {tool === "legend" && (
+          <section className="pcard" aria-label="기호 뜻">
+            {head("기호 뜻")}
+            <p>행성 하나가 일기 한 편이에요. 이어진 선을 따라가면 지난 생각이 어떻게 이어지고 바뀌었는지 보여요.</p>
+            <p className="sub">끌어서 돌리고, 두 손가락이나 마우스 휠로 크게 봐요. 해를 누르면 그 영역으로 다가가고, 빈 곳을 누르면 전체로 돌아와요.</p>
+            <div className="legend">
+              {onto?.universe_symbols.map((s) => <div key={s.name}><b>{s.name}</b> · {LEGEND[s.name] ?? s.legend}</div>)}
+            </div>
+          </section>
+        )}
+        {tool === "list" && (
+          <section className="pcard" aria-label="목록에서 기록 고르기">
+            {head("목록에서 기록 고르기")}
+            <div className="row">
+              {[...data.planets].sort((a, b) => a.written_at.localeCompare(b.written_at)).map((p) => (
+                <button key={p.id} className="small" onClick={() => onPick({ kind: "planet", id: p.id })}>{p.title}</button>
+              ))}
+            </div>
+          </section>
+        )}
+        {tool === "edit" && <EditPanel data={data} onChanged={reload} head={head("우주 고치기")} />}
+
+        {!tool && planet && (
           <section className="pcard" aria-label="기록 요약" data-testid="planet-card">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <h2 style={{ margin: 0 }}>{planet.title}</h2>
@@ -120,7 +183,7 @@ export default function UniversePage() {
             })}
           </section>
         )}
-        {pick.kind === "north" && data.north_star && (
+        {!tool && pick.kind === "north" && data.north_star && (
           <section className="pcard" aria-label="북극성">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <h2 style={{ margin: 0 }}>북극성 · 되고 싶은 모습</h2>
@@ -142,7 +205,7 @@ export default function UniversePage() {
             ) : <p className="sub">아직 닿은 순간이 없어요. 글에서 되고 싶은 모습에 닿으면 여기에 모여요.</p>}
           </section>
         )}
-        {bh && (
+        {!tool && bh && (
           <section className="pcard" aria-label="블랙홀">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <h2 style={{ margin: 0 }}>오래 머문 고민</h2>
@@ -152,7 +215,7 @@ export default function UniversePage() {
             <ul style={{ paddingLeft: 18 }}>{bh.planets.map((id) => <li key={id}>{title(id)}</li>)}</ul>
           </section>
         )}
-        {who && !planet && !bh && pick.kind !== "north" && (
+        {!tool && who && !planet && !bh && pick.kind !== "north" && (
           <section className="pcard" aria-label={`${who.name}과(와) 얽힌 생각`}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <h2 style={{ margin: 0 }}>{who.name}과(와) 얽힌 생각</h2>
@@ -162,26 +225,6 @@ export default function UniversePage() {
           </section>
         )}
       </Universe3D>
-
-      <p className="sub" style={{ marginTop: 8 }}>끌어서 돌리고, 두 손가락이나 마우스 휠로 크게 봐요. 해를 누르면 그 영역으로 다가가고, 빈 곳을 누르면 전체로 돌아와요.</p>
-
-      <details className="card">
-        <summary>기호 뜻 보기</summary>
-        <div className="legend" style={{ marginTop: 10 }}>
-          {onto?.universe_symbols.map((s) => <div key={s.name}><b>{s.name}</b> · {LEGEND[s.name] ?? s.legend}</div>)}
-        </div>
-      </details>
-
-      <details className="card">
-        <summary>목록에서 기록 고르기</summary>
-        <div className="row" style={{ marginTop: 10 }}>
-          {[...data.planets].sort((a, b) => a.written_at.localeCompare(b.written_at)).map((p) => (
-            <button key={p.id} className="small" onClick={() => setPick({ kind: "planet", id: p.id })}>{p.title}</button>
-          ))}
-        </div>
-      </details>
-
-      <EditPanel data={data} onChanged={reload} />
     </main>
   );
 }

@@ -96,7 +96,7 @@ test("꾸미기", async ({ page }, info) => {
 
   await test.step("우주 넓히기: 처음 나온 작은 별 · 사람을 별지기가 알려 줌", async () => {
     await nav("우주");
-    await page.getByText("목록에서 기록 고르기").click();
+    await page.getByRole("group", { name: "우주 도구" }).getByRole("button", { name: "기록 목록" }).click();   // 우주 위 떠 있는 단추(2026-10-28)
     await page.getByRole("button", { name: "7/18 가족 여행 2일차" }).click();
     await page.getByTestId("planet-card").getByRole("link", { name: "정리한 결과 보기" }).click();
     const grew = page.getByTestId("universe-grew");
@@ -107,7 +107,7 @@ test("꾸미기", async ({ page }, info) => {
     await shot("06-universe-grew");
     await grew.getByRole("link", { name: "우주에서 보기" }).click();
     await expect(page).toHaveURL(/\/universe$/);
-    await page.getByText("목록에서 기록 고르기").click();
+    await page.getByRole("group", { name: "우주 도구" }).getByRole("button", { name: "기록 목록" }).click();   // 우주 위 떠 있는 단추(2026-10-28)
     await page.getByRole("button", { name: "8/28 막막함" }).click();
     await page.getByTestId("planet-card").getByRole("link", { name: "정리한 결과 보기" }).click();
     await expect(page.getByTestId("result")).toBeVisible();

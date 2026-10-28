@@ -267,3 +267,27 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
 .imp-list { margin: 0; padding: 6px 8px 6px 30px; max-height: min(34dvh, 300px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
 .imp-list li { padding: 2px 0; }
 .imp-list li.skip { color: var(--faint); }
+
+/* 우주 풀스크린(app/universe): 작업 칸을 꽉 채움 = 머리줄(49px) · 휴대폰 아래 막대(64px)를 뺀 높이. Shell 의 높이를 바꾸면 이 둘도 */
+:root { --uni-top: 49px; --uni-tab: 64px; }
+main.uni-page { max-width: none; padding: 0; }
+.uni-page .uni { height: calc(100dvh - var(--uni-top)); min-height: 320px; border: 0; border-radius: 0; }
+@media (max-width: 899px) { .uni-page .uni { height: calc(100dvh - var(--uni-top) - var(--uni-tab) - env(safe-area-inset-bottom)); } }
+.uni .uni-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 80%; text-align: center; }
+/* 떠 있는 단추(기호 뜻 · 기록 목록 · 우주 고치기 · 전체 화면): PC 왼쪽 아래 한 줄(오른쪽 칸에 가리지 않게),
+   휴대폰 오른쪽 위 세로(아래에서 올라오는 칸에 가리지 않게, 글자는 읽어 주기만) */
+.uni .fabs { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.uni .fab { background: rgba(38, 38, 38, .9); border-color: var(--line); padding: 6px 12px; }
+.uni .fab svg { flex: none; color: var(--muted); }
+.uni .fab[aria-pressed="true"] svg { color: var(--accent); }
+.uni:has(> .pcard) .tools, .uni:has(> .pcard) .fabs { right: 370px; }   /* PC 오른쪽 칸이 열려 있으면 그 옆까지만 */
+.uni .pcard h2 { font-size: 1.05rem; }
+.uni .legend { grid-template-columns: 1fr; }
+@media (max-width: 899px) {
+  .uni .fabs { left: auto; bottom: auto; top: 10px; right: 10px; flex-direction: column; flex-wrap: nowrap; }
+  .uni .fab { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .uni .fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .uni .tools, .uni:has(> .pcard) .tools { right: 64px; }
+  .uni:has(> .pcard) .fabs { right: 10px; }
+  .uni .pcard { max-height: 55%; box-shadow: 0 -8px 32px rgba(0, 0, 0, .45); }
+}

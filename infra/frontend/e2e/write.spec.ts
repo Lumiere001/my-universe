@@ -98,7 +98,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
     await expect(page.getByText("기록을 지웠어요.")).toBeVisible();
     await expect(item).toHaveCount(0);
     await nav("우주");
-    await page.getByText("목록에서 기록 고르기").click();
+    await page.getByRole("group", { name: "우주 도구" }).getByRole("button", { name: "기록 목록" }).click();   // 우주 위 떠 있는 단추(2026-10-28)
     await expect(page.getByRole("button", { name: "산책" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /제주 여행/ })).toHaveCount(0);
   });
