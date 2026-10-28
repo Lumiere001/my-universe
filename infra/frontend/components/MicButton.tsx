@@ -1,15 +1,19 @@
 "use client";
 // 말로 쓰기(WS21): 마이크로 녹음하거나 녹음 파일(m4a · mp3 · wav · webm, 휴대폰 음성 메모)을 올리면 받아써서 onText 로 넘긴다.
 // 이야기하기 화면은 대화 턴으로 보내고, 쓰기 화면은 칸에 채운다(주소에 기대지 않는 컴포넌트).
+// 모양(2026-10-28): 입력 상자 도구 줄에 들어가는 아이콘 둘(마이크 · 클립) + 알림 한 줄(.tool-msg, 도구 줄 아래로 내려감).
+// 받는 형식 안내는 클립의 풍선 도움말(title)과 화면 읽기용 설명(aria-describedby)으로만.
 // Vercel 본문 한도(4.5MB): 브라우저가 소리를 풀어 16kHz 모노 WAV 2분 조각(약 3.8MB)으로 나누고(조용한 곳에서 자름) 하나씩
 // 보낸 뒤 받아쓴 글을 이어 붙인다. 서버는 조각을 모으지 않고 받아쓴 뒤 바로 버린다(녹음 저장 0).
 // 읽어 주기(useReadAloud): 별지기 말을 ElevenLabs 목소리로. 켜고 끔은 이 기기에만 기억(기본 꺼짐).
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { speak, transcribe, why } from "@/lib/api";
+import Icon from "./Icon";
 
 const RATE = 16000, PIECE_S = 120, MAX_RAW = 4 * 1024 * 1024;
 const MAX_MIN = 20;   // 입력 검사: 받아쓴 글이 한 번에 보낼 수 있는 8000자를 넘지 않게(한국어 말 약 350자/분)
 const ACCEPT = ".m4a,.mp3,.wav,.webm,.ogg,audio/*";
+export const VOICE_HELP = "녹음 파일은 m4a · mp3 · wav · webm을 받아요. 길어도 괜찮아요. 녹음은 받아쓴 뒤 바로 버려요.";
 
 // 녹음 → 16kHz 모노 소리. 이 브라우저가 못 푸는 형식이면 null(4MB 아래면 그대로 보냄).
 async function decode(b: Blob): Promise<Float32Array | null> {
@@ -67,6 +71,7 @@ export default function MicButton({ onText, disabled }: { onText: (text: string)
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const stream = useRef<MediaStream | null>(null);
+  const helpId = useId();
   useEffect(() => {
     if (!rec) return;
     const t = setInterval(() => setSec((s) => s + 1), 1000);
@@ -122,26 +127,25 @@ export default function MicButton({ onText, disabled }: { onText: (text: string)
     if (f) run(f);
   };
   const off = disabled || !!busy;
+  const time = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 
+  // 조각(fragment)으로 돌려줘서 부르는 쪽 도구 줄(.tools)에 아이콘이 나란히 서고, 알림은 줄 아래로 내려간다
   return (
-    <div className="stack" style={{ gap: 6 }}>
-      <div className="row">
-        <button type="button" aria-pressed={!!rec} disabled={off}
-          onClick={() => (rec ? rec.stop() : start())}>
-          {rec ? `말 마치기 (${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")})` : "말로 하기"}
-        </button>
-        <label className="btn" style={{ margin: 0, position: "relative", opacity: off || rec ? 0.5 : 1 }}>
-          녹음 파일 올리기
-          <input type="file" accept={ACCEPT} onChange={pick} disabled={off || !!rec} data-testid="voice-file"
-            style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-        </label>
-      </div>
-      <p className="sub" style={{ margin: 0 }}>
-        {rec ? "듣고 있어요. 다 말했으면 ‘말 마치기’를 눌러 주세요." : "녹음 파일은 m4a · mp3 · wav · webm을 받아요. 길어도 괜찮아요. 녹음은 받아쓴 뒤 바로 버려요."}
-      </p>
-      {busy && <p className="sub" role="status" style={{ margin: 0 }}>{busy}</p>}
-      {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
-    </div>
+    <>
+      <button type="button" className={rec ? "tbtn rec" : "tbtn"} disabled={off} onClick={() => (rec ? rec.stop() : start())}
+        aria-label={rec ? `말 마치기 (${time})` : "말로 하기"} title={rec ? "말 마치기" : "말로 하기"}>
+        <Icon name={rec ? "stop" : "mic"} />{rec && <span aria-hidden>{time}</span>}
+      </button>
+      <label className="tbtn" title={`녹음 파일 올리기\n${VOICE_HELP}`}>
+        <Icon name="clip" />
+        <input type="file" className="sr" accept={ACCEPT} onChange={pick} disabled={off || !!rec} data-testid="voice-file"
+          aria-label="녹음 파일 올리기" aria-describedby={helpId} />
+      </label>
+      <span id={helpId} className="sr">{VOICE_HELP}</span>
+      {rec && <p className="tool-msg sub">듣고 있어요. 다 말했으면 ‘말 마치기’를 눌러 주세요.</p>}
+      {busy && <p className="tool-msg sub" role="status">{busy}</p>}
+      {err && <p className="tool-msg err" role="alert">{err}</p>}
+    </>
   );
 }
 
