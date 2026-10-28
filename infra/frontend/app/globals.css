@@ -344,12 +344,12 @@ main.hist { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
 .tools > .tool-msg { order: 1; flex: 1 0 100%; margin: 4px 0 2px; font-size: .85rem; }
 
-/* 브라우저 기본 popover(더 보기 · 쓰는 방법): 화면 가운데 작은 칸, 바깥을 누르거나 Esc 로 닫힘 */
-.pop { inset: 0; margin: auto; width: min(440px, calc(100vw - 32px)); max-height: min(72dvh, 560px); overflow-y: auto; padding: 16px;
+/* 브라우저 기본 popover(더 보기 · 쓰는 방법): 화면 가운데 작은 칸, 바깥을 누르거나 Esc 로 닫힘. [popover] 로 묶어 지난 기록의 ⋯ 펼침(details.pop)과 섞이지 않게 */
+[popover].pop { inset: 0; margin: auto; width: min(440px, calc(100vw - 32px)); max-height: min(72dvh, 560px); overflow-y: auto; padding: 16px;
   background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
-.pop::backdrop { background: rgba(0, 0, 0, .45); }
-.pop h2 { font-size: 1rem; margin: 0; }
-.pop > * + * { margin-top: 10px; }
+[popover].pop::backdrop { background: rgba(0, 0, 0, .45); }
+[popover].pop h2 { font-size: 1rem; margin: 0; }
+[popover].pop > * + * { margin-top: 10px; }
 .pop p { margin-bottom: 0; font-size: .9rem; color: var(--muted); }
 .pop p b { color: var(--text); margin-right: 6px; }
 .pop-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
