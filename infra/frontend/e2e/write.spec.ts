@@ -18,15 +18,44 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
   const result = page.getByTestId("result");
   const again = async () => { await page.getByRole("button", { name: "새 글 쓰기" }).click(); await expect(page.getByLabel(/마음껏 적어/)).toBeVisible(); };
 
-  await test.step("말풍선: 날씨 질문 + 다짐 안부 → 건너뛰면 날씨 질문 없음", async () => {
+  await test.step("말풍선(접힌 한 줄 → 누르면 펼침): 날씨 질문 + 다짐 안부 → 건너뛰면 날씨 질문 없음", async () => {
     await page.goto("/write");
+    await expect(bubble.locator("summary")).toContainText("마음 날씨");          // 접힌 줄에 첫 문장 · 다짐 안부 표시
+    await expect(bubble.locator("summary")).toContainText("다짐 안부");
+    await expect(bubble.getByTestId("prompt-vow")).toBeHidden();
+    await bubble.locator("summary").click();
     await expect(bubble.getByTestId("prompt-question")).toContainText("마음 날씨");
     await expect(bubble.getByTestId("prompt-vow")).toContainText("팀 세 곳");
     await bubble.getByRole("button", { name: "다음부터 묻지 않기" }).click();
     await expect(bubble.getByText("다음부터 마음 날씨는 묻지 않을게요")).toBeVisible();
     await nav("지난 기록"); await nav("직접 쓰기");
+    await bubble.locator("summary").click();
     await expect(bubble.getByTestId("prompt-vow")).toBeVisible();
     await expect(bubble.getByTestId("prompt-question")).toHaveCount(0);
+  });
+
+  await test.step("일기장: 날짜 줄 = 글이 다루는 날 · 마크다운 미리보기(글 속 태그는 글자로)", async () => {
+    await expect(page.locator(".diary-date")).toContainText(/\d+월 \d+일 .요일/);
+    const box = page.getByLabel(/마음껏 적어/);
+    await box.fill("# 산책\n바람이 **시원했다**. *조금* 걸었다.\n둘째 줄\n\n- 공원\n- 편지\n\n1. 하나\n\n> 내일도\n\n---\n<b>태그</b> 2 * 3 * 4");
+    await page.getByRole("button", { name: "미리보기" }).click();
+    const view = page.getByRole("article", { name: "미리보기" });
+    await expect(view.getByRole("heading", { name: "산책" })).toBeVisible();
+    await expect(view.locator("strong")).toHaveText("시원했다");
+    await expect(view.locator("em")).toHaveText("조금");
+    await expect(view.locator("p br")).toHaveCount(1);                                // 줄바꿈
+    await expect(view.locator("ul li")).toHaveCount(2);
+    await expect(view.locator("ol li")).toHaveCount(1);
+    await expect(view.locator("blockquote")).toHaveText("내일도");
+    await expect(view.locator("hr")).toHaveCount(1);
+    await expect(view.locator("b")).toHaveCount(0);                                   // HTML 은 그리지 않음
+    await expect(view).toContainText("<b>태그</b> 2 * 3 * 4");
+    await expect(box).toBeHidden();
+    await page.getByRole("button", { name: "쓰기", exact: true }).click();
+    await expect(box).toHaveValue(/^# 산책\n/);                                       // 별지기에게는 쓴 글 그대로
+    await box.fill("");
+    await bubble.locator("summary").click();                                          // 말풍선을 다시 접으면
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), "일기장이 한 화면에").toBe(true);
   });
 
   await test.step("어제 날짜 · 제목으로 쓰면 결과의 날이 어제", async () => {

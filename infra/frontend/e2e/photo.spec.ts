@@ -10,8 +10,8 @@ test("사진으로 쓰기", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/write");
-  const box = page.getByRole("group", { name: "사진으로 쓰기" });
-  const input = box.getByLabel(/사진에서 글자 읽기/);
+  const box = page.getByRole("group", { name: "사진으로 쓰기" });   // 사진을 고르면 도구 줄 아래에 펼쳐지는 묶음
+  const input = page.getByLabel(/사진에서 글자 읽기/);               // 도구 줄의 사진 아이콘
   const list = box.getByRole("list", { name: "읽을 사진(쪽 순서)" });
   const diary = page.getByLabel(/마음껏 적어/);
 

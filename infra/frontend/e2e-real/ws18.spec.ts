@@ -74,7 +74,7 @@ test("사진으로 쓰기(실제 글자 읽기 · 로컬 백엔드)", async ({ p
   const shot = (name: string, full = false) => page.screenshot({ path: `${OUT}/${dev}-${name}.png`, fullPage: full, scale: "css",
     style: full ? ".top { position: static !important; } .top .nav { visibility: hidden; }" : undefined });
   const box = page.getByRole("group", { name: "사진으로 쓰기" });
-  const input = box.getByLabel(/사진에서 글자 읽기/);
+  const input = page.getByLabel(/사진에서 글자 읽기/);   // 도구 줄의 사진 아이콘(묶음은 사진을 고르면 펼쳐짐)
   const list = box.getByRole("list", { name: "읽을 사진(쪽 순서)" });
   const diary = page.getByLabel(/마음껏 적어/);
 
