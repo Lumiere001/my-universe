@@ -89,7 +89,7 @@ let people: Person[] = [
 
 let settings: Settings = {
   tone: "다정하게", fact_bomb_ack: false, gentle_today: null, comfort_only_today: null,
-  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기", tone_note: "",
+  suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기", tone_note: "", tts_voice: "따뜻한",
 };
 
 let aspiration: AspirationState = {

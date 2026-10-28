@@ -124,6 +124,14 @@ class SettingsPatch(In):
     # 꾸미기(WS25, 화면에만 씀 · LLM 에 보내지 않음). 값 목록 = infra/frontend/components/universeLook.ts 의 THEMES · KEEPER_LOOKS
     theme: Optional[Literal["밤하늘", "새벽", "오로라", "먹"]] = None
     keeper_look: Optional[Literal["글자", "별", "달", "고양이", "행성"]] = None
+    tts_voice: Optional[str] = None   # 읽어 주기 목소리(config.TTS_VOICES 의 이름)
+
+    @field_validator("tts_voice")
+    @classmethod
+    def _voice(cls, v):
+        if v is not None and v not in config.TTS_VOICES:
+            raise ValueError("unknown tts_voice")
+        return v
 
     @field_validator("tone")
     @classmethod

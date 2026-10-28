@@ -71,6 +71,7 @@ export type Settings = {
   suggestions: "적게" | "보통" | "많이"; cross_links: "숨김" | "눌렀을 때" | "항상"; weather_ask: boolean;
   keeper_name?: string;
   theme?: string; keeper_look?: string;   // 꾸미기(WS25): 우주 테마 · 별지기 모습(값 목록은 components/universeLook.ts)
+  tts_voice?: string;   // 읽어 주기 목소리(값 목록은 app/settings/page.tsx VOICES = 서버 config.TTS_VOICES)
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean } };

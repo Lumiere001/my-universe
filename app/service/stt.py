@@ -74,9 +74,10 @@ def transcribe(audio, fmt):
     return {"text": (r.get("text") or "").strip(), "seconds": sec, "usd": usd}
 
 
-def speak(text):
-    """글 → (mp3 바이트, 추정 비용)."""
-    r = _call(f"/text-to-speech/{config.TTS_VOICE_ID}", params={"output_format": "mp3_44100_64"},
+def speak(text, voice=None):
+    """글 → (mp3 바이트, 추정 비용). voice = 설정 tts_voice(목록 밖 · 없음이면 기본 목소리)."""
+    vid = config.TTS_VOICES.get(voice) or config.TTS_VOICE_ID
+    r = _call(f"/text-to-speech/{vid}", params={"output_format": "mp3_44100_64"},
               json={"text": text, "model_id": config.TTS_MODEL})
     usd = len(text) / 1000 * config.PRICE_TTS_PER_1K_CHARS
     logger.log("external", what="elevenlabs_tts", chars=len(text), est_usd=round(usd, 5))

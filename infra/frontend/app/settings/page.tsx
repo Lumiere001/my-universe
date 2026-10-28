@@ -17,6 +17,12 @@ let lastGroup: Group = "별지기";   // 같은 탭 안에서 설정에 다시 �
 const CUSTOM: Tone = "직접 정하기";
 const NOTE_MAX = 200;
 const hex = (n: number) => "#" + n.toString(16).padStart(6, "0");
+// 읽어 주기 목소리: 서버 app/core/config.py TTS_VOICES 와 같은 이름 · 순서(첫 값 = 기본). 미리 듣기 = public/voices/ 의 짧은 녹음(유료 호출 없음)
+const VOICES = { "따뜻한": "george", "차분한": "matilda", "부드러운": "sarah", "밝은": "will" } as const;
+type Voice = keyof typeof VOICES;
+const VOICE_NAMES = Object.keys(VOICES) as Voice[];
+let sample: HTMLAudioElement | null = null;   // 미리 듣기는 한 번에 하나만
+const listen = (v: Voice) => { sample?.pause(); sample = new Audio(`/voices/${VOICES[v]}.mp3`); sample.play().catch(() => { /* 못 틀어도 고른 목소리는 그대로 */ }); };
 
 // 설정 한 줄: 이름 · 한 줄 설명이 먼저, 고르는 것이 그 뒤(넓은 화면은 오른쪽, 휴대폰은 아래). htmlFor 가 있으면 이름이 입력 칸 이름표.
 function Row({ name, desc, htmlFor, children }: { name: string; desc?: string; htmlFor?: string; children: (id: string) => React.ReactNode }) {
@@ -181,6 +187,17 @@ export default function SettingsPage() {
             <Row name="마음 날씨 물어보기" desc="처음 만났을 때와 기분이 드러나지 않은 글에만 물어요.">
               {(by) => <Seg by={by} options={["묻기", "묻지 않기"] as const} value={s.weather_ask ? "묻기" : "묻지 않기"}
                 onPick={(v) => save({ weather_ask: v === "묻기" })} />}
+            </Row>
+            <Row name="읽어 주기 목소리" desc="이야기하기에서 '읽어 주기'를 켜면 별지기 말을 이 목소리로 읽어요.">
+              {(by) => {
+                const v = (s.tts_voice ?? VOICE_NAMES[0]) as Voice;
+                return (
+                  <div className="row">
+                    <Seg by={by} options={VOICE_NAMES} value={v} onPick={(x) => save({ tts_voice: x })} />
+                    <button type="button" className="small" aria-label={`${v} 목소리 미리 듣기`} onClick={() => listen(v)}><span aria-hidden>▶ </span>미리 듣기</button>
+                  </div>
+                );
+              }}
             </Row>
             <Row name="오늘 상태" desc="둘 다 별지기 한마디에 붙은 버튼으로 켜고, 그날만 이어져요.">
               {() => <p className="sub" style={{ margin: 0 }}>오늘은 살살: {s.gentle_today ? "켜짐(오늘만)" : "꺼짐"} · 오늘은 위로만: {s.comfort_only_today ? "켜짐(오늘만)" : "꺼짐"}</p>}

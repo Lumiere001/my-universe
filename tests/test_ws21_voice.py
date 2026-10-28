@@ -3,14 +3,16 @@
 분 · 글자 단위 비용 기록. 외부 호출은 모두 가짜, 가상 인물 글만."""
 import io
 import json
+import re
 import wave
+from pathlib import Path
 
 import httpx
 import pytest
 
 from app.core import config
 from app.service import stt
-from tests.test_api_flow import H1, client, events  # noqa: F401  (client 픽스처)
+from tests.test_api_flow import H1, H2, client, events  # noqa: F401  (client 픽스처)
 from tests.test_graph_flow import U1, env  # noqa: F401  (env 픽스처)
 from tests.test_ws19_talk import last, say, start, talk  # noqa: F401  (talk 픽스처)
 from tests.test_ws20_confirm import finish
@@ -210,3 +212,31 @@ def test_long_story_reply_gets_third_try(client, env, talk):  # noqa: F811
     talk.queue[:] = [bad, bad, good]
     v = last(say(client, c["id"], "점심엔 국수를 먹었다."))
     assert v["turns"][-1]["text"] in chat.SAFE["다정하게"] and len(talk.reply_calls) == 5   # 짧은 말: 두 번 뒤 기본 문장
+
+
+def test_speak_uses_chosen_voice(client, env, eleven):  # noqa: F811
+    """읽어 주기 목소리(설정 tts_voice): 기본 = 예전 목소리, 고르면 그 목소리로, 목록 밖 값은 422 · 저장 안 됨."""
+    tts = "https://api.elevenlabs.io/v1/text-to-speech/"
+    assert client.get("/me", headers=H1).json()["settings"]["tts_voice"] == "따뜻한"
+    client.post("/voice/speak", headers=H1, json={"text": "안녕"})
+    assert eleven.calls[-1]["url"] == tts + config.TTS_VOICE_ID
+    assert client.patch("/settings", headers=H1, json={"tts_voice": "부드러운"}).json()["tts_voice"] == "부드러운"
+    client.post("/voice/speak", headers=H1, json={"text": "안녕"})
+    assert eleven.calls[-1]["url"] == tts + config.TTS_VOICES["부드러운"]
+    for bad in ("George", "JBFqnCBsd6RMkjVDRZzb", "", 3, "../voices"):
+        assert client.patch("/settings", headers=H1, json={"tts_voice": bad}).status_code == 422, bad
+    assert client.get("/me", headers=H1).json()["settings"]["tts_voice"] == "부드러운"
+    assert client.get("/me", headers=H2).json()["settings"]["tts_voice"] == "따뜻한"          # 남의 설정은 안 바뀜
+    stt.speak("안녕", "없어진 목소리")
+    assert eleven.calls[-1]["url"] == tts + config.TTS_VOICE_ID                   # 목록에서 빠진 옛 값 → 기본 목소리
+
+
+def test_front_voices_match_backend():
+    """화면 목록(app/settings/page.tsx VOICES) = 서버 config.TTS_VOICES(이름 · 순서), 미리 듣기 녹음은 작은 mp3."""
+    front = Path(__file__).resolve().parents[1] / "infra" / "frontend"
+    block = re.search(r"const VOICES = \{(.*?)\} as const", (front / "app" / "settings" / "page.tsx").read_text(encoding="utf-8")).group(1)
+    pairs = re.findall(r'"([^"]+)": "(\w+)"', block)
+    assert [k for k, _ in pairs] == list(config.TTS_VOICES)
+    for _, f in pairs:
+        b = (front / "public" / "voices" / f"{f}.mp3").read_bytes()
+        assert stt.kind(b) == "mp3" and len(b) < 40_000
