@@ -13,7 +13,7 @@ import time
 
 from openai import OpenAI
 
-from app.core import config, llm, logger
+from app.core import config, llm, logger, trace
 
 _client = None
 
@@ -75,20 +75,23 @@ def run(kind, html):
         raise RuntimeError("Studio 호출은 llm.guard 안에서만")
     agent_id, config_id = ((config.RECORD_AGENT_ID, config.V8_RECORD_CONFIG_ID) if kind == "record"
                            else (config.OBSERVE_AGENT_ID, config.V8_OBSERVE_CONFIG_ID))
-    m.check(html, f"studio_{kind}")
-    last = None
-    for attempt in (1, 2):
-        t0 = time.time()
-        try:
-            data, pages = _once(agent_id, config_id, html, config.STUDIO_TIMEOUT_S)
-        except Exception as e:   # 네트워크 · 실패 상태 · JSON 아님
-            last = e
-            m.add(config.PRICE_STUDIO_PAGE)   # 실패해도 과금될 수 있어 크게 잡는다
-            logger.log("external", what=f"studio_{kind}", ok=False, attempts=attempt,
-                       code=getattr(e, "code", type(e).__name__))
-            continue
-        m.add(pages * config.PRICE_STUDIO_PAGE)
-        logger.log("external", what=f"studio_{kind}", ok=True, attempts=attempt, pages=pages,
-                   ms=int((time.time() - t0) * 1000))
-        return data
-    raise last if isinstance(last, StudioError) else StudioError("studio_failed")
+    with trace.span("studio.run", kind="AGENT", system="upstage", op="invoke_agent", agent=kind, config_id=str(config_id)):
+        m.check(html, f"studio_{kind}")
+        last, usd0 = None, m.usd
+        for attempt in (1, 2):
+            t0 = time.time()
+            try:
+                data, pages = _once(agent_id, config_id, html, config.STUDIO_TIMEOUT_S)
+            except Exception as e:   # 네트워크 · 실패 상태 · JSON 아님
+                last = e
+                m.add(config.PRICE_STUDIO_PAGE)   # 실패해도 과금될 수 있어 크게 잡는다
+                logger.log("external", what=f"studio_{kind}", ok=False, attempts=attempt,
+                           code=getattr(e, "code", type(e).__name__))
+                continue
+            m.add(pages * config.PRICE_STUDIO_PAGE)
+            logger.log("external", what=f"studio_{kind}", ok=True, attempts=attempt, pages=pages,
+                       ms=int((time.time() - t0) * 1000))
+            trace.set(attempts=attempt, pages=pages, est_usd=m.usd - usd0)
+            return data
+        trace.set(attempts=2, est_usd=m.usd - usd0)
+        raise last if isinstance(last, StudioError) else StudioError("studio_failed")

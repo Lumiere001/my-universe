@@ -10,6 +10,7 @@ app/api/diary.py
 POST /diary/{id}/confirm 이 고친 것을 넣어 저장한다. 텍스트 길(confirm 없음)은 그대로.
 """
 
+import contextvars
 import json
 import queue
 import threading
@@ -22,7 +23,7 @@ from psycopg.errors import UniqueViolation
 
 from app.agents import graph
 from app.api import consent
-from app.core import config
+from app.core import config, trace
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
 from app.models import ConfirmIn, DiaryIn
@@ -43,27 +44,36 @@ MESSAGES = {
 }
 
 
-def _start(repo, uid, eid):
-    """그래프를 백그라운드로 돌리고 (사건, 값) 줄을 돌려준다. 부르기 전에 diary.lock 으로 잠금을 잡아 둔다(끝나면 풂)."""
+def _start(repo, uid, eid, name="diary.stream"):
+    """그래프를 백그라운드로 돌리고 (사건, 값) 줄을 돌려준다. 부르기 전에 diary.lock 으로 잠금을 잡아 둔다(끝나면 풂).
+    name: 이 실행의 맨 위 span(추적, 부른 쪽 span 이 있으면 그 아래)."""
     q = queue.Queue()
 
     def work():
         try:
+            with trace.span(name, kind="CHAIN", entry_id=eid):
+                _work()
+        finally:
+            q.put(None)   # span 을 닫은 뒤 끝을 알린다
+
+    def _work():
+        try:
             graph.run(repo, uid, eid, lambda p: q.put(("progress", p)))
             with repo.session(uid) as s:
-                q.put(("result", views.entry_result(s, eid)))
+                r = views.entry_result(s, eid)
+            trace.set(status=r["status"])
+            q.put(("result", r))
         except Exception as e:
             code = graph.error_code(e)
+            trace.set(status="failed", error_code=code)
             q.put(("error", {"entry_id": eid, "code": code, "message": MESSAGES.get(code, MESSAGES["internal"]),
                              "resumable": code != "real_name_leak"}))
         finally:
-            try:
-                with repo.session(uid) as s:
-                    diary.unlock(s, eid)
-            finally:
-                q.put(None)
+            with repo.session(uid) as s:
+                diary.unlock(s, eid)
 
-    threading.Thread(target=work, name=f"diary-{eid}", daemon=True).start()
+    # 지금 문맥(추적 span)을 들고 간다
+    threading.Thread(target=contextvars.copy_context().run, args=(work,), name=f"diary-{eid}", daemon=True).start()
     return q
 
 
@@ -154,7 +164,7 @@ def write(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
     if dup:
         ev, data = _same(repo, user["id"], eid)
     else:
-        q = _start(repo, user["id"], eid)
+        q = _start(repo, user["id"], eid, "diary.write")
         out = None
         while (item := q.get()) is not None:
             out = item
@@ -176,7 +186,7 @@ def resume(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
         if not diary.lock(s, eid):
             raise ApiError(409, "already_running", "이 글은 지금 정리하고 있어요. 조금만 기다려 주세요.")
         diary.add_run(s, eid, "resume")
-    return _stream(_start(repo, user["id"], eid))
+    return _stream(_start(repo, user["id"], eid, "diary.resume"))
 
 
 LIST_MAX = 500   # 지난 기록 달력 · 찾기 · 주제별은 기록을 한 번에 모두 읽는다(더 있으면 before 로 이어 읽음, docs/api-v8.md §2)

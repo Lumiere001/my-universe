@@ -20,7 +20,7 @@ from typing import Any, Callable, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app.agents import graph, tools
-from app.core import config, llm, logger
+from app.core import config, llm, logger, trace
 from app.repository import conversations, diary
 from app.service import chat
 from app.service.rules import pick_past
@@ -66,11 +66,12 @@ def node(name):
         def run(state, config):
             ctx = config["configurable"]["ctx"]
             ctx.emit({"conversation_id": ctx.cid, "step": name, "label": STEPS[name]})
-            with llm.guard(state["people"]) as m:
+            with trace.span(name, kind="CHAIN"), llm.guard(state["people"]) as m:
                 try:
                     out = fn(state, ctx) or {}
                 finally:
                     ctx.calls, ctx.usd = ctx.calls + m.calls, ctx.usd + m.usd
+                    trace.set(calls=m.calls, est_usd=m.usd)
             return out
         run.__name__ = name
         return run
@@ -233,6 +234,7 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
     except Exception as e:
         code = error_code(e)
         logger.log("error", step="talk_turn", conversation=cid, turn=n, code=code, calls=ctx.calls, what=type(e).__name__)
+        trace.set(turn=n, calls=ctx.calls, est_usd=ctx.usd)
         with repo.session(uid) as s:
             diary.add_run(s, cid, "chat_turn", (time.time() - t0) * 1000, ctx.calls, ctx.usd, code, {"conversation": cid, "turn": n})
         raise
@@ -255,6 +257,7 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
         c = conversations.get(s, cid)
     logger.log("step", step="talk_turn", conversation=cid, turn=n, ms=int(ms), calls=ctx.calls, est_usd=round(ctx.usd, 4),
                checks=ctx.checks)
+    trace.set(turn=n, calls=ctx.calls, est_usd=ctx.usd, checks=sum(ctx.checks))   # 답 검사 문제 개수 합
     return view(c)
 
 
@@ -267,7 +270,7 @@ def make_draft(repo, uid, cid):
         people = _people(s, users) if users else []
     if not users:
         return None
-    with llm.guard(people) as m:
+    with trace.span("draft", kind="CHAIN"), llm.guard(people) as m:
         mk, table = tools.mask_obj(users, people)
         d = chat.draft(mk, crisis=bool(c.get("crisis")), limit=config.MAX_TEXT_CHARS)
     out = {"title": unmask(d["title"], table), "text": unmask(d["text"], table), "fallback": d["fallback"]}

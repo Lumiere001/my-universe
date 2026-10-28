@@ -57,6 +57,7 @@ push · PR 마다 GitHub Actions(`.github/workflows/test.yml`, 이름 `test`)가
 - JSON 내려받기: 결과 카드의 관측 보고서(관측 상태 · 한계)에서 기록 하나, 지난 기록 화면에서 전체를 내려받는다(`app/api/export.py`, `GET /export` · `/export/{id}`, 모양은 [docs/api-v8.md](docs/api-v8.md) §2.1). 다른 사람 이름은 가리지 않는다(본인 기록).
 - 사진(손글씨) 입력: 쓰기 화면에서 사진 여러 장(쪽 순서 바꾸기) → 화면이 4MB 아래 JPEG 로 줄여 한 장씩 `POST /photo/read`(Upstage Document Parse 로 글자만 — 줄 공책 표는 줄마다 풀고, `PHOTO_READ_MODEL=ocr` 로 되돌림, 사진 · 읽은 글은 저장 안 함, `app/api/upload.py` · `app/service/ocr.py`) → 읽은 글을 쓰기 칸에서 고쳐 띄움(`source=사진`, 그 뒤는 텍스트와 같은 길). 시험 사진은 가상 손글씨 `tests/fixtures/photos`(`uv run --frozen --with pillow python tools/photo_samples.py make`), 실제 글자 읽기 화면 확인은 `infra/frontend/e2e-real/ws18.spec.ts`(유료, 쪽당 $0.01).
 - 운영 화면: `/ops`(메뉴에 없음). 백엔드 환경변수 `ADMIN_EMAILS`(운영자 구글 계정) 계정만 열린다. 모든 사용자의 숫자 · 코드만(실행 · 관문 · 평균 시간 · 추정 비용 합계와 $50 경고 · 실패 · 골든셋 · 만족 · 지향 · 대화 · 말 걸기 지표, DB 역할 `app_ops` 는 암호문 칸을 못 읽음), 피드백 원문은 열람에 동의한 사용자 것만 가명으로 · 볼 때마다 열람 기록, 피드백 정리(Solar)는 누를 때만. 주 1회 오답 모으기: `OPS_TOKEN=… uv run --frozen python scripts/collect_feedback.py --api <백엔드>`(로컬은 `--local`). 설정 화면에는 내 피드백으로 본 "이 설정으로 바꿀까요?"(영역 넘는 선 · 제안 빈도)가 뜬다. API: [docs/api-v8.md §6.2](docs/api-v8.md).
+- 요청 추적(Trace, 과제 · 로컬 확인용): OpenTelemetry span(단계 순서 · 시간 · 호출 수 · 토큰 · 추정 비용 · 오류 코드만, 원문 · 이름 · 프롬프트 · 답 없음). `OTEL_EXPORTER_OTLP_ENDPOINT` 가 있을 때만 켜지고 운영 배포는 끔. 로컬 Phoenix(`uvx arize-phoenix serve`) + `scripts/trace_demo.py`(유료 호출 0) — [docs/trace.md](docs/trace.md).
 
 ### GHCR 이미지
 

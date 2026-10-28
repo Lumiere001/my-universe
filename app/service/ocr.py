@@ -18,7 +18,7 @@ from html.parser import HTMLParser
 
 import httpx
 
-from app.core import config, logger
+from app.core import config, logger, trace
 
 FORM = {"ocr": {"model": "ocr"},
         "document-parse": {"model": "document-parse", "ocr": "force", "output_formats": '["html", "text"]'}}
@@ -117,6 +117,7 @@ def ask(data, model):
         if r.status_code != 429 or attempt == 2:
             break
         time.sleep(1.5)
+    trace.set(http_status=r.status_code)
     if r.status_code >= 400:
         logger.log("external", what="upstage_ocr", model=model, ok=False, http=r.status_code, ms=int((time.time() - t0) * 1000))
         raise OcrError("ocr_busy" if r.status_code == 429 else "ocr_failed")
@@ -124,11 +125,13 @@ def ask(data, model):
     pages = j.get("numBilledPages") or (j.get("usage") or {}).get("pages") or 1
     logger.log("external", what="upstage_ocr", model=model, ok=True, pages=pages, est_usd=pages * PRICE_PER_PAGE[model],
                ms=int((time.time() - t0) * 1000))
+    trace.set(pages=pages, est_usd=pages * PRICE_PER_PAGE[model])
     return j
 
 
 def read_page(data, model=None):
     """사진 한 장 → 읽은 글(줄 단위, 빈 줄 뺌). model 을 안 주면 env PHOTO_READ_MODEL(기본 document-parse)."""
     model = model or config.PHOTO_READ_MODEL
-    j = ask(data, model)
-    return tidy(j.get("text") if model == "ocr" else dp_text(j))
+    with trace.span("ocr", kind="TOOL", system="upstage", model=model):   # 사진 · 읽은 글은 넣지 않음
+        j = ask(data, model)
+        return tidy(j.get("text") if model == "ocr" else dp_text(j))
