@@ -146,6 +146,7 @@ test("쓰기 화면 작은 묶음(실제 화면 · 로컬 백엔드)", async ({ 
 
   await test.step("지난 기록 지우기 → 목록 · 우주에서 사라짐", async () => {
     await nav("지난 기록");
+    await page.getByRole("searchbox", { name: "찾기" }).fill("제주");   // 3/28 로 고친 기록: 찾기로 바로
     const item = page.getByRole("button", { name: /3\/27~3\/29 제주 여행/ });
     await item.click();
     await page.getByRole("button", { name: "이 기록 지우기" }).click();

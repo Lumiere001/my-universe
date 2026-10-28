@@ -109,7 +109,7 @@ test("핵심 흐름", async ({ page }, info) => {
     for (const [i, a] of answers.entries()) {
       await page.locator("#asp").fill(a);
       if (i === 2) await shot("09-aspiration-form");
-      await page.getByRole("button", { name: "다음" }).click();
+      await page.getByRole("button", { name: "다음", exact: true }).click();
     }
     await page.getByRole("button", { name: "성취" }).click();
     await page.getByRole("button", { name: "규범" }).click();
@@ -178,12 +178,33 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByText(/지은을\(를\) 지웠어요/)).toBeVisible();
   });
 
-  await test.step("지난 기록", async () => {
+  await test.step("지난 기록: 달력 → 그날 기록 → 돌아오기 · 사이드바 작은 달력 · 주제별", async () => {
     await nav("지난 기록");
-    await expect(page.getByRole("button", { name: /10\/3 토요일 일기/ }).first()).toBeVisible();
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { name: "10월 3일 토요일" })).toBeVisible();   // 처음엔 가장 최근 기록의 날
+    await expect(main.getByRole("button", { name: /10\/3 토요일 일기/ }).first()).toBeVisible();
     await shot("15-history");
-    await page.getByRole("button", { name: /9\/20 토요일 일기/ }).click();
+    await main.getByRole("button", { name: "이전 달" }).click();
+    await main.getByRole("button", { name: "9월 20일, 기록 1편" }).click();
+    await main.getByRole("button", { name: /9\/20 토요일 일기/ }).click();
+    await expect(page).toHaveURL(/\/history\?id=e16/);
     await expect(page.getByTestId("result")).toBeVisible();
+    await page.getByRole("button", { name: "← 목록으로 돌아가기" }).click();
+    await expect(main.getByRole("heading", { name: "9월 20일 일요일" })).toBeVisible();   // 고른 날 그대로
+
+    const side = page.getByRole("complementary", { name: "사이드바" });
+    const drawer = !(await side.isVisible());
+    if (drawer) await page.getByRole("button", { name: "메뉴 열기 · 닫기" }).click();
+    await side.getByRole("button", { name: "9월 12일, 기록 1편" }).click();   // 작은 달력도 고른 날의 달(9월)
+    await expect(page).toHaveURL(/\/history\?day=2026-09-12/);
+    await expect(main.getByRole("button", { name: /9\/12 작은 회사 탐방/ })).toBeVisible();
+    if (drawer) await expect(side).toBeHidden();
+
+    await main.getByRole("button", { name: "주제별" }).click();
+    await expect(main.getByRole("button", { name: /^진로, 기록/ })).toHaveAttribute("aria-pressed", "true");   // 가장 많은 작은 별
+    await main.getByRole("button", { name: /^아침 걷기, 기록/ }).click();
+    await expect(main.getByRole("heading", { name: "건강 › 아침 걷기" })).toBeVisible();
+    await expect(main.getByRole("button", { name: /7\/10 걷기 2주째/ })).toBeVisible();
   });
 
   expect(errors, "화면 오류가 없어야 함").toEqual([]);

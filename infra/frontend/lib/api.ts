@@ -192,8 +192,8 @@ async function readStream(res: Response, h: StreamHandlers): Promise<EntryResult
 }
 
 /* ---------- 일기 ---------- */
-// 기록이 생기거나 바뀌면 사이드바 '지난 기록'(components/Shell.tsx)이 다시 읽는다
-const changed = <T,>(x: T): T => { window.dispatchEvent(new Event("entries")); return x; };
+// 기록이 생기거나 바뀌면 지난 기록 목록을 버리고 알린다 → 사이드바 · 지난 기록 화면(components/Calendar.tsx useEntries)이 다시 읽는다
+const changed = <T,>(x: T): T => { all = null; window.dispatchEvent(new Event("entries")); return x; };
 export async function writeDiary(input: DiaryInput, h: StreamHandlers): Promise<EntryResult> {
   if (MOCK) return changed(await (await mock()).writeDiary(input, h));
   return changed(await readStream(await postStream("/diary/stream", input, "서버에 닿지 못했어요. 인터넷 연결을 확인해 주세요."), h));
@@ -221,9 +221,22 @@ export async function exportDiary(id?: string): Promise<unknown> {
     records: id ? [await getDiary(id)] : [], domains: [] };
   return json("GET", id ? `/export/${encodeURIComponent(id)}` : "/export");
 }
-export async function listDiary(before?: string): Promise<{ entries: EntrySummary[] }> {
-  if (MOCK) return (await mock()).listDiary();
-  return json("GET", `/diary?limit=20${before ? "&before=" + encodeURIComponent(before) : ""}`);
+// 지난 기록 전부(최근에 쓴 것부터). 달력 · 찾기 · 주제별 · 사이드바가 같은 한 번의 읽기를 나눠 쓴다.
+// 서버 상한(500편)이 꽉 차면 마지막 쓴 시각을 before 로 이어 읽는다(docs/api-v8.md §2).
+// ponytail: 같은 초에 쓴 기록이 500편 경계에 걸치면 before(보다 앞)가 하나를 건너뛴다. 그런 일이 생기면 id 를 함께 넘기기.
+const PAGE = 500;
+let all: Promise<EntrySummary[]> | null = null;
+export function listDiary(): Promise<EntrySummary[]> {
+  return (all ??= (async () => {
+    if (MOCK) return (await (await mock()).listDiary()).entries;
+    const out: EntrySummary[] = [];
+    for (;;) {
+      const before = out.length ? "&before=" + encodeURIComponent(out[out.length - 1].written_at) : "";
+      const { entries } = await json<{ entries: EntrySummary[] }>("GET", `/diary?limit=${PAGE}${before}`);
+      out.push(...entries);
+      if (entries.length < PAGE) return out;
+    }
+  })().catch((e) => { all = null; throw e; }));
 }
 
 /* ---------- 우주 · 온톨로지 ---------- */

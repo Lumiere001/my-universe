@@ -63,12 +63,8 @@ p { margin: 0 0 .6em; }
 .side-sec > summary, .side-title { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: .78rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; }
 .side-sec > summary::-webkit-details-marker { display: none; }
 .tree { display: flex; flex-direction: column; gap: 1px; }
-.tree details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r); font-size: .88rem; color: var(--muted); }
-.tree details > summary::-webkit-details-marker { display: none; }
-.tree details > summary:hover { background: var(--hover); }
-.tree details > summary::before, .side-sec > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
-.tree details[open] > summary::before, .side-sec[open] > summary::before { transform: rotate(45deg); }
-.tree details a { padding-left: 26px; font-size: .88rem; }
+.side-sec > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
+.side-sec[open] > summary::before { transform: rotate(45deg); }
 .tree a span { overflow: hidden; text-overflow: ellipsis; }
 .tree .more { color: var(--faint); font-size: .85rem; }
 .tree .none { color: var(--faint); font-size: .85rem; padding: 4px 10px; margin: 0; }
@@ -133,7 +129,7 @@ button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(
 button.danger { background: transparent; border-color: rgba(232, 149, 111, .5); color: var(--orange); }
 button.danger:hover { background: rgba(232, 149, 111, .1); }
 @media (pointer: coarse) {
-  button, .btn, .nav a, .tree a, .tree details > summary { min-height: 44px; }
+  button, .btn, .nav a, .tree a { min-height: 44px; }
   button.small { min-height: 40px; }
 }
 input, textarea, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 9px 12px; width: 100%; }
@@ -221,9 +217,7 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
 .note > .card.head h2 { font-size: 1.6rem; margin-bottom: .3em; }
 .note > .card.links { background: rgba(139, 108, 239, .05); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 8px 0; }
 
-/* 지난 기록 = 파일 목록 */
-.files { display: flex; flex-direction: column; gap: 2px; margin: 0 0 18px; }
-.files h2 { font-size: .85rem; color: var(--faint); margin: 14px 0 4px; }
+/* 지난 기록의 기록 한 편(app/history) */
 .file { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: var(--r); padding: 10px 12px; min-height: 0; color: var(--text); }
 .file:hover { background: var(--hover); }
 .file b { display: block; font-weight: 600; }
@@ -244,4 +238,82 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
   .landing h1 { font-size: 2.6rem; }
   .how { grid-template-columns: repeat(3, 1fr); }
   .how img { max-height: 420px; }
+}
+
+/* ---------- C: 달력 · 사이드바 ---------- */
+/* 달력(components/Calendar.tsx): 지난 기록 화면의 큰 달력과 사이드바 작은 달력(.compact). 일요일부터, 점 = 기록 수(세 편까지) */
+.cal-head { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.cal-head b { min-width: 7.5em; text-align: center; font-weight: 600; }
+.cal-head .small { margin-left: auto; }
+.cal table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.cal th { font-size: .75rem; color: var(--faint); font-weight: 600; padding: 2px 0 4px; }
+.cal td { padding: 2px; }
+.cal td button { width: 100%; min-height: 56px; padding: 6px 0 0; flex-direction: column; justify-content: flex-start; gap: 4px;
+  background: none; border: 1px solid transparent; color: var(--faint); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.cal td button.has { color: var(--text); }
+.cal td button:hover { background: var(--hover); color: var(--text); }
+.cal td button[aria-current="date"] { border-color: #5a5a5a; font-weight: 700; color: var(--text); }
+.cal td[aria-selected="true"] button { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.cal-dots { display: flex; gap: 3px; }
+.cal-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-text); }
+.cal.compact { margin: 2px -6px 4px; }
+.cal.compact .cal-head { gap: 2px; padding: 0 4px; }
+.cal.compact .cal-head b { flex: 1; min-width: 0; font-size: .85rem; }
+.cal.compact .cal-head .icon { min-height: 28px; min-width: 28px; padding: 4px; }
+.cal.compact .cal-head .small { margin: 0; min-height: 26px; padding: 2px 8px; font-size: .78rem; }
+.cal.compact th { font-size: .7rem; padding-bottom: 2px; }
+.cal.compact td { padding: 0; }
+.cal.compact td button { min-height: 30px; padding: 3px 0 0; gap: 1px; font-size: .78rem; }
+.cal.compact .cal-dots i { width: 4px; height: 4px; }
+.side-sec .side-title { cursor: default; margin: 10px 0 2px; }
+
+/* 지난 기록(app/history): 한 화면에 머리줄 · 달력(또는 주제) · 기록 목록. PC 는 두 칸 나란히, 휴대폰은 위아래. 목록 칸만 안에서 넘긴다.
+   높이는 머리줄 49px · 휴대폰 아래 막대 64px 을 뺀 만큼(우주 화면과 같은 값) */
+main.hist { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-direction: column; padding: 14px 24px 16px; }
+.hist-head { display: flex; align-items: center; gap: 8px; }
+.hist-head h1 { margin: 0 auto 0 0; font-size: 1.35rem; }
+.hist-head input[type="search"] { width: 240px; padding: 6px 10px; }
+.hist-lead { margin: 2px 0 12px; }
+.seg { display: inline-flex; flex: none; padding: 2px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); }
+.seg button { background: none; min-height: 32px; padding: 4px 12px; font-size: .9rem; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: #3a3a3a; border-color: transparent; color: var(--text); }
+.pop { position: relative; flex: none; }
+.pop > summary { list-style: none; display: grid; place-items: center; min-width: 36px; min-height: 36px; border-radius: var(--r); color: var(--muted); font-size: 1.2rem; line-height: 1; }
+.pop > summary::-webkit-details-marker { display: none; }
+.pop > summary:hover { background: var(--hover); color: var(--text); }
+.pop > div { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; padding: 8px; white-space: nowrap;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.hist-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 1.1fr) 1fr; gap: 24px; }
+.hist-pane, .hist-list { min-height: 0; overflow: auto; }
+.hist-list { border-left: 1px solid var(--line); padding-left: 20px; }
+.hist-list h2 { position: sticky; top: 0; z-index: 1; background: var(--bg); font-size: 1rem; margin: 0; padding: 4px 0 8px; }
+.hist-list ul, .topics ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.topics h2 { display: flex; gap: 6px; align-items: baseline; font-size: .85rem; color: var(--faint); margin: 14px 0 4px; }
+.topics > div:first-child h2 { margin-top: 2px; }
+.topics li button { width: 100%; justify-content: space-between; background: none; color: var(--muted); padding: 6px 10px; min-height: 36px; }
+.topics li button:hover { background: var(--hover); color: var(--text); }
+.topics li button[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--text); }
+.topics .n { color: var(--faint); font-size: .8rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+@media (max-width: 899px) {
+  main.hist { height: calc(100dvh - 49px - 64px - env(safe-area-inset-bottom)); padding: 10px 16px 6px; }
+  .hist-head h1, .hist-lead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hist-head input[type="search"] { width: auto; flex: 1; min-width: 0; }
+  .hist-body { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .hist-pane { flex: none; overflow: visible; }
+  .topics { max-height: 34dvh; overflow: auto; }
+  .hist-list { flex: 1; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 6px; }
+  .hist-list .file { padding: 8px 4px; }
+  .hist-list .file .sum { -webkit-line-clamp: 1; }
+  .cal td { padding: 1px; }
+  .cal td button { min-height: 44px; padding-top: 4px; gap: 2px; }
+}
+/* 아주 낮은 화면(휴대폰 가로 등)은 한 화면에 못 넣으니 보통처럼 넘긴다 */
+@media (max-height: 560px) {
+  main.hist { height: auto; }
+  .hist-pane, .hist-list, .topics { overflow: visible; max-height: none; }
+}
+@media (pointer: coarse) {
+  .cal td button, .cal.compact td button, .topics li button { min-height: 44px; }
+  .cal .cal-head .icon, .cal.compact .cal-head .icon, .pop > summary { min-height: 44px; min-width: 44px; }
+  .cal.compact .cal-head .small, .seg button { min-height: 40px; }
 }

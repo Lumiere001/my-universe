@@ -37,6 +37,7 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
 
   await test.step("지난 기록: 전체 JSON", async () => {
     await menuNav(page, "지난 기록");
+    await page.getByLabel("더 보기", { exact: true }).click();   // 머리줄 ⋯ 안
     await expect(page.getByRole("button", { name: "모든 기록 파일로 내려받기(JSON)" })).toBeVisible();
     await page.screenshot({ path: `${OUT}/${info.project.name}-02-history-export.png` });
     const j = await saved("모든 기록 파일로 내려받기(JSON)");

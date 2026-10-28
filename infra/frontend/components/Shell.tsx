@@ -1,5 +1,5 @@
 "use client";
-// 틀(옵시디언 느낌, docs/DESIGN.md): PC는 왼쪽 사이드바(메뉴 + 지난 기록 목록) + 머리줄, 휴대폰은 머리줄 + 아래 막대(자주 쓰는 4개) + 서랍.
+// 틀(옵시디언 느낌, docs/DESIGN.md): PC는 왼쪽 사이드바(메뉴 + 작은 달력 · 최근 기록) + 머리줄, 휴대폰은 머리줄 + 아래 막대(자주 쓰는 4개) + 서랍.
 // 로그인 문: 가짜 데이터 모드에서는 로그인을 건너뛴다(동의 확인은 함).
 // 초대 목록(백엔드 ALLOWED_EMAILS) 밖 계정이면 403 not_allowed → 안내와 로그아웃만 보인다.
 // /privacy(개인정보처리방침) · /terms(이용약관)는 로그인 없이 보인다(구글 OAuth 브랜딩 링크, 정적 HTML 에도 들어감).
@@ -9,58 +9,53 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import Calendar, { countByDay, dayOf, useEntries } from "@/components/Calendar";
 import Icon, { type IconName } from "@/components/Icon";
 import Landing from "@/components/Landing";
 import { KeeperLook } from "@/components/Keeper";
-import { ApiError, getConsent, getMe, listDiary, MOCK, supabase, type EntrySummary } from "@/lib/api";
+import { ApiError, getConsent, getMe, MOCK, supabase } from "@/lib/api";
 
 const NAV: readonly (readonly [string, string, IconName])[] = [
   ["/", "이야기하기", "talk"], ["/write", "직접 쓰기", "write"], ["/universe", "우주", "universe"], ["/history", "지난 기록", "history"],
   ["/people", "사람", "people"], ["/aspiration", "되고 싶은 모습", "north"], ["/settings", "설정", "settings"],
 ];
 const TABS = NAV.slice(0, 4);   // 휴대폰 아래 막대
-const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "인스타그램에서 가져오기", "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영" };
+const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "지난 일기 가져오기", "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영" };
 const PUBLIC = ["/privacy", "/terms"];
 const OPEN = [...PUBLIC, "/consent", "/settings"];   // 동의 전에도 열리는 화면(설정 = 로그아웃 · 계정 지우기)
 const FOLD = "side-collapsed";   // PC에서 사이드바를 접어 둔 것(이 기기에만)
 
 const titleOf = (path: string) => TITLES[path] ?? NAV.find(([h]) => h === path)?.[1] ?? (path.startsWith("/universe/") ? "우주 › 기록" : "");
-const month = (e: EntrySummary) => (e.day ?? e.written_at).slice(0, 7);
+const RECENT = 5;   // 사이드바 최근 기록 수
 
-// 사이드바 '지난 기록': 최근 20편을 달별 폴더처럼. 처음 한 번 읽고, 기록이 바뀌면(lib/api.ts 의 'entries' 알림)만 다시 읽는다(화면을 옮길 때마다 부르지 않게).
-// 지금 연 기록(/history?id=)은 강조하고, 그 기록이 든 달은 펼친다.
+// 사이드바 '지난 기록'(C-01): 작은 달력(옵시디언 달력 플러그인처럼, 기록 있는 날에 점) + 최근 기록 다섯 편.
+// 처음 한 번 읽고, 기록이 바뀌면(lib/api.ts 의 'entries' 알림)만 다시 읽는다(useEntries, 지난 기록 화면과 같은 한 번의 읽기).
+// 날을 누르면 /history?day= 로 그날을 고른 지난 기록. 지난 기록을 보는 중이면 거기서 고른 날 · 연 기록을 같이 보인다.
 function Recent({ onPick }: { onPick: () => void }) {
   const path = usePathname();
-  const id = useSearchParams().get("id");
-  const open = path === "/history" ? id : null;
-  const [list, setList] = useState<EntrySummary[] | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    const load = () => listDiary().then((r) => { setList(r.entries); setFailed(false); }, () => setFailed(true));
-    load();
-    window.addEventListener("entries", load);
-    return () => window.removeEventListener("entries", load);
-  }, []);
-  const months = [...new Set((list ?? []).map(month))];
-  const openMonth = list?.find((e) => e.id === open);
+  const router = useRouter();
+  const q = useSearchParams();
+  const here = path === "/history";
+  const open = here ? q.get("id") : null;
+  const [list, err] = useEntries();
+  const opened = list?.find((e) => e.id === open);
+  const selected = here ? q.get("day") ?? (opened ? dayOf(opened) : null) : null;
   return (
     <details className="side-sec" open>
       <summary>지난 기록</summary>
+      <Calendar compact marks={list ? countByDay(list) : {}} selected={selected}
+        onPick={(d) => { router.push(`/history?day=${d}`); onPick(); }} />
+      <h2 className="side-title">최근 기록</h2>
       <div className="tree">
-        {failed && <p className="none">지난 기록을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.</p>}
+        {err && <p className="none">{err}</p>}
         {list?.length === 0 && <p className="none">아직 남긴 기록이 없어요.</p>}
-        {months.map((m, i) => (
-          <details key={m} open={i < 2 || (openMonth && month(openMonth) === m)}>
-            <summary>{+m.slice(0, 4)}년 {+m.slice(5)}월</summary>
-            {list!.filter((e) => month(e) === m).map((e) => (
-              <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title} onClick={onPick}
-                aria-current={e.id === open ? "page" : undefined}>
-                <Icon name="file" size={15} /><span>{e.title || "제목 없는 글"}</span>
-              </Link>
-            ))}
-          </details>
+        {list?.slice(0, RECENT).map((e) => (
+          <Link key={e.id} href={`/history?id=${encodeURIComponent(e.id)}`} title={e.title} onClick={onPick}
+            aria-current={e.id === open ? "page" : undefined}>
+            <Icon name="file" size={15} /><span>{e.title || "제목 없는 글"}</span>
+          </Link>
         ))}
-        {(list?.length ?? 0) >= 20 && <Link className="more" href="/history" onClick={onPick}>모든 기록 보기</Link>}
+        {(list?.length ?? 0) > RECENT && <Link className="more" href="/history" onClick={onPick}>모든 기록 보기</Link>}
       </div>
     </details>
   );

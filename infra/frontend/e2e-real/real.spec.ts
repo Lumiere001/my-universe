@@ -143,7 +143,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
 
   await test.step("지난 기록", async () => {
     await nav("지난 기록");
-    const items = page.locator("main button.card");
+    const items = page.locator("main .hist-list button.file");
     await expect(items.first()).toBeVisible();
     log(dev, "지난 기록 첫 쪽", await items.count());
     await shot("05-history");
@@ -221,7 +221,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     for (const v of pressed) expect(saved, "feedback 표에 " + v).toContain(v);
     if (pressed.includes("지켰어요")) {
       await nav("지난 기록");
-      await page.locator("main button.card").first().click();
+      await page.locator("main .hist-list button.file").first().click();
       await expect(page.getByTestId("result").getByText("다짐 지켰어요").first()).toBeVisible();
       await expect(page.getByRole("group", { name: "다짐 상태" })).toHaveCount(0);
       await shot("12-reloaded");
@@ -280,7 +280,7 @@ test("실제 모드 핵심 흐름", async ({ page }, info) => {
     for (const [i, a] of answers.entries()) {
       await page.locator("#asp").fill(a);
       if (i === 3) await shot("16-aspiration-form");
-      await page.getByRole("button", { name: "다음" }).click();
+      await page.getByRole("button", { name: "다음", exact: true }).click();
     }
     await page.getByRole("button", { name: "성취" }).click();
     await page.getByRole("button", { name: "북극성으로 띄우기" }).click();
