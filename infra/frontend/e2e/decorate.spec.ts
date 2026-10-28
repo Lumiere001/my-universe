@@ -45,7 +45,9 @@ test("꾸미기", async ({ page }, info) => {
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-${name}.png` });
   const nav = (name: string) => menuNav(page, name);
-  const deco = page.getByRole("region", { name: "꾸미기" });
+  // 설정은 묶음 하나씩 보인다(2026-10-28): 테마는 '우주와 화면', 별지기 모습은 '별지기'
+  const group = (name: string) => page.getByRole("group", { name: "설정 묶음" }).getByRole("button", { name, exact: true }).click();
+  const themes = page.getByRole("group", { name: "우주 테마" });
 
   await page.goto("/universe");
   await expect(page.locator(".uni canvas")).toBeVisible();
@@ -55,8 +57,9 @@ test("꾸미기", async ({ page }, info) => {
   await test.step("설정에서 테마를 고르면 우주 색이 바뀜(네 벌 캡처)", async () => {
     for (const [i, t] of (["새벽", "오로라", "먹", "밤하늘"] as ThemeName[]).entries()) {
       await nav("설정");
-      await deco.getByRole("group", { name: "우주 테마" }).getByRole("button", { name: t }).click();
-      await expect(deco.getByRole("button", { name: t })).toHaveAttribute("aria-pressed", "true");
+      await group("우주와 화면");
+      await themes.getByRole("button", { name: t }).click();
+      await expect(themes.getByRole("button", { name: t })).toHaveAttribute("aria-pressed", "true");
       await nav("우주");
       await expect(page.locator(".uni canvas")).toBeVisible();
       await expect.poll(() => bg(page)).toBe(THEMES[t].bg);
@@ -69,7 +72,8 @@ test("꾸미기", async ({ page }, info) => {
   await test.step("/me 가 늦게 와 테마로 다시 그려도 영역 넘는 선은 숨김(눌렀을 때)", async () => {
     const uni = (k: "bg" | "cross") => page.evaluate((key) => (window as unknown as { __uni?: Record<string, () => number> }).__uni?.[key]() ?? null, k);
     await nav("설정");
-    await deco.getByRole("group", { name: "우주 테마" }).getByRole("button", { name: "오로라" }).click();
+    await group("우주와 화면");
+    await themes.getByRole("button", { name: "오로라" }).click();
     await page.evaluate(() => { const w = window as unknown as { __uni?: unknown; __slowMe?: number }; delete w.__uni; w.__slowMe = 1500; });
     await nav("우주");
     await expect.poll(() => uni("bg")).toBe(THEMES["밤하늘"].bg);   // /me 전: 기본 색
@@ -81,7 +85,8 @@ test("꾸미기", async ({ page }, info) => {
 
   await test.step("별지기 모습을 고르면 말풍선 그림이 바뀜", async () => {
     await nav("설정");
-    const looks = deco.getByRole("group", { name: "별지기 모습" });
+    await group("별지기");
+    const looks = page.getByRole("group", { name: "별지기 모습" });
     await expect(looks.getByRole("button", { name: "이름 글자" })).toHaveAttribute("aria-pressed", "true");   // 기본
     const who = page.getByRole("region", { name: "말투" }).locator(".voice .who");
     await expect(who).toHaveText("별");
@@ -90,7 +95,7 @@ test("꾸미기", async ({ page }, info) => {
       await expect(page.locator("html")).toHaveAttribute("data-keeper", f);
       await expect(who).toHaveCSS("background-image", new RegExp(`/keeper/${f}\\.svg`));
     }
-    await deco.scrollIntoViewIfNeeded();
+    await looks.scrollIntoViewIfNeeded();
     await shot("05-settings-decorate");
   });
 

@@ -245,3 +245,90 @@ html[data-keeper] .voice .who { background: var(--keeper) center / cover no-repe
   .how { grid-template-columns: repeat(3, 1fr); }
   .how img { max-height: 420px; }
 }
+
+/* ---------- D: 설정 ---------- */
+/* 설정 · 사람 · 되고 싶은 모습(2026-10-28 동규): 한 화면에 그 화면 정보가 다 들어오게. 길어지는 목록은 그 안에서 스크롤. */
+
+/* 설정 = 옵시디언 설정: 묶음 목록(PC 왼쪽 · 휴대폰 위 한 줄) + 한 묶음. 설정 하나 = 한 줄(이름 · 한 줄 설명 | 고르는 것) */
+main.set-page, main.ppl-page { max-width: 980px; }
+.set { display: grid; gap: 12px; }
+.set-nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.set-nav button { flex: none; background: none; color: var(--muted); border-radius: 999px; padding: 4px 12px; min-height: 34px; font-size: .9rem; white-space: nowrap; }
+.set-nav button:hover { background: var(--hover); color: var(--text); }
+.set-nav button[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--text); font-weight: 600; }
+.set-panel { min-width: 0; }
+.set-panel > h2 { font-size: .8rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; margin: 6px 0 0; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.set-panel > h2 + .set-row, .set-panel > h2 + section > .set-row:first-child, .set-panel > h2 + section.card { border-top: 0; }
+.set-k label, .set-k b { display: block; color: var(--text); font-size: .95rem; font-weight: 600; margin: 0; }
+.set-k .sub { margin: 2px 0 0; font-size: .84rem; }
+.set-v { min-width: 0; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.looks .look img, .looks .look .letter { width: 22px; height: 22px; font-size: .7rem; }
+.set .look { gap: 6px; }
+.set .swatch { padding: 3px 5px; gap: 2px; }
+.set .swatch i { width: 7px; height: 7px; }
+.set-more { margin: 0 0 12px; }
+.set textarea { min-height: 0; resize: vertical; line-height: 1.5; }
+.set .care { padding: 14px 16px; }
+.set .care ol { font-size: .9rem; }
+.set-danger { border: 1px solid rgba(232, 149, 111, .4); border-radius: 8px; padding: 12px 14px; margin-top: 12px; background: rgba(232, 149, 111, .05); }
+.set-panel .set-danger { border-top: 1px solid rgba(232, 149, 111, .4); }
+.set-one form { width: 100%; }
+/* 홈 화면에 앱으로 두기(InstallGuide)는 소개 화면에서는 카드, 설정에서는 한 줄 */
+.set-panel > section.card { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 12px 0; margin: 0; }
+.set-panel > section.card h2 { font-size: .95rem; margin: 0 0 4px; }
+@media (max-width: 639px) {
+  /* 휴대폰: 묶음 이름은 위 버튼이 이미 보여 주고, 모습은 그림만(이름은 화면 읽기에만) — 한 묶음이 한 화면에 들게 */
+  .set-panel > h2, .looks .look-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .set-panel > h2 + .set-row { padding-top: 4px; }
+}
+@media (min-width: 640px) {
+  .set-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; }
+  .set-v { justify-self: end; }
+  .set-one, .set-danger { grid-template-columns: minmax(0, 1fr); }
+  .set-danger { grid-template-columns: minmax(0, 1fr) 260px; align-items: start; }
+}
+@media (min-width: 900px) {
+  .set { grid-template-columns: 180px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .set-nav { flex-direction: column; overflow: visible; position: sticky; top: 64px; border-right: 1px solid var(--line); padding: 0 12px 0 0; }
+  .set-nav button { width: 100%; justify-content: flex-start; border-radius: var(--r); }
+}
+
+/* 사람 목록 = 목록 | 고른 사람(PC 둘 다, 휴대폰은 하나씩). 목록에는 이름 · 관계 · 기록 수만 */
+.ppl { display: grid; gap: 16px; }
+.ppl-list ul { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ppl-list .file { padding: 8px 12px; min-height: 44px; }
+.ppl-list .file b { display: inline; margin-right: 8px; }
+.ppl-list .file[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; }
+.ppl-aux { font-size: .8rem; margin: 12px 0 0; }
+.ppl-detail { min-width: 0; }
+.ppl-back { margin-bottom: 10px; }
+.ppl-h { font-size: .8rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; margin: 14px 0 0; }
+@media (max-width: 899px) {
+  .ppl[data-open] .ppl-list, .ppl:not([data-open]) .ppl-detail { display: none; }
+}
+@media (min-width: 900px) {
+  .ppl { grid-template-columns: 260px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .ppl-list { position: sticky; top: 64px; max-height: calc(100dvh - 190px); overflow: auto; border-right: 1px solid var(--line); padding-right: 12px; }
+  .ppl-back { display: none; }
+  .ppl-detail [data-testid="person-thoughts"] { max-height: calc(100dvh - 330px); overflow: auto; padding-right: 6px; }
+}
+
+/* 되고 싶은 모습: 북극성 카드는 짧게, 닿은 순간 · 예전 모습은 그 안에서 스크롤, 묻기는 한 단계씩 */
+.asp-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; margin: 0; font-size: .9rem; }
+.asp-facts dt { color: var(--faint); }
+.asp-facts dd { margin: 0; color: var(--muted); }
+.asp-reached { margin-top: 10px; }
+.asp-reached ul, .asp-history ul { list-style: none; margin: 4px 0 0; padding: 0; max-height: 26dvh; overflow: auto; }
+.asp-reached li { margin: 4px 0; font-size: .92rem; }
+.asp-history > summary { list-style: none; }
+.asp-history > summary::-webkit-details-marker { display: none; }
+.asp-history[open] { flex: 1 1 100%; }
+.asp-history li { padding: 6px 0; border-top: 1px solid var(--line); font-size: .92rem; }
+.asp-history li:first-child { border-top: 0; }
+.asp-history .meta { color: var(--faint); font-size: .82rem; margin-right: 6px; }
+.asp-history .badge { margin-left: 4px; }
+.asp-dots { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0; }
+.asp-dots li { width: 28px; height: 4px; border-radius: 2px; background: var(--line); }
+.asp-dots li[data-on] { background: var(--gold); }

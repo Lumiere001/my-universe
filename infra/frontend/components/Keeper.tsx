@@ -26,17 +26,14 @@ export function useKeeperName() {
 export function KeeperLook() { useKeeperName(); return null; }
 export const rememberSettings = (s: Settings) => { cached = Promise.resolve(s); showKeeperLook(s.keeper_look); };
 
-// 설정: 별지기 이름 바꾸기(1~12자)
+// 설정: 별지기 이름 바꾸기(1~12자). 이름표(label htmlFor="keeper")는 설정 줄이 붙인다.
 export function KeeperNameField({ value, onSave }: { value: string; onSave: (n: string) => void }) {
   const [v, setV] = useState(value);
   const n = v.trim();
   return (
-    <form className="row" onSubmit={(e) => { e.preventDefault(); if (n) onSave(n); }}>
-      <div style={{ flex: "1 1 160px" }}>
-        <label htmlFor="keeper">별지기 이름</label>
-        <input id="keeper" value={v} maxLength={12} onChange={(e) => setV(e.target.value)} placeholder={KEEPER} />
-      </div>
-      <button type="submit" className="small" style={{ alignSelf: "flex-end" }} disabled={!n || n === value}>이름 바꾸기</button>
+    <form className="row" style={{ flexWrap: "nowrap" }} onSubmit={(e) => { e.preventDefault(); if (n) onSave(n); }}>
+      <input id="keeper" value={v} maxLength={12} onChange={(e) => setV(e.target.value)} placeholder={KEEPER} style={{ width: "10em" }} />
+      <button type="submit" className="small" disabled={!n || n === value}>이름 바꾸기</button>
     </form>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 // (마) 되고 싶은 모습: 허락을 구한 뒤 대화하듯 4단계(요즘의 나 → 되고 싶은 나 → 걸리는 것 → 그때 해 볼 것). 이력 보존.
+// 한 화면에 맞추기(2026-10-28): 북극성 카드는 짧게, 닿은 순간 · 예전 모습은 안에서 스크롤, 묻기는 한 번에 한 단계만.
 import { useState } from "react";
 import { useKeeperName } from "@/components/Keeper";
 import { unquote } from "@/components/ResultCard";
@@ -10,15 +11,19 @@ const KEYS = ["now", "want", "obstacle", "if_then"] as const;
 
 function AspirationCard({ a, title }: { a: Aspiration; title: string }) {
   return (
-    <section className="card" aria-label={title}>
+    <section className="card asp-card" aria-label={title}>
       <h2>{title}</h2>
       <p className="quote" style={{ borderColor: "var(--gold)" }}>“{a.said}”</p>
       <div className="row" style={{ marginBottom: 6 }}>{a.values.map((v) => <span key={v} className="badge g">{v}</span>)}</div>
-      <p className="sub" style={{ margin: 0 }}>걸림돌: {a.obstacle}<br />그때 해 볼 것: {a.if_then}<br />말한 날: {a.said_at.slice(0, 10)}</p>
+      <dl className="asp-facts">
+        <dt>걸림돌</dt><dd>{a.obstacle}</dd>
+        <dt>그때 해 볼 것</dt><dd>{a.if_then}</dd>
+        <dt>말한 날</dt><dd>{a.said_at.slice(0, 10)}</dd>
+      </dl>
       {a.reached.length > 0 && (
-        <div style={{ marginTop: 8 }}>
+        <div className="asp-reached">
           <b>닿은 순간</b>
-          {a.reached.map((r) => <p key={r.entry_id + r.quote} className="quote" style={{ borderColor: "var(--gold)" }}>{r.at.slice(0, 10)} · “{unquote(r.quote)}”</p>)}
+          <ul>{a.reached.map((r) => <li key={r.entry_id + r.quote} className="quote" style={{ borderColor: "var(--gold)" }}>{r.at.slice(0, 10)} · “{unquote(r.quote)}”</li>)}</ul>
         </div>
       )}
     </section>
@@ -62,6 +67,7 @@ export default function AspirationPage() {
     setMode("declined");
   };
   const who = <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>;
+  const s = steps[step];
 
   return (
     <main>
@@ -86,16 +92,12 @@ export default function AspirationPage() {
 
       {mode === "form" && (
         <section className="card stack" aria-label="되고 싶은 모습 대화">
-          {steps.slice(0, step + 1).map((s, i) => (
-            <div key={s.name} className="stack">
-              <div className="voice">{who}
-                <div><div className="sub">{i + 1} / 4 · {s.name}</div><div className="bubble">{s.question}</div></div></div>
-              {i < step && <div className="bubble me">{ans[KEYS[i]]}</div>}
-            </div>
-          ))}
-          {step < 4 ? (
-            <form onSubmit={next} className="stack" aria-label={steps[step]?.name}>
-              <label htmlFor="asp" className="sr">{steps[step]?.question}</label>
+          <ol className="asp-dots" aria-hidden>{steps.map((x, i) => <li key={x.name} data-on={i <= step ? "" : undefined} />)}<li data-on={step >= 4 ? "" : undefined} /></ol>
+          {step < 4 ? (<>
+            <div className="voice">{who}
+              <div><div className="sub">{step + 1} / 4 · {s?.name}</div><div className="bubble">{s?.question}</div></div></div>
+            <form onSubmit={next} className="stack" aria-label={s?.name}>
+              <label htmlFor="asp" className="sr">{s?.question}</label>
               <input id="asp" value={draft} maxLength={300} onChange={(e) => setDraft(e.target.value)} autoFocus
                 placeholder={step === 3 ? "예: 피곤하면 오 분만 하고 자겠다" : "편하게 적어 주세요"} />
               {!draft.trim() && <p className="sub" style={{ margin: 0 }}>답을 적으면 다음 질문으로 넘어가요.</p>}
@@ -105,8 +107,9 @@ export default function AspirationPage() {
                 <button type="button" onClick={() => decline("stop")}>그만 묻기</button>
               </div>
             </form>
-          ) : (
+          </>) : (
             <div className="stack">
+              <div className="bubble me">{ans.want}</div>
               <fieldset>
                 <legend>이 모습이 기대는 가치를 골라 주세요(여럿 골라도, 하나도 안 골라도 돼요)</legend>
                 <div className="row">
@@ -123,16 +126,26 @@ export default function AspirationPage() {
         </section>
       )}
 
-      {mode === "done" && <p className="toast" role="status">북극성으로 띄웠어요. 예전 모습은 '예전 모습 보기'에 남겨 둘게요.</p>}
+      {mode === "done" && <p className="toast" role="status">북극성으로 띄웠어요. 예전 모습은 &apos;예전 모습 보기&apos;에 남겨 둘게요.</p>}
 
       {data.current && mode !== "form" && <AspirationCard a={data.current} title="지금의 북극성" />}
-      {mode !== "form" && !showAsk && <button onClick={() => { setMode("form"); setStep(0); setAns({}); setValues([]); }}>{data.current ? "새로 적기" : "되고 싶은 모습 적어 보기"}</button>}
-
-      {data.history.length > 0 && (
-        <details className="card" style={{ marginTop: 14 }}>
-          <summary>예전 모습 보기 ({data.history.length})</summary>
-          <div style={{ marginTop: 10 }}>{data.history.map((a) => <AspirationCard key={a.id} a={a} title={a.said_at.slice(0, 10) + "에 말한 모습"} />)}</div>
-        </details>
+      {mode !== "form" && !showAsk && (
+        <div className="row">
+          <button onClick={() => { setMode("form"); setStep(0); setAns({}); setValues([]); }}>{data.current ? "새로 적기" : "되고 싶은 모습 적어 보기"}</button>
+          {data.history.length > 0 && (
+            <details className="asp-history">
+              <summary className="btn">예전 모습 보기 ({data.history.length})</summary>
+              <ul>
+                {data.history.map((a) => (
+                  <li key={a.id}>
+                    <span className="meta">{a.said_at.slice(0, 10)}</span> “{a.said}”
+                    {a.values.map((v) => <span key={v} className="badge g">{v}</span>)}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
       )}
     </main>
   );
