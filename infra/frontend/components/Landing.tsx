@@ -1,6 +1,6 @@
 "use client";
 // 로그인 전 첫 화면(소개). Shell 이 로그아웃 상태에서 보여 주고, 로그인하면 Shell 이 바로 앱 화면을 연다.
-// 화면 캡처는 로컬 시험 계정 tester@ 의 하늘 데모 우주(가상 인물) — scripts/make-images.mjs 가 만든다.
+// 화면 캡처는 가짜 데이터 모드의 가상 인물 하늘 화면(지금 디자인) — scripts/make-images.mjs 가 만든다.
 import Link from "next/link";
 import { useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
@@ -9,7 +9,7 @@ import { DEV_LOGIN, supabase } from "@/lib/api";
 const STEPS = [
   ["이야기하기 · 쓰기", "별지기와 말로 이야기하거나, 글 · 사진으로 오늘을 남겨요. 마음 날씨는 골라도 되고 건너뛰어도 돼요.", "/landing/write.jpg", 390, 668],
   ["우주", "별지기가 글을 생각 단위로 나눠 삶의 영역(해) 곁에 행성으로 띄워요. 지난 생각과 이어지면 선이 생겨요.", "/landing/universe-mobile.jpg", 390, 624],
-  ["별지기 한마디", "지난 기록을 기억하는 별지기가 오늘 글에 맞춰 말을 걸어요. 말투는 다정하게부터 팩폭까지 골라요.", "/landing/message.jpg", 390, 316],
+  ["별지기 한마디", "지난 기록을 기억하는 별지기가 오늘 글에 맞춰 말을 걸어요. 말투는 다정하게부터 팩폭까지 골라요.", "/landing/message.jpg", 390, 230],
 ] as const;
 
 export default function Landing() {
@@ -34,7 +34,7 @@ export default function Landing() {
           {start}
           <p className="sub">구글 계정이면 누구나 바로 시작해요. 지금은 시험 단계예요.</p>
         </div>
-        <img src="/landing/universe.jpg" width={1246} height={748} alt="일기로 만든 우주 화면. 삶의 영역마다 해가 있고, 그 곁을 기록 행성이 돌며 생각끼리 선으로 이어져 있어요." />
+        <img src="/landing/universe.jpg" width={1176} height={851} alt="일기로 만든 우주 화면. 삶의 영역마다 해가 있고, 그 곁을 기록 행성이 돌며 생각끼리 선으로 이어져 있어요." />
       </section>
 
       <section aria-labelledby="how">
