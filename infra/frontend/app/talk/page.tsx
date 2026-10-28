@@ -3,9 +3,12 @@
 // '지금까지 정리'(접이식) → '대화 마치고 정리하기' → 요약 확인(ConfirmCard) → 저장 뒤 한마디 · 안부는 이 화면의 별지기 말풍선.
 // /?from=<기록 id>(옛 주소 /talk?from=) 는 그 기록을 첫 맥락으로 새 대화를 연다('이 이야기 이어 하기').
 // 말 보내기는 send(text) 하나 — 마이크(WS21)도 받아쓴 글을 여기로 보낸다.
+// 모양(2026-10-28, 한 화면 규칙): 머리줄(아이콘 셋) · 대화(그 칸 안에서만 넘김) · 아래 붙은 입력 상자(글 칸 + 도구 줄: 마이크 · 클립 | 보내기).
+// 드물게 쓰는 '이어 하지 않은 대화' · '이 대화 지우기'는 '더 보기'(브라우저 기본 popover) 안에.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ConfirmCard from "@/components/ConfirmCard";
+import Icon from "@/components/Icon";
 import { useKeeperName } from "@/components/Keeper";
 import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
@@ -29,6 +32,7 @@ export default function TalkPage() {
   const [draft, setDraft] = useState<EntryResult | null>(null);   // 확인을 기다리는 정리
   const [saved, setSaved] = useState<EntryResult | null>(null);   // 저장한 결과(한마디)
   const endRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);   // '더 보기' 칸
   const voice = useReadAloud();   // 별지기 답 읽어 주기(WS21, 기본 꺼짐)
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [c?.turns.length, busy, saved, draft]);
 
@@ -115,28 +119,58 @@ export default function TalkPage() {
     setText(t); setErr("받아쓴 말이 8,000자를 넘어요. 칸에 남겨 뒀으니 조금 줄여서 보내 주세요.");
   };
 
+  const said = c?.turns.some((t) => t.role === "user");
+  const left = saved ? [] : others;   // 저장한 뒤에는 다른 대화를 보이지 않는다
+  const closeMore = () => moreRef.current?.hidePopover?.();   // popover 를 모르는 옛 브라우저는 칸이 그냥 펼쳐져 있다
+
   return (
-    <main onClickCapture={voice.on ? voice.unlock : undefined}>
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
-        <h1 style={{ margin: 0 }}>이야기하기</h1>
-        <div className="row">
-          <button className="small" aria-pressed={voice.on} onClick={voice.toggle}>별지기 말 읽어 주기 {voice.on ? "켜짐" : "꺼짐"}</button>
-          <button className="small" onClick={() => { if (c?.turn_count && !saved) setOthers([c, ...others]); fresh(); }}
-            disabled={!!busy}>새 대화 시작</button>
-          {c && !saved && <button className="small danger" onClick={remove} disabled={!!busy}>이 대화 지우기</button>}
+    <main className="chat" onClickCapture={voice.on ? voice.unlock : undefined}>
+      <div className="chat-head">
+        <h1>이야기하기</h1>
+        <div className="row tight">
+          <button className="tbtn" aria-pressed={voice.on} onClick={voice.toggle}
+            aria-label="별지기 말 읽어 주기" title={`별지기 말 읽어 주기 ${voice.on ? "켜짐" : "꺼짐"}`}>
+            <Icon name={voice.on ? "speaker" : "mute"} /></button>
+          <button className="tbtn" onClick={() => { if (c?.turn_count && !saved) setOthers([c, ...others]); fresh(); }}
+            disabled={!!busy} aria-label="새 대화 시작" title="새 대화 시작"><Icon name="newChat" /></button>
+          {(left.length > 0 || (c && !saved)) && (
+            <button className="tbtn" popoverTarget="talk-more" title="더 보기"
+              aria-label={left.length ? `더 보기 (이어 하지 않은 대화 ${left.length}개)` : "더 보기"}>
+              <Icon name="more" />{left.length > 0 && <span className="count" aria-hidden>{left.length}</span>}</button>
+          )}
         </div>
       </div>
-      <p className="sub">별지기와 이야기하면 내가 한 말로 일기를 정리하고, 지난 기록과 이어 드려요. 글로 쓰고 싶으면 <Link href="/write">직접 쓰기</Link>.</p>
+      {!said && <p className="sub chat-lead">별지기와 이야기하면 내가 한 말로 일기를 정리하고, 지난 기록과 이어 드려요. 글로 쓰고 싶으면 <Link href="/write">직접 쓰기</Link>.</p>}
 
-      {c?.summary && !saved && (
-        <details className="card" style={{ padding: "10px 14px" }}>
+      <div id="talk-more" popover="auto" ref={moreRef} className="pop">
+        {left.length > 0 && (
+          <section className="stack" aria-label="이어 하지 않은 대화">
+            <h2>이어 하지 않은 대화 {left.length}개</h2>
+            {left.map((o) => (
+              <div key={o.id} className="pop-row">
+                <span className="sub">{o.updated_at.slice(0, 10)} · {o.turns.find((t) => t.role === "user")?.text.slice(0, 30) ?? "아직 한 말이 없어요"}</span>
+                <span className="row tight">
+                  <button className="small" onClick={() => { closeMore(); if (c) setOthers([c, ...others.filter((x) => x.id !== o.id)]); else setOthers(others.filter((x) => x.id !== o.id)); open(o); }}>이어 하기</button>
+                  <button className="small danger" onClick={async () => { if (await drop(o.id)) setOthers(others.filter((x) => x.id !== o.id)); }}>지우기</button>
+                </span>
+              </div>
+            ))}
+          </section>
+        )}
+        {c && !saved && <button className="small danger" onClick={() => { closeMore(); remove(); }} disabled={!!busy}><Icon name="trash" size={16} />이 대화 지우기</button>}
+      </div>
+
+      {c?.summary && !saved && !draft && (
+        <details className="card chat-sum">
           <summary>지금까지 정리</summary>
-          <p className="sub" style={{ margin: "8px 0 0" }}>내가 한 말만으로 정리했어요. 대화를 마치면 이걸 바탕으로 일기를 만들어요.</p>
-          <p style={{ margin: "6px 0 0", ...PRE }}>{c.summary}</p>
+          <div className="chat-sum-body">
+            <p className="sub" style={{ margin: "8px 0 0" }}>내가 한 말만으로 정리했어요. 대화를 마치면 이걸 바탕으로 일기를 만들어요.</p>
+            <p style={{ margin: "6px 0 0", ...PRE }}>{c.summary}</p>
+          </div>
         </details>
       )}
 
-      <section aria-label="대화" aria-live="polite" style={{ margin: "12px 0" }}>
+      <section className="chat-log" aria-label="대화" aria-live="polite">
         {c?.turns.map(bubble)}
         {m && (
           <div className="voice" style={{ marginBottom: 12 }} data-testid="saved-message">
@@ -154,7 +188,7 @@ export default function TalkPage() {
       </section>
 
       {saved ? (
-        <section className="card stack" aria-label="저장했어요">
+        <section className="card stack" aria-label="저장했어요" style={{ margin: 0 }}>
           <p style={{ margin: 0 }}>우주에 저장했어요. 새 행성이 떴어요.</p>
           <div className="row">
             <Link className="btn" href="/universe">우주에서 보기</Link>
@@ -165,35 +199,21 @@ export default function TalkPage() {
       ) : draft ? (
         <ConfirmCard r={draft} onSaved={(r) => { setSaved(r); setDraft(null); voice.say(r.message?.text); }} />
       ) : c && (
-        <form className="stack" aria-label="말하기" onSubmit={(e) => { e.preventDefault(); send(text); }}>
-          <div>
-            <label htmlFor="talk-input">별지기에게 답하기</label>
-            <textarea id="talk-input" value={text} onChange={(e) => setText(e.target.value)} disabled={!!busy} style={{ minHeight: 88 }}
+        <form className="chat-foot" aria-label="말하기" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          <button type="button" className={c.wrap ? "small primary" : "small"} onClick={finish} disabled={!!busy || !c.turn_count}>
+            대화 마치고 정리하기</button>
+          <div className="composer">
+            <label htmlFor="talk-input" className="sr">별지기에게 답하기</label>
+            <textarea id="talk-input" rows={2} value={text} onChange={(e) => setText(e.target.value)} disabled={!!busy}
               placeholder="편하게 적어 주세요. Ctrl(⌘) + Enter로 보낼 수 있어요." maxLength={8000}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(text); } }} />
-          </div>
-          <MicButton onText={heard} disabled={!!busy} />
-          <div className="row">
-            <button type="submit" className="primary" disabled={!!busy || !text.trim()}>보내기</button>
-            <button type="button" className={c.wrap ? "primary" : undefined} onClick={finish} disabled={!!busy || !c.turn_count}>
-              대화 마치고 정리하기</button>
+            <div className="tools">
+              <MicButton onText={heard} disabled={!!busy} />
+              <button type="submit" className="tbtn send" disabled={!!busy || !text.trim()}
+                aria-label="보내기" title="보내기 (Ctrl(⌘) + Enter)"><Icon name="send" /></button>
+            </div>
           </div>
         </form>
-      )}
-
-      {others.length > 0 && !saved && (
-        <section className="card stack" aria-label="이어 하지 않은 대화" style={{ marginTop: 16 }}>
-          <h2>이어 하지 않은 대화 {others.length}개</h2>
-          {others.map((o) => (
-            <div key={o.id} className="row" style={{ justifyContent: "space-between" }}>
-              <span className="sub">{o.updated_at.slice(0, 10)} · {o.turns.find((t) => t.role === "user")?.text.slice(0, 30) ?? "아직 한 말이 없어요"}</span>
-              <span className="row">
-                <button className="small" onClick={() => { if (c) setOthers([c, ...others.filter((x) => x.id !== o.id)]); else setOthers(others.filter((x) => x.id !== o.id)); open(o); }}>이어 하기</button>
-                <button className="small danger" onClick={async () => { if (await drop(o.id)) setOthers(others.filter((x) => x.id !== o.id)); }}>지우기</button>
-              </span>
-            </div>
-          ))}
-        </section>
       )}
     </main>
   );
