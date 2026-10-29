@@ -683,3 +683,39 @@ main.ins { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-d
 .pref-item p { margin: 0; flex: 1; font-size: .9rem; }
 .pref-note > .primary { align-self: flex-end; }
 @media (max-width: 899px) { .pref-note { right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); } }
+
+/* 운영 화면(app/ops, 2026-10-30 동규 「기능은 그대로, 가독성 높이기」): 맨 위 '한눈에'(큰 숫자 + 괜찮아요/살펴보기) → 카드 두 칸.
+   카드마다 '무엇을 보나' 한 줄, 숫자는 같은 크기 격자 · 표 숫자 칸은 오른쪽 정렬, 단계 · 오류 코드는 사람 말(원래 코드는 흐리게) */
+.ops { display: flex; flex-direction: column; gap: 14px; }
+.ops-head h1 { margin: 0 0 2px; }
+.ops-head p { margin: 0; }
+.ops-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.ops-tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.ops-tile b { font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.ops-tile .l, .ops-stat .l { font-size: .82rem; color: var(--muted); }
+.ops-tile .n, .ops-stat .n { font-size: .76rem; color: var(--faint); }
+.ops-tile .state { font-size: .78rem; color: #8fd3b0; }
+.ops-tile.warn { border-color: rgba(232, 149, 111, .6); }
+.ops-tile.warn .state { color: var(--orange); }
+.ops-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.ops-grid > .full { grid-column: 1 / -1; }
+.ops-grid > *, .ops-two > * { min-width: 0; }   /* 긴 표가 칸을 넓히지 않고 자기 안에서만 밀리게 */
+.ops .card { margin: 0; }
+.ops h2 { margin: 0; font-size: 1.05rem; }
+.ops h3 { margin: 0; font-size: .92rem; color: var(--muted); }
+.ops-desc { margin: 0; font-size: .82rem; color: var(--faint); }
+.ops-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 16px; }
+.ops-stat { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ops-stat .v { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ops-meter { height: 8px; border-radius: 4px; background: var(--panel2); overflow: hidden; }
+.ops-meter i { display: block; height: 100%; }
+.ops-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ops-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ops-table { overflow-x: auto; }
+.ops-table table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.ops-table th, .ops-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.ops-table th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+.ops-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.ops-table tbody tr:hover { background: var(--panel2); }
+.ops .code { color: var(--faint); font-size: .74rem; margin-left: 6px; }
+@media (max-width: 899px) { .ops-grid, .ops-two { grid-template-columns: minmax(0, 1fr); } }

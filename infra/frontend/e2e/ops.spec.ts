@@ -9,7 +9,7 @@ test("운영 화면", async ({ page }, info) => {
   const dev = info.project.name;
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-ops-${name}.png`, fullPage: true, style: ".top { position: static; }" });
+  const shot = (name: string) => page.screenshot({ path: `${OUT}/${dev}-ops-${name}.png`, fullPage: true, scale: "css", style: ".top { position: static; }" });   // 긴 휴대폰 화면은 2배로는 못 찍어 CSS 크기로
 
   await page.goto("/ops");
   await expect(page.getByRole("heading", { level: 1, name: "운영" })).toBeVisible();
