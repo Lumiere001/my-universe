@@ -1,0 +1,3886 @@
+{
+ "tag": "two-groups",
+ "profile": "two",
+ "star_join": null,
+ "star_groups": true,
+ "config": {
+  "record": "5",
+  "observe": "4"
+ },
+ "personas": {
+  "F": {
+   "entries": [
+    {
+     "n": 1,
+     "entry_id": "e_693b0ecad44f",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.2,
+     "calls": 5,
+     "usd": 0.1014,
+     "step_ms": {
+      "safety": 876,
+      "names": 13,
+      "record_input": 9,
+      "record_agent": 35214,
+      "record_clean": 16,
+      "ontology": 1229,
+      "group_stars": 19,
+      "past": 12,
+      "observe": 34789,
+      "rules": 40,
+      "voice": 1606,
+      "save": 17
+     }
+    },
+    {
+     "n": 2,
+     "entry_id": "e_8bfbb81a277b",
+     "status": "done",
+     "errors": [],
+     "seconds": 89.5,
+     "calls": 8,
+     "usd": 0.1036,
+     "step_ms": {
+      "record_input": 11,
+      "record_clean": 15,
+      "past": 19,
+      "observe": 37118,
+      "save": 28,
+      "safety": 974,
+      "ontology": 250,
+      "rules": 13,
+      "names": 17,
+      "record_agent": 46585,
+      "group_stars": 1129,
+      "voice": 3132
+     }
+    },
+    {
+     "n": 3,
+     "entry_id": "e_8e434ef87d1b",
+     "status": "done",
+     "errors": [],
+     "seconds": 68.6,
+     "calls": 7,
+     "usd": 0.1025,
+     "step_ms": {
+      "record_input": 9,
+      "record_clean": 12,
+      "past": 23,
+      "observe": 29667,
+      "voice": 1666,
+      "safety": 538,
+      "ontology": 246,
+      "names": 12,
+      "record_agent": 34264,
+      "group_stars": 1945,
+      "rules": 13,
+      "save": 22
+     }
+    },
+    {
+     "n": 4,
+     "entry_id": "e_ade2bc47806b",
+     "status": "done",
+     "errors": [],
+     "seconds": 109.1,
+     "calls": 8,
+     "usd": 0.1074,
+     "step_ms": {
+      "safety": 503,
+      "names": 9,
+      "record_input": 8,
+      "record_agent": 57452,
+      "record_clean": 16,
+      "ontology": 385,
+      "group_stars": 2042,
+      "past": 40,
+      "observe": 45545,
+      "rules": 11,
+      "voice": 2840,
+      "save": 20
+     }
+    },
+    {
+     "n": 5,
+     "entry_id": "e_70e49c90670f",
+     "status": "done",
+     "errors": [],
+     "seconds": 99.9,
+     "calls": 7,
+     "usd": 0.1043,
+     "step_ms": {
+      "safety": 591,
+      "names": 15,
+      "record_input": 12,
+      "record_agent": 43463,
+      "record_clean": 14,
+      "ontology": 327,
+      "group_stars": 4769,
+      "past": 57,
+      "observe": 48467,
+      "rules": 14,
+      "voice": 1918,
+      "save": 28
+     }
+    },
+    {
+     "n": 6,
+     "entry_id": "e_cc22a8b4baa8",
+     "status": "done",
+     "errors": [],
+     "seconds": 108.4,
+     "calls": 7,
+     "usd": 0.1042,
+     "step_ms": {
+      "safety": 819,
+      "names": 15,
+      "record_input": 10,
+      "record_agent": 32254,
+      "record_clean": 10,
+      "ontology": 185,
+      "group_stars": 2961,
+      "past": 36,
+      "observe": 69918,
+      "rules": 12,
+      "voice": 1913,
+      "save": 21
+     }
+    },
+    {
+     "n": 7,
+     "entry_id": "e_1dec4ef6a338",
+     "status": "done",
+     "errors": [],
+     "seconds": 90.6,
+     "calls": 7,
+     "usd": 0.1044,
+     "step_ms": {
+      "safety": 562,
+      "names": 17,
+      "record_input": 10,
+      "record_agent": 39921,
+      "record_clean": 12,
+      "ontology": 261,
+      "group_stars": 4289,
+      "past": 37,
+      "observe": 42930,
+      "rules": 7,
+      "voice": 2248,
+      "save": 35
+     }
+    },
+    {
+     "n": 8,
+     "entry_id": "e_c3dfac02e3e9",
+     "status": "done",
+     "errors": [],
+     "seconds": 109.6,
+     "calls": 8,
+     "usd": 0.1076,
+     "step_ms": {
+      "safety": 538,
+      "names": 12,
+      "record_input": 9,
+      "record_agent": 40771,
+      "record_clean": 8,
+      "ontology": 280,
+      "group_stars": 2704,
+      "past": 55,
+      "observe": 61803,
+      "rules": 16,
+      "voice": 3181,
+      "save": 28
+     }
+    },
+    {
+     "n": 9,
+     "entry_id": "e_f6c6baa5e323",
+     "status": "done",
+     "errors": [],
+     "seconds": 87.1,
+     "calls": 7,
+     "usd": 0.1047,
+     "step_ms": {
+      "safety": 550,
+      "names": 15,
+      "record_input": 10,
+      "record_agent": 45597,
+      "record_clean": 15,
+      "ontology": 290,
+      "group_stars": 2348,
+      "past": 133,
+      "observe": 35921,
+      "rules": 12,
+      "voice": 1850,
+      "save": 27
+     }
+    },
+    {
+     "n": 10,
+     "entry_id": "e_5bb4b6170073",
+     "status": "done",
+     "errors": [],
+     "seconds": 133.9,
+     "calls": 8,
+     "usd": 0.1099,
+     "step_ms": {
+      "safety": 564,
+      "names": 14,
+      "record_input": 11,
+      "record_agent": 47771,
+      "record_clean": 18,
+      "ontology": 383,
+      "group_stars": 2766,
+      "past": 118,
+      "observe": 78443,
+      "rules": 14,
+      "voice": 3470,
+      "save": 49
+     }
+    },
+    {
+     "n": 11,
+     "entry_id": "e_c2b61af306d0",
+     "status": "done",
+     "errors": [],
+     "seconds": 98.5,
+     "calls": 7,
+     "usd": 0.1062,
+     "step_ms": {
+      "safety": 565,
+      "names": 14,
+      "record_input": 12,
+      "record_agent": 42818,
+      "record_clean": 11,
+      "ontology": 317,
+      "group_stars": 4071,
+      "past": 99,
+      "observe": 48382,
+      "rules": 14,
+      "voice": 1901,
+      "save": 30
+     }
+    },
+    {
+     "n": 12,
+     "entry_id": "e_3891eee4d94f",
+     "status": "done",
+     "errors": [],
+     "seconds": 86.6,
+     "calls": 7,
+     "usd": 0.1055,
+     "step_ms": {
+      "safety": 577,
+      "names": 13,
+      "record_input": 10,
+      "record_agent": 36634,
+      "record_clean": 15,
+      "ontology": 232,
+      "group_stars": 3587,
+      "past": 53,
+      "observe": 43914,
+      "rules": 13,
+      "voice": 1264,
+      "save": 34
+     }
+    },
+    {
+     "n": 13,
+     "entry_id": "e_a9c26d09a87e",
+     "status": "done",
+     "errors": [],
+     "seconds": 112.6,
+     "calls": 7,
+     "usd": 0.1058,
+     "step_ms": {
+      "safety": 576,
+      "names": 20,
+      "record_input": 13,
+      "record_agent": 67261,
+      "record_clean": 13,
+      "ontology": 288,
+      "group_stars": 2563,
+      "past": 94,
+      "observe": 40011,
+      "rules": 18,
+      "voice": 1441,
+      "save": 23
+     }
+    },
+    {
+     "n": 14,
+     "entry_id": "e_aa5553a7536e",
+     "status": "done",
+     "errors": [],
+     "seconds": 76.2,
+     "calls": 7,
+     "usd": 0.1059,
+     "step_ms": {
+      "safety": 565,
+      "names": 12,
+      "record_input": 10,
+      "record_agent": 35499,
+      "record_clean": 13,
+      "ontology": 245,
+      "group_stars": 4563,
+      "past": 60,
+      "observe": 33534,
+      "rules": 12,
+      "voice": 1467,
+      "save": 19
+     }
+    },
+    {
+     "n": 15,
+     "entry_id": "e_c0615f39ae73",
+     "status": "done",
+     "errors": [],
+     "seconds": 127.7,
+     "calls": 7,
+     "usd": 0.1068,
+     "step_ms": {
+      "safety": 637,
+      "names": 10,
+      "record_input": 10,
+      "record_agent": 53607,
+      "record_clean": 10,
+      "ontology": 287,
+      "group_stars": 3088,
+      "past": 149,
+      "observe": 67611,
+      "rules": 19,
+      "voice": 2016,
+      "save": 39
+     }
+    },
+    {
+     "n": 16,
+     "entry_id": "e_e7ed1cf4d44b",
+     "status": "done",
+     "errors": [],
+     "seconds": 85.9,
+     "calls": 6,
+     "usd": 0.107,
+     "step_ms": {
+      "safety": 490,
+      "names": 21,
+      "record_input": 10,
+      "record_agent": 37590,
+      "record_clean": 8,
+      "ontology": 334,
+      "group_stars": 7,
+      "past": 122,
+      "observe": 42937,
+      "rules": 14,
+      "voice": 4177,
+      "save": 20
+     }
+    },
+    {
+     "n": 17,
+     "entry_id": "e_55a15deb6cec",
+     "status": "done",
+     "errors": [],
+     "seconds": 38.1,
+     "calls": 3,
+     "usd": 0.0526,
+     "step_ms": {
+      "safety": 1157,
+      "names": 10,
+      "record_input": 9,
+      "record_agent": 35470,
+      "record_clean": 12,
+      "ontology": 18,
+      "group_stars": 0,
+      "past": 0,
+      "observe": 0,
+      "rules": 7,
+      "voice": 1178,
+      "save": 21
+     }
+    },
+    {
+     "n": 18,
+     "entry_id": "e_9e68cd6e0123",
+     "status": "done",
+     "errors": [],
+     "seconds": 89.8,
+     "calls": 5,
+     "usd": 0.2045,
+     "step_ms": {
+      "safety": 763,
+      "names": 15,
+      "record_input": 11,
+      "record_agent": 49211,
+      "record_clean": 15,
+      "ontology": 320,
+      "group_stars": 7,
+      "past": 191,
+      "observe": 37052,
+      "rules": 7,
+      "voice": 1982,
+      "save": 31
+     }
+    },
+    {
+     "n": 19,
+     "entry_id": "e_6fab52e0212e",
+     "status": "done",
+     "errors": [],
+     "seconds": 98.6,
+     "calls": 7,
+     "usd": 0.1068,
+     "step_ms": {
+      "safety": 623,
+      "names": 11,
+      "record_input": 9,
+      "record_agent": 37579,
+      "record_clean": 11,
+      "ontology": 263,
+      "group_stars": 3721,
+      "past": 101,
+      "observe": 54134,
+      "rules": 11,
+      "voice": 1948,
+      "save": 30
+     }
+    },
+    {
+     "n": 20,
+     "entry_id": "e_1a7c6debdfc7",
+     "status": "done",
+     "errors": [],
+     "seconds": 87.7,
+     "calls": 6,
+     "usd": 0.1065,
+     "step_ms": {
+      "safety": 544,
+      "names": 10,
+      "record_input": 10,
+      "record_agent": 39344,
+      "record_clean": 12,
+      "ontology": 283,
+      "group_stars": 7,
+      "past": 117,
+      "observe": 42940,
+      "rules": 9,
+      "voice": 4207,
+      "save": 32
+     }
+    }
+   ],
+   "thoughts": [
+    {
+     "id": "e_1a7c6debdfc7-t00",
+     "n": 20,
+     "position": 0,
+     "topic": "걔 우산 기억",
+     "fine": "걔 우산 기억",
+     "ai_topic": "걔 우산 기억",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "재민이 만남. 걔도 출근해서 모르는 거 물을 때 눈치 본다는데 나도 모르게 네가 무슨 걱정이냐고 할 뻔했다."
+    },
+    {
+     "id": "e_1a7c6debdfc7-t01",
+     "n": 20,
+     "position": 1,
+     "topic": "걔 우산 기억",
+     "fine": "걔 우산 기억",
+     "ai_topic": "걔 우산 기억",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(긍정)",
+     "quote": "중간에 걔 월급 궁금했던 것도 사실, 그래도 오늘은 내 근황 포장하느라 대답을 놓치진 않았다."
+    },
+    {
+     "id": "e_1a7c6debdfc7-t02",
+     "n": 20,
+     "position": 2,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록 고민",
+     "ai_topic": "부트캠프 등록 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "무료로 끝낸 게 있으니까 바로 백팔십만 원도 써야 한다는 건 아니고, 그렇다고 돈 아깝다는 말로 궁금한 걸 없는 셈 치기도 싫음."
+    },
+    {
+     "id": "e_1a7c6debdfc7-t03",
+     "n": 20,
+     "position": 3,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "오늘 선택 미룸",
+     "ai_topic": "오늘 선택 미룸",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "결제는 아직 못 누름."
+    },
+    {
+     "id": "e_1dec4ef6a338-t00",
+     "n": 7,
+     "position": 0,
+     "topic": "스스로 풀 때까지 기다리기",
+     "fine": "설명이 이해와 반응",
+     "ai_topic": "설명이 이해와 반응",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "재밌는 설명이랑 알아듣는 설명은 다른가봐"
+    },
+    {
+     "id": "e_1dec4ef6a338-t01",
+     "n": 7,
+     "position": 1,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록 고민",
+     "ai_topic": "부트캠프 등록 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "다짐",
+     "quote": "돈 내기 전에 공짜 실습을 끝까지 해보는 순서는 지키고 싶다."
+    },
+    {
+     "id": "e_3891eee4d94f-t00",
+     "n": 12,
+     "position": 0,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "소망",
+     "quote": "작은 반 하나는 내가 맡고 싶다."
+    },
+    {
+     "id": "e_5bb4b6170073-t00",
+     "n": 10,
+     "position": 0,
+     "topic": "집안일 책임 따지기",
+     "fine": "수입 감소로 달라진 집 분위기",
+     "ai_topic": "수입 감소로 달라진 집 분위기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "맞는 말인데 갑자기 방이 더 좁아진 느낌이었다."
+    },
+    {
+     "id": "e_5bb4b6170073-t01",
+     "n": 10,
+     "position": 1,
+     "topic": "집안일 책임 따지기",
+     "fine": "말문이 막힌 저녁",
+     "ai_topic": "말문이 막힌 저녁",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "김밥은 맛있었고 그래서 더 뭔 말을 해야 될지 모르겠음."
+    },
+    {
+     "id": "e_5bb4b6170073-t02",
+     "n": 10,
+     "position": 2,
+     "topic": "집안일 책임 따지기",
+     "fine": "생활비와 집안일 기록",
+     "ai_topic": "생활비와 집안일 기록",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "준호 수입이 줄었으니 9월이랑 10월은 내가 생활비를 더 내야 한다."
+    },
+    {
+     "id": "e_5bb4b6170073-t03",
+     "n": 10,
+     "position": 3,
+     "topic": "집안일 책임 따지기",
+     "fine": "생활비와 집안일 기록",
+     "ai_topic": "생활비와 집안일 기록",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "신념·원칙",
+     "quote": "걔한테 무조건 반 내라고 하면 밥값까지 빌려야 하는 걸 아니까 그렇게는 못 하겠다."
+    },
+    {
+     "id": "e_5bb4b6170073-t04",
+     "n": 10,
+     "position": 4,
+     "topic": "집안일 책임 따지기",
+     "fine": "형 역할로 굳는 부담",
+     "ai_topic": "형 역할로 굳는 부담",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "근데 내가 더 내는 게 당연한 형 역할로 굳을까 봐 그것도 싫음."
+    },
+    {
+     "id": "e_5bb4b6170073-t05",
+     "n": 10,
+     "position": 5,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "생활비를 보태면 모은 돈에서 수강료가 모자라고, 수강료를 먼저 내면 집에 줄 돈이 빈다."
+    },
+    {
+     "id": "e_5bb4b6170073-t06",
+     "n": 10,
+     "position": 6,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "나눠 내도 결국 내가 내는 돈인데."
+    },
+    {
+     "id": "e_5bb4b6170073-t07",
+     "n": 10,
+     "position": 7,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "배우고 싶다는 말이 이렇게 바로 김밥값이랑 붙을 줄 몰랐네."
+    },
+    {
+     "id": "e_5bb4b6170073-t08",
+     "n": 10,
+     "position": 8,
+     "topic": "집안일 책임 따지기",
+     "fine": "안내 화면으로 티 낸 일",
+     "ai_topic": "안내 화면으로 티 낸 일",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(부정)",
+     "quote": "쭌 잘못도 아닌데 걔 앞에서 안내 화면을 일부러 밝게 켜놓은 건 좀 치사했다."
+    },
+    {
+     "id": "e_5bb4b6170073-t09",
+     "n": 10,
+     "position": 9,
+     "topic": "집안일 책임 따지기",
+     "fine": "집안일 책임 따지기",
+     "ai_topic": "집안일 책임 따지기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "돈 더 내면 이건 네가 하라는 말이 목까지 올라왔다가 삼켰다, 그럼 내가 싫다던 계산을 또 하는 거잖아."
+    },
+    {
+     "id": "e_5bb4b6170073-t10",
+     "n": 10,
+     "position": 10,
+     "topic": "집안일 책임 따지기",
+     "fine": "집안일 책임 따지기",
+     "ai_topic": "집안일 책임 따지기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "그렇다고 내가 전부 할 수 있다는 뜻도 아님."
+    },
+    {
+     "id": "e_5bb4b6170073-t11",
+     "n": 10,
+     "position": 11,
+     "topic": "집안일 책임 따지기",
+     "fine": "말없는 설거지 분위기",
+     "ai_topic": "말없는 설거지 분위기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "말을 안 하니까 물소리만 너무 큼."
+    },
+    {
+     "id": "e_5bb4b6170073-t12",
+     "n": 10,
+     "position": 12,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "계좌를 세 번 확인해도 잔액은 그대로고 둘 중 뭘 뒤로 미룰지는 못 정했다."
+    },
+    {
+     "id": "e_693b0ecad44f-t00",
+     "n": 1,
+     "position": 0,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "안정적인 직업 우선",
+     "ai_topic": "안정적인 직업 우선",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "신념·원칙",
+     "quote": "안정적인 직업을 얻는 게 무조건 먼저다."
+    },
+    {
+     "id": "e_6fab52e0212e-t00",
+     "n": 19,
+     "position": 0,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "일에 몰입한 두 시간",
+     "ai_topic": "일에 몰입한 두 시간",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "감정",
+     "quote": "숫자 넣으면 합계 바뀌는 것뿐인데 내가 만든 화면에서 되니까 좀 신기함."
+    },
+    {
+     "id": "e_6fab52e0212e-t01",
+     "n": 19,
+     "position": 1,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님."
+    },
+    {
+     "id": "e_6fab52e0212e-t02",
+     "n": 19,
+     "position": 2,
+     "topic": "집안일 책임 따지기",
+     "fine": "화면이랑 통장 같이 보기",
+     "ai_topic": "화면이랑 통장 같이 보기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "화면이랑 통장 같이 켜두면 좀 복잡하다"
+    },
+    {
+     "id": "e_70e49c90670f-t00",
+     "n": 5,
+     "position": 0,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "재민이에게 축하 전하기",
+     "ai_topic": "재민이에게 축하 전하기",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "소망",
+     "quote": "재민이한테 잘됐다고 말은 해주고 싶다."
+    },
+    {
+     "id": "e_70e49c90670f-t01",
+     "n": 5,
+     "position": 1,
+     "topic": "걔 우산 기억",
+     "fine": "걔 우산 기억",
+     "ai_topic": "걔 우산 기억",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "그런 거까지 없던 일 되는건 싫음."
+    },
+    {
+     "id": "e_70e49c90670f-t02",
+     "n": 5,
+     "position": 2,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "재민이에게 축하 전하기",
+     "ai_topic": "재민이에게 축하 전하기",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "질문",
+     "quote": "근데 채팅방 열고도 또 닫았다."
+    },
+    {
+     "id": "e_70e49c90670f-t03",
+     "n": 5,
+     "position": 3,
+     "topic": "집안일 책임 따지기",
+     "fine": "집안일 책임 따지기",
+     "ai_topic": "집안일 책임 따지기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(부정)",
+     "quote": "걔도 일하고 온 건데 내 입은 왜 나만 출근한 사람처럼 구냐;;"
+    },
+    {
+     "id": "e_70e49c90670f-t04",
+     "n": 5,
+     "position": 4,
+     "topic": "집안일 책임 따지기",
+     "fine": "생활비와 집안일 기록",
+     "ai_topic": "생활비와 집안일 기록",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "질문",
+     "quote": "그렇다고 식비 얘기가 끝난 건 아님,"
+    },
+    {
+     "id": "e_8bfbb81a277b-t00",
+     "n": 2,
+     "position": 0,
+     "topic": "스스로 풀 때까지 기다리기",
+     "fine": "스스로 풀 때까지 기다리기",
+     "ai_topic": "스스로 풀 때까지 기다리기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "다짐",
+     "quote": "때까지 기다리는 건 계속 해보고 싶다."
+    },
+    {
+     "id": "e_8bfbb81a277b-t01",
+     "n": 2,
+     "position": 1,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "점수 질문을 미리 걱정함",
+     "ai_topic": "점수 질문을 미리 걱정함",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "축하 두 글자 치는 동안 걔가 내 점수 물어보는 장면부터 떠오름, 아직 묻지도 않았는데 혼자 답변 준비함"
+    },
+    {
+     "id": "e_8e434ef87d1b-t00",
+     "n": 3,
+     "position": 0,
+     "topic": "집안일 책임 따지기",
+     "fine": "생활비와 집안일 기록",
+     "ai_topic": "생활비와 집안일 기록",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "신념·원칙",
+     "quote": "식비랑 집안일은 둘 다 적어야 덜 억울할 것 같다."
+    },
+    {
+     "id": "e_8e434ef87d1b-t01",
+     "n": 3,
+     "position": 1,
+     "topic": "집안일 책임 따지기",
+     "fine": "집안일 책임 따지기",
+     "ai_topic": "집안일 책임 따지기",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "쓰레기 누가 버렸는지까지 기억력 대결 하는 거 개피곤"
+    },
+    {
+     "id": "e_9e68cd6e0123-t00",
+     "n": 18,
+     "position": 0,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "버틸 수 있을지 고민",
+     "ai_topic": "버틸 수 있을지 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "말하면서도 뭘 해달라는 건지 나도 모르겠더라, 자신감 좀 달라는 건가 책임은 좀 덜 달라는 건가."
+    },
+    {
+     "id": "e_9e68cd6e0123-t01",
+     "n": 18,
+     "position": 1,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "내가 질문을 놓치지 않고 볼 수 있을 것 같은 수, 괜히 열 명이라고 쓰고 잘하는 척 안 해서"
+    },
+    {
+     "id": "e_9e68cd6e0123-t02",
+     "n": 18,
+     "position": 2,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(긍정)",
+     "quote": "괜히 열 명이라고 쓰고 잘하는 척 안 해서 다행."
+    },
+    {
+     "id": "e_9e68cd6e0123-t03",
+     "n": 18,
+     "position": 3,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "다짐",
+     "quote": "좋아하는 마음만 믿고 맡는 건 불안했는데 이렇게 확인받으면서 맡는 건 하겠다고 내가 말함."
+    },
+    {
+     "id": "e_9e68cd6e0123-t04",
+     "n": 18,
+     "position": 4,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "그냥 보조로만 남을지 혼자 전부 책임질지 둘 중 하나 찍으려던 질문에는 일단 답이 생겼다."
+    },
+    {
+     "id": "e_9e68cd6e0123-t05",
+     "n": 18,
+     "position": 5,
+     "topic": "스스로 풀 때까지 기다리기",
+     "fine": "스스로 풀 때까지 기다리기",
+     "ai_topic": "스스로 풀 때까지 기다리기",
+     "domain": "인간관계",
+     "domain_first": "그 밖",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "신념·원칙",
+     "quote": "수업 잘했다는 칭찬보다 마지막에 애들이 혼자 어디까지 푸는지를 보고 싶다."
+    },
+    {
+     "id": "e_9e68cd6e0123-t06",
+     "n": 18,
+     "position": 6,
+     "topic": "스스로 풀 때까지 기다리기",
+     "fine": "스스로 풀 때까지 기다리기",
+     "ai_topic": "스스로 풀 때까지 기다리기",
+     "domain": "인간관계",
+     "domain_first": "그 밖",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "신념·원칙",
+     "quote": "지후 걔는 말로는 다 안다고 하니까 답만 말하게 하지 말고 풀이도 남겨야 하고,"
+    },
+    {
+     "id": "e_9e68cd6e0123-t07",
+     "n": 18,
+     "position": 7,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "내년 시험과 직업 선택 기준",
+     "ai_topic": "내년 시험과 직업 선택 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "이 반 맡는다고 네 번째 응시 여부까지 자동으로 정해지는 건 아닌데 이상하게 책을 안 펴는 저녁을 덜 변명하게 됨."
+    },
+    {
+     "id": "e_9e68cd6e0123-t08",
+     "n": 18,
+     "position": 8,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "안정적인 직업 우선",
+     "ai_topic": "안정적인 직업 우선",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "예전 점수 생각하면 안정적인 길을 놓치는 건가 싶기도 한다."
+    },
+    {
+     "id": "e_9e68cd6e0123-t09",
+     "n": 18,
+     "position": 9,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "직업 기준의 변화",
+     "ai_topic": "직업 기준의 변화",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "다짐",
+     "quote": "그래도 오늘처럼 내가 먼저 다음 시간을 준비하는 일을 직업 후보에서 빼고 싶지는 않다."
+    },
+    {
+     "id": "e_9e68cd6e0123-t10",
+     "n": 18,
+     "position": 10,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "다짐",
+     "quote": "지금 맡기로 한 수업부터 실제로 해볼 거다,"
+    },
+    {
+     "id": "e_9e68cd6e0123-t11",
+     "n": 18,
+     "position": 11,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "다짐",
+     "quote": "봉투는 버리지 말고 파일에 끼워둠"
+    },
+    {
+     "id": "e_a9c26d09a87e-t00",
+     "n": 13,
+     "position": 0,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "축하 연락 미루기",
+     "ai_topic": "축하 연락 미루기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "다짐",
+     "quote": "비교하는 마음이 남아 있어도 축하 연락은 오늘 보내기로 했다."
+    },
+    {
+     "id": "e_a9c26d09a87e-t01",
+     "n": 13,
+     "position": 1,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "꼬인 마음으로 보내 해도 되는지",
+     "ai_topic": "꼬인 마음으로 보내 해도 되는지",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "속 편해질 때까지 기다리면 걔 정년까지 안 보낼 듯;;"
+    },
+    {
+     "id": "e_a9c26d09a87e-t02",
+     "n": 13,
+     "position": 2,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "남과 비교",
+     "ai_topic": "남과 비교",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "보냈다고 내가 안 부러운 건 아님,\n그건 그대로네."
+    },
+    {
+     "id": "e_aa5553a7536e-t00",
+     "n": 14,
+     "position": 0,
+     "topic": "발가락의 모래",
+     "fine": "발가락의 모래",
+     "ai_topic": "발가락의 모래",
+     "domain": "그 밖",
+     "domain_first": "인간관계",
+     "sun_id": "d_e6e2bd915a49",
+     "kind": "질문",
+     "quote": "집 와서도 발가락에 모래 나옴, 대체 어디 숨었던 거"
+    },
+    {
+     "id": "e_ade2bc47806b-t00",
+     "n": 4,
+     "position": 0,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시험 출발선에 머무름",
+     "ai_topic": "시험 출발선에 머무름",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "책값 보는 순간 익숙해서 안심되는 게 더 찝찝했음, 내가 아는 출발선이 이것뿐이라 계속 여기서 있나."
+    },
+    {
+     "id": "e_ade2bc47806b-t01",
+     "n": 4,
+     "position": 1,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "삼 년의 시험 의미",
+     "ai_topic": "삼 년의 시험 의미",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "또 떨어질까 무서운 것도 맞지만 이번엔 안 보면 지난 삼 년을 설명할 말이 없어지는 기분이다."
+    },
+    {
+     "id": "e_ade2bc47806b-t02",
+     "n": 4,
+     "position": 2,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "인간관계",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "모아둔 돈이 이백만 원 좀 넘으니까 숫자로는 가능함, 가능한 거랑 괜찮은 거랑 같은 건가."
+    },
+    {
+     "id": "e_ade2bc47806b-t03",
+     "n": 4,
+     "position": 3,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록 고민",
+     "ai_topic": "부트캠프 등록 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "다짐",
+     "quote": "이번 모집 때는 부트캠프 등록금을 내고 내 자리를 잡아두고 싶다."
+    },
+    {
+     "id": "e_ade2bc47806b-t04",
+     "n": 4,
+     "position": 4,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "방향감 찾기",
+     "ai_topic": "방향감 찾기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "딱 수강생이 되면 적어도 어디로 가는 중이라고 말할 수 있을 것 같아서."
+    },
+    {
+     "id": "e_ade2bc47806b-t05",
+     "n": 4,
+     "position": 5,
+     "topic": "코딩 시작 나이",
+     "fine": "코딩 시작 나이",
+     "ai_topic": "코딩 시작 나이",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "자기평가(부정)",
+     "quote": "스물여섯에 코딩을 처음 배우는 건 이미 늦은 출발이다."
+    },
+    {
+     "id": "e_ade2bc47806b-t06",
+     "n": 4,
+     "position": 6,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록 고민",
+     "ai_topic": "부트캠프 등록 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "소망",
+     "quote": "그런데도 등록하고 싶은 마음은 안 없어짐, 늦었다고 생각하는 만큼 지금 안 사면 영영 문이 닫힐 것 같기도 하고."
+    },
+    {
+     "id": "e_ade2bc47806b-t07",
+     "n": 4,
+     "position": 7,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "버틸 수 있을지 고민",
+     "ai_topic": "버틸 수 있을지 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "하루 열 시간 앉아 있는 건 해봤으니까 버티겠지 싶다가, 시험 책 앞에서 멍때린 시간까지 공부로 세던 것도 생각남."
+    },
+    {
+     "id": "e_ade2bc47806b-t08",
+     "n": 4,
+     "position": 8,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시작한 사람처럼 보이는 선택",
+     "ai_topic": "시작한 사람처럼 보이는 선택",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "기본서 주문 탭이랑 수강 신청 탭을 번갈아 켰는데 둘 다 내가 뭔가를 시작한 사람처럼 보이게 해주는 물건 같음"
+    },
+    {
+     "id": "e_ade2bc47806b-t09",
+     "n": 4,
+     "position": 9,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "오늘 선택 미룸",
+     "ai_topic": "오늘 선택 미룸",
+     "domain": "커리어",
+     "domain_first": "인간관계",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "다짐",
+     "quote": "아 몰라 오늘은 어느 쪽도 안 누름."
+    },
+    {
+     "id": "e_ade2bc47806b-t10",
+     "n": 4,
+     "position": 10,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "선택 대신 주변 것 보기",
+     "ai_topic": "선택 대신 주변 것 보기",
+     "domain": "커리어",
+     "domain_first": "인간관계",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "자기평가(부정)",
+     "quote": "저렴한 키보드 추천 영상만 또 삼십 분 봤다"
+    },
+    {
+     "id": "e_ade2bc47806b-t11",
+     "n": 4,
+     "position": 11,
+     "topic": "충동 결제 경계",
+     "fine": "충동 결제 경계",
+     "ai_topic": "충동 결제 경계",
+     "domain": "그 밖",
+     "domain_first": "인간관계",
+     "sun_id": "d_e6e2bd915a49",
+     "kind": "자기평가(부정)",
+     "quote": "잠깐 눌러볼 뻔, 뭘 잠깐 눌러 돈 나가는 건데"
+    },
+    {
+     "id": "e_ade2bc47806b-t12",
+     "n": 4,
+     "position": 12,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "취업 후기 화면 보기",
+     "ai_topic": "취업 후기 화면 보기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "감정",
+     "quote": "후기 화면에 어린 얼굴들이 쭉 뜨는데 그 밑에 취업했다는 문장만 읽고 있음."
+    },
+    {
+     "id": "e_c0615f39ae73-t00",
+     "n": 15,
+     "position": 0,
+     "topic": "집안일 책임 따지기",
+     "fine": "저장 안 한 실수",
+     "ai_topic": "저장 안 한 실수",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(부정)",
+     "quote": "처음엔 빈 화면이라 노트북 탓했는데 내가 저장을 안 함 ㅋㅋ 어이없어"
+    },
+    {
+     "id": "e_c0615f39ae73-t01",
+     "n": 15,
+     "position": 1,
+     "topic": "코딩 시작 나이",
+     "fine": "코딩 시작 나이",
+     "ai_topic": "코딩 시작 나이",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "신념·원칙",
+     "quote": "스물여섯이라는 숫자는 코딩을 시작하지 말아야 할 이유가 아니다."
+    },
+    {
+     "id": "e_c0615f39ae73-t02",
+     "n": 15,
+     "position": 2,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "버틸 수 있을지 고민",
+     "ai_topic": "버틸 수 있을지 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "신념·원칙",
+     "quote": "내가 오류를 찾아보는 과정을 견디는지, 실제로 배우는 속도가 어떤지가 판단할 거리다."
+    },
+    {
+     "id": "e_c0615f39ae73-t03",
+     "n": 15,
+     "position": 3,
+     "topic": "코딩 시작 나이",
+     "fine": "코딩 시작 나이",
+     "ai_topic": "코딩 시작 나이",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "신청서 생년월일 칸에 오래 멈춰 있을 이유는 없음."
+    },
+    {
+     "id": "e_c0615f39ae73-t04",
+     "n": 15,
+     "position": 4,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "부트캠프 등록금 판단",
+     "ai_topic": "부트캠프 등록금 판단",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "신념·원칙",
+     "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ"
+    },
+    {
+     "id": "e_c0615f39ae73-t05",
+     "n": 15,
+     "position": 5,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "삼 년의 시험 의미",
+     "ai_topic": "삼 년의 시험 의미",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "다짐",
+     "quote": "다시 치면 왜 치는지는 써놓고 시작해야겠다, 삼 년 했으니까 일 년 더라는 계산만 들고 들어가면 같은 자리일 것 같음"
+    },
+    {
+     "id": "e_c0615f39ae73-t06",
+     "n": 15,
+     "position": 6,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "삼 년의 시험 의미",
+     "ai_topic": "삼 년의 시험 의미",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "다시 치면 왜 치는지는 써놓고 시작해야겠다, 삼 년 했으니까 일 년 더라는 계산만 들고 들어가면 같은 자리일 것 같음"
+    },
+    {
+     "id": "e_c2b61af306d0-t00",
+     "n": 11,
+     "position": 0,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "퇴근 후에도 이어지는 일 생각",
+     "ai_topic": "퇴근 후에도 이어지는 일 생각",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "나 원래 퇴근하면하던 일 생각도 하기 싫어했는데."
+    },
+    {
+     "id": "e_c2b61af306d0-t01",
+     "n": 11,
+     "position": 1,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "안정적인 직업 우선",
+     "ai_topic": "안정적인 직업 우선",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "신념·원칙",
+     "quote": "예전엔 안정적인 직업이 무조건 먼저라고 믿었는데, 지금은 내가 시간 가는 줄 모르고 하는 일이 뭔지가 더 중요하다."
+    },
+    {
+     "id": "e_c2b61af306d0-t02",
+     "n": 11,
+     "position": 2,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "직업 기준의 변화",
+     "ai_topic": "직업 기준의 변화",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "이건 진짜 생각 바뀐 거 맞음."
+    },
+    {
+     "id": "e_c2b61af306d0-t03",
+     "n": 11,
+     "position": 3,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "내년 시험과 직업 선택 기준",
+     "ai_topic": "내년 시험과 직업 선택 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "그렇다고 내년 시험을 안 본다고 오늘 선언할 용기는 없고 ㅋㅋ 적어도 직업 고를 때 첫 번째로 보는건 달라졌다."
+    },
+    {
+     "id": "e_c2b61af306d0-t04",
+     "n": 11,
+     "position": 4,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "일에 몰입한 두 시간",
+     "ai_topic": "일에 몰입한 두 시간",
+     "domain": "커리어",
+     "domain_first": "인간관계",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "오늘 두 시간은 버틴 시간이 아니었음"
+    },
+    {
+     "id": "e_c2b61af306d0-t05",
+     "n": 11,
+     "position": 5,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시험 출발선에 머무름",
+     "ai_topic": "시험 출발선에 머무름",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "질문",
+     "quote": "그렇다고 내년 시험을 안 본다고 오늘 선언할 용기는 없고 ㅋㅋ 적어도 직업 고를 때 첫 번째로 보는건 달라졌다."
+    },
+    {
+     "id": "e_c3dfac02e3e9-t00",
+     "n": 8,
+     "position": 0,
+     "topic": "집안일 책임 따지기",
+     "fine": "책상 사용 시간",
+     "ai_topic": "책상 사용 시간",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "바로 형 무시하냐고 할 뻔했는데 걔는 쉬는 날 책상 좀 쓰고 싶다는 말이었음;;"
+    },
+    {
+     "id": "e_c3dfac02e3e9-t01",
+     "n": 8,
+     "position": 1,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시작한 사람처럼 보이는 선택",
+     "ai_topic": "시작한 사람처럼 보이는 선택",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "다시 준비하면 붙을 가능성보다 일단 할 말이 생긴다는 게 먼저 떠오른다."
+    },
+    {
+     "id": "e_c3dfac02e3e9-t02",
+     "n": 8,
+     "position": 2,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시작한 사람처럼 보이는 선택",
+     "ai_topic": "시작한 사람처럼 보이는 선택",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "자기평가(부정)",
+     "quote": "준비 중이라고 하면 실패한 상태가 잠깐 가려지는 느낌,\n이거 때문에 응시하는 건 좀 이상한데."
+    },
+    {
+     "id": "e_c3dfac02e3e9-t03",
+     "n": 8,
+     "position": 3,
+     "topic": "집안일 책임 따지기",
+     "fine": "집안일 책임 따지기",
+     "ai_topic": "집안일 책임 따지기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "자기평가(부정)",
+     "quote": "집에 오래 있는 쪽이 빨래 널자고 내가 말해놓고 책상에서 문제 푼 시간은 예외로 치고 있었네."
+    },
+    {
+     "id": "e_c3dfac02e3e9-t04",
+     "n": 8,
+     "position": 4,
+     "topic": "집안일 책임 따지기",
+     "fine": "책상 사용 시간",
+     "ai_topic": "책상 사용 시간",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "바로 형 무시하냐고 할 뻔했는데"
+    },
+    {
+     "id": "e_c3dfac02e3e9-t05",
+     "n": 8,
+     "position": 5,
+     "topic": "부트캠프 등록금 판단",
+     "fine": "시작한 사람처럼 보이는 선택",
+     "ai_topic": "시작한 사람처럼 보이는 선택",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_2fb4d620cb97",
+     "kind": "해석",
+     "quote": "붙을 가능성보다 일단 할 말이 생긴다는 게 먼저 떠오른다."
+    },
+    {
+     "id": "e_cc22a8b4baa8-t00",
+     "n": 6,
+     "position": 0,
+     "topic": "참외 씨 부분 맛",
+     "fine": "참외 씨 부분 맛",
+     "ai_topic": "참외 씨 부분 맛",
+     "domain": "그 밖",
+     "domain_first": "인간관계",
+     "sun_id": "d_e6e2bd915a49",
+     "kind": "질문",
+     "quote": "씨 있는 부분이 제일 맛있는데 왜 빼지"
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t00",
+     "n": 16,
+     "position": 0,
+     "topic": "스스로 풀 때까지 기다리기",
+     "fine": "설명이 이해와 반응",
+     "ai_topic": "설명이 이해와 반응",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "수업 때 끄덕이길래 다 아는 줄 알았네."
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t01",
+     "n": 16,
+     "position": 1,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "해석",
+     "quote": "애들 한 달을 내가 연습 삼아 쓸 수는 없으니 보조로 남는 게 맞는 것 같다."
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t02",
+     "n": 16,
+     "position": 2,
+     "topic": "집안일 책임 따지기",
+     "fine": "작은 반 맡기",
+     "ai_topic": "작은 반 맡기",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "소망",
+     "quote": "근데 내 반을 맡아서 처음부터 끝까지 해보고 싶은 마음도 여전함."
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t03",
+     "n": 16,
+     "position": 3,
+     "topic": "집안일 책임 따지기",
+     "fine": "형 역할로 굳는 부담",
+     "ai_topic": "형 역할로 굳는 부담",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "신념·원칙",
+     "quote": "지금 난 어떤 형태로 수업을 맡아야 하지."
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t04",
+     "n": 16,
+     "position": 4,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "꼬인 마음으로 보내 해도 되는지",
+     "ai_topic": "꼬인 마음으로 보내 해도 되는지",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "질문",
+     "quote": "웃기려고 하는 건지 거리를 벌리는 건지 모르겠음."
+    },
+    {
+     "id": "e_e7ed1cf4d44b-t05",
+     "n": 16,
+     "position": 5,
+     "topic": "집안일 책임 따지기",
+     "fine": "말문이 막힌 저녁",
+     "ai_topic": "말문이 막힌 저녁",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "걔가 그냥 이름 부르래서 좀 뻘쭘했다."
+    },
+    {
+     "id": "e_f6c6baa5e323-t00",
+     "n": 9,
+     "position": 0,
+     "topic": "윤공 새 프로필",
+     "fine": "윤공 새 프로필",
+     "ai_topic": "윤공 새 프로필",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "감정",
+     "quote": "윤공 새 프로필 봄, 셔츠 왜케 빳빳함 ㅋㅋ"
+    },
+    {
+     "id": "e_f6c6baa5e323-t01",
+     "n": 9,
+     "position": 1,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "축하 연락 미루기",
+     "ai_topic": "축하 연락 미루기",
+     "domain": "인간관계",
+     "domain_first": "커리어",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "소망",
+     "quote": "내 근황을 묻는 답장이 올까 봐 축하 연락을 계속 미루고 싶다."
+    },
+    {
+     "id": "e_f6c6baa5e323-t02",
+     "n": 9,
+     "position": 2,
+     "topic": "꼬인 마음으로 보내 해도 되는지",
+     "fine": "꼬인 마음으로 보내 해도 되는지",
+     "ai_topic": "꼬인 마음으로 보내 해도 되는지",
+     "domain": "인간관계",
+     "domain_first": "그 밖",
+     "sun_id": "d_66cfd3d8075f",
+     "kind": "질문",
+     "quote": "축하는 하고 싶은데, 나 이 꼬인 마음인 채로 보내도 되나"
+    }
+   ],
+   "relations": [
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_693b0ecad44f-t00",
+     "to": "e_8bfbb81a277b-t01",
+     "from_n": 1,
+     "to_n": 2
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8bfbb81a277b-t01",
+     "to": "e_70e49c90670f-t01",
+     "from_n": 2,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t12",
+     "to": "e_70e49c90670f-t00",
+     "from_n": 4,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8e434ef87d1b-t01",
+     "to": "e_70e49c90670f-t03",
+     "from_n": 3,
+     "to_n": 5
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t03",
+     "to": "e_1dec4ef6a338-t01",
+     "from_n": 4,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t11",
+     "to": "e_1dec4ef6a338-t01",
+     "from_n": 4,
+     "to_n": 7
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t07",
+     "to": "e_1dec4ef6a338-t01",
+     "from_n": 4,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t08",
+     "to": "e_c3dfac02e3e9-t05",
+     "from_n": 4,
+     "to_n": 8
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t07",
+     "to": "e_c3dfac02e3e9-t05",
+     "from_n": 4,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t03",
+     "to": "e_c3dfac02e3e9-t03",
+     "from_n": 5,
+     "to_n": 8
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t00",
+     "to": "e_c3dfac02e3e9-t04",
+     "from_n": 8,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t01",
+     "to": "e_c3dfac02e3e9-t05",
+     "from_n": 8,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t01",
+     "to": "e_c3dfac02e3e9-t02",
+     "from_n": 8,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t03",
+     "to": "e_c3dfac02e3e9-t00",
+     "from_n": 5,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8bfbb81a277b-t01",
+     "to": "e_c3dfac02e3e9-t04",
+     "from_n": 2,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8e434ef87d1b-t01",
+     "to": "e_c3dfac02e3e9-t03",
+     "from_n": 3,
+     "to_n": 8
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_70e49c90670f-t04",
+     "to": "e_c3dfac02e3e9-t03",
+     "from_n": 5,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t00",
+     "to": "e_c3dfac02e3e9-t03",
+     "from_n": 8,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t08",
+     "to": "e_c3dfac02e3e9-t02",
+     "from_n": 4,
+     "to_n": 8
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_693b0ecad44f-t00",
+     "to": "e_c3dfac02e3e9-t05",
+     "from_n": 1,
+     "to_n": 8
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_70e49c90670f-t02",
+     "to": "e_c3dfac02e3e9-t00",
+     "from_n": 5,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8e434ef87d1b-t01",
+     "to": "e_c3dfac02e3e9-t04",
+     "from_n": 3,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t06",
+     "to": "e_f6c6baa5e323-t01",
+     "from_n": 4,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_70e49c90670f-t04",
+     "to": "e_5bb4b6170073-t02",
+     "from_n": 5,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8e434ef87d1b-t00",
+     "to": "e_5bb4b6170073-t03",
+     "from_n": 3,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t02",
+     "to": "e_5bb4b6170073-t04",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t05",
+     "to": "e_5bb4b6170073-t12",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t02",
+     "to": "e_5bb4b6170073-t05",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t06",
+     "to": "e_5bb4b6170073-t07",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t12",
+     "to": "e_5bb4b6170073-t07",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t02",
+     "to": "e_5bb4b6170073-t06",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t09",
+     "to": "e_5bb4b6170073-t10",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t00",
+     "to": "e_5bb4b6170073-t08",
+     "from_n": 8,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t00",
+     "to": "e_5bb4b6170073-t11",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_70e49c90670f-t02",
+     "to": "e_5bb4b6170073-t09",
+     "from_n": 5,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t01",
+     "to": "e_5bb4b6170073-t05",
+     "from_n": 7,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t02",
+     "to": "e_5bb4b6170073-t10",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t02",
+     "to": "e_5bb4b6170073-t01",
+     "from_n": 5,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t01",
+     "to": "e_5bb4b6170073-t00",
+     "from_n": 5,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t02",
+     "to": "e_5bb4b6170073-t12",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t03",
+     "to": "e_5bb4b6170073-t04",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_693b0ecad44f-t00",
+     "to": "e_c2b61af306d0-t01",
+     "from_n": 1,
+     "to_n": 11
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_693b0ecad44f-t00",
+     "to": "e_c2b61af306d0-t03",
+     "from_n": 1,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c2b61af306d0-t01",
+     "to": "e_c2b61af306d0-t02",
+     "from_n": 11,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t07",
+     "to": "e_c2b61af306d0-t05",
+     "from_n": 4,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t01",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 5,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c2b61af306d0-t04",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 11,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t00",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 8,
+     "to_n": 12
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t00",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 7,
+     "to_n": 12
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t04",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 8,
+     "to_n": 12
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_f6c6baa5e323-t00",
+     "to": "e_3891eee4d94f-t00",
+     "from_n": 9,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_70e49c90670f-t00",
+     "to": "e_a9c26d09a87e-t00",
+     "from_n": 5,
+     "to_n": 13
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_f6c6baa5e323-t01",
+     "to": "e_a9c26d09a87e-t00",
+     "from_n": 9,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f6c6baa5e323-t01",
+     "to": "e_a9c26d09a87e-t01",
+     "from_n": 9,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_8bfbb81a277b-t01",
+     "to": "e_a9c26d09a87e-t02",
+     "from_n": 2,
+     "to_n": 13
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t05",
+     "to": "e_c0615f39ae73-t01",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t02",
+     "to": "e_c0615f39ae73-t02",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t05",
+     "to": "e_c0615f39ae73-t03",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t05",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 10,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t01",
+     "to": "e_c0615f39ae73-t05",
+     "from_n": 7,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_70e49c90670f-t02",
+     "to": "e_c0615f39ae73-t00",
+     "from_n": 5,
+     "to_n": 15
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t03",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t05",
+     "to": "e_c0615f39ae73-t06",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t01",
+     "to": "e_c0615f39ae73-t03",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c2b61af306d0-t04",
+     "to": "e_c0615f39ae73-t02",
+     "from_n": 11,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t12",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 10,
+     "to_n": 15
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t02",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t01",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t02",
+     "to": "e_c0615f39ae73-t04",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t01",
+     "to": "e_c0615f39ae73-t05",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t02",
+     "to": "e_c0615f39ae73-t05",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_3891eee4d94f-t00",
+     "to": "e_e7ed1cf4d44b-t02",
+     "from_n": 12,
+     "to_n": 16
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_e7ed1cf4d44b-t01",
+     "to": "e_e7ed1cf4d44b-t02",
+     "from_n": 16,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f6c6baa5e323-t02",
+     "to": "e_e7ed1cf4d44b-t04",
+     "from_n": 9,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t03",
+     "to": "e_e7ed1cf4d44b-t03",
+     "from_n": 10,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3dfac02e3e9-t04",
+     "to": "e_e7ed1cf4d44b-t05",
+     "from_n": 8,
+     "to_n": 16
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t00",
+     "to": "e_e7ed1cf4d44b-t00",
+     "from_n": 7,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t06",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 4,
+     "to_n": 19
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t05",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 10,
+     "to_n": 19
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t12",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 10,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t08",
+     "to": "e_6fab52e0212e-t00",
+     "from_n": 4,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t09",
+     "to": "e_6fab52e0212e-t02",
+     "from_n": 10,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t00",
+     "to": "e_6fab52e0212e-t02",
+     "from_n": 15,
+     "to_n": 19
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_6fab52e0212e-t00",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 19,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t03",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 4,
+     "to_n": 19
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t01",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 7,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t00",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 4,
+     "to_n": 19
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_c0615f39ae73-t06",
+     "to": "e_6fab52e0212e-t01",
+     "from_n": 15,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1dec4ef6a338-t01",
+     "to": "e_6fab52e0212e-t00",
+     "from_n": 7,
+     "to_n": 19
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_ade2bc47806b-t06",
+     "to": "e_1a7c6debdfc7-t02",
+     "from_n": 4,
+     "to_n": 20
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_5bb4b6170073-t05",
+     "to": "e_1a7c6debdfc7-t02",
+     "from_n": 10,
+     "to_n": 20
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6fab52e0212e-t01",
+     "to": "e_1a7c6debdfc7-t03",
+     "from_n": 19,
+     "to_n": 20
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_1a7c6debdfc7-t00",
+     "to": "e_1a7c6debdfc7-t01",
+     "from_n": 20,
+     "to_n": 20
+    }
+   ],
+   "insight": {
+    "period": {
+     "from": "2026-07-01",
+     "to": "2026-10-25",
+     "records": 19
+    },
+    "suns": [
+     {
+      "name": "커리어",
+      "records": 10,
+      "stars": [
+       {
+        "name": "부트캠프 등록금 판단",
+        "records": 10,
+        "first": "2026-07-01",
+        "last": "2026-10-25",
+        "kinds": {
+         "해석": 15,
+         "질문": 9,
+         "다짐": 5
+        }
+       },
+       {
+        "name": "코딩 시작 나이",
+        "records": 2,
+        "first": "2026-07-12",
+        "last": "2026-09-16",
+        "kinds": {
+         "자기평가(부정)": 1,
+         "신념·원칙": 1,
+         "해석": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "부트캠프 등록금 판단",
+        "times": 21,
+        "from": {
+         "day": "2026-07-12",
+         "quote": "기본서 주문 탭이랑 수강 신청 탭을 번갈아 켰는데 둘 다 내가 뭔가를 시작한 사람처럼 보이게 해주는 물건 같음",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t08"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "결제는 아직 못 누름.",
+         "record_id": "e_1a7c6debdfc7",
+         "thought_id": "e_1a7c6debdfc7-t03"
+        }
+       },
+       {
+        "star": "코딩 시작 나이",
+        "times": 1,
+        "from": {
+         "day": "2026-09-16",
+         "quote": "스물여섯이라는 숫자는 코딩을 시작하지 말아야 할 이유가 아니다.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t01"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "신청서 생년월일 칸에 오래 멈춰 있을 이유는 없음.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t03"
+        }
+       }
+      ],
+      "changed": [
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "안정적인 직업을 얻는 게 무조건 먼저다.",
+         "record_id": "e_693b0ecad44f",
+         "thought_id": "e_693b0ecad44f-t00"
+        },
+        "to": {
+         "day": "2026-08-02",
+         "quote": "붙을 가능성보다 일단 할 말이 생긴다는 게 먼저 떠오른다.",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t05"
+        },
+        "axis": "안정적인 직업 우선 ↔ 당장 할 말 우선"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "실선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "안정적인 직업을 얻는 게 무조건 먼저다.",
+         "record_id": "e_693b0ecad44f",
+         "thought_id": "e_693b0ecad44f-t00"
+        },
+        "to": {
+         "day": "2026-08-23",
+         "quote": "예전엔 안정적인 직업이 무조건 먼저라고 믿었는데, 지금은 내가 시간 가는 줄 모르고 하는 일이 뭔지가 더 중요하다.",
+         "record_id": "e_c2b61af306d0",
+         "thought_id": "e_c2b61af306d0-t01"
+        },
+        "axis": "안정성 우선 ↔ 몰입하는 일 우선"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "실선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "안정적인 직업을 얻는 게 무조건 먼저다.",
+         "record_id": "e_693b0ecad44f",
+         "thought_id": "e_693b0ecad44f-t00"
+        },
+        "to": {
+         "day": "2026-08-23",
+         "quote": "그렇다고 내년 시험을 안 본다고 오늘 선언할 용기는 없고 ㅋㅋ 적어도 직업 고를 때 첫 번째로 보는건 달라졌다.",
+         "record_id": "e_c2b61af306d0",
+         "thought_id": "e_c2b61af306d0-t03"
+        },
+        "axis": "안정성 우선 ↔ 첫 기준 변화"
+       },
+       {
+        "star": "코딩 시작 나이",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "스물여섯에 코딩을 처음 배우는 건 이미 늦은 출발이다.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t05"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "스물여섯이라는 숫자는 코딩을 시작하지 말아야 할 이유가 아니다.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t01"
+        },
+        "axis": "늦은 출발 ↔ 시작해도 됨"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-28",
+         "quote": "돈 내기 전에 공짜 실습을 끝까지 해보는 순서는 지키고 싶다.",
+         "record_id": "e_1dec4ef6a338",
+         "thought_id": "e_1dec4ef6a338-t01"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님.",
+         "record_id": "e_6fab52e0212e",
+         "thought_id": "e_6fab52e0212e-t01"
+        },
+        "axis": "먼저 실습 ↔ 먼저 송금"
+       }
+      ],
+      "open": [
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "이번 모집 때는 부트캠프 등록금을 내고 내 자리를 잡아두고 싶다.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t03"
+        },
+        "to": {
+         "day": "2026-07-28",
+         "quote": "돈 내기 전에 공짜 실습을 끝까지 해보는 순서는 지키고 싶다.",
+         "record_id": "e_1dec4ef6a338",
+         "thought_id": "e_1dec4ef6a338-t01"
+        },
+        "axis": "먼저 실습 완료 ↔ 먼저 등록금 결제"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-16",
+         "quote": "신청서 생년월일 칸에 오래 멈춰 있을 이유는 없음.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t03"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        },
+        "axis": "나이 문제 아님 ↔ 비용은 따져야 함"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-16",
+         "quote": "내가 오류를 찾아보는 과정을 견디는지, 실제로 배우는 속도가 어떤지가 판단할 거리다.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t02"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        },
+        "axis": "학습 적합성 ↔ 비용 부담"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-16",
+         "quote": "스물여섯이라는 숫자는 코딩을 시작하지 말아야 할 이유가 아니다.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t01"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        },
+        "axis": "나이 문제 아님 ↔ 비용 부담"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-10-18",
+         "quote": "숫자 넣으면 합계 바뀌는 것뿐인데 내가 만든 화면에서 되니까 좀 신기함.",
+         "record_id": "e_6fab52e0212e",
+         "thought_id": "e_6fab52e0212e-t00"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님.",
+         "record_id": "e_6fab52e0212e",
+         "thought_id": "e_6fab52e0212e-t01"
+        },
+        "axis": "해보는 재미 ↔ 비용 부담"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-16",
+         "quote": "다시 치면 왜 치는지는 써놓고 시작해야겠다, 삼 년 했으니까 일 년 더라는 계산만 들고 들어가면 같은 자리일 것 같음",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t06"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님.",
+         "record_id": "e_6fab52e0212e",
+         "thought_id": "e_6fab52e0212e-t01"
+        },
+        "axis": "배우고 싶은 마음 ↔ 시작 이유 점검"
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "그런데도 등록하고 싶은 마음은 안 없어짐, 늦었다고 생각하는 만큼 지금 안 사면 영영 문이 닫힐 것 같기도 하고.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t06"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "무료로 끝낸 게 있으니까 바로 백팔십만 원도 써야 한다는 건 아니고, 그렇다고 돈 아깝다는 말로 궁금한 걸 없는 셈 치기도 싫음.",
+         "record_id": "e_1a7c6debdfc7",
+         "thought_id": "e_1a7c6debdfc7-t02"
+        },
+        "axis": "비용 신중 ↔ 등록 욕구"
+       }
+      ],
+      "settled": [
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "하루 열 시간 앉아 있는 건 해봤으니까 버티겠지 싶다가, 시험 책 앞에서 멍때린 시간까지 공부로 세던 것도 생각남.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t07"
+        },
+        "to": {
+         "day": "2026-07-28",
+         "quote": "돈 내기 전에 공짜 실습을 끝까지 해보는 순서는 지키고 싶다.",
+         "record_id": "e_1dec4ef6a338",
+         "thought_id": "e_1dec4ef6a338-t01"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "하루 열 시간 앉아 있는 건 해봤으니까 버티겠지 싶다가, 시험 책 앞에서 멍때린 시간까지 공부로 세던 것도 생각남.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t07"
+        },
+        "to": {
+         "day": "2026-08-02",
+         "quote": "붙을 가능성보다 일단 할 말이 생긴다는 게 먼저 떠오른다.",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t05"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "모아둔 돈이 이백만 원 좀 넘으니까 숫자로는 가능함, 가능한 거랑 괜찮은 거랑 같은 건가.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t02"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "나눠 내도 결국 내가 내는 돈인데.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t06"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "모아둔 돈이 이백만 원 좀 넘으니까 숫자로는 가능함, 가능한 거랑 괜찮은 거랑 같은 건가.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t02"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "내가 오류를 찾아보는 과정을 견디는지, 실제로 배우는 속도가 어떤지가 판단할 거리다.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t02"
+        }
+       },
+       {
+        "star": "코딩 시작 나이",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "스물여섯에 코딩을 처음 배우는 건 이미 늦은 출발이다.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t05"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "신청서 생년월일 칸에 오래 멈춰 있을 이유는 없음.",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t03"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "생활비를 보태면 모은 돈에서 수강료가 모자라고, 수강료를 먼저 내면 집에 줄 돈이 빈다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t05"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "계좌를 세 번 확인해도 잔액은 그대로고 둘 중 뭘 뒤로 미룰지는 못 정했다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t12"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-12",
+         "quote": "모아둔 돈이 이백만 원 좀 넘으니까 숫자로는 가능함, 가능한 거랑 괜찮은 거랑 같은 건가.",
+         "record_id": "e_ade2bc47806b",
+         "thought_id": "e_ade2bc47806b-t02"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "물론 백팔십만 원 칸에서는 멈춰야 됨 ㅠ",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t04"
+        }
+       },
+       {
+        "star": "부트캠프 등록금 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "생활비를 보태면 모은 돈에서 수강료가 모자라고, 수강료를 먼저 내면 집에 줄 돈이 빈다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t05"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "무료로 끝낸 게 있으니까 바로 백팔십만 원도 써야 한다는 건 아니고, 그렇다고 돈 아깝다는 말로 궁금한 걸 없는 셈 치기도 싫음.",
+         "record_id": "e_1a7c6debdfc7",
+         "thought_id": "e_1a7c6debdfc7-t02"
+        }
+       }
+      ]
+     },
+     {
+      "name": "인간관계",
+      "records": 14,
+      "stars": [
+       {
+        "name": "집안일 책임 따지기",
+        "records": 9,
+        "first": "2026-07-08",
+        "last": "2026-10-18",
+        "kinds": {
+         "감정": 8,
+         "해석": 7,
+         "자기평가(부정)": 4
+        }
+       },
+       {
+        "name": "꼬인 마음으로 보내 해도 되는지",
+        "records": 5,
+        "first": "2026-07-03",
+        "last": "2026-09-24",
+        "kinds": {
+         "질문": 3,
+         "소망": 2,
+         "감정": 2
+        }
+       },
+       {
+        "name": "스스로 풀 때까지 기다리기",
+        "records": 4,
+        "first": "2026-07-03",
+        "last": "2026-10-09",
+        "kinds": {
+         "해석": 2,
+         "신념·원칙": 2,
+         "다짐": 1
+        }
+       },
+       {
+        "name": "걔 우산 기억",
+        "records": 2,
+        "first": "2026-07-19",
+        "last": "2026-10-25",
+        "kinds": {
+         "감정": 2,
+         "자기평가(긍정)": 1
+        }
+       },
+       {
+        "name": "윤공 새 프로필",
+        "records": 1,
+        "first": "2026-08-11",
+        "last": "2026-08-11",
+        "kinds": {
+         "감정": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "집안일 책임 따지기",
+        "times": 19,
+        "from": {
+         "day": "2026-07-03",
+         "quote": "축하 두 글자 치는 동안 걔가 내 점수 물어보는 장면부터 떠오름, 아직 묻지도 않았는데 혼자 답변 준비함",
+         "record_id": "e_8bfbb81a277b",
+         "thought_id": "e_8bfbb81a277b-t01"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "화면이랑 통장 같이 켜두면 좀 복잡하다",
+         "record_id": "e_6fab52e0212e",
+         "thought_id": "e_6fab52e0212e-t02"
+        }
+       },
+       {
+        "star": "꼬인 마음으로 보내 해도 되는지",
+        "times": 4,
+        "from": {
+         "day": "2026-07-03",
+         "quote": "축하 두 글자 치는 동안 걔가 내 점수 물어보는 장면부터 떠오름, 아직 묻지도 않았는데 혼자 답변 준비함",
+         "record_id": "e_8bfbb81a277b",
+         "thought_id": "e_8bfbb81a277b-t01"
+        },
+        "to": {
+         "day": "2026-09-24",
+         "quote": "웃기려고 하는 건지 거리를 벌리는 건지 모르겠음.",
+         "record_id": "e_e7ed1cf4d44b",
+         "thought_id": "e_e7ed1cf4d44b-t04"
+        }
+       },
+       {
+        "star": "걔 우산 기억",
+        "times": 1,
+        "from": {
+         "day": "2026-07-03",
+         "quote": "축하 두 글자 치는 동안 걔가 내 점수 물어보는 장면부터 떠오름, 아직 묻지도 않았는데 혼자 답변 준비함",
+         "record_id": "e_8bfbb81a277b",
+         "thought_id": "e_8bfbb81a277b-t01"
+        },
+        "to": {
+         "day": "2026-07-19",
+         "quote": "그런 거까지 없던 일 되는건 싫음.",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t01"
+        }
+       }
+      ],
+      "changed": [
+       {
+        "star": "스스로 풀 때까지 기다리기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-28",
+         "quote": "재밌는 설명이랑 알아듣는 설명은 다른가봐",
+         "record_id": "e_1dec4ef6a338",
+         "thought_id": "e_1dec4ef6a338-t00"
+        },
+        "to": {
+         "day": "2026-09-24",
+         "quote": "수업 때 끄덕이길래 다 아는 줄 알았네.",
+         "record_id": "e_e7ed1cf4d44b",
+         "thought_id": "e_e7ed1cf4d44b-t00"
+        },
+        "axis": "구분해서 봄 ↔ 끄덕임을 이해로 봄"
+       }
+      ],
+      "open": [
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "준호 수입이 줄었으니 9월이랑 10월은 내가 생활비를 더 내야 한다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t02"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "근데 내가 더 내는 게 당연한 형 역할로 굳을까 봐 그것도 싫음.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t04"
+        },
+        "axis": "부담 수용 ↔ 역할 고착 경계"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "걔한테 무조건 반 내라고 하면 밥값까지 빌려야 하는 걸 아니까 그렇게는 못 하겠다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t03"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "근데 내가 더 내는 게 당연한 형 역할로 굳을까 봐 그것도 싫음.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t04"
+        },
+        "axis": "배려해서 요구 줄이기 ↔ 역할 고착 경계"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "돈 더 내면 이건 네가 하라는 말이 목까지 올라왔다가 삼켰다, 그럼 내가 싫다던 계산을 또 하는 거잖아.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t09"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "그렇다고 내가 전부 할 수 있다는 뜻도 아님.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t10"
+        },
+        "axis": "분담 요구 ↔ 전부 부담 거부"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-18",
+         "quote": "준호 수입이 줄었으니 9월이랑 10월은 내가 생활비를 더 내야 한다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t02"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "그렇다고 내가 전부 할 수 있다는 뜻도 아님.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t10"
+        },
+        "axis": "더 부담하기 ↔ 전부 부담하지 않기"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-28",
+         "quote": "재밌는 설명이랑 알아듣는 설명은 다른가봐",
+         "record_id": "e_1dec4ef6a338",
+         "thought_id": "e_1dec4ef6a338-t00"
+        },
+        "to": {
+         "day": "2026-08-27",
+         "quote": "작은 반 하나는 내가 맡고 싶다.",
+         "record_id": "e_3891eee4d94f",
+         "thought_id": "e_3891eee4d94f-t00"
+        },
+        "axis": "거리 두기 ↔ 맡기"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-02",
+         "quote": "바로 형 무시하냐고 할 뻔했는데",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t04"
+        },
+        "to": {
+         "day": "2026-08-27",
+         "quote": "작은 반 하나는 내가 맡고 싶다.",
+         "record_id": "e_3891eee4d94f",
+         "thought_id": "e_3891eee4d94f-t00"
+        },
+        "axis": "참여 ↔ 방어"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-11",
+         "quote": "윤공 새 프로필 봄, 셔츠 왜케 빳빳함 ㅋㅋ",
+         "record_id": "e_f6c6baa5e323",
+         "thought_id": "e_f6c6baa5e323-t00"
+        },
+        "to": {
+         "day": "2026-08-27",
+         "quote": "작은 반 하나는 내가 맡고 싶다.",
+         "record_id": "e_3891eee4d94f",
+         "thought_id": "e_3891eee4d94f-t00"
+        },
+        "axis": "역할 맡기 ↔ 관찰"
+       },
+       {
+        "star": "꼬인 마음으로 보내 해도 되는지",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-11",
+         "quote": "내 근황을 묻는 답장이 올까 봐 축하 연락을 계속 미루고 싶다.",
+         "record_id": "e_f6c6baa5e323",
+         "thought_id": "e_f6c6baa5e323-t01"
+        },
+        "to": {
+         "day": "2026-09-04",
+         "quote": "비교하는 마음이 남아 있어도 축하 연락은 오늘 보내기로 했다.",
+         "record_id": "e_a9c26d09a87e",
+         "thought_id": "e_a9c26d09a87e-t00"
+        },
+        "axis": "미루기 ↔ 보내기"
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-24",
+         "quote": "애들 한 달을 내가 연습 삼아 쓸 수는 없으니 보조로 남는 게 맞는 것 같다.",
+         "record_id": "e_e7ed1cf4d44b",
+         "thought_id": "e_e7ed1cf4d44b-t01"
+        },
+        "to": {
+         "day": "2026-09-24",
+         "quote": "근데 내 반을 맡아서 처음부터 끝까지 해보고 싶은 마음도 여전함.",
+         "record_id": "e_e7ed1cf4d44b",
+         "thought_id": "e_e7ed1cf4d44b-t02"
+        },
+        "axis": "보조로 남기 ↔ 자기 반 맡기"
+       }
+      ],
+      "settled": [
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-19",
+         "quote": "근데 채팅방 열고도 또 닫았다.",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t02"
+        },
+        "to": {
+         "day": "2026-08-02",
+         "quote": "바로 형 무시하냐고 할 뻔했는데 걔는 쉬는 날 책상 좀 쓰고 싶다는 말이었음;;",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t00"
+        }
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-19",
+         "quote": "그렇다고 식비 얘기가 끝난 건 아님,",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t04"
+        },
+        "to": {
+         "day": "2026-08-02",
+         "quote": "집에 오래 있는 쪽이 빨래 널자고 내가 말해놓고 책상에서 문제 푼 시간은 예외로 치고 있었네.",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t03"
+        }
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-02",
+         "quote": "바로 형 무시하냐고 할 뻔했는데 걔는 쉬는 날 책상 좀 쓰고 싶다는 말이었음;;",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t00"
+        },
+        "to": {
+         "day": "2026-08-02",
+         "quote": "바로 형 무시하냐고 할 뻔했는데",
+         "record_id": "e_c3dfac02e3e9",
+         "thought_id": "e_c3dfac02e3e9-t04"
+        }
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-19",
+         "quote": "그렇다고 식비 얘기가 끝난 건 아님,",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t04"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "준호 수입이 줄었으니 9월이랑 10월은 내가 생활비를 더 내야 한다.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t02"
+        }
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-19",
+         "quote": "근데 채팅방 열고도 또 닫았다.",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t02"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "돈 더 내면 이건 네가 하라는 말이 목까지 올라왔다가 삼켰다, 그럼 내가 싫다던 계산을 또 하는 거잖아.",
+         "record_id": "e_5bb4b6170073",
+         "thought_id": "e_5bb4b6170073-t09"
+        }
+       },
+       {
+        "star": "집안일 책임 따지기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-19",
+         "quote": "근데 채팅방 열고도 또 닫았다.",
+         "record_id": "e_70e49c90670f",
+         "thought_id": "e_70e49c90670f-t02"
+        },
+        "to": {
+         "day": "2026-09-16",
+         "quote": "처음엔 빈 화면이라 노트북 탓했는데 내가 저장을 안 함 ㅋㅋ 어이없어",
+         "record_id": "e_c0615f39ae73",
+         "thought_id": "e_c0615f39ae73-t00"
+        }
+       },
+       {
+        "star": "걔 우산 기억",
+        "line": "점선",
+        "from": {
+         "day": "2026-10-25",
+         "quote": "재민이 만남. 걔도 출근해서 모르는 거 물을 때 눈치 본다는데 나도 모르게 네가 무슨 걱정이냐고 할 뻔했다.",
+         "record_id": "e_1a7c6debdfc7",
+         "thought_id": "e_1a7c6debdfc7-t00"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "중간에 걔 월급 궁금했던 것도 사실, 그래도 오늘은 내 근황 포장하느라 대답을 놓치진 않았다.",
+         "record_id": "e_1a7c6debdfc7",
+         "thought_id": "e_1a7c6debdfc7-t01"
+        }
+       }
+      ]
+     }
+    ],
+    "across": [
+     {
+      "type": "이어짐",
+      "suns": [
+       "커리어",
+       "인간관계"
+      ],
+      "from": {
+       "day": "2026-07-01",
+       "quote": "안정적인 직업을 얻는 게 무조건 먼저다.",
+       "record_id": "e_693b0ecad44f",
+       "thought_id": "e_693b0ecad44f-t00"
+      },
+      "to": {
+       "day": "2026-07-03",
+       "quote": "축하 두 글자 치는 동안 걔가 내 점수 물어보는 장면부터 떠오름, 아직 묻지도 않았는데 혼자 답변 준비함",
+       "record_id": "e_8bfbb81a277b",
+       "thought_id": "e_8bfbb81a277b-t01"
+      }
+     },
+     {
+      "type": "이어짐",
+      "suns": [
+       "커리어",
+       "인간관계"
+      ],
+      "from": {
+       "day": "2026-07-12",
+       "quote": "후기 화면에 어린 얼굴들이 쭉 뜨는데 그 밑에 취업했다는 문장만 읽고 있음.",
+       "record_id": "e_ade2bc47806b",
+       "thought_id": "e_ade2bc47806b-t12"
+      },
+      "to": {
+       "day": "2026-07-19",
+       "quote": "재민이한테 잘됐다고 말은 해주고 싶다.",
+       "record_id": "e_70e49c90670f",
+       "thought_id": "e_70e49c90670f-t00"
+      }
+     },
+     {
+      "type": "이어짐",
+      "suns": [
+       "커리어",
+       "인간관계"
+      ],
+      "from": {
+       "day": "2026-07-12",
+       "quote": "그런데도 등록하고 싶은 마음은 안 없어짐, 늦었다고 생각하는 만큼 지금 안 사면 영영 문이 닫힐 것 같기도 하고.",
+       "record_id": "e_ade2bc47806b",
+       "thought_id": "e_ade2bc47806b-t06"
+      },
+      "to": {
+       "day": "2026-08-11",
+       "quote": "내 근황을 묻는 답장이 올까 봐 축하 연락을 계속 미루고 싶다.",
+       "record_id": "e_f6c6baa5e323",
+       "thought_id": "e_f6c6baa5e323-t01"
+      }
+     },
+     {
+      "type": "이어짐",
+      "suns": [
+       "커리어",
+       "인간관계"
+      ],
+      "from": {
+       "day": "2026-08-23",
+       "quote": "오늘 두 시간은 버틴 시간이 아니었음",
+       "record_id": "e_c2b61af306d0",
+       "thought_id": "e_c2b61af306d0-t04"
+      },
+      "to": {
+       "day": "2026-08-27",
+       "quote": "작은 반 하나는 내가 맡고 싶다.",
+       "record_id": "e_3891eee4d94f",
+       "thought_id": "e_3891eee4d94f-t00"
+      }
+     }
+    ]
+   },
+   "repeats": [
+    {
+     "n": 17,
+     "runs": [
+      [
+       {
+        "id": "e_d42bab0d3563-t00",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_d42bab0d3563-t01",
+        "name": "빨래 개기 빈칸",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "솔직하네"
+       },
+       {
+        "id": "e_d42bab0d3563-t02",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;; 내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_d42bab0d3563-t03",
+        "name": "빨래 개기 빈칸",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "빨래 개는 건 둘 다 빈칸, 솔직하네"
+       },
+       {
+        "id": "e_d42bab0d3563-t04",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;;"
+       },
+       {
+        "id": "e_d42bab0d3563-t05",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "이번 주도 쓴 돈이랑 한 집안일을 둘이 같은 메모에 적었다."
+       },
+       {
+        "id": "e_d42bab0d3563-t06",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;; 내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_d42bab0d3563-t07",
+        "name": "빨래 개기 빈칸",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "빨래 개는 건 둘 다 빈칸, 솔직하네"
+       },
+       {
+        "id": "e_d42bab0d3563-t08",
+        "name": "메모로 보이는 집안일과 지출",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_d42bab0d3563-t09",
+        "name": "빨래 개기 빈칸",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "솔직하네"
+       }
+      ],
+      [
+       {
+        "id": "e_5bddb6755b2e-t00",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_5bddb6755b2e-t01",
+        "name": "빨래 개는 빈칸",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "솔직하네"
+       },
+       {
+        "id": "e_5bddb6755b2e-t02",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;;"
+       },
+       {
+        "id": "e_5bddb6755b2e-t03",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;; 내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_5bddb6755b2e-t04",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "빨래 개는 건 둘 다 빈칸, 솔직하네"
+       },
+       {
+        "id": "e_5bddb6755b2e-t05",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "내 세제값도 이제 보이겠지 ㅋㅋ"
+       },
+       {
+        "id": "e_5bddb6755b2e-t06",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "쭌이 분리수거 세 번 한 거 처음 앎;;"
+       },
+       {
+        "id": "e_5bddb6755b2e-t07",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "빨래 개는 건 둘 다 빈칸, 솔직하네"
+       },
+       {
+        "id": "e_5bddb6755b2e-t08",
+        "name": "메모 체크",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "이번 주도 쓴 돈이랑 한 집안일을 둘이 같은 메모에 적었다."
+       },
+       {
+        "id": "e_5bddb6755b2e-t09",
+        "name": "집안일 책임 따지기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "빨래 개는 건 둘 다 빈칸, 솔직하네"
+       }
+      ]
+     ],
+     "group_sets": [
+      [],
+      [
+       "꼬인 마음으로 보내 해도 되는지"
+      ],
+      [
+       "집안일 책임 따지기"
+      ]
+     ]
+    },
+    {
+     "n": 18,
+     "runs": [
+      [
+       {
+        "id": "e_4084bd8436df-t00",
+        "name": "수업 맡는 범위",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "말하면서도 뭘 해달라는 건지 나도 모르겠더라, 자신감 좀 달라는 건가 책임은 좀 덜 달라는 건가."
+       },
+       {
+        "id": "e_4084bd8436df-t01",
+        "name": "수업 맡는 범위",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "내가 질문을 놓치지 않고 볼 수 있을 것 같은 수, 괜히 열 명이라고 쓰고 잘하는 척 안 해서 다행."
+       },
+       {
+        "id": "e_4084bd8436df-t02",
+        "name": "수업 맡는 방식",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "좋아하는 마음만 믿고 맡는 건 불안했는데 이렇게 확인받으면서 맡는 건 하겠다고 내가 말함."
+       },
+       {
+        "id": "e_4084bd8436df-t03",
+        "name": "수업 맡는 방식",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "그냥 보조로만 남을지 혼자 전부 책임질지 둘 중 하나 찍으려던 질문에는 일단 답이 생겼다."
+       },
+       {
+        "id": "e_4084bd8436df-t04",
+        "name": "붕어빵",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "먹다 보니 셋 다 맛있어서 됬음 ㅋㅋ"
+       },
+       {
+        "id": "e_4084bd8436df-t05",
+        "name": "수업에서 보고 싶은 것",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "수업 잘했다는 칭찬보다 마지막에 애들이 혼자 어디까지 푸는지를 보고 싶다."
+       },
+       {
+        "id": "e_4084bd8436df-t06",
+        "name": "풀이 남기기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "지후 걔는 말로는 다 안다고 하니까 답만 말하게 하지 말고 풀이도 남겨야 하고,"
+       },
+       {
+        "id": "e_4084bd8436df-t07",
+        "name": "시험 공부 변명",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "이 반 맡는다고 네 번째 응시 여부까지 자동으로 정해지는 건 아닌데 이상하게 책을 안 펴는 저녁을 덜 변명하게 됨."
+       },
+       {
+        "id": "e_4084bd8436df-t08",
+        "name": "네 번째 응시 여부",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "예전 점수 생각하면 안정적인 길을 놓치는 건가 싶기도 한다."
+       },
+       {
+        "id": "e_4084bd8436df-t09",
+        "name": "수업 일의 진로 가능성",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "그래도 오늘처럼 내가 먼저 다음 시간을 준비하는 일을 직업 후보에서 빼고 싶지는 않다."
+       },
+       {
+        "id": "e_4084bd8436df-t10",
+        "name": "수업 먼저 해보기",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "지금 맡기로 한 수업부터 실제로 해볼 거다,"
+       },
+       {
+        "id": "e_4084bd8436df-t11",
+        "name": "수업 준비물 정리",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "봉투는 버리지 말고 파일에 끼워둠"
+       },
+       {
+        "id": "e_4084bd8436df-t12",
+        "name": "늦은 시간",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "여기까지 적으니까 또 한 시네."
+       },
+       {
+        "id": "e_4084bd8436df-t13",
+        "name": "수업 맡는 방식",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "이렇게 확인받으면서 맡는 건 하겠다고 내가 말함."
+       },
+       {
+        "id": "e_4084bd8436df-t14",
+        "name": "수업 맡는 범위",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "괜히 열 명이라고 쓰고 잘하는 척 안 해서 다행."
+       },
+       {
+        "id": "e_4084bd8436df-t15",
+        "name": "수업에서 보고 싶은 것",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "수업 잘했다는 칭찬보다 마지막에 애들이 혼자 어디까지 푸는지를 보고 싶다."
+       }
+      ],
+      [
+       {
+        "id": "e_5d2c96f8f6f0-t00",
+        "name": "수업 맡는 범위",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "말하면서도 뭘 해달라는 건지 나도 모르겠더라, 자신감 좀\n달라는 건가 책임은 좀 덜 달라는 건가."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t01",
+        "name": "수업 맡는 범위",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "내가 질문을 놓치지 않고 볼 수 있을 것 같은 수, 괜히 열 명이라고 쓰고 잘하는 척 안 해서\n다행."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t02",
+        "name": "수업 맡는 범위",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "좋아하는 마음만 믿고 맡는 건 불안했는데\n이렇게 확인받으면서 맡는 건 하겠다고 내가 말함."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t03",
+        "name": "수업 맡는 범위",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "그냥 보조로만 남을지 혼자 전부 책임질지 둘 중 하나 찍으려던 질문에는 일단 답\n이 생겼다."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t04",
+        "name": "붕어빵",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "전부 팥, 먹다 보니 셋 다 맛있어서 됬음 ㅋㅋ"
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t05",
+        "name": "수업에서 보고 싶은 것",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "수업 잘했다는 칭찬보다 마지막에 애들이 혼자 어디까지 푸는지를 보고 싶다."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t06",
+        "name": "풀이 남기기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "지후 걔는 말로는\n다 안다고 하니까 답만 말하게 하지 말고 풀이도 남겨야 하고,"
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t07",
+        "name": "시험 공부와 수업 병행",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "이 반 맡는다고 네 번째 응시 여부까지 자동으로 정해지는 건 아닌데 이상하게 책을 안 펴는\n저녁을 덜 변명하게 됨."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t08",
+        "name": "안정적인 길 고민",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "예전 점수 생각하면 안정적인 길을 놓치는 건가 싶기도 한다."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t09",
+        "name": "직업 후보로서 수업 준비",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "그래도 오늘처럼 내가 먼저 다음 시간을 준비\n하는 일을 직업 후보에서 빼고 싶지는 않다."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t10",
+        "name": "맡기로 한 수업",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "지금 맡기로 한 수업부터 실제로 해볼\n거다,"
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t11",
+        "name": "직업 선택 고민",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "예전 점수 생각하면 안정적인 길을 놓치는 건가 싶기도 한다. 그래도 오늘처럼 내가 먼저 다음 시간을 준비\n하는 일을 직업 후보에서 빼고 싶지는 않다."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t12",
+        "name": "수업 맡는 방식",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "이렇게 확인받으면서 맡는 건 하겠다고 내가 말함."
+       },
+       {
+        "id": "e_5d2c96f8f6f0-t13",
+        "name": "수업 맡는 범위",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "괜히 열 명이라고 쓰고 잘하는 척 안 해서\n다행."
+       }
+      ]
+     ],
+     "group_sets": [
+      [
+       "부트캠프 등록금 판단",
+       "스스로 풀 때까지 기다리기",
+       "작은 반 맡기"
+      ],
+      [
+       "부트캠프 등록금 판단",
+       "집안일 책임 따지기"
+      ],
+      [
+       "부트캠프 등록금 판단",
+       "집안일 책임 따지기"
+      ]
+     ]
+    },
+    {
+     "n": 19,
+     "runs": [
+      [
+       {
+        "id": "e_5c8e96a18ba7-t00",
+        "name": "코딩 실습 결과",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "숫자 넣으면 합계 바뀌는 것뿐인데 내가 만든 화면에서 되니까 좀 신기함."
+       },
+       {
+        "id": "e_5c8e96a18ba7-t01",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님."
+       },
+       {
+        "id": "e_5c8e96a18ba7-t02",
+        "name": "결제와 등록금 계산",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "화면이랑 통장 같이 켜두면 좀 복잡하다"
+       }
+      ],
+      [
+       {
+        "id": "e_f2cf656f03f2-t00",
+        "name": "코딩 실습 화면 만들기",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "숫자 넣으면 합계 바뀌는 것뿐인데 내가 만든 화면에서 되니까 좀 신기함."
+       },
+       {
+        "id": "e_f2cf656f03f2-t01",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "돈 보낸 건 잘한 것 같은데 등록금 남은 계산을 하니까 아까 신난 게 잠깐 꺼짐, 그래도 배우고 싶은 쪽을 지운 건 아님."
+       },
+       {
+        "id": "e_f2cf656f03f2-t02",
+        "name": "학습과 돈 계산의 동시 부담",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "화면이랑 통장 같이 켜두면 좀 복잡하다"
+       }
+      ]
+     ],
+     "group_sets": [
+      [
+       "부트캠프 등록금 판단"
+      ],
+      [
+       "부트캠프 등록금 판단"
+      ],
+      [
+       "부트캠프 등록금 판단"
+      ]
+     ]
+    },
+    {
+     "n": 20,
+     "runs": [
+      [
+       {
+        "id": "e_36cce61b11e5-t00",
+        "name": "걔 우산 기억",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "걔도 출근해서 모르는 거 물을 때 눈치 본다는데 나도 모르게 네가 무슨 걱정이냐고 할 뻔했다."
+       },
+       {
+        "id": "e_36cce61b11e5-t01",
+        "name": "걔 우산 기억",
+        "domain": "인간관계",
+        "sun_id": "d_66cfd3d8075f",
+        "quote": "중간에 걔 월급 궁금했던 것도 사실, 그래도 오늘은 내 근황 포장하느라 대답을 놓치진 않았다."
+       },
+       {
+        "id": "e_36cce61b11e5-t02",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "무료로 끝낸 게 있으니까 바로 백팔십만 원도 써야 한다는 건 아니고, 그렇다고 돈 아깝다는 말로 궁금한 걸 없는 셈 치기도 싫음."
+       },
+       {
+        "id": "e_36cce61b11e5-t03",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "결제는 아직 못 누름."
+       }
+      ],
+      [
+       {
+        "id": "e_e468839a9f56-t00",
+        "name": "재민이 만남",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "걔 월급 궁금했던 것도 사실, 그래도 오늘은 내 근황 포장하느라 대답을 놓치진 않았다."
+       },
+       {
+        "id": "e_e468839a9f56-t01",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "무료로 끝낸 게 있으니까 바로 백팔십만 원도 써야 한다는 건 아니고, 그렇다고 돈 아깝다는 말로 궁금한 걸 없는 셈 치기도 싫음."
+       },
+       {
+        "id": "e_e468839a9f56-t02",
+        "name": "부트캠프 등록금 판단",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "결제는 아직 못 누름."
+       },
+       {
+        "id": "e_e468839a9f56-t03",
+        "name": "코딩 과정 안내",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "만들어둔 화면은 다시 켰다, 숫자 바꾸면 합계 잘 바뀜"
+       },
+       {
+        "id": "e_e468839a9f56-t04",
+        "name": "재민이 만남",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "나도 모르게 네가 무슨 걱정이냐고 할 뻔했다."
+       },
+       {
+        "id": "e_e468839a9f56-t05",
+        "name": "재민이 만남",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "삼키고 뭐가 제일 어렵냐고 물었더니 한참 말함."
+       },
+       {
+        "id": "e_e468839a9f56-t06",
+        "name": "재민이 만남",
+        "domain": "커리어",
+        "sun_id": "d_2fb4d620cb97",
+        "quote": "중간에 걔 월급 궁금했던 것도 사실,"
+       }
+      ]
+     ],
+     "group_sets": [
+      [
+       "부트캠프 등록금 판단",
+       "오늘 선택 미룸"
+      ],
+      [
+       "부트캠프 등록금 판단"
+      ],
+      [
+       "부트캠프 등록금 판단"
+      ]
+     ]
+    }
+   ],
+   "score": {
+    "stars": 10,
+    "gt_topics": 5,
+    "topic_pairs": {
+     "precision": 0.679,
+     "recall": 0.75,
+     "f1": 0.712
+    },
+    "domain_acc": 0.868,
+    "links_planted": 10,
+    "links_found": 6,
+    "links_found_same_type": 3,
+    "links_recall": 0.6,
+    "links_found_quote": 2,
+    "relations_shown": 56,
+    "relations_unplanted": 45,
+    "insights_linked": 5,
+    "insights_grouped": 5,
+    "insights": 5,
+    "failed_entries": 0,
+    "group_pass_k": {
+     "pass": 1,
+     "of": 4
+    },
+    "usd": 2.158
+   }
+  }
+ }
+}

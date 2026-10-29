@@ -88,7 +88,7 @@ def group_stars(stars, people, custom=()):
     ms = [{**st, **m} for st, m in zip(stars, masked)]
     ask = lambda system, user: llm.chat([{"role": "system", "content": system},   # noqa: E731
                                          {"role": "user", "content": user}], temperature=0)
-    groups = group_rules.parse_groups(ask(group_rules.GROUP_SYSTEM, group_rules.group_input(ms)), len(stars))
+    groups = group_rules.keep_old_apart(stars, group_rules.parse_groups(ask(group_rules.GROUP_SYSTEM, group_rules.group_input(ms)), len(stars)))
     choices = group_rules.sun_choices(custom)
     suns = group_rules.parse_suns(ask(group_rules.sun_system(choices), group_rules.sun_input(ms, groups)), len(groups), choices)
     return groups, suns

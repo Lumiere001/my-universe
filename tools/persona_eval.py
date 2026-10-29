@@ -130,6 +130,8 @@ def run_persona(k, d, tag, repeat):
             q3.ledger_line(f"가상 인물 {k} {rec['n']}/20 {tag}({what}, 서비스 길)"
                            + (f" — 실패 {','.join(r['errors'])}" if r["errors"] else ""), r["calls"], r["usd"])
             out.append({"n": rec["n"], **{x: r[x] for x in ("entry_id", "status", "errors", "seconds", "calls", "usd", "step_ms")}})
+            with repo.session(uid) as s:   # 글마다 우주의 묶음 · 해(무료) → 묶음 흔들림(churn)
+                out[-1]["groups"] = {x["id"]: [x.get("group") or x["id"], x["sun_id"]] for x in diary.stars(s)}
             print(k, rec["n"], r["status"], f"생각 {len(r['thoughts'])}", f"{r['seconds']}초", f"${r['usd']}", flush=True)
     return collect(repo, uid, d, out, k, tag, repeat)
 
@@ -278,8 +280,24 @@ def score(d, res, stars_by_n=None):
         "failed_entries": sum(e["status"] != "done" for e in res["entries"]),
         "group_pass_k": (lambda r: {"pass": sum(len({tuple(x) for x in g}) == 1 for g in r), "of": len(r)} if r else None)(
             [x["group_sets"] for x in res.get("repeats") or [] if x.get("group_sets")]),
+        "group_churn": churn([e["groups"] for e in res["entries"] if e.get("groups")]),
         "usd": round(sum(e["usd"] for e in res["entries"]), 3),
     }
+
+
+def churn(snaps):
+    """글마다 찍은 묶음 [{별 id: [머리 id, 해]}] → 글 하나를 쓸 때 우주가 얼마나 다시 섞이나(평균).
+    pairs = 앞뒤 글에 다 있던 별끼리, 한쪽에서라도 같은 묶음이던 짝 중 같이/따로가 바뀐 비율. suns = 해가 바뀐 별 비율."""
+    pair, sun = [], []
+    for a, b in zip(snaps, snaps[1:]):
+        ids = sorted(set(a) & set(b))
+        tog = [(x, y) for x, y in itertools.combinations(ids, 2) if a[x][0] == a[y][0] or b[x][0] == b[y][0]]
+        if tog:
+            pair.append(sum((a[x][0] == a[y][0]) != (b[x][0] == b[y][0]) for x, y in tog) / len(tog))
+        if ids:
+            sun.append(sum(a[x][1] != b[x][1] for x in ids) / len(ids))
+    return {"pairs": round(sum(pair) / len(pair), 3) if pair else 0.0, "suns": round(sum(sun) / len(sun), 3) if sun else 0.0,
+            "steps": len(sun)} if sun else None
 
 
 ##################################################

@@ -504,7 +504,7 @@ def grouped(ts):
 def regroup(repo, uid, people, today=(), entry_id=None):
     """쌓인 작은 별 전체를 다시 묶는다(Solar 두 번, llm.guard 안에서 부른다 — 이름 · 원문 예는 가명으로 나간다).
     묶음 머리를 작은 별 enc 에 적고, 묶음의 해로 별 · 생각 · 기록의 해를 옮긴다(사용자가 옮긴 별은 그대로). 작은 별은 지우지 않는다.
-    매번 처음의 작은 별 전체를 놓고 새로 묶는다(합친 별을 다시 묶으면 눈덩이). 끝난 글의 생각 + 지금 글의 생각(today, 아직 저장 전).
+    매번 처음의 작은 별 전체를 놓고 묶되(합친 별을 다시 묶으면 눈덩이) 지난 묶음은 이어 받는다(rules.groups prev). 끝난 글의 생각 + 지금 글의 생각(today, 아직 저장 전).
     → {stars, groups, moved} 또는 None(작은 별 2개 미만)."""
     with repo.session(uid) as s:
         when = {e["id"]: e["written_at"] for e in diary.entries(s, status="done")}
@@ -512,6 +512,7 @@ def regroup(repo, uid, people, today=(), entry_id=None):
         suns = diary.suns(s)
         ts = diary.thoughts(s, entry_id=list(when)) if when else []
         declined = edit.declined(s)
+        fresh_at = diary.profile(s)[0].get("groups_fresh_at") or 0
     sun_name = {x["id"]: x["name"] for x in suns}
     custom = [x["name"] for x in suns if x["custom"]]
     info = {x["id"]: ([], set()) for x in all_}
@@ -521,10 +522,15 @@ def regroup(repo, uid, people, today=(), entry_id=None):
             info[t["star_id"]][0].append(t.get("quote") or t.get("text") or t.get("thought") or "")
             info[t["star_id"]][1].add(t["entry_id"])
     # ponytail: 작은 별 전체를 한 번에 보낸다(별 100개 ≈ 입력 4천 토큰 ≈ $0.004). 수백 개가 되면 해마다 나눠 묶기.
+    size = Counter(x.get("group") or x["id"] for x in all_)   # 지난 묶음: 머리 id → 별 수(둘 이상이면 이어 받는다)
     stars = [{"id": x["id"], "name": x["name"], "sun": sun_name.get(x["sun_id"]), "pin": x.get("pin"),
+              "prev": (x.get("group") or x["id"]) if size[x.get("group") or x["id"]] > 1 else None,
               "records": len(info[x["id"]][1]), "quotes": info[x["id"]][0]} for x in all_ if info[x["id"]][1]]
     if len(stars) < 2:
         return None
+    fresh = len(stars) >= group_rules.FRESH_GROW * fresh_at   # 별이 많이 늘었으면 이번만 새로 묶는다(이른 판단 바로잡기)
+    if fresh:
+        stars = [{**st, "prev": None} for st in stars]
     groups, picked = tools.group_stars(stars, people, custom)
     plan = group_rules.apply(stars, groups, picked, declined)
     moved = 0
@@ -540,7 +546,7 @@ def regroup(repo, uid, people, today=(), entry_id=None):
             if p["sun"] and p["sun"] != sun_name.get(x["sun_id"]) and not x.get("pin"):
                 edit.set_sun(s, x["id"], diary.ensure_sun(s, p["sun"], custom=p["sun"] in custom), p["sun"])
                 moved += 1
-        diary.save_profile(s, settings={"groups_profile": config.ONTOLOGY_PROFILE or "v8"})
+        diary.save_profile(s, settings={"groups_profile": config.ONTOLOGY_PROFILE or "v8", **({"groups_fresh_at": len(stars)} if fresh else {})})
     return {"stars": len(stars), "groups": len({p["head"] for p in plan.values()}), "moved": moved}
 
 

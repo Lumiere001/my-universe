@@ -124,3 +124,33 @@ def test_observer_sees_group_names_before_save(env, monkeypatch):
     with env.repo.session(U1) as s:
         assert {t["topic"] for t in diary.thoughts(s)} == {"아침 걷기", "걷기 기록"}   # 저장은 기록 Agent 가 낸 이름 그대로
     assert r["relations"]   # 같은 묶음이라 이어짐이 남음
+
+
+def test_input_shows_last_groups_and_old_groups_never_merge():
+    """일관성(2026-10-30): 지난 묶음을 번호로 보여 주고, Solar 가 지난 묶음 둘을 한 묶음에 넣어도 코드가 다시 나눈다(눈덩이 방지)."""
+    stars = [{**star("a", "아침 걷기", 3, "커리어"), "prev": "a"}, {**star("b", "걷기 기록", 1, "커리어"), "prev": "a"},
+             star("c", "새 별", 1, "인간관계"), {**star("d", "엄마 통화", 2, "인간관계"), "prev": "d"}]
+    text = groups.group_input(stars)
+    assert "(3편 · 지난 묶음 1)" in text and "(1편 · 지난 묶음 1)" in text and "(2편 · 지난 묶음 2)" in text
+    assert "새 별 (1편)" in text and "지난 묶음끼리는 합치지 않는다" in groups.GROUP_SYSTEM
+    assert groups.keep_old_apart(stars, [[0, 1, 2, 3]]) == [[0, 1, 2], [3]]   # 새 별은 큰 지난 묶음(4편)에
+    assert groups.keep_old_apart(stars, [[0, 2], [1], [3]]) == [[0, 2], [1], [3]]   # 나누는 것은 Solar 몫, 코드는 합침만 막는다
+
+
+def test_regroup_carries_last_groups_until_stars_grow(env, monkeypatch):
+    """지난 묶음을 이어 받다가, 작은 별이 지난번 새로 묶었을 때의 1.5배가 되면 한 번 새로 묶는다(이른 판단 바로잡기)."""
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록", "셋째": "엄마 통화", "넷째": "동생 통화"})
+    env.fake.group_answer = [[1, 2]]
+    seen, real = [], graph.tools.group_stars
+
+    def spy(stars, people, custom=()):
+        seen.append({st["name"]: st.get("prev") for st in stars})
+        return real(stars, people, custom)
+    monkeypatch.setattr(graph.tools, "group_stars", spy)
+    for i, title in enumerate(("첫날", "둘째", "셋째", "넷째"), 1):
+        write(env, U1, title, "걷기를 적었다.", f"2026-10-0{i}T22:00:00+09:00")
+    assert not any(seen[0].values()) and not any(seen[1].values())   # 별 2개(처음) · 3개(2의 1.5배) → 새로 묶기
+    head = seen[2]["아침 걷기"]
+    assert head and seen[2]["걷기 기록"] == head and seen[2]["엄마 통화"] is None and seen[2]["동생 통화"] is None   # 별 4개 → 이어 받기
+    with env.repo.session(U1) as s:
+        assert diary.profile(s)[0]["groups_fresh_at"] == 3
