@@ -2,7 +2,7 @@
 // 모든 글은 가상 인물 "하늘"의 것(data/demo/universe-haneul.json 을 v8 모양으로 줄여 옮김). 실제 일기는 없다.
 import ontology from "./ontology.json";
 import type {
-  Aspiration, AspirationState, ConfirmInput, Consent, ConsentInput, Conversation, DiaryInput, EntryResult, EntrySummary, Feedback, Me, Person,
+  Aspiration, AspirationState, ConfirmInput, Consent, ConsentInput, Conversation, DiaryInput, EntryResult, EntrySummary, Feedback, Insight, InsightEnd, Me, Person,
   PersonThoughts, Prompt, Settings, StreamError, StreamHandlers, TalkProgress, Thought, Tone, Universe,
 } from "./api";
 
@@ -256,6 +256,56 @@ export async function listDiary(): Promise<{ entries: EntrySummary[] }> {
 export async function getUniverse(): Promise<Universe> {
   await sleep(150);
   return structuredClone({ ...universe, people: people.map(({ id, name, relation, planets }) => ({ id, name, relation, planets })) });
+}
+/* ---------- 나에 대해 알게 된 것(GET /insight) ---------- */
+// 서버 app/service/rules/insight.py 를 줄여 흉내: 하늘의 행성 · 선 · 열린 쌍행성(= 긴장)을 해 → 작은 별로 묶는다(쓰고 지우면 따라 바뀜).
+// e2e 는 window.__insight 에 다른 모양(빈 것 · 많은 것)이나 "fail"(불러오기 실패)을 넣는다.
+const KINDS: Record<string, Record<string, number>> = {   // 가짜 데이터에는 지난 글의 생각 목록이 없어 작은 별마다 정해 둠
+  s1: { 해석: 3, 다짐: 2, "자기평가(부정)": 1 }, s2: { "신념·원칙": 2, 다짐: 1 }, s3: { 감정: 2, "신념·원칙": 2 }, s4: { 감정: 1 },
+  s5: { 다짐: 2, "자기평가(부정)": 1, "자기평가(긍정)": 1 }, s6: { 감정: 1, 다짐: 1 }, s7: { 해석: 1 },
+};
+const TWIN_QUOTE: Record<string, string> = { e02: "큰 회사에 들어가는 게 맞다.", e15: "직접 가 보니 배우는 속도가 달랐다" };
+export async function getInsight(): Promise<Insight> {
+  await sleep(120);
+  const given = (globalThis as { __insight?: Insight | "fail" }).__insight;
+  if (given === "fail") throw new Error("fail");
+  if (given) return structuredClone(given);
+  const ps = new Map(universe.planets.map((p) => [p.id, p]));
+  if (!ps.size) return { period: null, suns: [], across: [] };
+  const day = (id: string) => ps.get(id)!.written_at.slice(0, 10);
+  const end = (id: string, quote = ""): InsightEnd => ({ day: day(id), quote, record_id: id, thought_id: id });
+  const sunOf = (id: string) => ps.get(id)!.sun_id;
+  const starOf = (id: string) => universe.stars.find((s) => s.id === ps.get(id)!.star_id)?.name ?? "";
+  const rels = [...universe.links, ...universe.twins.filter((w) => w.status === "열림").map((w) => ({ type: "긴장", line: "점선" as const,
+    from_planet: w.a_planet, to_planet: w.b_planet, from_quote: TWIN_QUOTE[w.a_planet], to_quote: TWIN_QUOTE[w.b_planet], axis: w.topic }))]
+    .filter((l) => ps.has(l.from_planet) && ps.has(l.to_planet)).sort((a, b) => day(a.to_planet).localeCompare(day(b.to_planet)));
+  const pair = (l: (typeof rels)[number]) => ({ star: starOf(l.to_planet), line: l.line, from: end(l.from_planet, l.from_quote),
+    to: end(l.to_planet, l.to_quote), ...("axis" in l && { axis: l.axis }) });
+  const days = [...ps.keys()].map(day).sort();
+  const name = (id: string) => universe.suns.find((s) => s.id === id)!.name;
+  const suns = universe.suns.filter((s) => [...ps.values()].some((p) => p.sun_id === s.id)).map((s) => {
+    const mine = [...ps.values()].filter((p) => p.sun_id === s.id);
+    const inner = rels.filter((l) => sunOf(l.from_planet) === s.id && sunOf(l.to_planet) === s.id);
+    const kept = new Map<string, Insight["suns"][number]["kept"][number]>();
+    for (const l of inner.filter((x) => x.type === "이어짐")) {
+      const k = kept.get(starOf(l.to_planet));
+      if (k) { k.times += 1; k.to = end(l.to_planet, l.to_quote); if (day(l.from_planet) < k.from.day) k.from = end(l.from_planet, l.from_quote); }
+      else kept.set(starOf(l.to_planet), { star: starOf(l.to_planet), times: 1, from: end(l.from_planet, l.from_quote), to: end(l.to_planet, l.to_quote) });
+    }
+    const resolved = new Set(rels.filter((l) => l.type === "해소").map((l) => l.from_planet));
+    return { name: s.name, records: mine.length,
+      stars: universe.stars.filter((x) => x.sun_id === s.id).map((x) => {
+        const d = mine.filter((p) => p.star_id === x.id).map((p) => day(p.id)).sort();
+        return { name: x.name, records: d.length, first: d[0], last: d[d.length - 1], kinds: KINDS[x.id] ?? {} };
+      }).filter((x) => x.records).sort((a, b) => b.records - a.records || a.first.localeCompare(b.first)),
+      kept: [...kept.values()].sort((a, b) => b.times - a.times),
+      changed: inner.filter((l) => l.type === "바뀜").map(pair),
+      open: inner.filter((l) => l.type === "긴장" && !resolved.has(l.from_planet) && !resolved.has(l.to_planet)).map(pair),
+      settled: inner.filter((l) => l.type === "해소").map(pair) };
+  });
+  const across = rels.filter((l) => sunOf(l.from_planet) !== sunOf(l.to_planet)).map((l) => ({ type: l.type,
+    suns: [name(sunOf(l.from_planet)), name(sunOf(l.to_planet))] as [string, string], from: end(l.from_planet, l.from_quote), to: end(l.to_planet, l.to_quote) }));
+  return { period: { from: days[0], to: days[days.length - 1], records: ps.size }, suns, across };
 }
 export async function sendFeedback(f: Feedback) {
   await sleep(150);

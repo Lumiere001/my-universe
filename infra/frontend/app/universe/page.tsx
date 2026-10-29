@@ -34,6 +34,7 @@ const ICON = {
   edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z",
   full: "M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3",
   exit: "M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3",
+  insight: "M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4",
 };
 const Svg = ({ d }: { d: string }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>
@@ -107,6 +108,7 @@ export default function UniversePage() {
           <button className="fab" aria-pressed={tool === "list"} onClick={() => openTool("list")}><Svg d={ICON.list} /><span>기록 목록</span></button>
           <button className="fab" aria-pressed={tool === "edit"} onClick={() => openTool("edit")}><Svg d={ICON.edit} /><span>우주 고치기</span></button>
           {canFull && <button className="fab" onClick={toggleFull}><Svg d={full ? ICON.exit : ICON.full} /><span>{full ? "전체 화면 끝내기" : "전체 화면"}</span></button>}
+          <Link className="btn fab" href="/insight"><Svg d={ICON.insight} /><span>알게 된 것</span></Link>
         </div>
         <div className="tools" role="group" aria-label="사람 고르기">
           {data.people.map((p) => (

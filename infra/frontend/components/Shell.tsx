@@ -20,7 +20,7 @@ const NAV: readonly (readonly [string, string, IconName])[] = [
   ["/people", "사람", "people"], ["/aspiration", "되고 싶은 모습", "north"], ["/settings", "설정", "settings"],
 ];
 const TABS = NAV.slice(0, 4);   // 휴대폰 아래 막대
-const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "지난 일기 가져오기", "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영" };
+const TITLES: Record<string, string> = { "/talk": "이야기하기", "/import": "지난 일기 가져오기", "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영", "/insight": "우주 › 알게 된 것" };
 const PUBLIC = ["/privacy", "/terms"];
 const OPEN = [...PUBLIC, "/consent", "/settings"];   // 동의 전에도 열리는 화면(설정 = 로그아웃 · 계정 지우기)
 const FOLD = "side-collapsed";   // PC에서 사이드바를 접어 둔 것(이 기기에만)

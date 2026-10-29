@@ -245,6 +245,20 @@ export function listDiary(): Promise<EntrySummary[]> {
 export async function getUniverse(): Promise<Universe> {
   return MOCK ? (await mock()).getUniverse() : json("GET", "/universe");
 }
+// 나에 대해 알게 된 것(docs/api-v8.md §2, 서버 app/service/rules/insight.py): 코드가 묶은 것, 날짜와 원문 인용만
+export type InsightEnd = { day: string; quote: string; record_id: string; thought_id: string };
+export type InsightPair = { star: string; line: "실선" | "점선" | null; from: InsightEnd; to: InsightEnd; axis?: string };
+export type Insight = {
+  period: { from: string; to: string; records: number } | null;
+  suns: { name: string; records: number;
+    stars: { name: string; records: number; first: string; last: string; kinds: Record<string, number> }[];
+    kept: { star: string; times: number; from: InsightEnd; to: InsightEnd }[];
+    changed: InsightPair[]; open: InsightPair[]; settled: InsightPair[] }[];
+  across: { type: string; suns: [string, string]; from: InsightEnd; to: InsightEnd }[];
+};
+export async function getInsight(): Promise<Insight> {
+  return MOCK ? (await mock()).getInsight() : json("GET", "/insight");
+}
 export async function getOntology(): Promise<Ontology> {
   return MOCK ? (await import("./ontology.json")).default : json("GET", "/ontology");
 }
