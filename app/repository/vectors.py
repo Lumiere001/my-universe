@@ -1,7 +1,8 @@
 """
 app/repository/vectors.py
 
-생각 벡터 저장소(ChromaDB 하나). 컬렉션 thoughts: id = 생각 id, 메타 = user_id · entry_id · star_id · written_at · kind.
+생각 벡터 저장소(ChromaDB 하나). 컬렉션 thoughts: id = 생각 id, 메타 = user_id · entry_id · sun_id · star_id · written_at · kind.
+메타의 해 · 작은 별은 저장할 때의 온톨로지 자리 표시다. 사람이 별을 옮기거나 합치면 바뀌므로 판단은 DB 로 한다.
 문서(원문)는 넣지 않는다. 벡터는 가명 처리한 글로 만든 임베딩이다. 모든 읽기 · 지우기는 user_id 로 거른다.
 """
 
@@ -20,11 +21,11 @@ class ChromaVectors:
                                               metadata={"hnsw:space": "cosine"})
 
     def upsert(self, uid, items):
-        """items: [{id, emb, entry_id, star_id, written_at, kind}]"""
+        """items: [{id, emb, entry_id, sun_id, star_id, written_at, kind}]"""
         if items:
             self.col.upsert(ids=[i["id"] for i in items], embeddings=[i["emb"] for i in items],
                             metadatas=[{"user_id": str(uid), **{k: str(i.get(k) or "") for k in
-                                                                ("entry_id", "star_id", "written_at", "kind")}}
+                                                                ("entry_id", "sun_id", "star_id", "written_at", "kind")}}
                                        for i in items])
 
     def get(self, uid, ids=None):
@@ -63,4 +64,4 @@ class MemVectors:
 
     def documents(self, uid):
         return [None for v in self.items.values() if v["user_id"] == str(uid)], \
-            [{k: v[k] for k in ("entry_id", "star_id", "written_at", "kind")} for v in self.items.values() if v["user_id"] == str(uid)]
+            [{k: v.get(k) for k in ("entry_id", "sun_id", "star_id", "written_at", "kind")} for v in self.items.values() if v["user_id"] == str(uid)]

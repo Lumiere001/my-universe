@@ -1,0 +1,241 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "persona",
+  "topics",
+  "entries",
+  "links",
+  "insights"
+ ],
+ "properties": {
+  "persona": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "name",
+    "age",
+    "job",
+    "background",
+    "writing_style",
+    "career_story",
+    "relationship_story",
+    "people"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "age": {
+     "type": "integer"
+    },
+    "job": {
+     "type": "string"
+    },
+    "background": {
+     "type": "string"
+    },
+    "writing_style": {
+     "type": "string"
+    },
+    "career_story": {
+     "type": "string"
+    },
+    "relationship_story": {
+     "type": "string"
+    },
+    "people": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "name",
+       "nicknames",
+       "relation"
+      ],
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "nicknames": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "relation": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "topics": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "domain",
+     "name",
+     "description"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "domain": {
+      "type": "string",
+      "enum": [
+       "커리어",
+       "인간관계"
+      ]
+     },
+     "name": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "entries": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "n",
+     "written_at",
+     "title",
+     "body",
+     "topics",
+     "off_axis"
+    ],
+    "properties": {
+     "n": {
+      "type": "integer"
+     },
+     "written_at": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "topics": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "off_axis": {
+      "type": "boolean"
+     }
+    }
+   }
+  },
+  "links": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "type",
+     "from_entry",
+     "from_quote",
+     "from_topic",
+     "to_entry",
+     "to_quote",
+     "to_topic",
+     "explicit",
+     "why"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "이어짐",
+       "바뀜",
+       "긴장",
+       "해소"
+      ]
+     },
+     "from_entry": {
+      "type": "integer"
+     },
+     "from_quote": {
+      "type": "string"
+     },
+     "from_topic": {
+      "type": "string"
+     },
+     "to_entry": {
+      "type": "integer"
+     },
+     "to_quote": {
+      "type": "string"
+     },
+     "to_topic": {
+      "type": "string"
+     },
+     "explicit": {
+      "type": "boolean"
+     },
+     "why": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "insights": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "domain",
+     "statement",
+     "evidence_entries"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "domain": {
+      "type": "string",
+      "enum": [
+       "커리어",
+       "인간관계",
+       "둘 다"
+      ]
+     },
+     "statement": {
+      "type": "string"
+     },
+     "evidence_entries": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -31,7 +31,7 @@ scripts/stop_docker.sh
 시험:
 
 ```bash
-uv run --frozen pytest -q                                 # 711개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 9개는 건너뜀)
+uv run --frozen pytest -q                                 # 753개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 11개는 건너뜀)
 uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
 uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
 uv run --frozen python eval/run.py --check                # CI 와 같은 검사(관문 실패 · 기준선 회귀면 종료 코드 1)
@@ -58,6 +58,29 @@ push · PR 마다 GitHub Actions(`.github/workflows/test.yml`, 이름 `test`)가
 - 사진(손글씨) 입력: 쓰기 화면에서 사진 여러 장(쪽 순서 바꾸기) → 화면이 4MB 아래 JPEG 로 줄여 한 장씩 `POST /photo/read`(Upstage Document Parse 로 글자만 — 줄 공책 표는 줄마다 풀고, `PHOTO_READ_MODEL=ocr` 로 되돌림, 사진 · 읽은 글은 저장 안 함, `app/api/upload.py` · `app/service/ocr.py`) → 읽은 글을 쓰기 칸에서 고쳐 띄움(`source=사진`, 그 뒤는 텍스트와 같은 길). 시험 사진은 가상 손글씨 `tests/fixtures/photos`(`uv run --frozen --with pillow python tools/photo_samples.py make`), 실제 글자 읽기 화면 확인은 `infra/frontend/e2e-real/ws18.spec.ts`(유료, 쪽당 $0.01).
 - 운영 화면: `/ops`(메뉴에 없음). 백엔드 환경변수 `ADMIN_EMAILS`(운영자 구글 계정) 계정만 열린다. 모든 사용자의 숫자 · 코드만(실행 · 관문 · 평균 시간 · 추정 비용 합계와 $50 경고 · 실패 · 골든셋 · 만족 · 지향 · 대화 · 말 걸기 지표, DB 역할 `app_ops` 는 암호문 칸을 못 읽음), 피드백 원문은 열람에 동의한 사용자 것만 가명으로 · 볼 때마다 열람 기록, 피드백 정리(Solar)는 누를 때만. 주 1회 오답 모으기: `OPS_TOKEN=… uv run --frozen python scripts/collect_feedback.py --api <백엔드>`(로컬은 `--local`). 설정 화면에는 내 피드백으로 본 "이 설정으로 바꿀까요?"(영역 넘는 선 · 제안 빈도)가 뜬다. API: [docs/api-v8.md §6.2](docs/api-v8.md).
 - 요청 추적(Trace, 과제 · 로컬 확인용): OpenTelemetry span(단계 순서 · 시간 · 호출 수 · 토큰 · 추정 비용 · 오류 코드만, 원문 · 이름 · 프롬프트 · 답 없음). `OTEL_EXPORTER_OTLP_ENDPOINT` 가 있을 때만 켜지고 운영 배포는 끔. 로컬 Phoenix(`uvx arize-phoenix serve`) + `scripts/trace_demo.py`(유료 호출 0) — [docs/trace.md](docs/trace.md).
+
+### v8 백엔드 한눈에 (업스테이지 2차 가이드 ⑥ Step 5)
+
+일기 한 편(`app/agents/graph.py`, LangGraph Super Graph, 노드가 끝날 때마다 암호화 체크포인트 → 끊기면 끝난 단계를 건너뛰고 이어 하기):
+
+```
+safety → names → record[ record_input → record_agent(Studio 기록 Agent) → record_clean(관문) → ontology(해 → 작은 별 → Chroma) ]
+       → observer[ past(지난 생각 고르기) → observe(Studio 관측 Agent) → rules(관계 규칙) ] → voice(Solar 한마디)
+       → (대화 초안이면 요약 확인까지 멈춤) → save
+```
+
+| 1차(Streamlit, 저장소 루트) | 2차(v8 백엔드) |
+| --- | --- |
+| `agent_client.py` | `app/agents/studio.py`(Files · Jobs API, 1회 재시도, 429 뒤 쉬기) |
+| `service.py` | `app/agents/graph.py` · `app/api/*.py`(SSE `/diary/stream`) |
+| `gates.py` · `universe.py` | `app/service/rules/`(gate · topics · past · relations · states · view · insight) |
+| `embedder.py` | `app/core/llm.py` · `app/agents/tools.py`(Solar Embedding, 가명 글로) |
+| `importer.py` | `app/service/importer/` |
+| `runlog.py` | `app/core/logger.py` · DB `runs` 표 · `app/core/trace.py`(OpenTelemetry) |
+
+- 환경변수 전체는 `.env.example`(v8 칸), API 표는 [docs/api-v8.md](docs/api-v8.md). 준비 확인: `GET /health?deep=1`(DB · ChromaDB까지, 안 되면 503).
+- **두 영역 모드(10/28 멘토링):** `ONTOLOGY_PROFILE=two` 면 해를 커리어 · 인간관계 둘로 묶고 나머지는 '그 밖'(저장만, 우주에 안 띄움). `STAR_JOIN_SIM` 을 주면 기록 Agent 가 새 이름을 내도 같은 해의 가까운 작은 별에 붙인다. 둘 다 운영은 끔. `GET /insight` = 나에 대해 알게 된 것(해 → 작은 별 → 이어 온 · 바뀐 · 맞서는 · 정리된 생각, 원문 인용). **작은 별 묶기**(`STAR_GROUPS`, 기본 켬): 새 작은 별이 생긴 글이 끝나면 쌓인 작은 별 전체를 Solar 가 같은 고민끼리 묶고 묶음마다 해를 고른다 — 화면 · 알게 된 것 · 관측 · 관계 규칙은 묶음 단위(작은 별은 지우지 않음, `app/service/rules/groups.py`).
+- **가상 인물 시험:** `eval/personas/p{A,B,C}.json`(Codex 가 지은 가상 일기 20편 + 심어 둔 정답) → `tools/persona_eval.py check | run | tune | score`.
 
 ### GHCR 이미지
 
@@ -110,7 +133,7 @@ scripts/stop_docker.sh                    # 끄기
 - **열린 목록(주관식):** 세부 주제 · 긴장 축 · 역할은 글에서 나온 말을 쓰고 사용자가 확인한다.
 - **삶의 영역 9개**는 주관적 안녕감 척도 PWI(Personal Wellbeing Index, International Wellbeing Group — OECD 2013 측정 지침이 영역 평가에서 인용)의 7개 영역(삶의 성취 · 관계 · 공동체 · 건강 · 생활 수준 · 미래 안정 · 안전) + 선택 영역 영성·신앙, WHO 삶의 질 척도 WHOQOL의 여가에서 가져왔다. 세부 주제는 가장 가까운 영역 하나에 붙는다(`universe.py`의 `DOMAINS`).
 
-## 전체 구조
+## 1차 MVP(10/03, Streamlit) — 전체 구조
 
 ![전체 구조](docs/images/architecture.png)
 
@@ -142,7 +165,7 @@ HR 예시의 `Resume·JD Agent → matching_builder → Matching Agent`와 같�
 
 **코드가 하는 판단 (에이전트 밖)**: 원문에 없는 인용은 버림 · 실명은 ○○ · 이어짐/바뀜/긴장/해소/어긋남은 같은 삶의 영역끼리만 · 다짐 뒤 30일 안의 반성은 어긋남 · 바뀜은 7일 이상, 긴장은 30일 이내 · 목표 충돌은 14일 안의 다짐 둘 · 감정이 달라진 것은 바뀜 · 해소가 아님 · 다짐이 지켜지면 이어짐 · 작성자가 직접 쓴 변화 · 정리만 실선.
 
-## 실행 방법
+## 1차 MVP — 실행 방법
 
 ```bash
 uv venv --python 3.11 .venv && source .venv/bin/activate

@@ -15,6 +15,10 @@ COPY main.py ./
 COPY app ./app
 COPY data/ops/domain_aliases_*.json data/ops/topic_center_*.json ./data/ops/
 
+# root 가 아닌 사용자로 실행(업스테이지 가이드 ⑥ Step 1). 리눅스에서 ./logs 를 마운트하면 그 폴더를 uid 1000 이 쓸 수 있어야 한다.
+RUN useradd --create-home --uid 1000 app && mkdir -p /srv/logs && chown -R app /srv
+USER app
+
 EXPOSE 8001
 # 로그 파일 이름 · 시각을 한국 시간으로(로컬과 같게). 하루 한도는 앱이 APP_TIMEZONE 으로 따로 센다.
 ENV TZ=Asia/Seoul

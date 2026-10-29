@@ -10,11 +10,13 @@ name: my-universe
 services:
   chroma:
     image: chromadb/chroma:1.5.9
+    restart: unless-stopped   # 컴퓨터를 다시 켜거나 멈추면 다시 띄운다(가이드 ⑥ · 3.1)
     ports: ["127.0.0.1:${CHROMA_HOST_PORT:-8000}:8000"]   # 이 컴퓨터에서만(같은 와이파이에 열지 않음)
     volumes: [chroma-data:/data]
 
   backend:
     build: { context: ., dockerfile: Dockerfile }
+    restart: unless-stopped
     env_file:
       - path: .env
       - path: .env.docker.local
@@ -43,6 +45,7 @@ services:
         NEXT_PUBLIC_DEV_LOGIN: ${NEXT_PUBLIC_DEV_LOGIN:-0}
         NEXT_PUBLIC_MOCK: ${NEXT_PUBLIC_MOCK:-0}
     ports: ["127.0.0.1:${FRONTEND_HOST_PORT:-8002}:8002"]
+    restart: unless-stopped
     depends_on: [backend]
 
 volumes:

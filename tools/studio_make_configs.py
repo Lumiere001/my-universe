@@ -1,4 +1,4 @@
-"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b · v4 · v4b.json
+"""Studio 기록 · 관측 Agent 설정을 v8 온톨로지에서 만든다 → agent_configs/* v2 · v3 · v3b · v4 · v4b · v5.json
 
     uv run --frozen python tools/studio_make_configs.py
 
@@ -220,6 +220,19 @@ RECORD_PROPS_V4B = _set(RECORD_PROPS_V3, ("thoughts", "topic"),
                         " ".join(O["topic_rules"][:3]) + f" 해 이름(쓰지 않는다): {domain_names}. {V4B_REUSE} {V3_VALUES}")
 
 
+# ---------------- 5판: 4판(운영 #5) + 같은 글이면 같은 결과(2026-10-29 결정 5) ----------------
+# 가상 인물 C · D 의 같은 글 3번(pass^k 0/4): 흔들림은 대부분 주제 이름(같은 고민을 번마다 다른 말로)과 생각 개수(±1).
+# 이름 흔들림은 코드의 작은 별 묶기(rules.groups)가 받아 주고, 여기서는 생각 나누는 기준과 이름 짓는 단위를 글로 고정한다.
+# 예시는 평가 글(하늘 · 가상 인물)이 아닌 문장.
+V5_SPLIT = ("생각 나누기 기준: 글쓴이가 자기 판단 · 느낌 · 다짐 · 물음을 적은 문장마다 생각 하나로 나눈다. 같은 판단을 이어 설명하는 "
+            "바로 뒤 문장은 앞 생각에 합치고, 한 문장을 둘로 나누지 않는다. 같은 글을 다시 받아도 같은 기준으로 나눈다.")
+V5_NAME = ("주제 이름은 그 생각이 이어 가는 고민 · 목표 · 관계의 이름으로 짓고, 그 글에만 나오는 장면 · 물건 · 날짜로 짓지 않는다"
+           "(예: '책상 위 메모' 대신 '시험 준비 계획', '토요일 통화' 대신 '언니와의 거리').")
+RECORD_PROPS_V5 = _add(_set(RECORD_PROPS_V3, ("thoughts", "topic"),
+                            " ".join(O["topic_rules"][:3]) + f" 해 이름(쓰지 않는다): {domain_names}. {V4_REUSE} {V5_NAME} {V3_VALUES}"),
+                       ("thoughts",), V5_SPLIT)
+
+
 def build():
     out = {"Record Agent v2.json": agent("Record Agent.json", RECORD_TYPES, RECORD_PROPS, "Extract_Record"),
            "Observe Agent v2.json": agent("Observe Agent.json", observe_states(), OBS_PROPS, "Extract_Observe")}
@@ -231,6 +244,7 @@ def build():
     out["Record Agent v4.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V4, "Extract_Record")
     out["Observe Agent v4.json"] = agent("Observe Agent v2.exported.json", observe_states(), OBS_PROPS_V4, "Extract_Observe")
     out["Record Agent v4b.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V4B, "Extract_Record")
+    out["Record Agent v5.json"] = agent("Record Agent v2.exported.json", RECORD_TYPES_V3, RECORD_PROPS_V5, "Extract_Record")
     return out
 
 

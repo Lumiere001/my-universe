@@ -136,6 +136,10 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `GET /diary/prompt` → `{"kind": "first|weather|aspiration|free|none", "text": "질문", "vow": {"thought_id", "text", "overdue": false} | null}` 쓰기 화면 위 별지기 말풍선(LLM 없음). 기록이 없으면 정해 둔 첫 만남 질문(`first`, PRD §6.2), 있으면 마지막 글의 '다음에 써 볼 질문'(`next_question` 과 같은 종류 · 글). 날씨 질문은 건너뛰었으면(`weather_ask: false`) `none`, 되고 싶은 모습 질문은 넘어감 · 그만 묻기 · 이미 적었으면 `none`. `vow` 는 다짐 안부: 기한이 지났거나(`overdue: true`) 마지막 글에서 나온 열린 다짐 하나(화면은 지켰어요 · 그만둘래요 버튼, 누르면 닫혀 다시 안 나옴). 마지막 글이 위로 모드(무거운 날 · 위기)였거나 오늘은 위로만이면, 또는 지난 질문이 이미 다짐 안부면 `null`. `/diary/{id}` 보다 먼저 등록한다.
 - `PATCH /diary/{id}/day` `{"day": "YYYY-MM-DD"}` → EntryResult. 글이 다루는 날을 고친다(`day_basis: "확실"`, `day_check: false`). 정리 결과(생각 · 관계)는 다시 돌리지 않는다. 정리 중이면 409 `already_running`, 남의 · 없는 기록은 404.
 - `GET /universe` → 아래 Universe
+- **작은 별 묶음(2026-10-29, `rules.groups`):** 새 작은 별이 생긴 글이 끝나면(그래프 `group_stars`) 쌓인 작은 별 전체를 Solar 가 같은 고민끼리 묶고(①) 묶음마다 해를 고른다(②). 작은 별은 지우지 않고 별 enc 에 묶음 머리(`group`)만 적는다. `/universe` · `/insight` · `/diary` · `/diary/{id}` · `/export` 의 작은 별(`star`, `topic`, `star_id`)은 **묶음 머리**로 나온다. 묶기는 관측 전에 돌아 지난 생각 고르기 · 관측 Agent · 관계 규칙(판단형은 같은 주제 안)도 묶음 단위로 본다. 기록 Agent 에게는 작은 별 이름 전체를 준다. 묶음의 해로 별 · 생각 · 기록의 해를 옮긴다(사용자가 옮긴 별 `pin` 은 그대로). `PATCH /stars/{id}`(해 옮기기) · `POST /stars/merge` 는 묶음 전체에 적용, 거절한 합치기 짝은 같은 묶음에 넣지 않는다. 모드를 바꾼 뒤(`ONTOLOGY_PROFILE`) 처음 `/universe` · `/insight` 를 열면 한 번 다시 묶는다(기존 해 옮기기). `STAR_GROUPS=0` 이면 끔.
+- `GET /insight`(2026-10-29) → 나에 대해 알게 된 것. 끝난 기록의 생각 · 남은 관계를 코드가 묶는다(AI 요약 · 판정 없음, 원문 인용과 날짜만):
+  `{"period": {"from", "to", "records"}, "suns": [{"name", "records", "stars": [{"name", "records", "first", "last", "kinds"}], "kept": [{"star", "times", "from", "to"}], "changed": [Pair], "open": [Pair], "settled": [Pair]}], "across": [{"type", "suns", "from", "to"}]}`.
+  Pair = `{"star", "line", "from": End, "to": End, "axis"?}`, End = `{"day", "quote", "record_id", "thought_id"}`. kept = 이어짐(작은 별마다 처음 · 마지막), changed = 바뀜, open = 해소가 붙지 않은 긴장, settled = 해소, across = 해를 넘는 관계. 두 영역 모드의 '그 밖'은 빠진다. 기록이 없으면 `{"period": null, "suns": [], "across": []}`.
 
 ### 2.1 JSON 내려받기 (WS15, 2026-10-14)
 
@@ -234,7 +238,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   - 팩폭은 `fact_bomb_ack: true`(경고 확인) 뒤에만 고를 수 있다(아니면 409 `fact_bomb_ack_required`). 경고 확인을 거두면 말투는 다정하게로.
   - `tone_note`(2026-10-28): 직접 정하기의 말투 바람. 200자 안(넘으면 422), 줄바꿈 · 탭은 띄어쓰기로, 제어 · 폭 없는 글자는 빼고 한 줄로 저장. 말투가 `직접 정하기`인데 바람이 비면 422 `tone_note_required`. 다른 말투로 바꿔도 남겨 둔다. 말 걸기 · 대화 프롬프트의 `[사용자가 원한 말투]` 절에만 들어가고(가명 처리), 고정 규칙 절(`[지킬 것]` · 상황 · 답 형식)이 늘 이긴다. 위기 글 · 무거운 날엔 쓰지 않고 다정하게(`app/service/voice.custom_note`). 바람을 쓴 말은 넘지 않는 선을 Solar 로 한 번 더 판정한다(팩폭과 같음).
 - `DELETE /me` → 204. 계정과 모든 기록 지우기(되돌릴 수 없음). 순서: 벡터(Chroma) → DB 의 그 사용자 행 전부 → Supabase auth 계정(관리 API, 서버 환경변수 `SUPABASE_SERVICE_ROLE_KEY`, 남은 행은 FK cascade). 벡터를 못 지우면 아무것도 지우지 않고 503 `vector_delete_failed`(계정 그대로, 다시 시도). 정리 중인 기록이 있으면 409 `already_running`, 서비스 키가 없으면 503 `account_delete_unconfigured`, auth 삭제 실패는 502 `account_delete_failed`(다시 시도하면 이어서 지움). 화면: 설정 맨 아래 "계정과 모든 기록 지우기"(되돌릴 수 없다는 안내 + '지우기' 입력 확인) → 끝나면 로그아웃. Studio 에 올린 입력 파일은 실행이 끝날 때마다 이미 지운다.
-- `GET /health` → `{"status": "ok", "version": "0.8.0"}`
+- `GET /health` → `{"status": "ok", "version": "0.8.0"}`. `GET /health?deep=1`(2026-10-29) → DB(`select 1`) · ChromaDB(컬렉션 열기)까지 보고 `checks: {"db", "vectors"}` 를 붙인다. 하나라도 안 되면 503 · `status: "degraded"`(값은 `ok` 또는 오류 종류 이름).
 - `GET /stats` → 원문 없는 운영 숫자(본인 것만): `{"entries", "entries_done", "days_written", "suns_with_entries", "feedback": {값: 수}, "yes_ratio": 맞아요/(맞아요+아니에요) 또는 null, "month_cost_usd"}`.
 
 ## 6.1 동의 (WS24, 2026-10-13)

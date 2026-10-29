@@ -8,7 +8,7 @@ from collections import Counter
 
 from app.core.ontology import load
 from app.repository import diary, drafts
-from app.service.rules import universe_view
+from app.service.rules import insight as rules_insight, universe_view
 from app.service.safety import forget_word
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
@@ -102,7 +102,8 @@ def entry_result(s, eid):
     if e["status"] != "done":
         return drafts.result(e, base) if drafts.pending(e) else base   # 확인을 기다리는 대화 초안(WS20)
     states = diary.states(s)
-    ts = diary.thoughts(s, entry_id=eid)
+    heads = diary.star_heads(diary.stars(s))
+    ts = diary.as_groups(diary.thoughts(s, entry_id=eid), heads)   # 작은 별은 묶음 이름으로(rules.groups)
     ids = [t["id"] for t in ts]
     rels = (diary.relations(s, to_thought=ids) + [r for r in diary.relations(s, from_thought=ids) if r["to"] not in ids]) if ids else []
     past_ids = d.get("past") or []
@@ -136,7 +137,7 @@ def entry_result(s, eid):
 
 def entry_list(s, limit=20, before=None):
     sun = {x["id"]: x["name"] for x in diary.suns(s)}
-    star = {x["id"]: x["name"] for x in diary.stars(s)}
+    star = {k: h["name"] for k, h in diary.star_heads(diary.stars(s)).items()}
     waiting = len(s.rows("entries", confirmed=drafts.WAITING))   # 확인 전 초안은 안 보임: 그만큼 더 가져와 거른 뒤에도 한 쪽이 limit 개
     shown = [e for e in diary.entries(s, limit=limit + waiting, before=before) if e.get("confirmed") != drafts.WAITING][:limit]
     return [{"id": e["id"], "written_at": diary.iso(e["written_at"]), "title": e["data"].get("title", ""),
@@ -173,7 +174,7 @@ def export(s, eid=None):
         records.append(r)
     used_sun = {t["sun_id"] for r in records for t in r["thoughts"]}
     used_star = {t["star_id"] for r in records for t in r["thoughts"]}
-    stars = [x for x in diary.stars(s) if x["id"] in used_star]
+    stars = [x for x in diary.stars(s) if x["id"] in used_star]   # entry_result 가 이미 묶음 머리로 바꿨다
     return {"schema": EXPORT_SCHEMA, "exported_at": diary.iso(diary.now()), "scope": "entry" if eid else "all",
             "records": records,
             "domains": [{"id": x["id"], "name": x["name"], "custom": x["custom"],
@@ -181,15 +182,30 @@ def export(s, eid=None):
                         for x in suns if x["id"] in used_sun or (x["custom"] and not eid)]}
 
 
+def insight(s):
+    """나에 대해 알게 된 것(rules.insight): 끝난 기록의 생각 · 남은 관계로. 본인 것만(세션이 사용자로 묶여 있음)."""
+    entries = {e["id"]: e for e in diary.entries(s, status="done")}
+    if not entries:
+        return rules_insight({}, [])
+    suns = diary.suns(s)
+    sun_name = {x["id"]: x["name"] for x in suns}
+    heads = diary.star_heads(diary.stars(s))
+    ts = {t["id"]: {**t, "record_id": t["entry_id"], "domain": sun_name.get(t["sun_id"]),
+                    "day": diary.local_day(entries[t["entry_id"]]["written_at"])}
+          for t in diary.as_groups(diary.thoughts(s, entry_id=list(entries)), heads) if t["entry_id"] in entries}
+    return rules_insight(ts, diary.relations(s), [x["name"] for x in suns if x["custom"]])
+
+
 def universe(s):
     entries = {e["id"]: e for e in diary.entries(s, status="done")}   # 위기 글도 평소처럼 행성(시험 단계)
     suns = diary.suns(s)
     sun_name = {x["id"]: x["name"] for x in suns}
     stars = diary.stars(s)
-    star_id = {x["name"]: x["id"] for x in stars}
+    heads = diary.star_heads(stars)   # 우주에는 묶음 머리만 뜬다(rules.groups). 상태 · 관계에 남은 옛 이름도 머리로
+    star_id = {**{x["name"]: heads[x["id"]]["id"] for x in stars}, **{h["name"]: h["id"] for h in heads.values()}}
     ts = {t["id"]: {**t, "record_id": t["entry_id"], "domain": sun_name.get(t["sun_id"]),
                     "day": diary.local_day(entries[t["entry_id"]]["written_at"])}
-          for t in diary.thoughts(s, entry_id=list(entries)) if t["entry_id"] in entries} if entries else {}
+          for t in diary.as_groups(diary.thoughts(s, entry_id=list(entries)), heads) if t["entry_id"] in entries} if entries else {}
     rels = [r for r in diary.relations(s) if r["from"] in ts and r["to"] in ts]
     states = diary.states(s)
     people = diary.people(s)
@@ -277,6 +293,7 @@ def person_thoughts(s, pid):
     if not ts:
         return out
     states, rels = diary.states(s), diary.relations(s, to_thought=[t["id"] for t in ts])
+    ts = diary.as_groups(ts, diary.star_heads(diary.stars(s)))
     return {**out, "thoughts": [{**thought_api(t, states, rels), "entry_id": t["entry_id"],
                                  "written_at": diary.iso(entries[t["entry_id"]]["written_at"]),
                                  "title": entries[t["entry_id"]]["data"].get("title", "")} for t in ts]}

@@ -1,0 +1,2573 @@
+{
+ "tag": "two-v2-join",
+ "profile": "two",
+ "star_join": 0.55,
+ "config": {
+  "record": "5",
+  "observe": "4"
+ },
+ "personas": {
+  "C": {
+   "entries": [
+    {
+     "n": 1,
+     "entry_id": "e_f753219f4b0a",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.2,
+     "calls": 5,
+     "usd": 0.102,
+     "step_ms": {
+      "record_input": 10,
+      "observe": 31282,
+      "rules": 16,
+      "voice": 2787,
+      "save": 30,
+      "record_agent": 38463,
+      "record_clean": 15,
+      "ontology": 347,
+      "past": 12,
+      "safety": 994,
+      "names": 19
+     }
+    },
+    {
+     "n": 2,
+     "entry_id": "e_275412563637",
+     "status": "done",
+     "errors": [],
+     "seconds": 82.7,
+     "calls": 5,
+     "usd": 0.1024,
+     "step_ms": {
+      "past": 27,
+      "safety": 592,
+      "names": 20,
+      "record_input": 13,
+      "observe": 36182,
+      "rules": 17,
+      "voice": 2190,
+      "save": 27,
+      "record_agent": 42895,
+      "record_clean": 19,
+      "ontology": 416
+     }
+    },
+    {
+     "n": 3,
+     "entry_id": "e_9bb50afd4634",
+     "status": "done",
+     "errors": [],
+     "seconds": 81.1,
+     "calls": 6,
+     "usd": 0.1051,
+     "step_ms": {
+      "observe": 35541,
+      "rules": 13,
+      "voice": 5574,
+      "save": 30,
+      "record_agent": 38594,
+      "record_clean": 15,
+      "ontology": 428,
+      "past": 39,
+      "safety": 583,
+      "names": 17,
+      "record_input": 12
+     }
+    },
+    {
+     "n": 4,
+     "entry_id": "e_e13a3583da35",
+     "status": "done",
+     "errors": [],
+     "seconds": 75.0,
+     "calls": 5,
+     "usd": 0.1024,
+     "step_ms": {
+      "safety": 624,
+      "names": 19,
+      "record_input": 11,
+      "observe": 37301,
+      "rules": 17,
+      "voice": 2193,
+      "save": 30,
+      "record_agent": 34157,
+      "record_clean": 16,
+      "ontology": 317,
+      "past": 42
+     }
+    },
+    {
+     "n": 5,
+     "entry_id": "e_d4804cf31a72",
+     "status": "done",
+     "errors": [],
+     "seconds": 93.2,
+     "calls": 6,
+     "usd": 0.1052,
+     "step_ms": {
+      "record_agent": 38795,
+      "record_clean": 16,
+      "ontology": 358,
+      "past": 65,
+      "observe": 49494,
+      "rules": 17,
+      "voice": 3339,
+      "save": 37,
+      "safety": 819,
+      "names": 17,
+      "record_input": 11
+     }
+    },
+    {
+     "n": 6,
+     "entry_id": "e_43afef18ed33",
+     "status": "done",
+     "errors": [],
+     "seconds": 36.1,
+     "calls": 3,
+     "usd": 0.0521,
+     "step_ms": {
+      "record_agent": 32989,
+      "record_clean": 16,
+      "ontology": 23,
+      "past": 0,
+      "observe": 0,
+      "safety": 847,
+      "rules": 9,
+      "names": 17,
+      "voice": 1993,
+      "record_input": 10,
+      "save": 24
+     }
+    },
+    {
+     "n": 7,
+     "entry_id": "e_6c19f8b56308",
+     "status": "done",
+     "errors": [],
+     "seconds": 82.1,
+     "calls": 5,
+     "usd": 0.1029,
+     "step_ms": {
+      "names": 14,
+      "record_input": 10,
+      "observe": 39527,
+      "rules": 16,
+      "voice": 1865,
+      "save": 24,
+      "record_agent": 38779,
+      "record_clean": 21,
+      "ontology": 320,
+      "past": 62,
+      "safety": 1236
+     }
+    },
+    {
+     "n": 8,
+     "entry_id": "e_321f1df20fb3",
+     "status": "done",
+     "errors": [],
+     "seconds": 92.5,
+     "calls": 5,
+     "usd": 0.103,
+     "step_ms": {
+      "ontology": 240,
+      "past": 72,
+      "safety": 612,
+      "names": 19,
+      "record_input": 10,
+      "observe": 51637,
+      "rules": 15,
+      "voice": 3274,
+      "save": 26,
+      "record_agent": 36375,
+      "record_clean": 9
+     }
+    },
+    {
+     "n": 9,
+     "entry_id": "e_9c5854d9917a",
+     "status": "done",
+     "errors": [],
+     "seconds": 79.9,
+     "calls": 5,
+     "usd": 0.1029,
+     "step_ms": {
+      "record_input": 11,
+      "past": 57,
+      "observe": 40196,
+      "rules": 15,
+      "voice": 1497,
+      "save": 35,
+      "record_agent": 36762,
+      "safety": 649,
+      "record_clean": 101,
+      "names": 19,
+      "ontology": 279
+     }
+    },
+    {
+     "n": 10,
+     "entry_id": "e_30a68ff8fbe0",
+     "status": "done",
+     "errors": [],
+     "seconds": 88.2,
+     "calls": 5,
+     "usd": 0.1031,
+     "step_ms": {
+      "record_clean": 9,
+      "save": 33,
+      "ontology": 290,
+      "past": 74,
+      "safety": 790,
+      "names": 24,
+      "record_input": 12,
+      "observe": 50032,
+      "rules": 10,
+      "record_agent": 35080,
+      "voice": 1685
+     }
+    },
+    {
+     "n": 11,
+     "entry_id": "e_ce26cda3beb4",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.1,
+     "calls": 5,
+     "usd": 0.1028,
+     "step_ms": {
+      "safety": 1113,
+      "names": 17,
+      "record_input": 10,
+      "observe": 34953,
+      "rules": 14,
+      "voice": 2041,
+      "save": 23,
+      "record_agent": 35389,
+      "record_clean": 13,
+      "ontology": 249,
+      "past": 54
+     }
+    },
+    {
+     "n": 12,
+     "entry_id": "e_f8dfc0b74804",
+     "status": "done",
+     "errors": [],
+     "seconds": 87.9,
+     "calls": 6,
+     "usd": 0.1065,
+     "step_ms": {
+      "safety": 943,
+      "names": 18,
+      "record_input": 12,
+      "record_agent": 38415,
+      "observe": 42250,
+      "record_clean": 14,
+      "rules": 12,
+      "ontology": 321,
+      "voice": 5568,
+      "past": 97,
+      "save": 36
+     }
+    },
+    {
+     "n": 13,
+     "entry_id": "e_fefb99a8a7be",
+     "status": "done",
+     "errors": [],
+     "seconds": 88.4,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 635,
+      "names": 14,
+      "observe": 48878,
+      "record_input": 11,
+      "rules": 13,
+      "voice": 2015,
+      "save": 37,
+      "record_agent": 36235,
+      "record_clean": 10,
+      "ontology": 303,
+      "past": 65
+     }
+    },
+    {
+     "n": 14,
+     "entry_id": "e_4b54c9cec4c7",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.5,
+     "calls": 5,
+     "usd": 0.1029,
+     "step_ms": {
+      "past": 59,
+      "safety": 823,
+      "observe": 36932,
+      "names": 22,
+      "rules": 9,
+      "record_input": 13,
+      "voice": 2005,
+      "save": 30,
+      "record_agent": 34130,
+      "record_clean": 12,
+      "ontology": 251
+     }
+    },
+    {
+     "n": 15,
+     "entry_id": "e_1d4e04babf55",
+     "status": "done",
+     "errors": [],
+     "seconds": 89.2,
+     "calls": 5,
+     "usd": 0.1034,
+     "step_ms": {
+      "record_agent": 39178,
+      "record_clean": 18,
+      "ontology": 373,
+      "past": 111,
+      "safety": 748,
+      "observe": 46868,
+      "names": 17,
+      "rules": 12,
+      "record_input": 11,
+      "voice": 1539,
+      "save": 42
+     }
+    },
+    {
+     "n": 16,
+     "entry_id": "e_995ffbc51562",
+     "status": "done",
+     "errors": [],
+     "seconds": 36.7,
+     "calls": 3,
+     "usd": 0.0525,
+     "step_ms": {
+      "record_input": 9,
+      "record_agent": 33959,
+      "record_clean": 10,
+      "ontology": 14,
+      "past": 0,
+      "observe": 0,
+      "rules": 7,
+      "voice": 1521,
+      "save": 25,
+      "safety": 935,
+      "names": 14
+     }
+    },
+    {
+     "n": 17,
+     "entry_id": "e_3ce821d54a3d",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.9,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "record_input": 12,
+      "save": 16,
+      "record_agent": 34126,
+      "record_clean": 19,
+      "ontology": 305,
+      "past": 86,
+      "observe": 37353,
+      "safety": 527,
+      "rules": 7,
+      "names": 17,
+      "voice": 2261
+     }
+    },
+    {
+     "n": 18,
+     "entry_id": "e_cb4809533943",
+     "status": "done",
+     "errors": [],
+     "seconds": 83.8,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "voice": 2348,
+      "safety": 785,
+      "save": 37,
+      "names": 8,
+      "record_input": 7,
+      "record_agent": 38446,
+      "record_clean": 17,
+      "ontology": 290,
+      "past": 112,
+      "observe": 41518,
+      "rules": 23
+     }
+    },
+    {
+     "n": 19,
+     "entry_id": "e_503b74f57e52",
+     "status": "done",
+     "errors": [],
+     "seconds": 86.9,
+     "calls": 5,
+     "usd": 0.1035,
+     "step_ms": {
+      "record_agent": 37917,
+      "record_clean": 16,
+      "ontology": 324,
+      "safety": 738,
+      "past": 131,
+      "names": 9,
+      "observe": 45290,
+      "record_input": 7,
+      "rules": 14,
+      "voice": 2194,
+      "save": 47
+     }
+    },
+    {
+     "n": 20,
+     "entry_id": "e_e7b9ea157f1b",
+     "status": "done",
+     "errors": [],
+     "seconds": 81.8,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "observe": 40182,
+      "rules": 16,
+      "voice": 2940,
+      "save": 30,
+      "safety": 641,
+      "names": 19,
+      "record_input": 12,
+      "record_agent": 37187,
+      "record_clean": 15,
+      "ontology": 370,
+      "past": 112
+     }
+    }
+   ],
+   "thoughts": [
+    {
+     "id": "e_1d4e04babf55-t00",
+     "n": 15,
+     "position": 0,
+     "topic": "직장 유지 판단",
+     "ai_topic": "책상에 앉아 한 일",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "그래도 내가 책상에 앉아 쓴 시간이 빈 시간은 아니었다."
+    },
+    {
+     "id": "e_1d4e04babf55-t01",
+     "n": 15,
+     "position": 1,
+     "topic": "간호 일 배우기",
+     "ai_topic": "간호 일 배우기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "예전에는 환자 곁에 붙어 있어야만 도움이 된다고 여겼지만, 지금은 덜 헷갈리게 설명을 고치는 일도 같은 무게의 간호라고 생각한다."
+    },
+    {
+     "id": "e_1d4e04babf55-t02",
+     "n": 15,
+     "position": 2,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "다른 곳으로 가는 결정",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "질문",
+     "quote": "그렇다고 다른 곳으로 가는 결정까지 쉬워진 건 아니다."
+    },
+    {
+     "id": "e_1d4e04babf55-t03",
+     "n": 15,
+     "position": 3,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "지금 자리를 지키는 게 맞다는 생각과 밖에서 이 일을 더 해 보고 싶다는 생각이 번갈아 계산기를 잡는다."
+    },
+    {
+     "id": "e_1d4e04babf55-t04",
+     "n": 15,
+     "position": 4,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "이직 고민",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "질문",
+     "quote": "내가 무엇을 좋아하는지는 좀 더 알겠는데, 그걸 따라 움직일 조건은 아직 못 정했다."
+    },
+    {
+     "id": "e_1d4e04babf55-t05",
+     "n": 15,
+     "position": 5,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "고친 안내 종이의 효과",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "질문이 실제로 얼마나 줄었는지는\n아직 모른다."
+    },
+    {
+     "id": "e_1d4e04babf55-t06",
+     "n": 15,
+     "position": 6,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "생각 정리",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "기타",
+     "quote": "이 말을 쓰는 데 생각보다 오래 걸렸다."
+    },
+    {
+     "id": "e_275412563637-t00",
+     "n": 2,
+     "position": 0,
+     "topic": "간호 일 배우기",
+     "ai_topic": "같이 사는 미래",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "같이 살 미래를 생각하면 근무표에 남은 저녁은 준호와 보내고 싶다."
+    },
+    {
+     "id": "e_275412563637-t01",
+     "n": 2,
+     "position": 1,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "같이 사는 일상",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "해석",
+     "quote": "한집에 산다는 말보다 둘이 멀쩡히 깨어서 밥 먹는 장면이 먼저 떠올랐다."
+    },
+    {
+     "id": "e_275412563637-t02",
+     "n": 2,
+     "position": 2,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "그 말에 답하려니 또 달력이 필요했다."
+    },
+    {
+     "id": "e_275412563637-t03",
+     "n": 2,
+     "position": 3,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "함께 보내는 시간의 부족함",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "감정",
+     "quote": "네 번째 여름을 같이 보내는데 아직도 만나는 날마다 겨우 잡았다는 느낌이 난다."
+    },
+    {
+     "id": "e_275412563637-t04",
+     "n": 2,
+     "position": 4,
+     "topic": "식기 전에 같이 먹기",
+     "ai_topic": "식기 전에 같이 먹기",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "다짐",
+     "quote": "다음에는 식기 전에 먹자고 했더니 준호가 남은 만두를 한입에 넣었다."
+    },
+    {
+     "id": "e_275412563637-t05",
+     "n": 2,
+     "position": 5,
+     "topic": "간호 일 배우기",
+     "ai_topic": "함께 살기와 근무표 사이",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "자기평가(부정)",
+     "quote": "나는 좋다고 해\n놓고 다음 달 근무표부터 켰다."
+    },
+    {
+     "id": "e_275412563637-t06",
+     "n": 2,
+     "position": 6,
+     "topic": "같이 있는 시간",
+     "ai_topic": "같이 있는 시간",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "기타",
+     "quote": "준호는 집 크기보다 같이 있는 시간이 얼마나 될지가 궁금하다고 했다."
+    },
+    {
+     "id": "e_275412563637-t07",
+     "n": 2,
+     "position": 7,
+     "topic": "간호 일 배우기",
+     "ai_topic": "같이 살 집 알아보기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "기타",
+     "quote": "내년 봄에는 집을 같이 알아보면 어떻겠냐고 했다."
+    },
+    {
+     "id": "e_30a68ff8fbe0-t00",
+     "n": 10,
+     "position": 0,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "신념·원칙",
+     "quote": "가까운 친구에게도 내 사정은 내가 설명해야 한다."
+    },
+    {
+     "id": "e_30a68ff8fbe0-t01",
+     "n": 10,
+     "position": 1,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "나는 꽃집 사진만 보고 요즘 여유가 생긴 줄 알았다."
+    },
+    {
+     "id": "e_30a68ff8fbe0-t02",
+     "n": 10,
+     "position": 2,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "서로 사진에 없는 부분을 너무 쉽게 채웠다."
+    },
+    {
+     "id": "e_30a68ff8fbe0-t03",
+     "n": 10,
+     "position": 3,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "감정",
+     "quote": "그건 듣고 싶어서 그냥 계속 들었다."
+    },
+    {
+     "id": "e_321f1df20fb3-t00",
+     "n": 8,
+     "position": 0,
+     "topic": "막힌 지점 기록하기",
+     "ai_topic": "막힌 지점 기록하기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "자기평가(긍정)",
+     "quote": "이 정도면 조금은 앞으로 간 셈이다."
+    },
+    {
+     "id": "e_321f1df20fb3-t01",
+     "n": 8,
+     "position": 1,
+     "topic": "간호 일 배우기",
+     "ai_topic": "간호 일 배우기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "수업을 따라가려면 근무가 비는 저녁 두번은 혼자 공부하는 데 써야 한다."
+    },
+    {
+     "id": "e_321f1df20fb3-t02",
+     "n": 8,
+     "position": 2,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "같이 있을 시간부터 늘리고 싶다는 마음은 그대로인데 화면의 수업 일정을 지울 수도 없었다."
+    },
+    {
+     "id": "e_321f1df20fb3-t03",
+     "n": 8,
+     "position": 3,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "준호를 만나는 왕복 시간까지 생각하면 둘 다 넣기는 어렵다."
+    },
+    {
+     "id": "e_321f1df20fb3-t04",
+     "n": 8,
+     "position": 4,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "공부를 접고 싶지도, 우리가 늘 다음 순서가 되는 것도 싫다."
+    },
+    {
+     "id": "e_3ce821d54a3d-t00",
+     "n": 17,
+     "position": 0,
+     "topic": "숫자 입력 실수",
+     "ai_topic": "숫자 입력 실수",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "자기평가(긍정)",
+     "quote": "같은 번호가 두 번 보여도 무조건 지우면 안 되는 이유를 이제는 조금 설명할 수 있다."
+    },
+    {
+     "id": "e_3ce821d54a3d-t01",
+     "n": 17,
+     "position": 1,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "가상 설문 자료 그래프",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "무엇을 센 숫자인지 말할 수 없는 그림은 제출하지 않기로 했다."
+    },
+    {
+     "id": "e_3ce821d54a3d-t02",
+     "n": 17,
+     "position": 2,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "숫자든 문장이든 만드는 쪽에서 당연한 것이 읽는 쪽에서는 아닐 수 있다."
+    },
+    {
+     "id": "e_3ce821d54a3d-t03",
+     "n": 17,
+     "position": 3,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "표현 다듬기",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "감정",
+     "quote": "오늘은 완성한 장수보다 지운 표현 두 개가 더 마음에 남는다."
+    },
+    {
+     "id": "e_4b54c9cec4c7-t00",
+     "n": 14,
+     "position": 0,
+     "topic": "같이 있는 시간",
+     "ai_topic": "같이 있는 시간",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "나는 웃다가 같이 살면 이런 얘기를 매일 듣겠구나 싶었다."
+    },
+    {
+     "id": "e_4b54c9cec4c7-t01",
+     "n": 14,
+     "position": 1,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "다음 약속이 이미 있음",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "그래도 헤어질 때 다음 약속이 이미 있다는 게 생각보다 컸다."
+    },
+    {
+     "id": "e_503b74f57e52-t00",
+     "n": 19,
+     "position": 0,
+     "topic": "간호 일 배우기",
+     "ai_topic": "보건 교육 직무 지원",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "생활비 여섯 달치는 남겨 두고, 재직 상태로 보건 교육 직무에 지원하기로 했다."
+    },
+    {
+     "id": "e_503b74f57e52-t01",
+     "n": 19,
+     "position": 1,
+     "topic": "간호 일 배우기",
+     "ai_topic": "사직 날짜 결정",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "새 자 리의 급여와 근무 조건을 확인한 뒤 사직 날짜를 정할 것이다."
+    },
+    {
+     "id": "e_503b74f57e52-t02",
+     "n": 19,
+     "position": 2,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "안전하려면 계속 같은 곳에 있어야 한다는 기준은 내려놓는다."
+    },
+    {
+     "id": "e_503b74f57e52-t03",
+     "n": 19,
+     "position": 3,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "일의 방향 정하기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "데이터만 다루는 일보다 숫자를 보고 설명을 고치는 쪽으로 가고 싶다는 답도 정했다."
+    },
+    {
+     "id": "e_503b74f57e52-t04",
+     "n": 19,
+     "position": 4,
+     "topic": "간호 일 배우기",
+     "ai_topic": "집 고르기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "집은 출근할 지역이 정해진 뒤 고르기로 했다."
+    },
+    {
+     "id": "e_503b74f57e52-t05",
+     "n": 19,
+     "position": 5,
+     "topic": "이직 앞둔 두려움",
+     "ai_topic": "이직 앞둔 두려움",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "무섭기는 하다."
+    },
+    {
+     "id": "e_503b74f57e52-t06",
+     "n": 19,
+     "position": 6,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "그래도 남을지 움직일지를 처 음부터 다시 묻는 일은 여기서 끝내고 싶다."
+    },
+    {
+     "id": "e_6c19f8b56308-t00",
+     "n": 7,
+     "position": 0,
+     "topic": "직장 유지 판단",
+     "ai_topic": "안내 종이 접힘선",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "나는 늘 한\n번 더 설명하면 된다고 생각했지 종이가 어떻게 접히는지는 안 봤다."
+    },
+    {
+     "id": "e_6c19f8b56308-t01",
+     "n": 7,
+     "position": 1,
+     "topic": "직장 유지 판단",
+     "ai_topic": "안내 종이 접힘선",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "오늘 제일 오래 생각한 건 거창한 처치가 아\n니라 종이 모서리였다."
+    },
+    {
+     "id": "e_6c19f8b56308-t02",
+     "n": 7,
+     "position": 2,
+     "topic": "직장 유지 판단",
+     "ai_topic": "내 몫과 개선 작업의 균형",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "그렇다고 이런 걸 만지는 동안 다른 사람이 내 몫까지 뛰게 되는 건 싫다."
+    },
+    {
+     "id": "e_6c19f8b56308-t03",
+     "n": 7,
+     "position": 3,
+     "topic": "직장 유지 판단",
+     "ai_topic": "내 몫과 개선 작업의 균형",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "내 일을 다 하고 나서 봐야 마음이\n편할 것 같다."
+    },
+    {
+     "id": "e_9bb50afd4634-t00",
+     "n": 3,
+     "position": 0,
+     "topic": "막힌 지점 기록하기",
+     "ai_topic": "막힌 지점 기록하기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "막히는 칸이 생기면 답을 베끼지 않고 어디서 막혔는지 한 줄 적어 두기로 했다."
+    },
+    {
+     "id": "e_9bb50afd4634-t01",
+     "n": 3,
+     "position": 1,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "수업 결제와 일상 유지",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "해석",
+     "quote": "수업료를 냈다고 다른 사람이 된 것은 아니고 내일도 출근한다."
+    },
+    {
+     "id": "e_9bb50afd4634-t02",
+     "n": 3,
+     "position": 2,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "직장을 놓을 생각까지 한 건 아니다."
+    },
+    {
+     "id": "e_9bb50afd4634-t03",
+     "n": 3,
+     "position": 3,
+     "topic": "직장 유지 판단",
+     "ai_topic": "새 일 가능성 확인",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "다만 교육 쪽이든 자료를 다루는 쪽이든 내가 실제로 할 수 있는 일이 있는지 확인은 하고 싶다."
+    },
+    {
+     "id": "e_9bb50afd4634-t04",
+     "n": 3,
+     "position": 4,
+     "topic": "간호 일 배우기",
+     "ai_topic": "수업료 예산 조정",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "적금은 그대로 두고 이번 달 배달 음식 예산에서 수업료를 뺐다."
+    },
+    {
+     "id": "e_9bb50afd4634-t05",
+     "n": 3,
+     "position": 5,
+     "topic": "간호 일 배우기",
+     "ai_topic": "계산을 마친 뒤 강의 재개",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "계산이 맞으니 그제야 강의를 다시 켤 수 있었다."
+    },
+    {
+     "id": "e_9bb50afd4634-t06",
+     "n": 3,
+     "position": 6,
+     "topic": "숫자 입력 실수",
+     "ai_topic": "숫자 입력 실수",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "자기평가(부정)",
+     "quote": "화면 속 표는 얌전한데 내 손을\n거치면 숫자가 이상해진다."
+    },
+    {
+     "id": "e_9bb50afd4634-t07",
+     "n": 3,
+     "position": 7,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "날짜 입력 방식 오류",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "일단 오늘은 날짜를 글\n자로 넣은 게 문제였다."
+    },
+    {
+     "id": "e_9c5854d9917a-t00",
+     "n": 9,
+     "position": 0,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "이걸로 모든 섭섭함이 없어질 것 같지는 않다."
+    },
+    {
+     "id": "e_9c5854d9917a-t01",
+     "n": 9,
+     "position": 1,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "해석",
+     "quote": "그래도 둘 다 비어 있으면 보자는 말보다는 손에 잡혔다."
+    },
+    {
+     "id": "e_9c5854d9917a-t02",
+     "n": 9,
+     "position": 2,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "함께 보내는 시간과 근무표",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "지금 약속한 저녁부터 실제로 보내 보고 싶어서다."
+    },
+    {
+     "id": "e_cb4809533943-t00",
+     "n": 18,
+     "position": 0,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "답이 늦길래 또 내가 서운하게 했나 싶었지만, 꽃 정리 중일 수도 있겠다고 두었다."
+    },
+    {
+     "id": "e_cb4809533943-t01",
+     "n": 18,
+     "position": 1,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "다짐",
+     "quote": "나는 바로 방법을 제안하려다가 그냥 힘들었겠다고 했다."
+    },
+    {
+     "id": "e_cb4809533943-t02",
+     "n": 18,
+     "position": 2,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "자기평가(부정)",
+     "quote": "오래 알았다는 이유로 내 속을 알아주길 기다리는 동안 정작 나는 지은의 하루를 묻지 않았던 것 같다."
+    },
+    {
+     "id": "e_cb4809533943-t03",
+     "n": 18,
+     "position": 3,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "다짐",
+     "quote": "이번에는 만나서 내 얘기를 시작하기 전에 그 행사 사진부터 보여 달라고 해야겠다."
+    },
+    {
+     "id": "e_ce26cda3beb4-t00",
+     "n": 11,
+     "position": 0,
+     "topic": "숫자 입력 실수",
+     "ai_topic": "숫자 입력 실수",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "신념·원칙",
+     "quote": "숫자를 보기 전에 각 칸이 무엇을 세는지부터 확인해야 한다."
+    },
+    {
+     "id": "e_ce26cda3beb4-t01",
+     "n": 11,
+     "position": 1,
+     "topic": "숫자 입력 실수",
+     "ai_topic": "숫자 입력 실수",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "해석",
+     "quote": "그래도 틀린 답을 빨리 만드는 것보다는 낫다."
+    },
+    {
+     "id": "e_d4804cf31a72-t00",
+     "n": 5,
+     "position": 0,
+     "topic": "막힌 지점 기록하기",
+     "ai_topic": "막힌 지점 기록하기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "질문을 묶고 문장을 다시 쓰는 과정이 이상하게 재미있었다."
+    },
+    {
+     "id": "e_d4804cf31a72-t01",
+     "n": 5,
+     "position": 1,
+     "topic": "직장 유지 판단",
+     "ai_topic": "설명으로 사람 돕기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "수입이 잠깐 줄더라도 내가 만든 설명으로 사람을 돕는 일을 한 번은 해보고 싶다."
+    },
+    {
+     "id": "e_d4804cf31a72-t02",
+     "n": 5,
+     "position": 2,
+     "topic": "안정 우선",
+     "ai_topic": "안정 우선",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "신념·원칙",
+     "quote": "수입이 흔들리는 선택을 하면 안 된다는 생각도 여전히 맞는 말처럼 들린다."
+    },
+    {
+     "id": "e_d4804cf31a72-t03",
+     "n": 5,
+     "position": 3,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "어느 쪽도 지워지지 않는다."
+    },
+    {
+     "id": "e_d4804cf31a72-t04",
+     "n": 5,
+     "position": 4,
+     "topic": "막힌 지점 기록하기",
+     "ai_topic": "막힌 지점 기록하기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "오늘 본 질문 목록을 흉내 내서 가상의 예시부터 만들어볼 생각이다."
+    },
+    {
+     "id": "e_d4804cf31a72-t05",
+     "n": 5,
+     "position": 5,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "설명회 화면",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "감정",
+     "quote": "설명회는 끝났는데 화면을 끄기가 아까웠다."
+    },
+    {
+     "id": "e_d4804cf31a72-t06",
+     "n": 5,
+     "position": 6,
+     "topic": "직장 유지 판단",
+     "ai_topic": "설명으로 사람 돕기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "이 일을 좋아할 가능성을 알아버린 게 조금 귀찮기도 하다."
+    },
+    {
+     "id": "e_e13a3583da35-t00",
+     "n": 4,
+     "position": 0,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "질문",
+     "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다."
+    },
+    {
+     "id": "e_e13a3583da35-t01",
+     "n": 4,
+     "position": 1,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "신념·원칙",
+     "quote": "정말 가까운 친구라면 내가 말하지 않아도 바쁜 사정쯤은 알아줘야 한다."
+    },
+    {
+     "id": "e_e13a3583da35-t02",
+     "n": 4,
+     "position": 2,
+     "topic": "간호 일 배우기",
+     "ai_topic": "다음 만남의 불확실함",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "다음에 보자는 말은 쉬운데 다음이 언제인지 모르겠다."
+    },
+    {
+     "id": "e_e7b9ea157f1b-t00",
+     "n": 20,
+     "position": 0,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "지원서에 쓴 내용",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "자기평가(긍정)",
+     "quote": "대단한 성과처럼 부풀리지는 않았다."
+    },
+    {
+     "id": "e_e7b9ea157f1b-t01",
+     "n": 20,
+     "position": 1,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "환자에게 배우는 시간",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "해석",
+     "quote": "병동에서 보낸 시간이 다음 일을 위한 빈칸은 아니라는 생각이 든다."
+    },
+    {
+     "id": "e_e7b9ea157f1b-t02",
+     "n": 20,
+     "position": 2,
+     "topic": "이직 앞둔 두려움",
+     "ai_topic": "이직 앞둔 두려움",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "결과는 모르고 다른 공고도 더 볼 것이다."
+    },
+    {
+     "id": "e_e7b9ea157f1b-t03",
+     "n": 20,
+     "position": 3,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "다짐",
+     "quote": "다른 곳을 향해 움직이는 동안에도 지금 하는 일을 대충 끝내고 싶지는 않다."
+    },
+    {
+     "id": "e_f753219f4b0a-t00",
+     "n": 1,
+     "position": 0,
+     "topic": "돈이 묶인 현실감",
+     "ai_topic": "돈이 묶인 현실감",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "월세랑 적금 빠지는 날짜를 외우게 된 뒤로 더 그렇다."
+    },
+    {
+     "id": "e_f753219f4b0a-t01",
+     "n": 1,
+     "position": 1,
+     "topic": "안정 우선",
+     "ai_topic": "안정 우선",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "신념·원칙",
+     "quote": "안정이 제일이다."
+    },
+    {
+     "id": "e_f753219f4b0a-t02",
+     "n": 1,
+     "position": 2,
+     "topic": "직장 유지 판단",
+     "ai_topic": "직장 유지 판단",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "신념·원칙",
+     "quote": "수입이 끊길 가능성이 있다면 하고 싶은 일이 있어도 지금 자리를 지키는 게 맞다."
+    },
+    {
+     "id": "e_f753219f4b0a-t03",
+     "n": 1,
+     "position": 3,
+     "topic": "간호 일 배우기",
+     "ai_topic": "간호 일 배우기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "설명하는 일을 제대로 배워보고 싶다."
+    },
+    {
+     "id": "e_f753219f4b0a-t04",
+     "n": 1,
+     "position": 4,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "환자에게 배우는 시간",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "해석",
+     "quote": "환자 곁에 붙어 있는 시간만이 간호사로서 쓸모 있는 시간이라고 생각한다."
+    },
+    {
+     "id": "e_f753219f4b0a-t05",
+     "n": 1,
+     "position": 5,
+     "topic": "환자에게 배우는 시간",
+     "ai_topic": "병동 밖에 있는 나",
+     "domain": "그 밖",
+     "sun_id": "d_ab1b88bc092a",
+     "kind": "자기평가(부정)",
+     "quote": "안내문을 만들려고 병동 밖 책상에 앉아 있는 내 모습은 아직 괜히 도망치는 사람 같다."
+    },
+    {
+     "id": "e_f8dfc0b74804-t00",
+     "n": 12,
+     "position": 0,
+     "topic": "돈이 묶인 현실감",
+     "ai_topic": "돈이 묶인 현실감",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "나는 여전히 지금 받는 돈이 제일 확실한 보호막이라고 느낀다."
+    },
+    {
+     "id": "e_f8dfc0b74804-t01",
+     "n": 12,
+     "position": 1,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "실제 교육에 써 보기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "소망",
+     "quote": "그런데 배우고 만든 걸 실제 교육에 써 보고 싶은 마음도 한 달 전보다 커졌다."
+    },
+    {
+     "id": "e_f8dfc0b74804-t02",
+     "n": 12,
+     "position": 2,
+     "topic": "함께 보내는 시간과 근무표",
+     "ai_topic": "다른 일 알아보기",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "질문",
+     "quote": "식탁에서는 답을 못 정했다."
+    },
+    {
+     "id": "e_f8dfc0b74804-t03",
+     "n": 12,
+     "position": 3,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "자기평가(부정)",
+     "quote": "지은에게는 오늘 내 얘기만 많이 한 것 같다고,"
+    },
+    {
+     "id": "e_f8dfc0b74804-t04",
+     "n": 12,
+     "position": 4,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "소망",
+     "quote": "다음 행사 끝나면 네 얘기도 더 듣고 싶다고 보냈다."
+    },
+    {
+     "id": "e_f8dfc0b74804-t05",
+     "n": 12,
+     "position": 5,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "친구 사이의 설명과 이해",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "감정",
+     "quote": "사진 설명이 길어서 좋았다."
+    },
+    {
+     "id": "e_fefb99a8a7be-t00",
+     "n": 13,
+     "position": 0,
+     "topic": "친구 사이의 설명과 이해",
+     "ai_topic": "질문 분류 기준",
+     "domain": "인간관계",
+     "sun_id": "d_8c43e6a88c6b",
+     "kind": "해석",
+     "quote": "혼자 했으면 전부 어려운 표현 탓으로 적었을 것이다."
+    },
+    {
+     "id": "e_fefb99a8a7be-t01",
+     "n": 13,
+     "position": 1,
+     "topic": "직장 유지 판단",
+     "ai_topic": "퇴근길에 남아 있는 느낌",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "오늘은 누군가를 더 빨리 따라다닌 게 아\n닌데도 퇴근길에 한 일이 남아 있는 느낌이었다."
+    },
+    {
+     "id": "e_fefb99a8a7be-t02",
+     "n": 13,
+     "position": 2,
+     "topic": "직장 유지 판단",
+     "ai_topic": "내 일이라고 말하는 어색함",
+     "domain": "커리어",
+     "sun_id": "d_130b85f9ca5c",
+     "kind": "감정",
+     "quote": "아직 이걸 내 일이라고 자연스럽게 말하기는 조금 어색하다."
+    }
+   ],
+   "relations": [
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_e13a3583da35-t01",
+     "from_n": 4,
+     "to_n": 4
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_d4804cf31a72-t01",
+     "to": "e_d4804cf31a72-t02",
+     "from_n": 5,
+     "to_n": 5
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_f753219f4b0a-t02",
+     "to": "e_d4804cf31a72-t01",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_f753219f4b0a-t01",
+     "to": "e_d4804cf31a72-t01",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t03",
+     "to": "e_d4804cf31a72-t03",
+     "from_n": 3,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t00",
+     "to": "e_d4804cf31a72-t04",
+     "from_n": 3,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f753219f4b0a-t05",
+     "to": "e_d4804cf31a72-t05",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_d4804cf31a72-t01",
+     "to": "e_d4804cf31a72-t06",
+     "from_n": 5,
+     "to_n": 5
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t01",
+     "to": "e_6c19f8b56308-t02",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t02",
+     "to": "e_6c19f8b56308-t03",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_9c5854d9917a-t00",
+     "to": "e_9c5854d9917a-t01",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9c5854d9917a-t01",
+     "to": "e_9c5854d9917a-t02",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t07",
+     "to": "e_9c5854d9917a-t01",
+     "from_n": 3,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t01",
+     "to": "e_30a68ff8fbe0-t02",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_e13a3583da35-t01",
+     "to": "e_30a68ff8fbe0-t00",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_30a68ff8fbe0-t00",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t02",
+     "to": "e_30a68ff8fbe0-t03",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t00",
+     "to": "e_30a68ff8fbe0-t01",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t01",
+     "to": "e_30a68ff8fbe0-t03",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t00",
+     "to": "e_30a68ff8fbe0-t02",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_30a68ff8fbe0-t03",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e13a3583da35-t01",
+     "to": "e_30a68ff8fbe0-t01",
+     "from_n": 4,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t06",
+     "to": "e_ce26cda3beb4-t00",
+     "from_n": 3,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ce26cda3beb4-t00",
+     "to": "e_ce26cda3beb4-t01",
+     "from_n": 11,
+     "to_n": 11
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_9c5854d9917a-t00",
+     "to": "e_f8dfc0b74804-t01",
+     "from_n": 9,
+     "to_n": 12
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_f8dfc0b74804-t03",
+     "from_n": 4,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t03",
+     "to": "e_f8dfc0b74804-t05",
+     "from_n": 10,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t02",
+     "to": "e_f8dfc0b74804-t05",
+     "from_n": 10,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t03",
+     "to": "e_f8dfc0b74804-t04",
+     "from_n": 12,
+     "to_n": 12
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t01",
+     "to": "e_f8dfc0b74804-t02",
+     "from_n": 12,
+     "to_n": 12
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t02",
+     "to": "e_fefb99a8a7be-t02",
+     "from_n": 3,
+     "to_n": 13
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_e13a3583da35-t01",
+     "to": "e_fefb99a8a7be-t00",
+     "from_n": 4,
+     "to_n": 13
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_fefb99a8a7be-t00",
+     "from_n": 4,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t00",
+     "to": "e_fefb99a8a7be-t00",
+     "from_n": 10,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t02",
+     "to": "e_fefb99a8a7be-t01",
+     "from_n": 3,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t03",
+     "to": "e_fefb99a8a7be-t01",
+     "from_n": 7,
+     "to_n": 13
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_d4804cf31a72-t06",
+     "to": "e_fefb99a8a7be-t02",
+     "from_n": 5,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_fefb99a8a7be-t01",
+     "to": "e_fefb99a8a7be-t02",
+     "from_n": 13,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t02",
+     "to": "e_fefb99a8a7be-t00",
+     "from_n": 10,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t05",
+     "to": "e_fefb99a8a7be-t00",
+     "from_n": 12,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t02",
+     "to": "e_fefb99a8a7be-t01",
+     "from_n": 7,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t01",
+     "to": "e_fefb99a8a7be-t01",
+     "from_n": 7,
+     "to_n": 13
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t02",
+     "to": "e_fefb99a8a7be-t02",
+     "from_n": 7,
+     "to_n": 13
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e13a3583da35-t00",
+     "to": "e_4b54c9cec4c7-t01",
+     "from_n": 4,
+     "to_n": 14
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t04",
+     "to": "e_4b54c9cec4c7-t01",
+     "from_n": 12,
+     "to_n": 14
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t00",
+     "to": "e_4b54c9cec4c7-t01",
+     "from_n": 10,
+     "to_n": 14
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_1d4e04babf55-t00",
+     "to": "e_1d4e04babf55-t03",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1d4e04babf55-t02",
+     "to": "e_1d4e04babf55-t04",
+     "from_n": 15,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6c19f8b56308-t01",
+     "to": "e_1d4e04babf55-t00",
+     "from_n": 7,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t02",
+     "to": "e_1d4e04babf55-t03",
+     "from_n": 3,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_ce26cda3beb4-t00",
+     "to": "e_3ce821d54a3d-t00",
+     "from_n": 11,
+     "to_n": 17
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t02",
+     "to": "e_3ce821d54a3d-t01",
+     "from_n": 12,
+     "to_n": 17
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_30a68ff8fbe0-t02",
+     "to": "e_3ce821d54a3d-t02",
+     "from_n": 10,
+     "to_n": 17
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t04",
+     "to": "e_cb4809533943-t01",
+     "from_n": 12,
+     "to_n": 18
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t03",
+     "to": "e_cb4809533943-t02",
+     "from_n": 12,
+     "to_n": 18
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t04",
+     "to": "e_cb4809533943-t03",
+     "from_n": 12,
+     "to_n": 18
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_cb4809533943-t01",
+     "to": "e_cb4809533943-t03",
+     "from_n": 18,
+     "to_n": 18
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_d4804cf31a72-t03",
+     "to": "e_503b74f57e52-t06",
+     "from_n": 5,
+     "to_n": 19
+    },
+    {
+     "type": "해소",
+     "line": "실선",
+     "from": "e_1d4e04babf55-t03",
+     "to": "e_503b74f57e52-t02",
+     "from_n": 15,
+     "to_n": 19
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_f753219f4b0a-t02",
+     "to": "e_503b74f57e52-t02",
+     "from_n": 1,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t01",
+     "to": "e_503b74f57e52-t03",
+     "from_n": 12,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t03",
+     "to": "e_503b74f57e52-t00",
+     "from_n": 3,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1d4e04babf55-t01",
+     "to": "e_503b74f57e52-t03",
+     "from_n": 15,
+     "to_n": 19
+    },
+    {
+     "type": "목표 충돌",
+     "line": "점선",
+     "from": "e_503b74f57e52-t00",
+     "to": "e_503b74f57e52-t04",
+     "from_n": 19,
+     "to_n": 19
+    },
+    {
+     "type": "목표 충돌",
+     "line": "점선",
+     "from": "e_503b74f57e52-t00",
+     "to": "e_503b74f57e52-t01",
+     "from_n": 19,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_f753219f4b0a-t04",
+     "to": "e_e7b9ea157f1b-t01",
+     "from_n": 1,
+     "to_n": 20
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_d4804cf31a72-t03",
+     "to": "e_e7b9ea157f1b-t03",
+     "from_n": 5,
+     "to_n": 20
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9bb50afd4634-t02",
+     "to": "e_e7b9ea157f1b-t03",
+     "from_n": 3,
+     "to_n": 20
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_e7b9ea157f1b-t02",
+     "to": "e_e7b9ea157f1b-t03",
+     "from_n": 20,
+     "to_n": 20
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_f8dfc0b74804-t02",
+     "to": "e_e7b9ea157f1b-t00",
+     "from_n": 12,
+     "to_n": 20
+    }
+   ],
+   "insight": {
+    "period": {
+     "from": "2026-07-01",
+     "to": "2026-10-25",
+     "records": 18
+    },
+    "suns": [
+     {
+      "name": "커리어",
+      "records": 14,
+      "stars": [
+       {
+        "name": "함께 보내는 시간과 근무표",
+        "records": 9,
+        "first": "2026-07-05",
+        "last": "2026-10-25",
+        "kinds": {
+         "해석": 5,
+         "질문": 3,
+         "다짐": 2
+        }
+       },
+       {
+        "name": "직장 유지 판단",
+        "records": 8,
+        "first": "2026-07-01",
+        "last": "2026-10-25",
+        "kinds": {
+         "해석": 5,
+         "감정": 4,
+         "소망": 3
+        }
+       },
+       {
+        "name": "간호 일 배우기",
+        "records": 7,
+        "first": "2026-07-01",
+        "last": "2026-10-18",
+        "kinds": {
+         "다짐": 4,
+         "해석": 3,
+         "소망": 2
+        }
+       },
+       {
+        "name": "막힌 지점 기록하기",
+        "records": 3,
+        "first": "2026-07-09",
+        "last": "2026-08-06",
+        "kinds": {
+         "다짐": 2,
+         "자기평가(긍정)": 1,
+         "감정": 1
+        }
+       },
+       {
+        "name": "안정 우선",
+        "records": 2,
+        "first": "2026-07-01",
+        "last": "2026-07-21",
+        "kinds": {
+         "신념·원칙": 2
+        }
+       },
+       {
+        "name": "이직 앞둔 두려움",
+        "records": 2,
+        "first": "2026-10-18",
+        "last": "2026-10-25",
+        "kinds": {
+         "감정": 1,
+         "다짐": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "직장 유지 판단",
+        "times": 12,
+        "from": {
+         "day": "2026-07-09",
+         "quote": "다만 교육 쪽이든 자료를 다루는 쪽이든 내가 실제로 할 수 있는 일이 있는지 확인은 하고 싶다.",
+         "record_id": "e_9bb50afd4634",
+         "thought_id": "e_9bb50afd4634-t03"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "다른 곳을 향해 움직이는 동안에도 지금 하는 일을 대충 끝내고 싶지는 않다.",
+         "record_id": "e_e7b9ea157f1b",
+         "thought_id": "e_e7b9ea157f1b-t03"
+        }
+       },
+       {
+        "star": "함께 보내는 시간과 근무표",
+        "times": 4,
+        "from": {
+         "day": "2026-07-09",
+         "quote": "일단 오늘은 날짜를 글\n자로 넣은 게 문제였다.",
+         "record_id": "e_9bb50afd4634",
+         "thought_id": "e_9bb50afd4634-t07"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "데이터만 다루는 일보다 숫자를 보고 설명을 고치는 쪽으로 가고 싶다는 답도 정했다.",
+         "record_id": "e_503b74f57e52",
+         "thought_id": "e_503b74f57e52-t03"
+        }
+       },
+       {
+        "star": "막힌 지점 기록하기",
+        "times": 1,
+        "from": {
+         "day": "2026-07-09",
+         "quote": "막히는 칸이 생기면 답을 베끼지 않고 어디서 막혔는지 한 줄 적어 두기로 했다.",
+         "record_id": "e_9bb50afd4634",
+         "thought_id": "e_9bb50afd4634-t00"
+        },
+        "to": {
+         "day": "2026-07-21",
+         "quote": "오늘 본 질문 목록을 흉내 내서 가상의 예시부터 만들어볼 생각이다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t04"
+        }
+       },
+       {
+        "star": "간호 일 배우기",
+        "times": 1,
+        "from": {
+         "day": "2026-07-09",
+         "quote": "다만 교육 쪽이든 자료를 다루는 쪽이든 내가 실제로 할 수 있는 일이 있는지 확인은 하고 싶다.",
+         "record_id": "e_9bb50afd4634",
+         "thought_id": "e_9bb50afd4634-t03"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "생활비 여섯 달치는 남겨 두고, 재직 상태로 보건 교육 직무에 지원하기로 했다.",
+         "record_id": "e_503b74f57e52",
+         "thought_id": "e_503b74f57e52-t00"
+        }
+       }
+      ],
+      "changed": [
+       {
+        "star": "함께 보내는 시간과 근무표",
+        "line": "실선",
+        "from": {
+         "day": "2026-08-12",
+         "quote": "이걸로 모든 섭섭함이 없어질 것 같지는 않다.",
+         "record_id": "e_9c5854d9917a",
+         "thought_id": "e_9c5854d9917a-t00"
+        },
+        "to": {
+         "day": "2026-08-30",
+         "quote": "그런데 배우고 만든 걸 실제 교육에 써 보고 싶은 마음도 한 달 전보다 커졌다.",
+         "record_id": "e_f8dfc0b74804",
+         "thought_id": "e_f8dfc0b74804-t01"
+        },
+        "axis": "섭섭함 해소 기대 낮음 ↔ 실제 교육에 써 보고 싶은 마음 커짐"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "실선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "수입이 끊길 가능성이 있다면 하고 싶은 일이 있어도 지금 자리를 지키는 게 맞다.",
+         "record_id": "e_f753219f4b0a",
+         "thought_id": "e_f753219f4b0a-t02"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "안전하려면 계속 같은 곳에 있어야 한다는 기준은 내려놓는다.",
+         "record_id": "e_503b74f57e52",
+         "thought_id": "e_503b74f57e52-t02"
+        },
+        "axis": "직장 유지 ↔ 이직 모색"
+       }
+      ],
+      "open": [
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "수입이 끊길 가능성이 있다면 하고 싶은 일이 있어도 지금 자리를 지키는 게 맞다.",
+         "record_id": "e_f753219f4b0a",
+         "thought_id": "e_f753219f4b0a-t02"
+        },
+        "to": {
+         "day": "2026-07-21",
+         "quote": "수입이 잠깐 줄더라도 내가 만든 설명으로 사람을 돕는 일을 한 번은 해보고 싶다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t01"
+        },
+        "axis": "해보고 싶은 일 ↔ 자리 지키기"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-01",
+         "quote": "안정이 제일이다.",
+         "record_id": "e_f753219f4b0a",
+         "thought_id": "e_f753219f4b0a-t01"
+        },
+        "to": {
+         "day": "2026-07-21",
+         "quote": "수입이 잠깐 줄더라도 내가 만든 설명으로 사람을 돕는 일을 한 번은 해보고 싶다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t01"
+        },
+        "axis": "해보고 싶은 일 ↔ 안정"
+       },
+       {
+        "star": "안정 우선",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-21",
+         "quote": "수입이 잠깐 줄더라도 내가 만든 설명으로 사람을 돕는 일을 한 번은 해보고 싶다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t01"
+        },
+        "to": {
+         "day": "2026-07-21",
+         "quote": "수입이 흔들리는 선택을 하면 안 된다는 생각도 여전히 맞는 말처럼 들린다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t02"
+        },
+        "axis": "도전 ↔ 안정"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-31",
+         "quote": "오늘 제일 오래 생각한 건 거창한 처치가 아\n니라 종이 모서리였다.",
+         "record_id": "e_6c19f8b56308",
+         "thought_id": "e_6c19f8b56308-t01"
+        },
+        "to": {
+         "day": "2026-07-31",
+         "quote": "그렇다고 이런 걸 만지는 동안 다른 사람이 내 몫까지 뛰게 되는 건 싫다.",
+         "record_id": "e_6c19f8b56308",
+         "thought_id": "e_6c19f8b56308-t02"
+        },
+        "axis": "작은 실제를 봄 ↔ 자기 몫을 먼저 함"
+       },
+       {
+        "star": "함께 보내는 시간과 근무표",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-12",
+         "quote": "이걸로 모든 섭섭함이 없어질 것 같지는 않다.",
+         "record_id": "e_9c5854d9917a",
+         "thought_id": "e_9c5854d9917a-t00"
+        },
+        "to": {
+         "day": "2026-08-12",
+         "quote": "그래도 둘 다 비어 있으면 보자는 말보다는 손에 잡혔다.",
+         "record_id": "e_9c5854d9917a",
+         "thought_id": "e_9c5854d9917a-t01"
+        },
+        "axis": "섭섭함이 남음 ↔ 시간이 손에 잡힘"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-21",
+         "quote": "이 일을 좋아할 가능성을 알아버린 게 조금 귀찮기도 하다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t06"
+        },
+        "to": {
+         "day": "2026-09-05",
+         "quote": "아직 이걸 내 일이라고 자연스럽게 말하기는 조금 어색하다.",
+         "record_id": "e_fefb99a8a7be",
+         "thought_id": "e_fefb99a8a7be-t02"
+        },
+        "axis": "어색함 ↔ 좋아할 가능성"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-31",
+         "quote": "그렇다고 이런 걸 만지는 동안 다른 사람이 내 몫까지 뛰게 되는 건 싫다.",
+         "record_id": "e_6c19f8b56308",
+         "thought_id": "e_6c19f8b56308-t02"
+        },
+        "to": {
+         "day": "2026-09-05",
+         "quote": "아직 이걸 내 일이라고 자연스럽게 말하기는 조금 어색하다.",
+         "record_id": "e_fefb99a8a7be",
+         "thought_id": "e_fefb99a8a7be-t02"
+        },
+        "axis": "내 일로 느끼기 어색함 ↔ 내 몫을 지켜야 함"
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-10-25",
+         "quote": "결과는 모르고 다른 공고도 더 볼 것이다.",
+         "record_id": "e_e7b9ea157f1b",
+         "thought_id": "e_e7b9ea157f1b-t02"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "다른 곳을 향해 움직이는 동안에도 지금 하는 일을 대충 끝내고 싶지는 않다.",
+         "record_id": "e_e7b9ea157f1b",
+         "thought_id": "e_e7b9ea157f1b-t03"
+        },
+        "axis": "이직 탐색 ↔ 현재 일 유지"
+       }
+      ],
+      "settled": [
+       {
+        "star": "함께 보내는 시간과 근무표",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-30",
+         "quote": "식탁에서는 답을 못 정했다.",
+         "record_id": "e_f8dfc0b74804",
+         "thought_id": "e_f8dfc0b74804-t02"
+        },
+        "to": {
+         "day": "2026-10-04",
+         "quote": "무엇을 센 숫자인지 말할 수 없는 그림은 제출하지 않기로 했다.",
+         "record_id": "e_3ce821d54a3d",
+         "thought_id": "e_3ce821d54a3d-t01"
+        }
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "실선",
+        "from": {
+         "day": "2026-09-21",
+         "quote": "지금 자리를 지키는 게 맞다는 생각과 밖에서 이 일을 더 해 보고 싶다는 생각이 번갈아 계산기를 잡는다.",
+         "record_id": "e_1d4e04babf55",
+         "thought_id": "e_1d4e04babf55-t03"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "안전하려면 계속 같은 곳에 있어야 한다는 기준은 내려놓는다.",
+         "record_id": "e_503b74f57e52",
+         "thought_id": "e_503b74f57e52-t02"
+        }
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-21",
+         "quote": "어느 쪽도 지워지지 않는다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t03"
+        },
+        "to": {
+         "day": "2026-10-18",
+         "quote": "그래도 남을지 움직일지를 처 음부터 다시 묻는 일은 여기서 끝내고 싶다.",
+         "record_id": "e_503b74f57e52",
+         "thought_id": "e_503b74f57e52-t06"
+        }
+       },
+       {
+        "star": "함께 보내는 시간과 근무표",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-30",
+         "quote": "식탁에서는 답을 못 정했다.",
+         "record_id": "e_f8dfc0b74804",
+         "thought_id": "e_f8dfc0b74804-t02"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "대단한 성과처럼 부풀리지는 않았다.",
+         "record_id": "e_e7b9ea157f1b",
+         "thought_id": "e_e7b9ea157f1b-t00"
+        }
+       },
+       {
+        "star": "직장 유지 판단",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-21",
+         "quote": "어느 쪽도 지워지지 않는다.",
+         "record_id": "e_d4804cf31a72",
+         "thought_id": "e_d4804cf31a72-t03"
+        },
+        "to": {
+         "day": "2026-10-25",
+         "quote": "다른 곳을 향해 움직이는 동안에도 지금 하는 일을 대충 끝내고 싶지는 않다.",
+         "record_id": "e_e7b9ea157f1b",
+         "thought_id": "e_e7b9ea157f1b-t03"
+        }
+       }
+      ]
+     },
+     {
+      "name": "인간관계",
+      "records": 9,
+      "stars": [
+       {
+        "name": "친구 사이의 설명과 이해",
+        "records": 7,
+        "first": "2026-07-14",
+        "last": "2026-10-11",
+        "kinds": {
+         "해석": 6,
+         "감정": 3,
+         "신념·원칙": 2
+        }
+       },
+       {
+        "name": "돈이 묶인 현실감",
+        "records": 2,
+        "first": "2026-07-01",
+        "last": "2026-08-30",
+        "kinds": {
+         "해석": 2
+        }
+       },
+       {
+        "name": "같이 있는 시간",
+        "records": 2,
+        "first": "2026-07-05",
+        "last": "2026-09-13",
+        "kinds": {
+         "기타": 1,
+         "해석": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "친구 사이의 설명과 이해",
+        "times": 20,
+        "from": {
+         "day": "2026-07-14",
+         "quote": "정말 가까운 친구라면 내가 말하지 않아도 바쁜 사정쯤은 알아줘야 한다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t01"
+        },
+        "to": {
+         "day": "2026-10-11",
+         "quote": "이번에는 만나서 내 얘기를 시작하기 전에 그 행사 사진부터 보여 달라고 해야겠다.",
+         "record_id": "e_cb4809533943",
+         "thought_id": "e_cb4809533943-t03"
+        }
+       }
+      ],
+      "changed": [
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "정말 가까운 친구라면 내가 말하지 않아도 바쁜 사정쯤은 알아줘야 한다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t01"
+        },
+        "to": {
+         "day": "2026-08-19",
+         "quote": "가까운 친구에게도 내 사정은 내가 설명해야 한다.",
+         "record_id": "e_30a68ff8fbe0",
+         "thought_id": "e_30a68ff8fbe0-t00"
+        },
+        "axis": "알아주길 바람 ↔ 직접 설명함"
+       },
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "정말 가까운 친구라면 내가 말하지 않아도 바쁜 사정쯤은 알아줘야 한다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t01"
+        },
+        "to": {
+         "day": "2026-09-05",
+         "quote": "혼자 했으면 전부 어려운 표현 탓으로 적었을 것이다.",
+         "record_id": "e_fefb99a8a7be",
+         "thought_id": "e_fefb99a8a7be-t00"
+        },
+        "axis": "말하지 않아도 알아줌 ↔ 직접 설명함"
+       }
+      ],
+      "open": [],
+      "settled": [
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t00"
+        },
+        "to": {
+         "day": "2026-07-14",
+         "quote": "정말 가까운 친구라면 내가 말하지 않아도 바쁜 사정쯤은 알아줘야 한다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t01"
+        }
+       },
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t00"
+        },
+        "to": {
+         "day": "2026-08-19",
+         "quote": "가까운 친구에게도 내 사정은 내가 설명해야 한다.",
+         "record_id": "e_30a68ff8fbe0",
+         "thought_id": "e_30a68ff8fbe0-t00"
+        }
+       },
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t00"
+        },
+        "to": {
+         "day": "2026-08-30",
+         "quote": "지은에게는 오늘 내 얘기만 많이 한 것 같다고,",
+         "record_id": "e_f8dfc0b74804",
+         "thought_id": "e_f8dfc0b74804-t03"
+        }
+       },
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t00"
+        },
+        "to": {
+         "day": "2026-09-05",
+         "quote": "혼자 했으면 전부 어려운 표현 탓으로 적었을 것이다.",
+         "record_id": "e_fefb99a8a7be",
+         "thought_id": "e_fefb99a8a7be-t00"
+        }
+       },
+       {
+        "star": "친구 사이의 설명과 이해",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-14",
+         "quote": "그래도 중학교 때부터 봤는데 꼭 다 설명해야 하나 싶었다.",
+         "record_id": "e_e13a3583da35",
+         "thought_id": "e_e13a3583da35-t00"
+        },
+        "to": {
+         "day": "2026-09-13",
+         "quote": "그래도 헤어질 때 다음 약속이 이미 있다는 게 생각보다 컸다.",
+         "record_id": "e_4b54c9cec4c7",
+         "thought_id": "e_4b54c9cec4c7-t01"
+        }
+       }
+      ]
+     }
+    ],
+    "across": []
+   },
+   "repeats": [],
+   "score": {
+    "stars": 12,
+    "gt_topics": 5,
+    "topic_pairs": {
+     "precision": 0.554,
+     "recall": 0.823,
+     "f1": 0.662
+    },
+    "domain_acc": 0.69,
+    "links_planted": 10,
+    "links_found": 4,
+    "links_found_same_type": 4,
+    "links_recall": 0.4,
+    "links_found_quote": 2,
+    "relations_shown": 38,
+    "relations_unplanted": 31,
+    "insights_linked": 4,
+    "insights_grouped": 5,
+    "insights": 5,
+    "failed_entries": 0,
+    "usd": 1.965
+   }
+  }
+ }
+}

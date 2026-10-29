@@ -45,6 +45,10 @@ ALLOWED = {
     "bytes": "app.audio.bytes",
     "format": "app.audio.format",
     "chars": "app.tts.chars",                # 읽어 준 글자 수
+    "profile": "app.ontology.profile",       # 온톨로지 모드(v8 · two) — 점수가 바뀌면 어느 판이었는지(강의 10강 버전 ID)
+    "stars_new": "app.ontology.stars_new",   # 이 글에서 새로 생긴 작은 별 수
+    "stars_joined": "app.ontology.stars_joined",   # 새 이름이었지만 기존 작은 별에 붙인 수(STAR_JOIN_SIM)
+    "other_sun": "app.ontology.other_sun",   # 두 영역 밖('그 밖')으로 간 생각 수
 }
 NAME_LIKE = re.compile(r"[\w.:/-]{1,64}", re.ASCII)
 _tracer = None

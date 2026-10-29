@@ -4,11 +4,13 @@ app/api/routes.py
 우주 · 온톨로지 · 피드백 · 사람 · 되고 싶은 모습 · 나 · 설정 · 계정 지우기 · 운영(/health · /stats).
 """
 
+import time
 import unicodedata
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response
 
+from app.agents import graph
 from app.core import auth, config, logger
 from app.core.ontology import load
 from app.deps import get_repo, get_user
@@ -20,11 +22,39 @@ from app.service.rules import press
 
 router = APIRouter()
 Id = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,80}$")]   # id 모양만(제어 문자 · 다른 글자는 422)
+_DEEP = {"at": 0.0, "out": None}   # deep 점검 결과를 10초 둔다(로그인 없이 부를 수 있어 DB · Chroma 연결을 아끼려고)
 
 
 @router.get("/health", tags=["운영"])
-def health():
-    return {"status": "ok", "version": config.VERSION}
+def health(response: Response, deep: bool = False):
+    """deep=1 이면 DB(select 1) · ChromaDB(컬렉션 열기)까지 닿는지 본다(업스테이지 가이드 ④ Step 5 · ⑥ Step 3).
+    하나라도 안 되면 503 · degraded. 오류는 종류 이름만(주소 · 메시지는 내보내지 않음)."""
+    out = {"status": "ok", "version": config.VERSION}
+    if not deep:
+        return out
+    if _DEEP["out"] and time.time() - _DEEP["at"] < 10:
+        response.status_code = 200 if _DEEP["out"]["status"] == "ok" else 503
+        return _DEEP["out"]
+    checks = {}
+    try:
+        import psycopg
+        if not config.DATABASE_URL:
+            raise LookupError("unconfigured")
+        with psycopg.connect(config.DATABASE_URL, connect_timeout=5) as c:
+            c.execute("select 1")
+        checks["db"] = "ok"
+    except Exception as e:
+        checks["db"] = str(e) if isinstance(e, LookupError) else type(e).__name__
+    try:
+        from app.repository.vectors import ChromaVectors
+        ChromaVectors()
+        checks["vectors"] = "ok"
+    except Exception as e:
+        checks["vectors"] = type(e).__name__
+    if any(v != "ok" for v in checks.values()):
+        response.status_code, out["status"] = 503, "degraded"
+    _DEEP.update(at=time.time(), out={**out, "checks": checks})
+    return _DEEP["out"]
 
 
 @router.get("/ontology", tags=["운영"], summary="app/core/ontology/v8.json 그대로")
@@ -40,8 +70,16 @@ def stats(user=Depends(get_user), repo=Depends(get_repo)):
 
 @router.get("/universe", tags=["우주"])
 def universe(user=Depends(get_user), repo=Depends(get_repo)):
+    graph.ensure_groups(repo, user["id"])   # 모드를 바꾼 뒤 처음 열 때 한 번 작은 별 묶기(rules.groups)
     with repo.session(user["id"]) as s:
         return views.universe(s)
+
+
+@router.get("/insight", tags=["우주"], summary="나에 대해 알게 된 것: 해 → 작은 별 → 이어 온 · 바뀐 · 맞서는 · 정리된 생각(원문 인용)")
+def insight(user=Depends(get_user), repo=Depends(get_repo)):
+    graph.ensure_groups(repo, user["id"])   # 모드를 바꾼 뒤 처음 열 때 한 번 작은 별 묶기(rules.groups)
+    with repo.session(user["id"]) as s:
+        return views.insight(s)
 
 
 ##################################################

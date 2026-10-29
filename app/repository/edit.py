@@ -93,20 +93,35 @@ def star(s, sid):
     return next((x for x in diary.stars(s) if x["id"] == sid), None)
 
 
+def set_sun(s, sid, sun_id, to_name):
+    """작은 별 하나의 해 바꾸기: 별 · 그 별의 생각 · 그 별이 주인인 기록 · 이어 하기 상태(묶음 해 고르기도 쓴다)."""
+    s.update("stars", {"sun_id": sun_id}, id=sid)
+    s.update("thoughts", {"sun_id": sun_id}, star_id=sid)
+    s.update("entries", {"sun_id": sun_id}, star_id=sid)
+    _fix_steps(s, lambda st_: _walk(st_, lambda d: {**d, "sun_id": sun_id, **({"domain": to_name} if "domain" in d else {})}
+                                    if d.get("star_id") == sid else d))
+
+
+def group_of(s, sid):
+    """작은 별 sid 와 같은 묶음의 별들(sid 가 머리면 묶음 전체, 아니면 sid 하나). 화면은 묶음 머리 id 로 고친다(rules.groups)."""
+    all_ = diary.stars(s)
+    heads = diary.star_heads(all_)
+    return [x for x in all_ if heads[x["id"]]["id"] == sid] or [x for x in all_ if x["id"] == sid]
+
+
 def move_star(s, sid, sun_id):
-    """작은 별을 다른 해로: 별 · 그 별의 생각 · 그 별이 주인인 기록의 해를 바꾼다. 다음 글의 같은 주제도 이 해로 간다
-    (graph.record_input 이 작은 별의 해를 기록 Agent 정리에 넘김)."""
+    """작은 별(묶음이면 묶음 전체)을 다른 해로: 별 · 그 별의 생각 · 그 별이 주인인 기록의 해를 바꾸고, 사용자가 고른 해라고
+    표시(pin)해 다음 묶기가 해를 바꾸지 않게 한다. 다음 글의 같은 주제도 이 해로 간다(graph.record_input 이 작은 별의 해를 넘김)."""
     st, to = star(s, sid), sun(s, sun_id)
     if not st or not to:
         return None
-    if st["sun_id"] != sun_id:
+    if st["sun_id"] != sun_id or not st.get("pin"):
         frm = sun(s, st["sun_id"]) if st["sun_id"] else None
-        s.update("stars", {"sun_id": sun_id}, id=sid)
-        s.update("thoughts", {"sun_id": sun_id}, star_id=sid)
-        s.update("entries", {"sun_id": sun_id}, star_id=sid)
-        _fix_steps(s, lambda st_: _walk(st_, lambda d: {**d, "sun_id": sun_id, **({"domain": to["name"]} if "domain" in d else {})}
-                                        if d.get("star_id") == sid else d))
-        lesson(s, "star", sid, "옮김", topic=st["name"], **{"from": frm and frm["name"], "to": to["name"]})
+        for x in group_of(s, sid):
+            set_sun(s, x["id"], sun_id, to["name"])
+            diary.set_star(s, x, pin=True)
+        if st["sun_id"] != sun_id:
+            lesson(s, "star", sid, "옮김", topic=st["name"], **{"from": frm and frm["name"], "to": to["name"]})
     return {**st, "sun_id": sun_id}
 
 
@@ -119,11 +134,21 @@ def _rename_topic(s, table, old, new):
 
 
 def merge_stars(s, from_id, into_id):
-    """작은 별 from 을 into 로 합친다(사용자가 확인한 뒤). 생각은 into 의 이름 · 해로 옮기고, 관계 · 상태의 주제 이름도 바꾼다.
-    다음 글에서 기록 Agent 가 옛 이름을 다시 내도 into 로 가게 비슷한 말(topic_aliases)로 남긴다."""
+    """작은 별 from(묶음이면 묶음 전체)을 into 로 합친다(사용자가 확인한 뒤 — 사람이 정한 것이라 실제로 합친다, rules.groups)."""
     a, b = star(s, from_id), star(s, into_id)
     if not a or not b or from_id == into_id:
         return None
+    for x in group_of(s, from_id):
+        if x["id"] != into_id:
+            _merge_one(s, x["id"], into_id)
+    lesson(s, "star", into_id, "합침", **{"from": a["name"], "into": b["name"]})
+    return b
+
+
+def _merge_one(s, from_id, into_id):
+    """생각은 into 의 이름 · 해로 옮기고, 관계 · 상태의 주제 이름도 바꾼다.
+    다음 글에서 기록 Agent 가 옛 이름을 다시 내도 into 로 가게 비슷한 말(topic_aliases)로 남긴다."""
+    a, b = star(s, from_id), star(s, into_id)
     to = sun(s, b["sun_id"]) if b["sun_id"] else None
     for r in s.rows("thoughts", star_id=from_id):
         d = diary.unseal(s, "thoughts", r["id"], r["enc"])
@@ -144,8 +169,6 @@ def merge_stars(s, from_id, into_id):
     st, _ = diary.profile(s)
     aliases = {k: (b["name"] if v == a["name"] else v) for k, v in (st.get("topic_aliases") or {}).items() if k != b["name"]}
     diary.save_profile(s, settings={"topic_aliases": {**aliases, a["name"]: b["name"]}})
-    lesson(s, "star", into_id, "합침", **{"from": a["name"], "into": b["name"]})
-    return b
 
 
 def pair_id(a, b):

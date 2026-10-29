@@ -10,6 +10,7 @@ from app.agents import graph, studio
 from app.core import config, llm, security
 from app.repository import MemRepo, diary, views
 from app.service import voice
+from app.service.rules import groups
 from app.service.safety.crisis import LLM_PROMPT
 
 U1 = "11111111-1111-1111-1111-111111111111"
@@ -28,6 +29,7 @@ class FakeUpstage:
 
     def __init__(self):
         self.sent, self.store, self.calls = [], {}, {"record": 0, "observe": 0, "chat": 0, "embed": 0}
+        self.group_answer, self.sun_answer = [], []
         self.fail_observe = 0
         self.classify = "생각·성찰"   # 기록 Agent Classify 갈래(글 유형)
         self.crisis_llm = '{"crisis": false, "reason": "평범한 하루"}'   # 위기 2차 판정 답(예외면 실패)
@@ -84,6 +86,12 @@ class FakeUpstage:
     def _chat(self, model, messages, **kw):
         self.calls["chat"] += 1
         self.sent.append(json.dumps(messages, ensure_ascii=False))
+        if messages[0]["content"] == groups.GROUP_SYSTEM:   # 작은 별 묶기: 기본은 모두 혼자(시험이 group_answer 로 정함)
+            return _o(choices=[_o(message=_o(content=json.dumps({"groups": self.group_answer})))],
+                      usage=_o(prompt_tokens=100, completion_tokens=10))
+        if messages[0]["content"].startswith("너는 일기 앱에서 생각 묶음이"):
+            return _o(choices=[_o(message=_o(content=json.dumps({"suns": self.sun_answer}, ensure_ascii=False)))],
+                      usage=_o(prompt_tokens=100, completion_tokens=10))
         if messages[0]["content"] == LLM_PROMPT:
             if isinstance(self.crisis_llm, Exception):
                 raise self.crisis_llm
@@ -165,7 +173,7 @@ def test_stored_text_is_encrypted_and_vectors_have_no_text(env):
         assert word not in raw
     docs, metas = env.repo.vectors.documents(U1)
     assert docs and all(d is None for d in docs)
-    assert all(set(m) == {"entry_id", "star_id", "written_at", "kind"} for m in metas)
+    assert all(set(m) == {"entry_id", "sun_id", "star_id", "written_at", "kind"} for m in metas)
 
 
 SHOWN_BAD = re.compile(r"(?<!\d)(?:109|112|119)(?!\d)|마들랜|상담")   # 시험 단계: 보이는 글에 단체 · 번호 없음
@@ -347,3 +355,52 @@ def test_custom_tone_note_is_masked(env):
     write(env, U1, *DAY2, "2026-10-03T22:00:00+09:00")
     sent = "\n".join(env.fake.sent)
     assert "[사용자가 원한 말투]" in sent and "다정한 반말로" in sent and not [n for n in NAMES if n in sent]
+
+
+def test_star_join_keeps_same_text_on_same_star(env, monkeypatch):
+    """WS27: 기록 Agent 가 같은 글에 다른 주제 이름을 내도, 작은 별 맞추기를 켜면 같은 해의 가까운 기존 별에 붙는다."""
+    first = env.fake._record
+    names = iter(["첫 이름", "다른 이름"])
+
+    def record(html):
+        d = first(html)
+        n = next(names, "또 다른 이름")
+        for t in d["thoughts"]:
+            t["topic"] = [n]
+        return d
+    monkeypatch.setattr(env.fake, "_record", record)
+    monkeypatch.setattr(config, "STAR_JOIN_SIM", 0.5)   # 가짜 벡터(8차원)라 문턱은 낮게 — 실제 값은 가상 인물 시험으로
+    monkeypatch.setattr(graph.tools, "sun_vectors", lambda: ({"삶의 성취": [[1.0] * 8]}, [0.3] * 8))   # 중심이 없으면 맞추기를 끈다
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    _, _, r = write(env, U1, *DAY1, "2026-10-02T22:00:00+09:00")
+    assert {t["topic"] for t in r["thoughts"]} == {"첫 이름"}
+    with env.repo.session(U1) as s:
+        assert [x["name"] for x in diary.stars(s)] == ["첫 이름"]
+    _, metas = env.repo.vectors.documents(U1)
+    assert all(m["sun_id"] for m in metas)   # 벡터마다 해 메타(온톨로지 자리)
+
+
+def test_two_domain_profile_shows_only_two_suns(env, monkeypatch):
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        assert {x["name"] for x in diary.suns(s)} <= {"커리어", "인간관계", "그 밖"}
+
+
+def test_two_domain_mode_forces_unmatched_topics_into_two_suns(env, monkeypatch):
+    """두 영역 모드: 낱말로 해가 안 정해지는 주제는 임베딩으로 고를 때 '그 밖'으로 가는 축을 후보에서 뺀다."""
+    first = env.fake._record
+
+    def record(html):
+        d = first(html)
+        for t in d["thoughts"]:
+            t["topic"] = ["낱말 없는 주제"]
+        return d
+    monkeypatch.setattr(env.fake, "_record", record)
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    # 생각 벡터는 '건강'(그 밖) 축에 가장 가깝지만, 두 영역 모드라 커리어 · 인간관계 축 중에서만 고른다
+    monkeypatch.setattr(graph.tools, "sun_vectors", lambda: ({"건강": [[1.0] * 8], "관계": [[0.5] * 4 + [0.0] * 4]}, [0.0] * 8))
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        sun = {x["id"]: x["name"] for x in diary.suns(s)}
+        assert {sun[t["sun_id"]] for t in diary.thoughts(s)} == {"인간관계"}

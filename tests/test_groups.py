@@ -1,0 +1,126 @@
+"""작은 별 묶음(rules.groups · graph.group_stars): 같은 고민끼리 묶어 묶음 머리 이름으로 보이고, 작은 별은 지우지 않는다."""
+import json
+
+from app.agents import graph
+from app.core import config
+from app.repository import diary, edit, views
+from app.service.rules import groups
+from tests.test_graph_flow import DAY1, NAMES, U1, env, write  # noqa: F401
+
+
+def star(i, name, records, sun="삶의 성취", pin=None):
+    return {"id": i, "name": name, "sun": sun, "records": records, "quotes": [f"{name} 예"], "pin": pin}
+
+
+def test_parse_groups_fixes_missing_duplicate_and_bad_numbers():
+    assert groups.parse_groups('설명 {"groups": [[1, 3], [3, 9, "x"]]} 끝', 4) == [[0, 2], [1], [3]]
+    assert groups.parse_groups("답이 JSON 이 아님", 2) == [[0], [1]]
+    assert groups.parse_suns('{"suns": [{"group": 2, "sun": "인간관계"}, {"group": 1, "sun": "없는 해"}]}', 2,
+                             [("커리어", ""), ("인간관계", "")]) == [None, "인간관계"]
+
+
+def test_apply_head_is_most_written_star_and_pin_wins():
+    stars = [star("a", "대본 연습", 1), star("b", "영어 녹음", 5), star("c", "도현 답장", 3, "관계", pin=True)]
+    got = groups.apply(stars, [[0, 1], [2]], ["커리어", "커리어"])
+    assert got["a"] == got["b"] == {"head": "b", "sun": "커리어"}
+    assert got["c"] == {"head": "c", "sun": "관계"}   # 사용자가 옮긴 별은 사용자가 고른 해
+
+
+def test_apply_keeps_declined_pair_apart():
+    stars = [star("a", "첫째", 2), star("b", "둘째", 1), star("c", "셋째", 1)]
+    got = groups.apply(stars, [[0, 1, 2]], [None], declined={"a>b"})
+    assert got["a"]["head"] == got["c"]["head"] == "a" and got["b"]["head"] == "b"
+
+
+def test_two_domain_sun_choices(monkeypatch):
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    assert [n for n, _ in groups.sun_choices(["독서"])] == ["커리어", "인간관계", "그 밖", "독서"]
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "")
+    assert len(groups.sun_choices()) == 9
+
+
+def _topics_by_title(env, monkeypatch, table):
+    first = env.fake._record
+
+    def record(html):
+        d = first(html)
+        n = next((v for k, v in table.items() if k in html), "기타 주제")
+        for t in d["thoughts"]:
+            t["topic"] = [n]
+        return d
+    monkeypatch.setattr(env.fake, "_record", record)
+
+
+def test_group_stars_shows_head_and_keeps_small_stars(env, monkeypatch):
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록", "셋째": "걷기 기록"})
+    env.fake.group_answer = [[1, 2]]
+    env.fake.sun_answer = [{"group": 1, "sun": "건강"}]
+    write(env, U1, "첫날", DAY1[1], "2026-10-01T22:00:00+09:00")
+    write(env, U1, "둘째", "걷기를 적었다. 민준이랑 걸었다.", "2026-10-02T22:00:00+09:00")
+    eid, _, r = write(env, U1, "셋째", "걷기를 또 적었다.", "2026-10-03T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        stars = {x["name"]: x for x in diary.stars(s)}
+        u = views.universe(s)
+        ins = views.insight(s)
+        sun = {x["id"]: x["name"] for x in diary.suns(s)}
+        thought_suns = {sun[t["sun_id"]] for t in diary.thoughts(s)}
+    assert set(stars) == {"아침 걷기", "걷기 기록"}                       # 작은 별은 지우지 않는다
+    # 둘째 글 뒤 묶을 때 둘 다 1편 → 먼저 만든 별이 머리. 셋째 글은 새 별이 없어 다시 묶지 않는다(머리 이름이 흔들리지 않게)
+    assert stars["걷기 기록"].get("group") == stars["아침 걷기"]["id"] and not stars["아침 걷기"].get("group")
+    assert [x["name"] for x in u["stars"]] == ["아침 걷기"] and len(u["planets"]) == 3
+    assert thought_suns == {"건강"}                                       # 묶음이 고른 해로 옮김
+    assert [x["name"] for x in ins["suns"][0]["stars"]] == ["아침 걷기"]
+    assert {t["topic"] for t in r["thoughts"]} == {"아침 걷기"}
+    sent = "\n".join(env.fake.sent)
+    assert "작은 별 목록" in sent and not [n for n in NAMES if n in sent]   # 묶기 요청도 가명으로
+
+
+def test_move_and_merge_act_on_whole_group(env, monkeypatch):
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록", "셋째": "민준과 대화"})
+    env.fake.group_answer = [[1, 2], [3]]
+    for i, title in enumerate(("첫날", "둘째", "셋째"), 1):
+        write(env, U1, title, "걷기를 적었다.", f"2026-10-0{i}T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        st = {x["name"]: x for x in diary.stars(s)}
+        head = diary.star_heads(diary.stars(s))[st["걷기 기록"]["id"]]["id"]
+        to = diary.ensure_sun(s, "관계")
+        edit.move_star(s, head, to)
+        assert {x["sun_id"] for x in diary.stars(s) if x["name"] != "민준과 대화"} == {to}
+        assert all(x.get("pin") for x in diary.stars(s) if x["name"] != "민준과 대화")
+        edit.merge_stars(s, head, st["민준과 대화"]["id"])
+        assert [x["name"] for x in diary.stars(s)] == ["민준과 대화"]   # 사람이 합치면 묶음 전체를 실제로 합친다
+
+
+def test_regroup_once_after_mode_change(env, monkeypatch):
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록"})
+    write(env, U1, "첫날", DAY1[1], "2026-10-01T22:00:00+09:00")
+    write(env, U1, "둘째", "걷기를 적었다.", "2026-10-02T22:00:00+09:00")
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    env.fake.group_answer, env.fake.sun_answer = [[1, 2]], [{"group": 1, "sun": "커리어"}]
+    before = env.fake.calls["chat"]
+    assert graph.ensure_groups(env.repo, U1) == {"stars": 2, "groups": 1, "moved": 2}   # 기존 해 옮기기
+    assert graph.ensure_groups(env.repo, U1) is None and env.fake.calls["chat"] == before + 2   # 한 번만
+    with env.repo.session(U1) as s:
+        sun = {x["id"]: x["name"] for x in diary.suns(s)}
+        assert {sun[t["sun_id"]] for t in diary.thoughts(s)} == {"커리어"}
+        assert diary.profile(s)[0]["groups_profile"] == "two"
+        assert json.dumps(views.universe(s)["stars"], ensure_ascii=False).count('"name"') == 1
+
+
+def test_observer_sees_group_names_before_save(env, monkeypatch):
+    """묶기는 관측 전에 돈다: 새 이름의 생각도 지난 생각 고르기 · 관측 Agent · 관계 규칙에는 묶음 이름으로 간다(판단형 = 같은 묶음 안)."""
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록"})
+    env.fake.group_answer = [[1, 2]]
+    seen = []
+    real = graph.tools.run_observe_agent
+
+    def spy(day, today, past, asp, people):
+        seen.append(({t["topic"] for t in today}, {t["topic"] for t in past}))
+        return real(day, today, past, asp, people)
+    monkeypatch.setattr(graph.tools, "run_observe_agent", spy)
+    write(env, U1, "첫날", DAY1[1], "2026-10-01T22:00:00+09:00")
+    _, _, r = write(env, U1, "둘째", "걷기를 적었다.", "2026-10-02T22:00:00+09:00")
+    assert seen[-1] == ({"아침 걷기"}, {"아침 걷기"})
+    with env.repo.session(U1) as s:
+        assert {t["topic"] for t in diary.thoughts(s)} == {"아침 걷기", "걷기 기록"}   # 저장은 기록 Agent 가 낸 이름 그대로
+    assert r["relations"]   # 같은 묶음이라 이어짐이 남음

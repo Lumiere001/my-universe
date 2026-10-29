@@ -75,7 +75,8 @@ def normalize(field, raw):
 
 def other_candidates(items):
     """정리한 생각 · 기록들의 original({칸: 원래 말})을 세어 새 값 후보를 많은 순으로. 정하는 것은 사람."""
-    c = Counter((f, w) for it in items for f, w in (it.get("original") or {}).items() if w)
+    c = Counter((f, w) for it in items for f, w in (it.get("original") or {}).items()
+                if w and f != "topic")   # topic = 작은 별에 맞추기 전 기록 Agent 가 낸 이름(목록 밖 값이 아님)
     return [{"field": f, "original": w, "count": n} for (f, w), n in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
 
 

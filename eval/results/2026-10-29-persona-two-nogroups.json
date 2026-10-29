@@ -1,0 +1,2953 @@
+{
+ "tag": "two-nogroups",
+ "profile": "two",
+ "star_join": null,
+ "star_groups": false,
+ "config": {
+  "record": "5",
+  "observe": "4"
+ },
+ "personas": {
+  "E": {
+   "entries": [
+    {
+     "n": 1,
+     "entry_id": "e_9b6fe5eab808",
+     "status": "done",
+     "errors": [],
+     "seconds": 73.4,
+     "calls": 5,
+     "usd": 0.1018,
+     "step_ms": {
+      "safety": 1048,
+      "names": 14,
+      "record_input": 9,
+      "record_agent": 35291,
+      "record_clean": 8,
+      "ontology": 381,
+      "past": 13,
+      "observe": 34359,
+      "rules": 11,
+      "voice": 2046,
+      "save": 21,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 2,
+     "entry_id": "e_f4cedb341f9b",
+     "status": "done",
+     "errors": [],
+     "seconds": 69.9,
+     "calls": 5,
+     "usd": 0.102,
+     "step_ms": {
+      "safety": 863,
+      "names": 14,
+      "record_input": 11,
+      "record_agent": 34523,
+      "record_clean": 12,
+      "ontology": 518,
+      "past": 19,
+      "observe": 31271,
+      "rules": 14,
+      "voice": 2436,
+      "save": 28,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 3,
+     "entry_id": "e_5678ce32d7de",
+     "status": "done",
+     "errors": [],
+     "seconds": 71.3,
+     "calls": 5,
+     "usd": 0.1021,
+     "step_ms": {
+      "safety": 853,
+      "names": 15,
+      "record_input": 12,
+      "record_agent": 35316,
+      "record_clean": 15,
+      "ontology": 389,
+      "past": 30,
+      "observe": 32469,
+      "rules": 11,
+      "voice": 1944,
+      "save": 31,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 4,
+     "entry_id": "e_69e884b164c0",
+     "status": "done",
+     "errors": [],
+     "seconds": 75.4,
+     "calls": 5,
+     "usd": 0.1026,
+     "step_ms": {
+      "safety": 792,
+      "names": 19,
+      "record_input": 12,
+      "record_agent": 34333,
+      "record_clean": 15,
+      "ontology": 392,
+      "past": 37,
+      "observe": 37106,
+      "rules": 14,
+      "voice": 2422,
+      "save": 26,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 5,
+     "entry_id": "e_09d155bd0bc4",
+     "status": "done",
+     "errors": [],
+     "seconds": 78.6,
+     "calls": 5,
+     "usd": 0.1028,
+     "step_ms": {
+      "safety": 819,
+      "names": 16,
+      "record_input": 12,
+      "record_agent": 35971,
+      "record_clean": 13,
+      "ontology": 447,
+      "past": 49,
+      "observe": 38813,
+      "rules": 12,
+      "voice": 2154,
+      "save": 32,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 6,
+     "entry_id": "e_e32783e8ca20",
+     "status": "done",
+     "errors": [],
+     "seconds": 68.9,
+     "calls": 5,
+     "usd": 0.1023,
+     "step_ms": {
+      "safety": 1231,
+      "names": 14,
+      "record_input": 10,
+      "record_agent": 31391,
+      "record_clean": 11,
+      "ontology": 315,
+      "past": 31,
+      "observe": 34194,
+      "rules": 9,
+      "voice": 1510,
+      "save": 20,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 7,
+     "entry_id": "e_3c23acebde3b",
+     "status": "done",
+     "errors": [],
+     "seconds": 80.0,
+     "calls": 5,
+     "usd": 0.1028,
+     "step_ms": {
+      "safety": 609,
+      "names": 15,
+      "record_input": 12,
+      "record_agent": 35166,
+      "record_clean": 15,
+      "ontology": 505,
+      "past": 69,
+      "observe": 40896,
+      "rules": 13,
+      "voice": 2436,
+      "save": 31,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 8,
+     "entry_id": "e_047c3d0f3f19",
+     "status": "done",
+     "errors": [],
+     "seconds": 85.6,
+     "calls": 5,
+     "usd": 0.1031,
+     "step_ms": {
+      "safety": 704,
+      "names": 17,
+      "record_input": 12,
+      "record_agent": 38901,
+      "record_clean": 14,
+      "ontology": 462,
+      "past": 60,
+      "observe": 43813,
+      "rules": 11,
+      "voice": 1338,
+      "save": 21,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 9,
+     "entry_id": "e_1fc67e2eb26b",
+     "status": "done",
+     "errors": [],
+     "seconds": 99.8,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 919,
+      "names": 15,
+      "record_input": 11,
+      "record_agent": 38746,
+      "record_clean": 7,
+      "ontology": 451,
+      "past": 82,
+      "observe": 56655,
+      "rules": 12,
+      "voice": 2622,
+      "save": 44,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 10,
+     "entry_id": "e_c3bb0ae10bda",
+     "status": "done",
+     "errors": [],
+     "seconds": 78.7,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 593,
+      "names": 15,
+      "record_input": 11,
+      "record_agent": 36042,
+      "record_clean": 15,
+      "ontology": 456,
+      "past": 84,
+      "observe": 37660,
+      "rules": 15,
+      "voice": 3604,
+      "save": 16,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 11,
+     "entry_id": "e_b34dd23eec19",
+     "status": "done",
+     "errors": [],
+     "seconds": 87.9,
+     "calls": 5,
+     "usd": 0.1033,
+     "step_ms": {
+      "safety": 1194,
+      "names": 11,
+      "record_input": 9,
+      "record_agent": 36031,
+      "record_clean": 14,
+      "ontology": 430,
+      "past": 70,
+      "observe": 47420,
+      "rules": 13,
+      "voice": 2473,
+      "save": 31,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 12,
+     "entry_id": "e_d98ef05ae435",
+     "status": "done",
+     "errors": [],
+     "seconds": 68.8,
+     "calls": 5,
+     "usd": 0.1028,
+     "step_ms": {
+      "safety": 1028,
+      "names": 15,
+      "record_input": 11,
+      "record_agent": 33559,
+      "record_clean": 14,
+      "ontology": 382,
+      "past": 64,
+      "observe": 31377,
+      "rules": 17,
+      "voice": 2117,
+      "save": 24,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 13,
+     "entry_id": "e_e59719354898",
+     "status": "done",
+     "errors": [],
+     "seconds": 80.1,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 840,
+      "names": 15,
+      "record_input": 12,
+      "record_agent": 37185,
+      "record_clean": 14,
+      "ontology": 381,
+      "past": 81,
+      "observe": 39411,
+      "rules": 12,
+      "voice": 1894,
+      "save": 27,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 14,
+     "entry_id": "e_b73803f70e26",
+     "status": "done",
+     "errors": [],
+     "seconds": 69.3,
+     "calls": 5,
+     "usd": 0.1029,
+     "step_ms": {
+      "safety": 540,
+      "names": 14,
+      "record_input": 11,
+      "record_agent": 32876,
+      "record_clean": 15,
+      "ontology": 442,
+      "past": 67,
+      "observe": 32289,
+      "rules": 14,
+      "voice": 2797,
+      "save": 24,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 15,
+     "entry_id": "e_6ed87a372d61",
+     "status": "done",
+     "errors": [],
+     "seconds": 77.1,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 659,
+      "names": 15,
+      "record_input": 12,
+      "record_agent": 33944,
+      "record_clean": 15,
+      "ontology": 379,
+      "past": 85,
+      "observe": 38633,
+      "rules": 13,
+      "voice": 3095,
+      "save": 26,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 16,
+     "entry_id": "e_e1e7dd60b621",
+     "status": "done",
+     "errors": [],
+     "seconds": 88.6,
+     "calls": 5,
+     "usd": 0.1036,
+     "step_ms": {
+      "safety": 731,
+      "names": 13,
+      "record_input": 11,
+      "record_agent": 40979,
+      "record_clean": 14,
+      "ontology": 578,
+      "past": 155,
+      "observe": 44023,
+      "rules": 14,
+      "voice": 1795,
+      "save": 39,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 17,
+     "entry_id": "e_bf9e69eb71d9",
+     "status": "done",
+     "errors": [],
+     "seconds": 92.9,
+     "calls": 5,
+     "usd": 0.1034,
+     "step_ms": {
+      "safety": 880,
+      "names": 16,
+      "record_input": 11,
+      "record_agent": 42474,
+      "record_clean": 16,
+      "ontology": 494,
+      "past": 176,
+      "observe": 46590,
+      "rules": 16,
+      "voice": 1909,
+      "save": 41,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 18,
+     "entry_id": "e_17a205605e33",
+     "status": "done",
+     "errors": [],
+     "seconds": 73.0,
+     "calls": 5,
+     "usd": 0.103,
+     "step_ms": {
+      "safety": 980,
+      "names": 19,
+      "record_input": 11,
+      "record_agent": 35835,
+      "record_clean": 13,
+      "ontology": 287,
+      "past": 72,
+      "observe": 34355,
+      "rules": 12,
+      "voice": 1199,
+      "save": 19,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 19,
+     "entry_id": "e_63ed0a1053df",
+     "status": "done",
+     "errors": [],
+     "seconds": 74.0,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 943,
+      "names": 16,
+      "record_input": 9,
+      "record_agent": 33037,
+      "record_clean": 15,
+      "ontology": 365,
+      "past": 87,
+      "observe": 37561,
+      "rules": 10,
+      "voice": 1750,
+      "save": 22,
+      "group_stars": 0
+     }
+    },
+    {
+     "n": 20,
+     "entry_id": "e_e5a57af2ff42",
+     "status": "done",
+     "errors": [],
+     "seconds": 66.7,
+     "calls": 5,
+     "usd": 0.1032,
+     "step_ms": {
+      "safety": 1167,
+      "names": 16,
+      "record_input": 8,
+      "record_agent": 32165,
+      "record_clean": 15,
+      "ontology": 357,
+      "past": 90,
+      "observe": 30314,
+      "rules": 14,
+      "voice": 2383,
+      "save": 15,
+      "group_stars": 0
+     }
+    }
+   ],
+   "thoughts": [
+    {
+     "id": "e_047c3d0f3f19-t00",
+     "n": 8,
+     "position": 0,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "내가 또 말을 잘못 보탤 바에는 수진이와 이대로 멀어지게 두는 편이 나을 것 같기도 하다."
+    },
+    {
+     "id": "e_047c3d0f3f19-t01",
+     "n": 8,
+     "position": 1,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "이제 와서 사과하면 내 찜찜함만 덜려는 사람처럼 보일까 봐 겁난다."
+    },
+    {
+     "id": "e_047c3d0f3f19-t02",
+     "n": 8,
+     "position": 2,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "그런데 이대로 두면 수진이는 내가 그날 말을 아무렇지 않게 여긴다고 생각할 수도 있다."
+    },
+    {
+     "id": "e_047c3d0f3f19-t03",
+     "n": 8,
+     "position": 3,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "소망",
+     "quote": "먼저 말을 걸어야 한다는 생각까지 지워진 건 아니다."
+    },
+    {
+     "id": "e_047c3d0f3f19-t04",
+     "n": 8,
+     "position": 4,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "보내지도 못했고."
+    },
+    {
+     "id": "e_047c3d0f3f19-t05",
+     "n": 8,
+     "position": 5,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "내가 또 말을 잘못 보탤 바에는 수진이와 이대로 멀어지게 두는 편이 나을 것 같기도 하다. 이제 와서 사과하면 내 찜찜함만 덜려는 사람처럼 보일까 봐 겁난다. 그런데 이대로 두면 수진이는 내가 그날 말을 아무렇지 않게 여긴다고 생각할 수도 있다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t00",
+     "n": 5,
+     "position": 0,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "다짐",
+     "quote": "엄마가 도와주는 날이어도 마감 시간은 내가 정해서 말하겠다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t01",
+     "n": 5,
+     "position": 1,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "자기평가(부정)",
+     "quote": "이 정도 말도 미리 문장을 만들어야 한다니."
+    },
+    {
+     "id": "e_09d155bd0bc4-t02",
+     "n": 5,
+     "position": 2,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "사실 바쁜지는 나도 모른다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t03",
+     "n": 5,
+     "position": 3,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "자기평가(부정)",
+     "quote": "물건은 매일 만지면서 그 애에게는 한 줄도 못 보낸다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t04",
+     "n": 5,
+     "position": 4,
+     "topic": "도움을 받은 순간의 짜증",
+     "fine": "도움을 받은 순간의 짜증",
+     "ai_topic": "도움을 받은 순간의 짜증",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "괜히 오래 닦았다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t05",
+     "n": 5,
+     "position": 5,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "기타",
+     "quote": "나는 여섯 시로 바꿀 생각이었는데 옆에서 웃기만 했다."
+    },
+    {
+     "id": "e_09d155bd0bc4-t06",
+     "n": 5,
+     "position": 6,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "바쁜가 보지 하고 넘겼다."
+    },
+    {
+     "id": "e_17a205605e33-t00",
+     "n": 18,
+     "position": 0,
+     "topic": "엄마와의 마감 대화",
+     "fine": "엄마와의 마감 대화",
+     "ai_topic": "엄마와의 마감 대화",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "감정",
+     "quote": "별것 아닌 질문인데 반가웠다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t00",
+     "n": 9,
+     "position": 0,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "다짐",
+     "quote": "메뉴를 줄여서라도 이번 달은 더 운영해 볼 생각이다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t01",
+     "n": 9,
+     "position": 1,
+     "topic": "영업시간의 기준",
+     "fine": "영업시간의 기준",
+     "ai_topic": "영업시간의 기준",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "신념·원칙",
+     "quote": "빈 시간이 길다고 문을 열어 놓는 시간을 끝없이 늘릴 수는 없다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t02",
+     "n": 9,
+     "position": 2,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "자기평가(부정)",
+     "quote": "집에 와서는 내가 너무 세게 말했나 싶어 통화 버튼을 눌렀다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t03",
+     "n": 9,
+     "position": 3,
+     "topic": "영업시간의 기준",
+     "fine": "영업시간의 기준",
+     "ai_topic": "영업시간의 기준",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "다짐",
+     "quote": "내일도 여섯 시에 닫는다는 말은 취소하지 않았다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t04",
+     "n": 9,
+     "position": 4,
+     "topic": "재료 폐기량",
+     "fine": "재료 폐기량",
+     "ai_topic": "재료 폐기량",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "해석",
+     "quote": "버리는 우유와 과일이 생각보다 많다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t05",
+     "n": 9,
+     "position": 5,
+     "topic": "엄마와의 마감 대화",
+     "fine": "엄마와의 마감 대화",
+     "ai_topic": "엄마와의 마감 대화",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "기타",
+     "quote": "엄마는 그러든가 하고 행주를 널었다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t06",
+     "n": 9,
+     "position": 6,
+     "topic": "영업시간의 기준",
+     "fine": "영업시간의 기준",
+     "ai_topic": "영업시간의 기준",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "자기평가(긍정)",
+     "quote": "엄마가 저녁 손님을 더 받자고 했지만 오늘은 내가 정한 여섯 시에 문을 닫았다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t07",
+     "n": 9,
+     "position": 7,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "저녁 먹었냐는 얘기만 했다."
+    },
+    {
+     "id": "e_1fc67e2eb26b-t08",
+     "n": 9,
+     "position": 8,
+     "topic": "메뉴 손익 계산",
+     "fine": "메뉴 손익 계산",
+     "ai_topic": "메뉴 손익 계산",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "기타",
+     "quote": "잘 안 나가는 음료 세 가지의 재료값을 따로 계산했다."
+    },
+    {
+     "id": "e_3c23acebde3b-t00",
+     "n": 7,
+     "position": 0,
+     "topic": "출근 바람",
+     "fine": "출근 바람",
+     "ai_topic": "출근 바람",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "소망",
+     "quote": "그 생산팀에 들어가 정해진 시간에 일하며 배우고 싶다."
+    },
+    {
+     "id": "e_3c23acebde3b-t01",
+     "n": 7,
+     "position": 1,
+     "topic": "출근 바람",
+     "fine": "출근 바람",
+     "ai_topic": "출근 바람",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "입 밖으로 내지는 않았지만 돌아오는 길에는 꽤 분명했다."
+    },
+    {
+     "id": "e_3c23acebde3b-t02",
+     "n": 7,
+     "position": 2,
+     "topic": "맛 차이의 이유",
+     "fine": "맛 차이의 이유",
+     "ai_topic": "맛 차이의 이유",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "아직 손이 일정하지 않아서 그런가."
+    },
+    {
+     "id": "e_3c23acebde3b-t03",
+     "n": 7,
+     "position": 3,
+     "topic": "맛 차이의 이유",
+     "fine": "맛 차이의 이유",
+     "ai_topic": "맛 차이의 이유",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "작업장에서 본 큰 기계보다 그 빈칸이 더 어려웠다."
+    },
+    {
+     "id": "e_3c23acebde3b-t04",
+     "n": 7,
+     "position": 4,
+     "topic": "맛 차이의 이유",
+     "fine": "맛 차이의 이유",
+     "ai_topic": "맛 차이의 이유",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "작업장에서 본 큰 기계보다 그 빈칸이 더 어려웠다."
+    },
+    {
+     "id": "e_3c23acebde3b-t05",
+     "n": 7,
+     "position": 5,
+     "topic": "출근 바람",
+     "fine": "출근 바람",
+     "ai_topic": "출근 바람",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "소망",
+     "quote": "실제 시간표도 보고 싶다고 부탁했다."
+    },
+    {
+     "id": "e_5678ce32d7de-t00",
+     "n": 3,
+     "position": 0,
+     "topic": "도움을 가볍게 소개한 일",
+     "fine": "도움을 가볍게 소개한 일",
+     "ai_topic": "도움을 가볍게 소개한 일",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "해석",
+     "quote": "그때 수진이가 웃지 않았던 게 이제는 사진보다 선명하다."
+    },
+    {
+     "id": "e_5678ce32d7de-t01",
+     "n": 3,
+     "position": 1,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "수진이와 다시 편하게 말하려면 내가 먼저 연락해야 할 것 같다."
+    },
+    {
+     "id": "e_5678ce32d7de-t02",
+     "n": 3,
+     "position": 2,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "너무 아무 일 없는 사람 같아서"
+    },
+    {
+     "id": "e_5678ce32d7de-t03",
+     "n": 3,
+     "position": 3,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "이번에는 내 사정 설명이 더 길어졌다."
+    },
+    {
+     "id": "e_63ed0a1053df-t00",
+     "n": 19,
+     "position": 0,
+     "topic": "첫 출근 준비",
+     "fine": "첫 출근 준비",
+     "ai_topic": "첫 출근 준비",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "읽고 나니 첫날 어느 문으로 들어가는지부터 궁금해졌다."
+    },
+    {
+     "id": "e_63ed0a1053df-t01",
+     "n": 19,
+     "position": 1,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "집에 와서도 그 말을 두 번쯤 떠올렸다."
+    },
+    {
+     "id": "e_69e884b164c0-t00",
+     "n": 4,
+     "position": 0,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "장마 탓이라고 적어 두면 마음은 편하지만 지난달에도 다른 이유를 적었다."
+    },
+    {
+     "id": "e_69e884b164c0-t01",
+     "n": 4,
+     "position": 1,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "내가 배울 일을 확인하기 전에는 급여만 보고 답하지 않겠다."
+    },
+    {
+     "id": "e_69e884b164c0-t02",
+     "n": 4,
+     "position": 2,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "질문",
+     "quote": "궁금한 건 많은데 가게를 어떻게 할 거냐는 질문에는 아직 대답을 못 하겠다."
+    },
+    {
+     "id": "e_69e884b164c0-t03",
+     "n": 4,
+     "position": 3,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "감정",
+     "quote": "영업 중인 문 앞에서 다른 직장을 상상하는 게 이상했다."
+    },
+    {
+     "id": "e_6ed87a372d61-t00",
+     "n": 15,
+     "position": 0,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "내가 질문했던 내용에 답이 붙어 있으니 수락하는 쪽이 더 선명해졌다."
+    },
+    {
+     "id": "e_6ed87a372d61-t01",
+     "n": 15,
+     "position": 1,
+     "topic": "엄마와의 마감 대화",
+     "fine": "엄마와의 마감 대화",
+     "ai_topic": "엄마와의 마감 대화",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "기타",
+     "quote": "엄마가 서운한 건지 놀란 건지 묻지는 못했다."
+    },
+    {
+     "id": "e_6ed87a372d61-t02",
+     "n": 15,
+     "position": 2,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "감정",
+     "quote": "그 말이 고마우면서도 그동안 들인 수고를 돌려줄 방법부터 찾게 된다."
+    },
+    {
+     "id": "e_9b6fe5eab808-t00",
+     "n": 1,
+     "position": 0,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "기타",
+     "quote": "그래도 다른 데서 일하는 내 모습은 잘 안 그려진다."
+    },
+    {
+     "id": "e_9b6fe5eab808-t01",
+     "n": 1,
+     "position": 1,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "내 가게를 끝까지 지키는 것이 곧 나를 지키는 일이다."
+    },
+    {
+     "id": "e_9b6fe5eab808-t02",
+     "n": 1,
+     "position": 2,
+     "topic": "도움을 받은 순간의 짜증",
+     "fine": "도움을 받은 순간의 짜증",
+     "ai_topic": "도움을 받은 순간의 짜증",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "감정",
+     "quote": "나는 컵받침 찾느라 짜증부터 냈다."
+    },
+    {
+     "id": "e_9b6fe5eab808-t03",
+     "n": 1,
+     "position": 3,
+     "topic": "고마움과 말을 고르는 마음",
+     "fine": "고마움과 말을 고르는 마음",
+     "ai_topic": "고마움과 말을 고르는 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "기타",
+     "quote": "고맙다는 말과 그냥 두라는 말이 입 안에서 엉켰다."
+    },
+    {
+     "id": "e_b34dd23eec19-t00",
+     "n": 11,
+     "position": 0,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "소망",
+     "quote": "그 안에서 일하는 쪽으로 마음은 계속 기운다."
+    },
+    {
+     "id": "e_b34dd23eec19-t01",
+     "n": 11,
+     "position": 1,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "엄마가 쏟은 시간을 생각하면 나 혼자편해지자고 가게를 떠나서는 안 될 것 같다."
+    },
+    {
+     "id": "e_b34dd23eec19-t02",
+     "n": 11,
+     "position": 2,
+     "topic": "엄마와의 마감 대화",
+     "fine": "엄마와의 마감 대화",
+     "ai_topic": "엄마와의 마감 대화",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "감정",
+     "quote": "엄마는 내가 다른 자리를 알아보는 줄도 모른다."
+    },
+    {
+     "id": "e_b73803f70e26-t00",
+     "n": 14,
+     "position": 0,
+     "topic": "감자칩 맛",
+     "fine": "감자칩 맛",
+     "ai_topic": "감자칩 맛",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "감정",
+     "quote": "그래도 바삭한 세 조각은 맛있었다."
+    },
+    {
+     "id": "e_b73803f70e26-t01",
+     "n": 14,
+     "position": 1,
+     "topic": "채칼 사용 고민",
+     "fine": "채칼 사용 고민",
+     "ai_topic": "채칼 사용 고민",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "다음에는 채칼을 쓸까 싶지만 설거지가 늘어나는 건 싫다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t00",
+     "n": 17,
+     "position": 0,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "숫자를 채우는 상상보다 생산팀에서 첫 공정을 익히는 상상이 더 구체적이었다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t01",
+     "n": 17,
+     "position": 1,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "예전에는 내 가게를 끝까지 지키는 것이 곧 나를 지키는 일이라고 믿었지만, 지금은 가게가 커피 일을 하는 여러 방식 중 하나일 뿐이라고 생각한다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t02",
+     "n": 17,
+     "position": 2,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "감정",
+     "quote": "이 문장을 쓰고도 조금 울컥했다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t03",
+     "n": 17,
+     "position": 3,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "해석",
+     "quote": "생각이 바뀌었다고 이 공간이 덜 좋아지는 건 아닌가 보다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t04",
+     "n": 17,
+     "position": 4,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "우석 씨에게 확인한 업무와 교육 시간은 내가 원하던 방향에 가깝다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t05",
+     "n": 17,
+     "position": 5,
+     "topic": "일 제안의 판단 기준",
+     "fine": "일 제안의 판단 기준",
+     "ai_topic": "일 제안의 판단 기준",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "제안을 받아들이기로 마음을 정하고 수락 메일을 써 뒀다."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t06",
+     "n": 17,
+     "position": 6,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "다짐",
+     "quote": "보내기 전에 마지막 영업 날짜와 정리 일정을 맞춰 보자."
+    },
+    {
+     "id": "e_bf9e69eb71d9-t07",
+     "n": 17,
+     "position": 7,
+     "topic": "가게를 지키는 의미",
+     "fine": "가게를 지키는 의미",
+     "ai_topic": "가게를 지키는 의미",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "감정",
+     "quote": "생각이 바뀌었다고 이 공간이 덜 좋아지는 건 아닌가 보다."
+    },
+    {
+     "id": "e_c3bb0ae10bda-t00",
+     "n": 10,
+     "position": 0,
+     "topic": "맛 차이의 이유",
+     "fine": "맛 차이의 이유",
+     "ai_topic": "맛 차이의 이유",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "신념·원칙",
+     "quote": "같은 맛을 못 내도 왜 달라졌는지 설명할 수 있으면 그날 연습은 성공이다."
+    },
+    {
+     "id": "e_c3bb0ae10bda-t01",
+     "n": 10,
+     "position": 1,
+     "topic": "맛 차이의 이유",
+     "fine": "맛 차이의 이유",
+     "ai_topic": "맛 차이의 이유",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "한 번에 한 조건만 바꾸고 맛이 달라진 이유를 적어 두겠다."
+    },
+    {
+     "id": "e_c3bb0ae10bda-t02",
+     "n": 10,
+     "position": 2,
+     "topic": "맛 표현의 정확성",
+     "fine": "맛 표현의 정확성",
+     "ai_topic": "맛 표현의 정확성",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "해석",
+     "quote": "정확한 표현인지는 모\r\n르겠지만 내가 마신 맛은 기억난다."
+    },
+    {
+     "id": "e_c3bb0ae10bda-t03",
+     "n": 10,
+     "position": 3,
+     "topic": "실습 기록 다시 읽기",
+     "fine": "실습 기록 다시 읽기",
+     "ai_topic": "실습 기록 다시 읽기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "소망",
+     "quote": "이번 기록은 다시 읽어 보고 싶다."
+    },
+    {
+     "id": "e_d98ef05ae435-t00",
+     "n": 12,
+     "position": 0,
+     "topic": "그날 얘기 건너뛰기",
+     "fine": "그날 얘기 건너뛰기",
+     "ai_topic": "그날 얘기 건너뛰기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "아무 일 없던 듯 인사하면 그날 얘기를 또 건너뛰는 셈이다."
+    },
+    {
+     "id": "e_d98ef05ae435-t01",
+     "n": 12,
+     "position": 1,
+     "topic": "사과 메시지 보내기",
+     "fine": "사과 메시지 보내기",
+     "ai_topic": "사과 메시지 보내기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "긴 사과를 갑자기 보내면 답장을 요구하는 것처럼 보일까."
+    },
+    {
+     "id": "e_e1e7dd60b621-t00",
+     "n": 16,
+     "position": 0,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "그 애가 나를 반겨 줄 거라는 확신부터 얻으려 했던\n것 같다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t01",
+     "n": 16,
+     "position": 1,
+     "topic": "사과 메시지 보내기",
+     "fine": "사과 메시지 보내기",
+     "ai_topic": "사과 메시지 보내기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "내가 먼저 연락해서 그날 내 말을 사과하기로 했다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t02",
+     "n": 16,
+     "position": 2,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "신념·원칙",
+     "quote": "답장이 오느냐는 수진이 몫이고,"
+    },
+    {
+     "id": "e_e1e7dd60b621-t03",
+     "n": 16,
+     "position": 3,
+     "topic": "도움을 가볍게 소개한 일",
+     "fine": "도움을 가볍게 소개한 일",
+     "ai_topic": "도움을 가볍게 소개한 일",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "신념·원칙",
+     "quote": "그 애의 수고를 작게 말한 건 내가 바로\n잡을 일이다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t04",
+     "n": 16,
+     "position": 4,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "보내고 나서 답이 늦어도 안 읽었냐고 다시 묻지는 않을 거다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t05",
+     "n": 16,
+     "position": 5,
+     "topic": "사과 메시지 보내기",
+     "fine": "사과 메시지 보내기",
+     "ai_topic": "사과 메시지 보내기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "문장이 짧아졌는데 하고 싶은 말은 더 잘 보인\n다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t06",
+     "n": 16,
+     "position": 6,
+     "topic": "수진이에게 먼저 연락하기",
+     "fine": "수진이에게 먼저 연락하기",
+     "ai_topic": "수진이에게 먼저 연락하기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "질문",
+     "quote": "수진이에게 연락할지 이대로 멀어지게 둘지 적어 놓고 보니 몇 달째 같은 자리다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t07",
+     "n": 16,
+     "position": 7,
+     "topic": "도움을 가볍게 소개한 일",
+     "fine": "도움을 가볍게 소개한 일",
+     "ai_topic": "도움을 가볍게 소개한 일",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "감정",
+     "quote": "두 달이나 함께 준비했는데 잠깐 도와준 사람처럼 소개해서 미안하다고 썼다."
+    },
+    {
+     "id": "e_e1e7dd60b621-t08",
+     "n": 16,
+     "position": 8,
+     "topic": "사과 메시지 보내기",
+     "fine": "사과 메시지 보내기",
+     "ai_topic": "사과 메시지 보내기",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "다짐",
+     "quote": "문자에서 요즘 바빴다는 설명은 뺐다."
+    },
+    {
+     "id": "e_e32783e8ca20-t00",
+     "n": 6,
+     "position": 0,
+     "topic": "사진 속에 남은 비",
+     "fine": "사진 속에 남은 비",
+     "ai_topic": "사진 속에 남은 비",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "해석",
+     "quote": "저녁에 보니 창틀은 말라 있었고 사진 속에만 비가 남아 있었다."
+    },
+    {
+     "id": "e_e59719354898-t00",
+     "n": 13,
+     "position": 0,
+     "topic": "메뉴 손익 계산",
+     "fine": "메뉴 손익 계산",
+     "ai_topic": "메뉴 손익 계산",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "해석",
+     "quote": "종이에 쓴 일이 조금 실제처럼 느껴졌다."
+    },
+    {
+     "id": "e_e59719354898-t01",
+     "n": 13,
+     "position": 1,
+     "topic": "메뉴 손익 계산",
+     "fine": "메뉴 손익 계산",
+     "ai_topic": "메뉴 손익 계산",
+     "domain": "커리어",
+     "domain_first": "커리어",
+     "sun_id": "d_f59b3dc67921",
+     "kind": "자기평가(부정)",
+     "quote": "여기서는 숫자를 보고 다음에 해 볼 일을 떠올릴 수 있는데 매출표 앞에서는 자꾸 내가 잘못한 일만 찾는다."
+    },
+    {
+     "id": "e_e59719354898-t02",
+     "n": 13,
+     "position": 2,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "기타",
+     "quote": "오늘은 어느 쪽도 덮고 싶지 않아서 책상에 펼쳐 뒀다."
+    },
+    {
+     "id": "e_e5a57af2ff42-t00",
+     "n": 20,
+     "position": 0,
+     "topic": "가게를 계속할지에 대한 마음",
+     "fine": "가게를 계속할지에 대한 마음",
+     "ai_topic": "가게를 계속할지에 대한 마음",
+     "domain": "그 밖",
+     "domain_first": "그 밖",
+     "sun_id": "d_57e93eee29d3",
+     "kind": "다짐",
+     "quote": "이 공간을 정리하기로 한 결정은 그대로다."
+    },
+    {
+     "id": "e_e5a57af2ff42-t01",
+     "n": 20,
+     "position": 1,
+     "topic": "엄마와의 마감 대화",
+     "fine": "엄마와의 마감 대화",
+     "ai_topic": "엄마와의 마감 대화",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "다짐",
+     "quote": "남은 날에는 평소처럼 커피를 내리고 정리할 물건을 조금씩 나누면 된다."
+    },
+    {
+     "id": "e_f4cedb341f9b-t00",
+     "n": 2,
+     "position": 0,
+     "topic": "같은 원두 두 컵",
+     "fine": "같은 원두 두 컵",
+     "ai_topic": "같은 원두 두 컵",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "감정",
+     "quote": "나는 두 컵이 다르다는 사실부터 거슬렸다."
+    },
+    {
+     "id": "e_f4cedb341f9b-t01",
+     "n": 2,
+     "position": 1,
+     "topic": "같은 원두 두 컵",
+     "fine": "같은 원두 두 컵",
+     "ai_topic": "같은 원두 두 컵",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "신념·원칙",
+     "quote": "똑같은 맛을 재현해야만 제대로 배운 것이다."
+    },
+    {
+     "id": "e_f4cedb341f9b-t02",
+     "n": 2,
+     "position": 2,
+     "topic": "같은 원두 두 컵",
+     "fine": "같은 원두 두 컵",
+     "ai_topic": "같은 원두 두 컵",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "신념·원칙",
+     "quote": "이유를 길게 설명할 수 있어도 다음번에 같은맛을 못 내면 무슨 소용인가 싶다."
+    },
+    {
+     "id": "e_f4cedb341f9b-t03",
+     "n": 2,
+     "position": 3,
+     "topic": "같은 원두 두 컵",
+     "fine": "같은 원두 두 컵",
+     "ai_topic": "같은 원두 두 컵",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "자기평가(부정)",
+     "quote": "오늘 날짜는 실패 쪽에 썼다."
+    },
+    {
+     "id": "e_f4cedb341f9b-t04",
+     "n": 2,
+     "position": 4,
+     "topic": "같은 원두 두 컵",
+     "fine": "같은 원두 두 컵",
+     "ai_topic": "같은 원두 두 컵",
+     "domain": "인간관계",
+     "domain_first": "인간관계",
+     "sun_id": "d_94ebb2c3dfbc",
+     "kind": "질문",
+     "quote": "냄새만으로는 어느 컵이었는지 전혀 모르겠다."
+    }
+   ],
+   "relations": [
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t03",
+     "to": "e_5678ce32d7de-t03",
+     "from_n": 1,
+     "to_n": 3
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t00",
+     "to": "e_69e884b164c0-t02",
+     "from_n": 1,
+     "to_n": 4
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t01",
+     "to": "e_69e884b164c0-t00",
+     "from_n": 1,
+     "to_n": 4
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t01",
+     "to": "e_09d155bd0bc4-t00",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "어긋남",
+     "line": "점선",
+     "from": "e_5678ce32d7de-t01",
+     "to": "e_09d155bd0bc4-t03",
+     "from_n": 3,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t03",
+     "to": "e_09d155bd0bc4-t01",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t02",
+     "to": "e_09d155bd0bc4-t04",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t00",
+     "to": "e_09d155bd0bc4-t05",
+     "from_n": 1,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_69e884b164c0-t03",
+     "to": "e_09d155bd0bc4-t05",
+     "from_n": 4,
+     "to_n": 5
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t00",
+     "to": "e_3c23acebde3b-t05",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t02",
+     "to": "e_3c23acebde3b-t03",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t02",
+     "to": "e_3c23acebde3b-t04",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t00",
+     "to": "e_3c23acebde3b-t01",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t01",
+     "to": "e_3c23acebde3b-t05",
+     "from_n": 7,
+     "to_n": 7
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5678ce32d7de-t01",
+     "to": "e_047c3d0f3f19-t03",
+     "from_n": 3,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t03",
+     "to": "e_047c3d0f3f19-t04",
+     "from_n": 5,
+     "to_n": 8
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t00",
+     "to": "e_047c3d0f3f19-t02",
+     "from_n": 8,
+     "to_n": 8
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t05",
+     "to": "e_1fc67e2eb26b-t00",
+     "from_n": 5,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t03",
+     "to": "e_1fc67e2eb26b-t07",
+     "from_n": 5,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t06",
+     "to": "e_1fc67e2eb26b-t07",
+     "from_n": 5,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t02",
+     "to": "e_1fc67e2eb26b-t07",
+     "from_n": 8,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t03",
+     "to": "e_1fc67e2eb26b-t07",
+     "from_n": 8,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t00",
+     "to": "e_1fc67e2eb26b-t07",
+     "from_n": 8,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t03",
+     "to": "e_1fc67e2eb26b-t02",
+     "from_n": 1,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t01",
+     "to": "e_1fc67e2eb26b-t02",
+     "from_n": 5,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t01",
+     "to": "e_1fc67e2eb26b-t03",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t01",
+     "to": "e_1fc67e2eb26b-t06",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t03",
+     "to": "e_1fc67e2eb26b-t06",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t05",
+     "to": "e_1fc67e2eb26b-t06",
+     "from_n": 9,
+     "to_n": 9
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_3c23acebde3b-t02",
+     "to": "e_c3bb0ae10bda-t00",
+     "from_n": 7,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_c3bb0ae10bda-t00",
+     "to": "e_c3bb0ae10bda-t01",
+     "from_n": 10,
+     "to_n": 10
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t01",
+     "to": "e_b34dd23eec19-t01",
+     "from_n": 1,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t05",
+     "to": "e_b34dd23eec19-t02",
+     "from_n": 9,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_69e884b164c0-t01",
+     "to": "e_b34dd23eec19-t00",
+     "from_n": 4,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_69e884b164c0-t00",
+     "to": "e_b34dd23eec19-t01",
+     "from_n": 4,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t00",
+     "to": "e_b34dd23eec19-t01",
+     "from_n": 5,
+     "to_n": 11
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t08",
+     "to": "e_e59719354898-t00",
+     "from_n": 9,
+     "to_n": 13
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_69e884b164c0-t02",
+     "to": "e_e59719354898-t02",
+     "from_n": 4,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t00",
+     "to": "e_e59719354898-t02",
+     "from_n": 9,
+     "to_n": 13
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_69e884b164c0-t01",
+     "to": "e_6ed87a372d61-t00",
+     "from_n": 4,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_b34dd23eec19-t00",
+     "to": "e_6ed87a372d61-t00",
+     "from_n": 11,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_9b6fe5eab808-t03",
+     "to": "e_6ed87a372d61-t02",
+     "from_n": 1,
+     "to_n": 15
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5678ce32d7de-t01",
+     "to": "e_e1e7dd60b621-t04",
+     "from_n": 3,
+     "to_n": 16
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t02",
+     "to": "e_e1e7dd60b621-t02",
+     "from_n": 5,
+     "to_n": 16
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t00",
+     "to": "e_e1e7dd60b621-t04",
+     "from_n": 8,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t04",
+     "to": "e_e1e7dd60b621-t06",
+     "from_n": 16,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t05",
+     "to": "e_e1e7dd60b621-t08",
+     "from_n": 16,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t03",
+     "to": "e_e1e7dd60b621-t07",
+     "from_n": 16,
+     "to_n": 16
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_09d155bd0bc4-t06",
+     "to": "e_e1e7dd60b621-t00",
+     "from_n": 5,
+     "to_n": 16
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t02",
+     "to": "e_e1e7dd60b621-t01",
+     "from_n": 8,
+     "to_n": 16
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t01",
+     "to": "e_e1e7dd60b621-t02",
+     "from_n": 16,
+     "to_n": 16
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_b34dd23eec19-t00",
+     "to": "e_bf9e69eb71d9-t00",
+     "from_n": 11,
+     "to_n": 17
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_6ed87a372d61-t00",
+     "to": "e_bf9e69eb71d9-t04",
+     "from_n": 15,
+     "to_n": 17
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_6ed87a372d61-t00",
+     "to": "e_bf9e69eb71d9-t05",
+     "from_n": 15,
+     "to_n": 17
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_9b6fe5eab808-t01",
+     "to": "e_bf9e69eb71d9-t01",
+     "from_n": 1,
+     "to_n": 17
+    },
+    {
+     "type": "바뀜",
+     "line": "실선",
+     "from": "e_b34dd23eec19-t01",
+     "to": "e_bf9e69eb71d9-t01",
+     "from_n": 11,
+     "to_n": 17
+    },
+    {
+     "type": "긴장",
+     "line": "점선",
+     "from": "e_bf9e69eb71d9-t01",
+     "to": "e_bf9e69eb71d9-t03",
+     "from_n": 17,
+     "to_n": 17
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_69e884b164c0-t02",
+     "to": "e_bf9e69eb71d9-t06",
+     "from_n": 4,
+     "to_n": 17
+    },
+    {
+     "type": "바뀜",
+     "line": "점선",
+     "from": "e_1fc67e2eb26b-t00",
+     "to": "e_bf9e69eb71d9-t06",
+     "from_n": 9,
+     "to_n": 17
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_6ed87a372d61-t01",
+     "to": "e_17a205605e33-t00",
+     "from_n": 15,
+     "to_n": 18
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t02",
+     "to": "e_63ed0a1053df-t01",
+     "from_n": 8,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_047c3d0f3f19-t03",
+     "to": "e_63ed0a1053df-t01",
+     "from_n": 8,
+     "to_n": 19
+    },
+    {
+     "type": "해소",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t06",
+     "to": "e_63ed0a1053df-t01",
+     "from_n": 16,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_e1e7dd60b621-t00",
+     "to": "e_63ed0a1053df-t01",
+     "from_n": 16,
+     "to_n": 19
+    },
+    {
+     "type": "이어짐",
+     "line": "점선",
+     "from": "e_5678ce32d7de-t01",
+     "to": "e_63ed0a1053df-t01",
+     "from_n": 3,
+     "to_n": 19
+    }
+   ],
+   "insight": {
+    "period": {
+     "from": "2026-07-01",
+     "to": "2026-10-25",
+     "records": 20
+    },
+    "suns": [
+     {
+      "name": "커리어",
+      "records": 16,
+      "stars": [
+       {
+        "name": "수진이에게 먼저 연락하기",
+        "records": 6,
+        "first": "2026-07-10",
+        "last": "2026-10-19",
+        "kinds": {
+         "해석": 5,
+         "감정": 3,
+         "질문": 3
+        }
+       },
+       {
+        "name": "일 제안의 판단 기준",
+        "records": 4,
+        "first": "2026-07-16",
+        "last": "2026-10-06",
+        "kinds": {
+         "해석": 3,
+         "다짐": 2,
+         "소망": 1
+        }
+       },
+       {
+        "name": "도움을 받은 순간의 짜증",
+        "records": 2,
+        "first": "2026-07-01",
+        "last": "2026-07-24",
+        "kinds": {
+         "감정": 2
+        }
+       },
+       {
+        "name": "맛 차이의 이유",
+        "records": 2,
+        "first": "2026-08-03",
+        "last": "2026-08-20",
+        "kinds": {
+         "감정": 2,
+         "질문": 1,
+         "신념·원칙": 1
+        }
+       },
+       {
+        "name": "메뉴 손익 계산",
+        "records": 2,
+        "first": "2026-08-18",
+        "last": "2026-09-11",
+        "kinds": {
+         "기타": 1,
+         "해석": 1,
+         "자기평가(부정)": 1
+        }
+       },
+       {
+        "name": "사과 메시지 보내기",
+        "records": 2,
+        "first": "2026-09-05",
+        "last": "2026-10-01",
+        "kinds": {
+         "다짐": 2,
+         "질문": 1,
+         "해석": 1
+        }
+       },
+       {
+        "name": "출근 바람",
+        "records": 1,
+        "first": "2026-08-03",
+        "last": "2026-08-03",
+        "kinds": {
+         "소망": 2,
+         "해석": 1
+        }
+       },
+       {
+        "name": "실습 기록 다시 읽기",
+        "records": 1,
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "kinds": {
+         "소망": 1
+        }
+       },
+       {
+        "name": "그날 얘기 건너뛰기",
+        "records": 1,
+        "first": "2026-09-05",
+        "last": "2026-09-05",
+        "kinds": {
+         "해석": 1
+        }
+       },
+       {
+        "name": "채칼 사용 고민",
+        "records": 1,
+        "first": "2026-09-14",
+        "last": "2026-09-14",
+        "kinds": {
+         "질문": 1
+        }
+       },
+       {
+        "name": "첫 출근 준비",
+        "records": 1,
+        "first": "2026-10-19",
+        "last": "2026-10-19",
+        "kinds": {
+         "감정": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "times": 9,
+        "from": {
+         "day": "2026-07-10",
+         "quote": "수진이와 다시 편하게 말하려면 내가 먼저 연락해야 할 것 같다.",
+         "record_id": "e_5678ce32d7de",
+         "thought_id": "e_5678ce32d7de-t01"
+        },
+        "to": {
+         "day": "2026-10-19",
+         "quote": "집에 와서도 그 말을 두 번쯤 떠올렸다.",
+         "record_id": "e_63ed0a1053df",
+         "thought_id": "e_63ed0a1053df-t01"
+        }
+       },
+       {
+        "star": "일 제안의 판단 기준",
+        "times": 4,
+        "from": {
+         "day": "2026-07-16",
+         "quote": "내가 배울 일을 확인하기 전에는 급여만 보고 답하지 않겠다.",
+         "record_id": "e_69e884b164c0",
+         "thought_id": "e_69e884b164c0-t01"
+        },
+        "to": {
+         "day": "2026-10-06",
+         "quote": "제안을 받아들이기로 마음을 정하고 수락 메일을 써 뒀다.",
+         "record_id": "e_bf9e69eb71d9",
+         "thought_id": "e_bf9e69eb71d9-t05"
+        }
+       },
+       {
+        "star": "출근 바람",
+        "times": 3,
+        "from": {
+         "day": "2026-08-03",
+         "quote": "그 생산팀에 들어가 정해진 시간에 일하며 배우고 싶다.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t00"
+        },
+        "to": {
+         "day": "2026-08-03",
+         "quote": "실제 시간표도 보고 싶다고 부탁했다.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t05"
+        }
+       },
+       {
+        "star": "사과 메시지 보내기",
+        "times": 2,
+        "from": {
+         "day": "2026-08-09",
+         "quote": "그런데 이대로 두면 수진이는 내가 그날 말을 아무렇지 않게 여긴다고 생각할 수도 있다.",
+         "record_id": "e_047c3d0f3f19",
+         "thought_id": "e_047c3d0f3f19-t02"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "문자에서 요즘 바빴다는 설명은 뺐다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t08"
+        }
+       },
+       {
+        "star": "도움을 받은 순간의 짜증",
+        "times": 1,
+        "from": {
+         "day": "2026-07-01",
+         "quote": "나는 컵받침 찾느라 짜증부터 냈다.",
+         "record_id": "e_9b6fe5eab808",
+         "thought_id": "e_9b6fe5eab808-t02"
+        },
+        "to": {
+         "day": "2026-07-24",
+         "quote": "괜히 오래 닦았다.",
+         "record_id": "e_09d155bd0bc4",
+         "thought_id": "e_09d155bd0bc4-t04"
+        }
+       },
+       {
+        "star": "맛 차이의 이유",
+        "times": 1,
+        "from": {
+         "day": "2026-08-20",
+         "quote": "같은 맛을 못 내도 왜 달라졌는지 설명할 수 있으면 그날 연습은 성공이다.",
+         "record_id": "e_c3bb0ae10bda",
+         "thought_id": "e_c3bb0ae10bda-t00"
+        },
+        "to": {
+         "day": "2026-08-20",
+         "quote": "한 번에 한 조건만 바꾸고 맛이 달라진 이유를 적어 두겠다.",
+         "record_id": "e_c3bb0ae10bda",
+         "thought_id": "e_c3bb0ae10bda-t01"
+        }
+       },
+       {
+        "star": "메뉴 손익 계산",
+        "times": 1,
+        "from": {
+         "day": "2026-08-18",
+         "quote": "잘 안 나가는 음료 세 가지의 재료값을 따로 계산했다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t08"
+        },
+        "to": {
+         "day": "2026-09-11",
+         "quote": "종이에 쓴 일이 조금 실제처럼 느껴졌다.",
+         "record_id": "e_e59719354898",
+         "thought_id": "e_e59719354898-t00"
+        }
+       }
+      ],
+      "changed": [
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-24",
+         "quote": "바쁜가 보지 하고 넘겼다.",
+         "record_id": "e_09d155bd0bc4",
+         "thought_id": "e_09d155bd0bc4-t06"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "그 애가 나를 반겨 줄 거라는 확신부터 얻으려 했던\n것 같다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t00"
+        },
+        "axis": "상대 사정 추정 ↔ 내 기대 돌아보기"
+       }
+      ],
+      "open": [
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-10-01",
+         "quote": "내가 먼저 연락해서 그날 내 말을 사과하기로 했다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t01"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "답장이 오느냐는 수진이 몫이고,",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t02"
+        },
+        "axis": "내가 할 일 ↔ 상대의 몫"
+       }
+      ],
+      "settled": [
+       {
+        "star": "맛 차이의 이유",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-03",
+         "quote": "아직 손이 일정하지 않아서 그런가.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t02"
+        },
+        "to": {
+         "day": "2026-08-03",
+         "quote": "작업장에서 본 큰 기계보다 그 빈칸이 더 어려웠다.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t03"
+        }
+       },
+       {
+        "star": "맛 차이의 이유",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-03",
+         "quote": "아직 손이 일정하지 않아서 그런가.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t02"
+        },
+        "to": {
+         "day": "2026-08-03",
+         "quote": "작업장에서 본 큰 기계보다 그 빈칸이 더 어려웠다.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t04"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-24",
+         "quote": "물건은 매일 만지면서 그 애에게는 한 줄도 못 보낸다.",
+         "record_id": "e_09d155bd0bc4",
+         "thought_id": "e_09d155bd0bc4-t03"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "저녁 먹었냐는 얘기만 했다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t07"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-24",
+         "quote": "바쁜가 보지 하고 넘겼다.",
+         "record_id": "e_09d155bd0bc4",
+         "thought_id": "e_09d155bd0bc4-t06"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "저녁 먹었냐는 얘기만 했다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t07"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-09",
+         "quote": "그런데 이대로 두면 수진이는 내가 그날 말을 아무렇지 않게 여긴다고 생각할 수도 있다.",
+         "record_id": "e_047c3d0f3f19",
+         "thought_id": "e_047c3d0f3f19-t02"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "저녁 먹었냐는 얘기만 했다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t07"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-09",
+         "quote": "내가 또 말을 잘못 보탤 바에는 수진이와 이대로 멀어지게 두는 편이 나을 것 같기도 하다.",
+         "record_id": "e_047c3d0f3f19",
+         "thought_id": "e_047c3d0f3f19-t00"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "저녁 먹었냐는 얘기만 했다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t07"
+        }
+       },
+       {
+        "star": "맛 차이의 이유",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-03",
+         "quote": "아직 손이 일정하지 않아서 그런가.",
+         "record_id": "e_3c23acebde3b",
+         "thought_id": "e_3c23acebde3b-t02"
+        },
+        "to": {
+         "day": "2026-08-20",
+         "quote": "같은 맛을 못 내도 왜 달라졌는지 설명할 수 있으면 그날 연습은 성공이다.",
+         "record_id": "e_c3bb0ae10bda",
+         "thought_id": "e_c3bb0ae10bda-t00"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-07-24",
+         "quote": "사실 바쁜지는 나도 모른다.",
+         "record_id": "e_09d155bd0bc4",
+         "thought_id": "e_09d155bd0bc4-t02"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "답장이 오느냐는 수진이 몫이고,",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t02"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-09",
+         "quote": "내가 또 말을 잘못 보탤 바에는 수진이와 이대로 멀어지게 두는 편이 나을 것 같기도 하다.",
+         "record_id": "e_047c3d0f3f19",
+         "thought_id": "e_047c3d0f3f19-t00"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "보내고 나서 답이 늦어도 안 읽었냐고 다시 묻지는 않을 거다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t04"
+        }
+       },
+       {
+        "star": "일 제안의 판단 기준",
+        "line": "점선",
+        "from": {
+         "day": "2026-08-29",
+         "quote": "그 안에서 일하는 쪽으로 마음은 계속 기운다.",
+         "record_id": "e_b34dd23eec19",
+         "thought_id": "e_b34dd23eec19-t00"
+        },
+        "to": {
+         "day": "2026-10-06",
+         "quote": "숫자를 채우는 상상보다 생산팀에서 첫 공정을 익히는 상상이 더 구체적이었다.",
+         "record_id": "e_bf9e69eb71d9",
+         "thought_id": "e_bf9e69eb71d9-t00"
+        }
+       },
+       {
+        "star": "일 제안의 판단 기준",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-23",
+         "quote": "내가 질문했던 내용에 답이 붙어 있으니 수락하는 쪽이 더 선명해졌다.",
+         "record_id": "e_6ed87a372d61",
+         "thought_id": "e_6ed87a372d61-t00"
+        },
+        "to": {
+         "day": "2026-10-06",
+         "quote": "우석 씨에게 확인한 업무와 교육 시간은 내가 원하던 방향에 가깝다.",
+         "record_id": "e_bf9e69eb71d9",
+         "thought_id": "e_bf9e69eb71d9-t04"
+        }
+       },
+       {
+        "star": "수진이에게 먼저 연락하기",
+        "line": "점선",
+        "from": {
+         "day": "2026-10-01",
+         "quote": "수진이에게 연락할지 이대로 멀어지게 둘지 적어 놓고 보니 몇 달째 같은 자리다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t06"
+        },
+        "to": {
+         "day": "2026-10-19",
+         "quote": "집에 와서도 그 말을 두 번쯤 떠올렸다.",
+         "record_id": "e_63ed0a1053df",
+         "thought_id": "e_63ed0a1053df-t01"
+        }
+       }
+      ]
+     },
+     {
+      "name": "인간관계",
+      "records": 11,
+      "stars": [
+       {
+        "name": "엄마와의 마감 대화",
+        "records": 5,
+        "first": "2026-08-18",
+        "last": "2026-10-25",
+        "kinds": {
+         "감정": 2,
+         "기타": 2,
+         "다짐": 1
+        }
+       },
+       {
+        "name": "도움을 가볍게 소개한 일",
+        "records": 2,
+        "first": "2026-07-10",
+        "last": "2026-10-01",
+        "kinds": {
+         "해석": 1,
+         "신념·원칙": 1,
+         "감정": 1
+        }
+       },
+       {
+        "name": "같은 원두 두 컵",
+        "records": 1,
+        "first": "2026-07-04",
+        "last": "2026-07-04",
+        "kinds": {
+         "신념·원칙": 2,
+         "감정": 1,
+         "자기평가(부정)": 1
+        }
+       },
+       {
+        "name": "사진 속에 남은 비",
+        "records": 1,
+        "first": "2026-07-27",
+        "last": "2026-07-27",
+        "kinds": {
+         "해석": 1
+        }
+       },
+       {
+        "name": "영업시간의 기준",
+        "records": 1,
+        "first": "2026-08-18",
+        "last": "2026-08-18",
+        "kinds": {
+         "신념·원칙": 1,
+         "다짐": 1,
+         "자기평가(긍정)": 1
+        }
+       },
+       {
+        "name": "재료 폐기량",
+        "records": 1,
+        "first": "2026-08-18",
+        "last": "2026-08-18",
+        "kinds": {
+         "해석": 1
+        }
+       },
+       {
+        "name": "맛 표현의 정확성",
+        "records": 1,
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "kinds": {
+         "해석": 1
+        }
+       },
+       {
+        "name": "감자칩 맛",
+        "records": 1,
+        "first": "2026-09-14",
+        "last": "2026-09-14",
+        "kinds": {
+         "감정": 1
+        }
+       }
+      ],
+      "kept": [
+       {
+        "star": "영업시간의 기준",
+        "times": 4,
+        "from": {
+         "day": "2026-08-18",
+         "quote": "빈 시간이 길다고 문을 열어 놓는 시간을 끝없이 늘릴 수는 없다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t01"
+        },
+        "to": {
+         "day": "2026-08-18",
+         "quote": "엄마가 저녁 손님을 더 받자고 했지만 오늘은 내가 정한 여섯 시에 문을 닫았다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t06"
+        }
+       },
+       {
+        "star": "엄마와의 마감 대화",
+        "times": 1,
+        "from": {
+         "day": "2026-08-18",
+         "quote": "엄마는 그러든가 하고 행주를 널었다.",
+         "record_id": "e_1fc67e2eb26b",
+         "thought_id": "e_1fc67e2eb26b-t05"
+        },
+        "to": {
+         "day": "2026-08-29",
+         "quote": "엄마는 내가 다른 자리를 알아보는 줄도 모른다.",
+         "record_id": "e_b34dd23eec19",
+         "thought_id": "e_b34dd23eec19-t02"
+        }
+       },
+       {
+        "star": "도움을 가볍게 소개한 일",
+        "times": 1,
+        "from": {
+         "day": "2026-10-01",
+         "quote": "그 애의 수고를 작게 말한 건 내가 바로\n잡을 일이다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t03"
+        },
+        "to": {
+         "day": "2026-10-01",
+         "quote": "두 달이나 함께 준비했는데 잠깐 도와준 사람처럼 소개해서 미안하다고 썼다.",
+         "record_id": "e_e1e7dd60b621",
+         "thought_id": "e_e1e7dd60b621-t07"
+        }
+       }
+      ],
+      "changed": [],
+      "open": [],
+      "settled": [
+       {
+        "star": "엄마와의 마감 대화",
+        "line": "점선",
+        "from": {
+         "day": "2026-09-23",
+         "quote": "엄마가 서운한 건지 놀란 건지 묻지는 못했다.",
+         "record_id": "e_6ed87a372d61",
+         "thought_id": "e_6ed87a372d61-t01"
+        },
+        "to": {
+         "day": "2026-10-12",
+         "quote": "별것 아닌 질문인데 반가웠다.",
+         "record_id": "e_17a205605e33",
+         "thought_id": "e_17a205605e33-t00"
+        }
+       }
+      ]
+     }
+    ],
+    "across": []
+   },
+   "repeats": [
+    {
+     "n": 17,
+     "runs": [
+      [
+       {
+        "id": "e_516670627bb5-t00",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "숫자를 채우는 상상보다 생산팀에서 첫 공정을 익히는 상상이 더 구체적이었다."
+       },
+       {
+        "id": "e_516670627bb5-t01",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "예전에는 내 가게를 끝까지 지키는 것이 곧 나를 지키는 일이라고 믿었지만, 지금은 가게가 커피 일을 하는 여러 방식 중 하나일 뿐이라고 생각한다."
+       },
+       {
+        "id": "e_516670627bb5-t02",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "이 문장을 쓰고도 조금 울컥했다."
+       },
+       {
+        "id": "e_516670627bb5-t03",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "생각이 바뀌었다고 이 공간이 덜 좋아지는 건 아닌가 보다."
+       },
+       {
+        "id": "e_516670627bb5-t04",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "우석 씨에게 확인한 업무와 교육 시간은 내가 원하던 방향에 가깝다."
+       },
+       {
+        "id": "e_516670627bb5-t05",
+        "name": "마지막 영업 날짜와 정리 일정",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "보내기 전에 마지막 영업 날짜와 정리 일정을 맞춰 보자."
+       },
+       {
+        "id": "e_516670627bb5-t06",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "제안을 받아들이기로 마음을 정하고 수락 메일을 써 뒀다."
+       }
+      ],
+      [
+       {
+        "id": "e_fccf7b835b27-t00",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "숫자를 채우는 상상보다 생산팀에서 첫 공정을 익히는 상상이 더 구체적이었다."
+       },
+       {
+        "id": "e_fccf7b835b27-t01",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "예전에는 내 가게를 끝까지 지키는 것이 곧 나를 지키는 일이라고 믿었지만, 지금은 가게가 커피 일을 하는 여러 방식 중 하나일 뿐이라고 생각한다."
+       },
+       {
+        "id": "e_fccf7b835b27-t02",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "이 문장을 쓰고도 조금 울컥했다."
+       },
+       {
+        "id": "e_fccf7b835b27-t03",
+        "name": "가게를 지키는 의미",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "생각이 바뀌었다고 이 공간이 덜 좋아지는 건 아닌가 보다."
+       },
+       {
+        "id": "e_fccf7b835b27-t04",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "우석 씨에게 확인한 업무와 교육 시간은 내가 원하던 방향에 가깝다."
+       },
+       {
+        "id": "e_fccf7b835b27-t05",
+        "name": "일 제안의 판단 기준",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "제안을 받아들이기로 마음을 정하고 수락 메일을 써 뒀다."
+       },
+       {
+        "id": "e_fccf7b835b27-t06",
+        "name": "가게를 계속할지에 대한 마음",
+        "domain": "그 밖",
+        "sun_id": "d_57e93eee29d3",
+        "quote": "보내기 전에 마지막 영업 날짜와 정리 일정을 맞춰 보자."
+       }
+      ]
+     ]
+    },
+    {
+     "n": 18,
+     "runs": [
+      [
+       {
+        "id": "e_4a076d39e411-t00",
+        "name": "맛 차이의 이유",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "예상과 다른 맛이 나왔지만 다음에 확인할 구간이 남았다."
+       },
+       {
+        "id": "e_4a076d39e411-t01",
+        "name": "엄마와의 마감 대화",
+        "domain": "인간관계",
+        "sun_id": "d_94ebb2c3dfbc",
+        "quote": "별것 아닌 질문인데 반가웠다."
+       }
+      ],
+      [
+       {
+        "id": "e_28c40c985c4b-t00",
+        "name": "맛 차이의 이유",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "예상과 다른 맛이 나왔지만 다음에 확인할 구간이 남았다."
+       },
+       {
+        "id": "e_28c40c985c4b-t01",
+        "name": "엄마와의 마감 대화",
+        "domain": "인간관계",
+        "sun_id": "d_94ebb2c3dfbc",
+        "quote": "별것 아닌 질문인데 반가웠다."
+       }
+      ]
+     ]
+    },
+    {
+     "n": 19,
+     "runs": [
+      [
+       {
+        "id": "e_6f49f8ad57c2-t00",
+        "name": "첫 출근 상상",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "읽고 나니 첫날 어느 문으로 들어가는지부터 궁금해졌다."
+       },
+       {
+        "id": "e_6f49f8ad57c2-t01",
+        "name": "수진이와의 침묵",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "중간중간 조용해졌지만 급하게 다른 얘기로 채우지는 않았다."
+       }
+      ],
+      [
+       {
+        "id": "e_b590823b400f-t00",
+        "name": "첫 출근 상상",
+        "domain": "커리어",
+        "sun_id": "d_f59b3dc67921",
+        "quote": "읽고 나니 첫날 어느 문으로 들어가는지부터 궁금해졌다."
+       },
+       {
+        "id": "e_b590823b400f-t01",
+        "name": "수진이와의 침묵",
+        "domain": "인간관계",
+        "sun_id": "d_94ebb2c3dfbc",
+        "quote": "중간중간 조용해졌지만 급하게 다른 얘기로 채우지는 않았다."
+       },
+       {
+        "id": "e_b590823b400f-t02",
+        "name": "수진이와의 침묵",
+        "domain": "인간관계",
+        "sun_id": "d_94ebb2c3dfbc",
+        "quote": "집에 와서도 그 말을 두 번쯤 떠올렸다."
+       }
+      ]
+     ]
+    },
+    {
+     "n": 20,
+     "runs": [
+      [],
+      []
+     ]
+    }
+   ],
+   "score": {
+    "stars": 22,
+    "gt_topics": 5,
+    "topic_pairs": {
+     "precision": 0.839,
+     "recall": 0.662,
+     "f1": 0.74
+    },
+    "domain_acc": 0.4,
+    "links_planted": 9,
+    "links_found": 5,
+    "links_found_same_type": 4,
+    "links_recall": 0.556,
+    "links_found_quote": 1,
+    "relations_shown": 40,
+    "relations_unplanted": 32,
+    "insights_linked": 5,
+    "insights_grouped": 5,
+    "insights": 5,
+    "failed_entries": 0,
+    "group_pass_k": null,
+    "usd": 2.058
+   }
+  }
+ }
+}

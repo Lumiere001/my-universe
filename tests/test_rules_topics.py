@@ -81,3 +81,59 @@ def test_many_topics_become_one():
          "topic": "독서노트 습관, 진로 선택, 혼자 있는 시간", "people": ""}]}
     t = clean_record(raw, topics={"독서노트 습관": "배움", "혼자 있는 시간": "관계"})["thoughts"][0]
     assert (t["topic"], t["domain"]) == ("혼자 있는 시간", "관계")
+
+
+def test_two_domain_profile_maps_axes(monkeypatch):
+    """두 영역 모드(10/28 멘토링): 고른 기준 축을 커리어 · 인간관계로 묶고 나머지는 '그 밖'(우주에 안 띄움)."""
+    from app.core import config
+    from app.service.rules import to_sun
+    assert to_sun("미래 안정") == "미래 안정"   # 꺼져 있으면 그대로(지금 운영)
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    assert [to_sun(d) for d in ("삶의 성취", "미래 안정", "관계", "공동체", "건강", "커리어", "통일 사역")] == \
+        ["커리어", "커리어", "인간관계", "인간관계", "그 밖", "커리어", "통일 사역"]
+    shown = sun_list([{"domain": "커리어"}, {"domain": "그 밖"}])
+    assert shown == {"shown": ["커리어"], "hidden": ["인간관계"]}
+    assert match_topic("커리어", {}) == ("커리어", "해 이름")   # 모드의 해 이름도 주제가 아니다
+
+
+def test_join_star_uses_nearest_star_center():
+    from app.service.rules import join_star
+    pool = {"s1": [[1.0, 0.0], [0.9, 0.1]], "s2": [[0.0, 1.0]]}
+    assert join_star([1.0, 0.05], pool, tau=0.9) == "s1"
+    assert join_star([0.7, 0.7], pool, tau=0.9) is None   # 어느 별과도 충분히 가깝지 않으면 새 별
+    assert join_star([1.0, 0.0], pool, tau=None) is None  # 끄면 이름으로만
+
+
+def test_insight_groups_by_sun_and_star_with_quotes(monkeypatch):
+    """나에 대해 알게 된 것: 해 → 작은 별, 이어 온 · 바뀐 · 맞서는(풀린 것 빼고) · 해를 넘는 관계. 원문 인용만, 판정 없음."""
+    from app.core import config
+    from app.service.rules import insight
+    from app.service.rules.insight import _end
+    monkeypatch.setattr(config, "ONTOLOGY_PROFILE", "two")
+    T = lambda i, rec, day, topic, dom, kind="해석": {  # noqa: E731
+        "id": i, "record_id": rec, "day": day, "topic": topic, "domain": dom, "kind": kind, "quote": f"{i} 인용"}
+    ts = {t["id"]: t for t in [T("a", "r1", "2026-08-01", "회사 고르기", "커리어"), T("b", "r2", "2026-09-01", "회사 고르기", "커리어"),
+                               T("c", "r3", "2026-10-01", "회사 고르기", "커리어"), T("d", "r2", "2026-09-01", "부모님", "인간관계"),
+                               T("e", "r4", "2026-09-05", "산책", "그 밖")]}
+    rels = [{"type": "이어짐", "from": "a", "to": "b"}, {"type": "바뀜", "from": "a", "to": "c", "line": "실선"},
+            {"type": "긴장", "from": "b", "to": "d"}]
+    out = insight(ts, rels)
+    assert out["period"] == {"from": "2026-08-01", "to": "2026-10-01", "records": 4}
+    career, people = out["suns"]
+    assert [s["name"] for s in out["suns"]] == ["커리어", "인간관계"]   # '그 밖'은 빠짐
+    assert career["stars"][0] == {"name": "회사 고르기", "records": 3, "first": "2026-08-01", "last": "2026-10-01",
+                                  "kinds": {"해석": 3}}
+    assert career["kept"][0]["times"] == 1 and career["changed"][0]["to"]["quote"] == "c 인용"
+    assert out["across"] == [{"type": "긴장", "suns": ["커리어", "인간관계"], "from": _end(ts["b"]),
+                              "to": _end(ts["d"])}]
+
+
+def test_insight_resolution_closes_only_the_earlier_side():
+    """해소는 먼저 쓴(열려 있던) 생각만 닫는다. 결론이 나중에 다른 생각과 맞서면 그 긴장은 열려 있다."""
+    from app.service.rules import insight
+    T = lambda i, day: {"id": i, "record_id": f"r{i}", "day": day, "topic": "이직", "domain": "미래 안정", "kind": "해석",  # noqa: E731
+                        "quote": i}
+    ts = {i: T(i, d) for i, d in (("x", "2026-08-01"), ("y", "2026-08-02"), ("z", "2026-09-01"), ("w", "2026-10-01"))}
+    rels = [{"type": "긴장", "from": "x", "to": "y"}, {"type": "해소", "from": "y", "to": "z"}, {"type": "긴장", "from": "z", "to": "w"}]
+    (sun,) = insight(ts, rels)["suns"]
+    assert [(p["from"]["thought_id"], p["to"]["thought_id"]) for p in sun["open"]] == [("z", "w")]

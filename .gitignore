@@ -9,8 +9,10 @@ runs/
 tools/diagrams/out/
 tools/preview3d/
 .claude/worktrees/
+.claude/review/
 .env.local
 .env.*.local
 logs/
 node_modules/
 .next/
+eval/results/vectors/

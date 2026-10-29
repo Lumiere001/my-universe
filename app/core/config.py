@@ -38,6 +38,15 @@ EMBED_QUERY_MODEL = os.getenv("EMBEDDING_QUERY_MODEL", EMBED_PASSAGE_MODEL.repla
 # 사진 글자 읽기(WS18): document-parse(기본, 2026-10-28 동규 결정) | ocr(되돌리기 — 코드 안 고치고 env 로)
 PHOTO_READ_MODEL = os.getenv("PHOTO_READ_MODEL") or "document-parse"
 
+# 온톨로지 모드(2026-10-29 멘토링): "two" = 해를 커리어 · 인간관계 둘로 묶음(v8.json profiles). 비우면 기준 축 9개(지금 운영).
+ONTOLOGY_PROFILE = os.getenv("ONTOLOGY_PROFILE", "")
+# 작은 별 맞추기(WS27): 기록 Agent 가 새 이름을 내도 같은 해의 기존 작은 별 중심과 중심 보정 코사인이 이만큼 이상이면
+# 그 별에 붙인다. 비우면 끔(이름이 같을 때만 같은 별 — 지금 운영). 값은 가상 인물 시험(tools/persona_eval.py)으로 정한다.
+STAR_JOIN_SIM = float(os.getenv("STAR_JOIN_SIM") or 0) or None
+# 작은 별 묶기(rules.groups, 2026-10-29): 새 작은 별이 생긴 글이 끝나면 같은 고민끼리 묶고 묶음마다 해를 고른다(Solar 두 번).
+# 0 이면 끔(시험의 비교 판 · 운영에서 문제가 생기면 배포 없이 끄기).
+STAR_GROUPS = os.getenv("STAR_GROUPS", "1") != "0"
+
 # Studio 기록 · 관측 Agent. 1판(RECORD_CONFIG_ID=1)은 Streamlit 데모가 계속 쓰고, 새 백엔드는 V8_* (기본 2판).
 RECORD_AGENT_ID = os.getenv("RECORD_AGENT_ID", "")
 RECORD_CONFIG_ID = os.getenv("RECORD_CONFIG_ID", "1")
@@ -46,6 +55,7 @@ OBSERVE_CONFIG_ID = os.getenv("OBSERVE_CONFIG_ID", "1")
 V8_RECORD_CONFIG_ID = os.getenv("V8_RECORD_CONFIG_ID", "2")
 V8_OBSERVE_CONFIG_ID = os.getenv("V8_OBSERVE_CONFIG_ID", "2")
 STUDIO_TIMEOUT_S = _int("STUDIO_TIMEOUT_S", 180)
+STUDIO_RETRY_WAIT_S = _int("STUDIO_RETRY_WAIT_S", 3)   # 429(너무 잦은 요청) 뒤 다시 보내기 전 쉬는 초
 
 # Supabase(로그인 · 관계형 DB). 백엔드는 DATABASE_URL 로 붙고 요청마다 그 사용자로 RLS 를 건다.
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")

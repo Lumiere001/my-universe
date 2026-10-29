@@ -214,6 +214,27 @@ def add_star(s, sid, name, sun_id):
     s.upsert("stars", {"id": sid, "sun_id": sun_id, "enc": seal(s, "stars", sid, {"name": name})})
 
 
+def set_star(s, st, **fields):
+    """작은 별 enc 칸 고치기(group: 묶음 머리 id · pin: 사용자가 해를 옮김). st: stars() 한 줄. None 은 칸을 뺀다."""
+    data = {k: v for k, v in {**{k: st[k] for k in st if k not in ("id", "sun_id")}, **fields}.items() if v is not None}
+    s.update("stars", {"enc": seal(s, "stars", st["id"], data)}, id=st["id"])
+
+
+def star_heads(stars):
+    """{작은 별 id: 묶음 머리 별}(rules.groups). 묶음이 없거나 머리가 사라졌으면 자기 자신."""
+    by = {x["id"]: x for x in stars}
+    return {x["id"]: by.get(x.get("group")) or x for x in stars}
+
+
+def as_groups(ts, heads):
+    """생각의 작은 별을 묶음 머리로 바꾼 사본(화면 · 알게 된 것 · 기록 Agent 이름 목록은 묶음 단위로 본다).
+    ts: 생각 목록 또는 {id: 생각}. 원래 작은 별은 fine_star_id 로 남긴다."""
+    def one(t):
+        h = heads.get(t.get("star_id"))
+        return {**t, "star_id": h["id"], "topic": h["name"], "fine_star_id": t["star_id"]} if h else t
+    return {k: one(t) for k, t in ts.items()} if isinstance(ts, dict) else [one(t) for t in ts]
+
+
 ##################################################
 # 기록
 ##################################################
@@ -362,7 +383,8 @@ def save_thought(s, eid, t):
                           "enc": seal(s, "thoughts", t["id"], {"text": t["thought"], "quote": t["quote"],
                                                                "self_change": t["self_change"] or None,
                                                                "other": t["original"].get("kind"), "topic": t["topic"],
-                                                               "original": t["original"]})})
+                                                               "original": t["original"],
+                                                               "domain_first": t.get("domain_first") or t.get("domain")})})   # 온톨로지 단계가 처음 고른 해
     for pid in t["people"]:
         s.insert("thought_people", {"thought_id": t["id"], "person_id": pid})
 

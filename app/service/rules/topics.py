@@ -3,12 +3,14 @@
 
 주제는 그 사용자의 기존 작은 별 이름을 다시 쓰고, 해 이름은 주제로 쓰지 않는다(topic_rules).
 해는 혼합형: 일기에 나온 영역 + 사용자가 추가한 해, 글 없는 기준 축은 숨김(domain_rules).
+두 영역 모드(config.ONTOLOGY_PROFILE=two)면 고른 기준 축을 커리어 · 인간관계로 묶고 나머지는 '그 밖'(우주에 안 띄움).
 임베딩 벡터는 부르는 쪽이 넘긴다(여기서는 네트워크를 쓰지 않는다).
 """
 
 import math
 import re
 
+from app.core import config
 from app.core.ontology import load
 from app.service.rules.normalize import key
 
@@ -27,8 +29,32 @@ def cos(a, b, center=None):
     return dot / (na * nb) if na and nb else 0.0
 
 
+def profile():
+    """켜진 온톨로지 모드(v8.json profiles 의 한 항목) 또는 None(기준 축 9개)."""
+    return O.get("profiles", {}).get(config.ONTOLOGY_PROFILE)
+
+
+def base():
+    """우주에 띄울 기준 해 이름. 두 영역 모드면 그 두 이름."""
+    p = profile()
+    return [s["name"] for s in p["suns"]] if p else BASE
+
+
+def to_sun(domain):
+    """기준 축(9개) 이름 → 켜진 모드의 해 이름. 모드가 꺼졌거나 이미 모드의 이름 · 사용자가 만든 해면 그대로."""
+    p = profile()
+    if not p or not domain:
+        return domain
+    for s in p["suns"]:
+        if domain == s["name"] or domain in s["from"]:
+            return s["name"]
+    return p["other"] if domain in BASE else domain
+
+
 def _sun_names(suns):
-    return BASE + [s["name"] if isinstance(s, dict) else s for s in suns or ()]
+    p = profile()
+    extra = [s["name"] for s in p["suns"]] + [p["other"]] if p else []
+    return BASE + extra + [s["name"] if isinstance(s, dict) else s for s in suns or ()]
 
 
 def topic_input(topics):
@@ -92,9 +118,43 @@ def sun_list(thoughts, suns=()):
     """{"shown": 띄울 해, "hidden": 글 없는 기준 축(질문 재료)}. 9개 밖 영역이 생각에 나오면 해로 띄운다."""
     used = {t.get("domain") for t in thoughts if t.get("domain")}
     user = [s["name"] if isinstance(s, dict) else s for s in suns or ()]
-    shown = [d for d in BASE if d in used] + [s for s in user if s not in BASE]
-    shown += sorted(used - set(shown))
-    return {"shown": shown, "hidden": [d for d in BASE if d not in shown]}
+    axes, p = base(), profile()
+    shown = [d for d in axes if d in used] + [s for s in user if s not in axes]
+    shown += sorted(used - set(shown) - {p and p["other"]})   # 두 영역 모드의 '그 밖'은 저장만 하고 띄우지 않는다
+    return {"shown": shown, "hidden": [d for d in axes if d not in shown]}
+
+
+def join_star(vec, pool, center=None, tau=None):
+    """새 주제 이름이어도 같은 해의 기존 작은 별에 붙일지(WS27 작은 별 맞추기). pool: {작은 별 id: [생각 벡터 …]}.
+    작은 별 중심(평균 벡터)과의 중심 보정 코사인이 가장 큰 별이 tau 이상이면 그 별 id, 아니면 None(새 별).
+    같은 글은 같은 벡터라 같은 별로 간다 — 기록 Agent 가 이름을 매번 다르게 지어도 묶음은 흔들리지 않는다."""
+    if not (tau and vec and pool):
+        return None
+    cent = {k: [sum(c) / len(vs) for c in zip(*vs)] for k, vs in pool.items() if vs}
+    best = max(cent, key=lambda k: (cos(vec, cent[k], center), k), default=None)
+    return best if best and cos(vec, cent[best], center) >= tau else None
+
+
+def place_stars(items, stars, pools, new_id, center=None, tau=None):
+    """한 글의 생각들을 작은 별에 앉힌다(그래프 ontology 단계와 시험 도구가 같은 코드를 쓴다).
+    items: [{topic(match_topic 을 지난 이름), sun_id, vec, keep_name(모으는 별 등 맞추기 제외)}],
+    stars: {이름: id}(새 별을 더함), pools: {sun_id: {star_id: [벡터 …]}}(이 글의 생각도 더함 — 다음 생각이 보게).
+    돌려줌: [(이름, 새 별인지, 맞추기로 붙었는지)]."""
+    names = {v: k for k, v in stars.items()}
+    out = []
+    for it in items:
+        name, pool, joined = it["topic"], pools.setdefault(it["sun_id"], {}), False
+        if tau and name not in stars and not it.get("keep_name"):
+            hit = join_star(it["vec"], pool, center, tau)
+            if hit:
+                name, joined = names[hit], True
+        new = name not in stars
+        if new:
+            stars[name] = new_id()
+            names[stars[name]] = name
+        pool.setdefault(stars[name], []).append(it["vec"])
+        out.append((name, new, joined))
+    return out
 
 
 def merge_candidates(topics, vecs=None, center=None):

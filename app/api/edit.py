@@ -151,13 +151,16 @@ def merge_suggestions(user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
         done = [e["id"] for e in diary.entries(s, status="done")]
         ts = diary.thoughts(s, entry_id=done) if done else []
-        stars = {x["id"]: x for x in diary.stars(s)}
+        all_stars = diary.stars(s)
+        heads = diary.star_heads(all_stars)   # 묶음끼리만 제안한다(같은 묶음 안의 작은 별은 이미 한 별로 보임, rules.groups)
+        stars = {x["id"]: x for x in all_stars}
         sun = {x["id"]: x["name"] for x in diary.suns(s)}
         no = edit.declined(s)
     by_star = {}
     for t in ts:
-        if t["star_id"] in stars and stars[t["star_id"]]["name"] != OTHER_TOPIC:   # 모으는 별은 합치기 후보가 아님
-            by_star.setdefault(t["star_id"], []).append(vecs.get(t["id"]))
+        h = heads.get(t["star_id"])
+        if h and h["name"] != OTHER_TOPIC:   # 모으는 별은 합치기 후보가 아님
+            by_star.setdefault(h["id"], []).append(vecs.get(t["id"]))
     name_id = {stars[i]["name"]: i for i in by_star}
     topics = {stars[i]["name"]: sun.get(stars[i]["sun_id"]) for i in by_star}
     mean = lambda vs: [sum(c) / len(vs) for c in zip(*vs)]   # noqa: E731

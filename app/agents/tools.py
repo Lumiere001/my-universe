@@ -16,6 +16,7 @@ from app.core.ontology import load
 from app.repository import diary
 from app.service import studio_format as sf
 from app.service import voice
+from app.service.rules import groups as group_rules
 from app.service.rules import pick_past
 from app.service.safety import mask, unmask
 
@@ -80,6 +81,19 @@ def run_observe_agent(day, today, past, aspiration, people):
     return unmask_obj(sf.parse_observe(studio.run("observe", html), ids), table)
 
 
+def group_stars(stars, people, custom=()):
+    """작은 별 묶음(rules.groups): Solar ① 같은 고민끼리 묶기 → Solar ② 묶음마다 해 고르기. 이름 · 원문 예는 가명으로 보낸다.
+    stars: [{name, sun, records, quotes}] → (묶음 [[0부터 번호 …]], 묶음마다 해 이름 또는 None)."""
+    masked, _ = mask_obj([{"name": st["name"], "quotes": st["quotes"][:group_rules.EXAMPLES]} for st in stars], people)
+    ms = [{**st, **m} for st, m in zip(stars, masked)]
+    ask = lambda system, user: llm.chat([{"role": "system", "content": system},   # noqa: E731
+                                         {"role": "user", "content": user}], temperature=0)
+    groups = group_rules.parse_groups(ask(group_rules.GROUP_SYSTEM, group_rules.group_input(ms)), len(stars))
+    choices = group_rules.sun_choices(custom)
+    suns = group_rules.parse_suns(ask(group_rules.sun_system(choices), group_rules.sun_input(ms, groups)), len(groups), choices)
+    return groups, suns
+
+
 ##################################################
 # 생각 벡터 · 지난 생각 검색
 ##################################################
@@ -116,6 +130,7 @@ def search_past(repo, uid, entry_id, today):
         done = {e["id"]: e for e in diary.entries(s, status="done")
                 if e["id"] != entry_id and (me is None or e["written_at"] < me["written_at"])}
         past = [t for t in diary.thoughts(s, entry_id=list(done)) if t["id"] in vecs] if done else []
+        past = diary.as_groups(past, diary.star_heads(diary.stars(s)))   # 주제 = 묶음 이름(오늘 생각의 group_topic 과 같은 단위)
         sun_name = {x["id"]: x["name"] for x in diary.suns(s)}
     for t in past:
         e = done[t["entry_id"]]

@@ -87,6 +87,8 @@ def run(kind, html):
                 m.add(config.PRICE_STUDIO_PAGE)   # 실패해도 과금될 수 있어 크게 잡는다
                 logger.log("external", what=f"studio_{kind}", ok=False, attempts=attempt,
                            code=getattr(e, "code", type(e).__name__))
+                if attempt == 1 and getattr(e, "status_code", None) == 429:   # 너무 잦은 요청이면 조금 쉬고 다시(업스테이지 가이드 3.1)
+                    time.sleep(config.STUDIO_RETRY_WAIT_S)
                 continue
             m.add(pages * config.PRICE_STUDIO_PAGE)
             logger.log("external", what=f"studio_{kind}", ok=True, attempts=attempt, pages=pages,

@@ -7,7 +7,8 @@ from tests.test_api_flow import H1, client, write  # noqa: F401  (client 픽스�
 from tests.test_graph_flow import DAY1, NAMES, env  # noqa: F401  (env 픽스처)
 from tests.test_ws19_talk import say, start, talk  # noqa: F401  (talk 픽스처)
 
-STEPS = ["safety", "names", "record_input", "record_agent", "record_clean", "past", "observe", "rules", "voice", "save"]
+STEPS = ["safety", "names", "record_input", "record_agent", "record_clean", "ontology", "group_stars", "past", "observe", "rules",
+         "voice", "save"]
 
 
 @pytest.fixture
@@ -69,7 +70,7 @@ def test_diary_stream_span_tree(client, env, spans):  # noqa: F811
     assert names(kids, root) == STEPS   # Trajectory: 그래프 순서 그대로
     step = {c.name: c for c in kids[root.context.span_id]}
     assert names(kids, step["safety"]) == ["solar.chat"]
-    assert names(kids, step["record_agent"]) == ["studio.run"] and names(kids, step["record_clean"]) == ["embed"]
+    assert names(kids, step["record_agent"]) == ["studio.run"] and names(kids, step["ontology"]) == ["embed"]
     assert "solar.chat" in names(kids, step["voice"])
     studio = kids[step["record_agent"].context.span_id][0].attributes
     assert studio["gen_ai.agent.name"] == "record" and studio["app.studio.attempts"] == 1 and studio["app.pages"] == 1
@@ -95,7 +96,7 @@ def test_resume_marks_skipped_steps(client, env, spans):  # noqa: F811
     (root,) = kids[None]
     assert root.name == "diary.resume"
     skipped = [s.name for s in kids[root.context.span_id] if s.attributes.get("app.step.skipped")]
-    assert skipped == STEPS[:6] and names(kids, root) == STEPS
+    assert skipped == STEPS[:8] and names(kids, root) == STEPS
 
 
 def test_talk_turn_span_tree(client, env, talk, spans):  # noqa: F811
