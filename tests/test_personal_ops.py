@@ -15,10 +15,13 @@ def test_disliked_message_goes_to_next_prompt_as_never_again(env):
     env.fake.sent.clear()
     write(env, U1, "둘째", "오늘도 걸었다. 걷기를 또 적었다.", "2026-10-02T22:00:00+09:00")
     voice_prompt = next(x for x in env.fake.sent if "별지기" in x and "'별로'라고 한 한마디" in x)
-    assert r1["message"]["text"][:12] in voice_prompt.split("'별로'라고 한 한마디")[1]   # 가명 처리된 지난 한마디가 금지 목록에
+    assert r1["message"]["text"][-12:] in voice_prompt.split("'별로'라고 한 한마디")[1]   # 가명 처리된 지난 한마디(끝부분)가 금지 목록에
     msgs = voice.build_messages({"disliked": ["힘내요!"]}, "편지", [], False)
     assert "힘내요!" in msgs[0]["content"]
     assert "'별로'" not in voice.build_messages({}, "편지", [], False)[0]["content"]   # 없으면 칸도 없음
+    long = "가" * 150 + " 다음엔 하나만 적어 볼까요?"
+    got = voice.build_messages({"disliked": [long]}, "편지", [], False)[0]["content"]
+    assert "적어 볼까요?" in got and "가" * 120 not in got   # 끝부분만(길게 넣으면 한마디도 길어졌다)
 
 
 def _fb(user, target, value, days_ago, today=date(2026, 10, 30)):

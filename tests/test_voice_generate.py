@@ -589,3 +589,14 @@ def test_talk_uses_same_custom_note():
     assert NOTE in s and voice.NOTE_RULE in s and s.index("[사용자가 원한 말투]") < s.index("[지킬 것]")
     s = chat.messages({"tone": voice.CUSTOM, "tone_note": NOTE, "text": "오늘 너무 슬펐어"}, ["무거운 날"])[0]["content"]
     assert NOTE not in s and "[말투] 다정하게" in s
+
+
+def test_too_long_twice_is_cut_at_sentence_not_safe_line(fake):
+    """길이만 두 번 넘으면 기본 문장 대신 300자 안의 마지막 문장까지(2026-10-30). 다른 문제가 섞이면 예전처럼 기본 문장."""
+    long = "팀 세 곳을 찾아보기로 한 마음이 오늘 기록에 그대로 남아 있어요. " * 8
+    fake["answers"] = [{"message": long, "next_question": ""}]
+    r = voice.generate(ctx(tone="다정하게"))
+    assert r["checks"][-1] == {"attempt": "자름", "problems": []}
+    assert len(r["message"]) <= checks.MAX_LEN and r["message"].endswith("요.") and r["message"] in long
+    assert checks.cut_to_len("가" * 400) is None
+

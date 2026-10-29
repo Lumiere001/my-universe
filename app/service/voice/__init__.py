@@ -278,6 +278,9 @@ def _lines(xs):
     return "\n".join(f"- {x}" for x in xs)
 
 
+DISLIKED_CUT = 100   # '별로' 받은 한마디에서 금지 목록에 넣는 끝부분 글자 수
+
+
 def build_messages(ctx, kind, sit, suggest, avoid=()):
     """v8.json 의 말투 · 규칙 문장으로 시스템 프롬프트를, ctx 로 사용자 입력을 만든다."""
     o = _o()
@@ -293,7 +296,9 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
         sys.append(f"[팩폭 세기] {fb['strength']}")
     sys.append("[지킬 것]\n" + _lines(rules))
     if ctx.get("disliked"):   # 개인 금지(온톨로지 feedback '별로': 그 말은 다시 쓰지 않는다)
-        sys.append("[이 사람이 '별로'라고 한 한마디 — 같은 말 · 비슷한 말투와 내용으로 다시 쓰지 않는다]\n" + _lines(ctx["disliked"]))
+        # 끝부분만(맺는 말 · 제안이 주로 거기): 통째로 넣으면 한마디가 따라 길어져 300자를 넘고 기본 문장으로 떨어졌다(2026-10-30 E 3/24)
+        tails = [("…" + d[-DISLIKED_CUT:]) if len(d) > DISLIKED_CUT else d for d in ctx["disliked"]]
+        sys.append("[이 사람이 '별로'라고 한 한마디의 끝부분 — 같은 말 · 비슷한 말투로 다시 쓰지 않는다. 길이 규칙은 그대로]\n" + _lines(tails))
 
     # 상황별 지시. v8.json 에 있는 문장은 거기서 읽고, 없는 상황(늦은 밤 · 복잡한 날 · 쉼)만 여기 적는다.
     sl = []
@@ -399,9 +404,10 @@ def generate(ctx):
         if kind not in ("commitment", "open_question", "widen") or (kind == "widen" and not nq):
             nq = base_question(kind, ctx)  # 정해 둔 질문(날씨 · 되고 싶은 모습 · 첫 만남)은 그대로
         # 제안 빈도는 선호라 검사로 막지 않는다. 무거운 날만 제안을 막는다(checks.problems).
-        probs = checks.problems(msg, nq, sources=_sources(ctx), past=ctx.get("past_messages"),
-                                comfort=comfort, aspiration=bool(ctx.get("aspiration")),
-                                gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")))
+        check = lambda m: checks.problems(m, nq, sources=_sources(ctx), past=ctx.get("past_messages"),   # noqa: E731
+                                          comfort=comfort, aspiration=bool(ctx.get("aspiration")),
+                                          gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")))
+        probs = check(msg)
         entry = {"attempt": attempt, "problems": probs}
         # 팩폭(오늘은 살살 포함) · 사용자 말투 바람을 쓴 말은 코드 검사를 지나도 넘지 않는 선을 LLM 으로 한 번 더
         if not probs and (ctx.get("tone") == "팩폭" or custom_note(ctx, sit)):
@@ -414,6 +420,13 @@ def generate(ctx):
         if not probs or entry.get("crisis_judge") == "판정 실패":   # 위기 판정을 못 하면 다시 만들어도 못 믿는다
             break
         avoid = probs
+    llm_checked = ctx.get("tone") == "팩폭" or custom_note(ctx, sit) or ctx.get("crisis")
+    if probs and not llm_checked and all(p.startswith("너무 김") for p in probs):
+        # 길이만 넘었으면 기본 문장 대신 300자 안의 마지막 문장까지(2026-10-30: 긴 글에서 두 번 다 넘어 기본 문장으로 떨어지던 것)
+        cut = checks.cut_to_len(msg)
+        if cut and not check(cut):
+            msg, probs = cut, []
+            log.append({"attempt": "자름", "problems": []})
     if probs:   # 두 번 다 문제거나 위기 한마디 판정 실패 → 안전한 기본 문장(위기 글은 위로 문장)
         tone = ctx.get("tone") if (ctx.get("tone"), comfort) in SAFE else "다정하게"
         opts = CRISIS_SAFE.get(ctx.get("tone"), CRISIS_SAFE["다정하게"]) if ctx.get("crisis") else SAFE[(tone, comfort)]

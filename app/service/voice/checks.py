@@ -110,6 +110,13 @@ def repeat_problems(text, past):
 MAX_LEN = 300  # 한마디는 짧게(2~4문장)
 
 
+def cut_to_len(msg, n=MAX_LEN):
+    """길이만 넘었을 때: n 자 안의 마지막 문장 끝(. ? ! …)까지 자른다. 앞의 3분의 1도 못 남기면 None(기본 문장으로)."""
+    head = msg[:n]
+    i = max(head.rfind(c) for c in ".?!…")
+    return head[: i + 1].strip() if i >= n // 3 else None
+
+
 def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False):
     """생성된 한마디 · 다음 질문의 문제 목록. crisis: 위기 글(기관 · 연락처 안내도 막음)."""
     both = f"{msg}\n{next_q}"
