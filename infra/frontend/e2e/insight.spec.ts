@@ -140,3 +140,35 @@ test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 
   await page.getByRole("group", { name: "우주 도구" }).getByRole("link", { name: "알게 된 것" }).click();
   await expect(page.locator("main").getByRole("alert")).toHaveText("알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
 });
+
+test("점선 카드에서 맞아요 · 아니에요(사용자가 매긴 정답) · 바뀐 설정 알림", async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  const data = structuredClone(two);
+  data.suns[0].open = data.suns[0].open.map((p, i) => ({ ...p, rid: `r${i}` }));   // 서버는 관계 id(rid)를 함께 준다
+  await fake(page, data);
+  await page.addInitScript(() => {   // 반응이 쌓여 서버가 그 사람 설정을 한 칸 옮긴 뒤(가짜)
+    (window as unknown as { __pref: unknown }).__pref = [{ id: "p1", at: "2026-10-30T09:00:00+09:00", setting: "cross_links",
+      from: "눌렀을 때", to: "숨김", reason: "다른 영역과 이어진 선에 '아니에요'를 자주 눌렀어요." }];
+  });
+  await page.goto("/insight");
+  await expect(page.getByText("2026년 7월 1일 ~ 10월 25일에 남긴 기록 19편에서")).toBeVisible();
+  const note = page.getByRole("status").filter({ hasText: "내 반응에 맞춰 설정을 바꿨어요" });
+  await expect(note).toContainText("다른 영역과 이어진 선 보이기: 눌렀을 때 → 숨김");
+  await page.screenshot({ path: `${OUT}/${info.project.name}-07-notice.png` });
+  await note.getByRole("button", { name: "되돌리기" }).click();                 // 되돌리면 알림이 닫힌다(휴대폰에서는 아래 카드를 가리므로 먼저)
+  await expect(note).toHaveCount(0);
+  await pick(page, "맞서는").click();
+  const cards = shown(page).locator(".ins-card");
+  const n = await cards.count();
+  await expect(cards.first().getByRole("group", { name: "이 연결이 맞나요?" })).toBeVisible();
+  await cards.first().getByRole("button", { name: "맞아요" }).click();
+  await expect(cards.first()).toContainText("실선 · 글에 직접 씀");               // 맞아요 → 실선, 버튼은 사라짐
+  await expect(cards.first().getByRole("group", { name: "이 연결이 맞나요?" })).toHaveCount(0);
+  await cards.nth(1).getByRole("button", { name: "아니에요" }).click();
+  await expect(cards).toHaveCount(n - 1);                                       // 아니에요 → 카드가 빠지고 탭 숫자도 준다
+  await expect(pick(page, "맞서는")).toContainText(String(n - 1));
+  await page.screenshot({ path: `${OUT}/${info.project.name}-08-card-check.png` });
+  expect(errors).toEqual([]);
+});
+

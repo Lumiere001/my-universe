@@ -280,6 +280,53 @@ def eval_results(base=None, keep=5):
     return out or None
 
 
+PERSONAL_MIN = 5   # ponytail: 사람 하나의 비율을 믿을 최소 반응 수(근거 없음). 파일럿 반응이 쌓이면 다시 정한다
+FIXES = ("고침", "옮김", "합침")
+
+
+def _rate(rows, good, bad):
+    g, b = sum(r["value"] in good for r in rows), sum(r["value"] in bad for r in rows)
+    return round(g / (g + b), 3) if g + b >= PERSONAL_MIN else None
+
+
+def personal(feedback, entries, today, window=14):
+    """개인 지표(2026-10-30, 개인 고리의 '재기'): 사람마다 그 사람 반응으로만. 최근 window 일(now)과 그 전(before)을 따로 →
+    links_yes = AI 추정 선 '맞아요' 비율, dislike = 한마디 '별로' 비율, fixes = 끝난 글 10편당 고침 · 옮김 · 합침(AI 정리를 고친 수).
+    반응이 PERSONAL_MIN 보다 적으면 None(믿기 어려움). 원문은 쓰지 않는다(값 · 대상 종류 · 시각만)."""
+    cut = today - timedelta(days=window)
+    by = defaultdict(lambda: {"fb": [], "done": 0})
+    for f in feedback:
+        by[str(f["user_id"])]["fb"].append(f)
+    for e in entries:
+        if e.get("status") == "done":
+            by[str(e["user_id"])]["done"] += 1
+    out = {}
+    for u, d in by.items():
+        now_ = [f for f in d["fb"] if _day(f["created_at"]) >= cut]
+        old = [f for f in d["fb"] if _day(f["created_at"]) < cut]
+        rel = lambda xs: [f for f in xs if f["target"] == "relation"]   # noqa: E731
+        msg = lambda xs: [f for f in xs if f["target"] == "message"]   # noqa: E731
+        out[u] = {"links_yes": {"now": _rate(rel(now_), ("맞아요",), ("아니에요",)), "before": _rate(rel(old), ("맞아요",), ("아니에요",))},
+                  "dislike": {"now": _rate(msg(now_), ("별로",), ("좋아요",)), "before": _rate(msg(old), ("별로",), ("좋아요",))},
+                  "fixes": round(10 * sum(f["value"] in FIXES for f in d["fb"]) / d["done"], 1) if d["done"] else None}
+    return out
+
+
+def personal_spread(per, drop=0.15):
+    """운영은 사람을 하나하나 보지 않고 분포만 본다: 지표마다 잴 수 있는 사람 수 · 중앙값 · 자기 기준보다 나빠진 사람 수(drop 이상)."""
+    def med(xs):
+        xs = sorted(xs)
+        return round((xs[len(xs) // 2] + xs[(len(xs) - 1) // 2]) / 2, 3) if xs else None
+    out = {}
+    for key, worse in (("links_yes", lambda n, b: n <= b - drop), ("dislike", lambda n, b: n >= b + drop)):
+        vals = [p[key] for p in per.values() if p[key]["now"] is not None]
+        out[key] = {"users": len(vals), "median": med([v["now"] for v in vals]),
+                    "worse": sum(v["before"] is not None and worse(v["now"], v["before"]) for v in vals)}
+    fx = [p["fixes"] for p in per.values() if p["fixes"] is not None]
+    out["fixes"] = {"users": len(fx), "median": med(fx)}
+    return out
+
+
 def summary(r, version, budget, now=None):
     """운영 화면 한 장. r = reader(repo). 원문 0건(숫자 · 코드 · id · 시각만)."""
     now = now or datetime.now(timezone.utc)
@@ -304,6 +351,7 @@ def summary(r, version, budget, now=None):
         "talk": talk(runs, now),
         "voice": voice(msgs, runs, fb, days, today),
         "other_values": other_counts(r.rows("thoughts")),
+        "personal": personal_spread(personal(fb, entries, today)),
         "feedback_text": {"consented": sum(str(f["user_id"]) in readers and f["value"] == "불편한 점 한 줄" for f in fb),
                           "not_consented": sum(str(f["user_id"]) not in readers and f["value"] == "불편한 점 한 줄" for f in fb)},
     }
@@ -384,6 +432,40 @@ def pref_signals(s, since=None):
     said = [f for f in msg if sug.get(f["target_id"])]
     return {"cross_links": (sum(f["value"] == "맞아요" for f in pick), sum(f["value"] == "아니에요" for f in pick)),
             "suggestions": (sum(f["value"] == "좋아요" for f in said), sum(f["value"] == "별로" for f in said))}
+
+
+def auto_pref(s):
+    """개인 고리(2026-10-30): 반응이 한쪽으로 쌓이면(pref_suggestions) 묻지 않고 그 사람 설정을 한 칸 옮기고, 알림(pref_auto)을 남긴다.
+    사용자는 알림에서 되돌릴 수 있다. 다이얼마다 옮긴 뒤의 반응만 다시 센다(pref_seen_by — 같은 반응으로 거듭 옮기지 않게,
+    한 다이얼을 옮겨도 다른 다이얼에 쌓인 반응은 그대로). → 이번에 옮긴 것 목록."""
+    st, ob = diary.profile(s)
+    seen = ob.get("pref_seen_by") or {}
+    moves = []
+    for key in STEPS:
+        since = seen.get(key) or ob.get("pref_seen")
+        moves += pref_suggestions(st, {key: pref_signals(s, diary.parse_dt(since) if since else None)[key]})
+    if not moves:
+        return []
+    at = diary.now().isoformat()
+    notes = [{**m, "id": diary.new_id("p"), "at": at, "seen": False} for m in moves]
+    diary.save_profile(s, settings={m["setting"]: m["to"] for m in moves},
+                       onboarding={"pref_seen_by": {**seen, **{m["setting"]: at for m in moves}},
+                                   "pref_auto": (ob.get("pref_auto") or [])[-9:] + notes})
+    return notes
+
+
+def pref_undo(s, note_id):
+    """알림 하나 되돌리기: 설정이 아직 그 값이면 원래 값으로, 알림은 본 것으로. 그 다이얼은 되돌린 뒤의 반응만 다시 센다."""
+    st, ob = diary.profile(s)
+    notes = ob.get("pref_auto") or []
+    n = next((x for x in notes if x["id"] == note_id), None)
+    if not n:
+        return None
+    back = {n["setting"]: n["from"]} if st.get(n["setting"]) == n["to"] else {}
+    marks = [{**x, "seen": True, "undone": True} if x["id"] == note_id else x for x in notes]
+    diary.save_profile(s, settings=back, onboarding={"pref_auto": marks, "pref_seen_by": {
+        **(ob.get("pref_seen_by") or {}), n["setting"]: diary.now().isoformat()}})
+    return {**n, "undone": True}
 
 
 def pref_suggestions(settings, signals):

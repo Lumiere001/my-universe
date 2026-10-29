@@ -87,6 +87,22 @@ export default function OpsPage() {
           rows={Object.entries(s.satisfaction.by_config).map(([k, v]) => [k, v["맞아요"] ?? 0, v["아니에요"] ?? 0, v["좋아요"] ?? 0, v["별로"] ?? 0])} />
       </section>
 
+      {s.personal && (
+        <section className="card stack" aria-label="사람마다 · 개인 지표">
+          <h2 style={{ margin: 0 }}>사람마다 · 개인 지표 <span className="sub">(분포만, 사람별 값은 보지 않아요)</span></h2>
+          <div className="row">
+            <Stat label="AI 추정 선 맞아요 (중앙값)" value={pct(s.personal.links_yes.median)}
+              note={`${s.personal.links_yes.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.links_yes.worse}명`} />
+            <Stat label="한마디 별로 (중앙값)" value={pct(s.personal.dislike.median)}
+              note={`${s.personal.dislike.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.dislike.worse}명`} />
+            <Stat label="글 10편당 고친 수 (중앙값)" value={s.personal.fixes.median ?? "—"} note={`${s.personal.fixes.users}명 · 고침 · 옮김 · 합침`} />
+          </div>
+          <p className="sub" style={{ margin: 0 }}>
+            반응이 5번 넘게 쌓인 사람만 셉니다. 나빠진 사람 = 최근 14일이 그 전보다 15%p 이상 나쁨. 사람마다 설정은 반응에 맞춰 자동으로 한 칸씩 바뀌고(되돌리기 가능), 여기서는 그 고리가 잘 도는지만 봅니다.
+          </p>
+        </section>
+      )}
+
       <section className="card stack" aria-label="말 걸기 · 대화">
         <h2 style={{ margin: 0 }}>말 걸기 · 대화</h2>
         <div className="row">

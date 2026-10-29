@@ -369,22 +369,59 @@ def test_pref_suggestions_rules():
 
 
 def test_pref_suggestions_api(c, env):  # noqa: F811
+    """개인 고리(2026-10-30): 반응이 한쪽으로 3번 이상 쌓이면 묻지 않고 그 사람 설정을 한 칸 옮기고 알린다. 되돌리기 · 본 것으로 하기."""
     res = _fill(c)
-    assert c.get("/settings/suggestions", headers=H1).json() == {"suggestions": []}
+    assert c.get("/settings/suggestions", headers=H1).json() == {"suggestions": [], "applied": []}
     with env.repo.session(U1) as s:
         s.update("messages", {"suggested": True})
         ts = s.rows("thoughts")
         s.update("thoughts", {"sun_id": "d_other"}, id=ts[0]["id"])   # 두 생각이 다른 해 → 영역을 넘는 관계
         for _ in range(3):
             diary.add_feedback(s, "relation", f"{ts[0]['id']}>{ts[-1]['id']}", "아니에요")
+    first = c.post("/feedback", headers=H1, json={"target": "message", "target_id": res["id"], "value": "별로"}).json()
+    assert [(x["setting"], x["to"]) for x in first["tuned"]] == [("cross_links", "숨김")]   # 누르는 순간 그 사람 것만 한 칸
     for _ in range(2):
         c.post("/feedback", headers=H1, json={"target": "message", "target_id": res["id"], "value": "별로"})
-    got = c.get("/settings/suggestions", headers=H1).json()["suggestions"]
+    got = c.get("/settings/suggestions", headers=H1).json()["applied"]
     assert [(x["setting"], x["from"], x["to"]) for x in got] == [("cross_links", "눌렀을 때", "숨김"), ("suggestions", "보통", "적게")]
-    assert got[0]["reason"].endswith("자주 눌렀어요.")
+    assert got[0]["reason"].endswith("자주 눌렀어요.")   # 한 다이얼을 옮겨도 다른 다이얼에 쌓인 반응은 그대로
+    with env.repo.session(U1) as s:
+        assert diary.profile(s)[0]["cross_links"] == "숨김"
+    undo = c.post(f"/settings/suggestions/{got[0]['id']}/undo", headers=H1).json()
+    assert undo["settings"]["cross_links"] == "눌렀을 때" and undo["settings"]["suggestions"] == "적게"
+    assert [x["setting"] for x in c.get("/settings/suggestions", headers=H1).json()["applied"]] == ["suggestions"]
     assert c.post("/settings/suggestions/seen", headers=H1).json() == {"ok": True}
-    assert c.get("/settings/suggestions", headers=H1).json() == {"suggestions": []}   # 본 뒤의 피드백만 다시 셈
-    assert c.get("/settings/suggestions", headers=H2).json() == {"suggestions": []}   # 남의 피드백과 상관없음
+    assert c.get("/settings/suggestions", headers=H1).json()["applied"] == []
+    assert c.post("/feedback", headers=H1, json={"target": "message", "target_id": res["id"], "value": "별로"}).json()["tuned"] == []
+    assert c.get("/settings/suggestions", headers=H2).json()["applied"] == []   # 남의 피드백과 상관없음
+    assert c.post("/settings/suggestions/nope/undo", headers=H1).status_code == 404
+
+
+def test_personal_loop_two_users_move_apart(c, env):  # noqa: F811
+    """개인 맞춤 Ops: 같은 공통 틀에서 취향이 반대인 두 사람 — 각자 누른 반응대로 각자 설정만 반대쪽으로 한 칸씩 옮겨지고(알림도 각자),
+    운영 화면에는 사람 id 없이 분포만 나온다."""
+    res1 = _fill(c)                                                   # U1: 아니에요 1 · 별로 1 이미 있음
+    _, ev = write(c, *DAY2, "2026-10-04T22:00:00+09:00", h=H2)
+    res2 = ev[-1][1]
+    for uid, value, n in ((U1, "아니에요", 4), (U2, "맞아요", 5)):     # 영역을 넘는 선에 U1 은 '아니에요', U2 는 '맞아요'
+        with env.repo.session(uid) as s:
+            s.update("messages", {"suggested": True})
+            ts = s.rows("thoughts")
+            s.update("thoughts", {"sun_id": "d_other"}, id=ts[0]["id"])
+            for _ in range(n):
+                diary.add_feedback(s, "relation", f"{ts[0]['id']}>{ts[-1]['id']}", value)
+    for h, res, value in ((H1, res1, "별로"), (H2, res2, "좋아요")):   # 제안 든 한마디에 U1 은 '별로', U2 는 '좋아요'
+        for _ in range(3):
+            c.post("/feedback", headers=h, json={"target": "message", "target_id": res["id"], "value": value})
+    want = {U1: {"cross_links": "숨김", "suggestions": "적게"}, U2: {"cross_links": "항상", "suggestions": "많이"}}
+    for uid, h in ((U1, H1), (U2, H2)):
+        with env.repo.session(uid) as s:
+            st = diary.profile(s)[0]
+        assert {k: st[k] for k in want[uid]} == want[uid]              # 같은 틀, 반대 방향 — 사람마다 따로
+        assert {x["setting"] for x in c.get("/settings/suggestions", headers=h).json()["applied"]} == {"cross_links", "suggestions"}
+    personal = c.get("/ops/summary", headers=HA).json()["personal"]
+    assert personal["links_yes"] == {"users": 2, "median": 0.5, "worse": 0} and personal["dislike"]["users"] == 0
+    assert U1 not in json.dumps(personal) and U2 not in json.dumps(personal)
 
 
 ##################################################

@@ -40,7 +40,7 @@ def insight(thoughts, relations, suns=()):
                         for n, v in by_star.items()), key=lambda s: (-s["records"], s["first"], s["name"]))
         mine = [r for r in rels if r["b"].get("domain") == sun and r["a"].get("domain") == sun]
         pair = lambda r: {"star": r["b"]["topic"], "line": r.get("line"), "from": _end(r["a"]), "to": _end(r["b"]),   # noqa: E731
-                          **({"axis": r["axis"]} if r.get("axis") else {})}
+                          "rid": r.get("id"), **({"axis": r["axis"]} if r.get("axis") else {})}
         kept = {}
         for r in mine:
             if r["type"] == "이어짐":
@@ -54,7 +54,8 @@ def insight(thoughts, relations, suns=()):
                     "changed": [pair(r) for r in mine if r["type"] == "바뀜"],
                     "open": [pair(r) for r in mine if r["type"] == "긴장" and not {r["a"]["id"], r["b"]["id"]} & resolved],
                     "settled": [pair(r) for r in mine if r["type"] == "해소"]})
-    across = [{"type": r["type"], "suns": [r["a"]["domain"], r["b"]["domain"]], "from": _end(r["a"]), "to": _end(r["b"])}
+    across = [{"type": r["type"], "suns": [r["a"]["domain"], r["b"]["domain"]], "from": _end(r["a"]), "to": _end(r["b"]),
+               "rid": r.get("id"), "line": r.get("line")}
               for r in rels if r["a"].get("domain") != r["b"].get("domain")
               and {r["a"].get("domain"), r["b"].get("domain")} <= set(shown)]
     return {"period": {"from": days[0], "to": days[-1], "records": len({t["record_id"] for t in thoughts.values()})},

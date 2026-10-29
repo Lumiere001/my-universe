@@ -147,16 +147,27 @@ def ops_summarize(days: int = Days, admin=Depends(get_admin), repo=Depends(get_r
 # 선호 맞추기 제안(사용자)
 ##################################################
 
-@router.get("/settings/suggestions", tags=["나"], summary="내 피드백으로 본 '이 설정으로 바꿀까요?'(영역 넘는 선 · 제안 빈도)")
+@router.get("/settings/suggestions", tags=["나"], summary="내 반응으로 자동으로 바꾼 설정 알림(아직 안 본 것) — 되돌릴 수 있음")
 def settings_suggestions(user=Depends(get_user), repo=Depends(get_repo)):
+    """개인 고리(2026-10-30): 예전에는 '이 설정으로 바꿀까요?'를 물었고, 이제는 반응을 누를 때(POST /feedback) 한 칸 바로 옮기고
+    여기서 알린다. suggestions 는 옛 화면 호환으로 빈 목록."""
     with repo.session(user["id"]) as s:
-        st, ob = diary.profile(s)
-        since = diary.parse_dt(ob["pref_seen"]) if ob.get("pref_seen") else None
-        return {"suggestions": ops.pref_suggestions(st, ops.pref_signals(s, since))}
+        ob = diary.profile(s)[1]
+        return {"suggestions": [], "applied": [n for n in ob.get("pref_auto") or [] if not n.get("seen")]}
 
 
-@router.post("/settings/suggestions/seen", tags=["나"], summary="제안을 보고 골랐음(바꿨든 그대로 뒀든). 이 뒤의 피드백만 다시 셈")
+@router.post("/settings/suggestions/seen", tags=["나"], summary="알림을 봤음(바꾼 그대로 두기)")
 def settings_suggestions_seen(user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
-        diary.save_profile(s, onboarding={"pref_seen": diary.now().isoformat()})
+        ob = diary.profile(s)[1]
+        diary.save_profile(s, onboarding={"pref_auto": [{**n, "seen": True} for n in ob.get("pref_auto") or []]})
     return {"ok": True}
+
+
+@router.post("/settings/suggestions/{note_id}/undo", tags=["나"], summary="자동으로 바꾼 설정 하나 되돌리기")
+def settings_suggestions_undo(note_id: str, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        n = ops.pref_undo(s, note_id)
+        if not n:
+            raise ApiError(404, "not_found", "되돌릴 알림을 찾지 못했어요. 화면을 새로 고쳐 주세요.")
+        return {"ok": True, "undone": n, "settings": diary.profile(s)[0]}

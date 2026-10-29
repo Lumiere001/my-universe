@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
 import { KeeperNameField, KEEPER, rememberSettings } from "@/components/Keeper";
-import PrefSuggest from "@/components/PrefSuggest";   // WS22
 import { OneLine } from "@/components/ResultCard";
 import { KEEPER_LOOKS, KEEPER_SVG, THEME_NAMES, THEMES, themeOf } from "@/components/universeLook";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, why, type Settings, type Tone } from "@/lib/api";
@@ -89,7 +88,6 @@ export default function SettingsPage() {
       <p className="sub">별지기의 말투와 우주 보기를 내게 맞게 바꿔요.</p>
       {msg && <p className="toast" role="status">{msg}</p>}
       {fail && <p className="err" role="alert">{fail}</p>}
-      <PrefSuggest onApply={async (p) => { await save(p); }} />
 
       <div className="set">
         <div className="set-nav" role="group" aria-label="설정 묶음">

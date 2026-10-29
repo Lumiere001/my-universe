@@ -2,11 +2,12 @@
 // 나에 대해 알게 된 것(docs/content/U-11): GET /insight 를 해마다 — 자주 쓴 주제(작은 별) | 바뀐 · 맞서는 · 정리된 · 이어 온 · 다른 영역과 이어진 생각.
 // AI 요약 · 판정 없이 날짜와 원문 인용만(서버 app/service/rules/insight.py). 날짜를 누르면 그 기록(/history?id=).
 // 한 화면: PC 두 칸 · 휴대폰 위아래, 목록은 그 칸 안에서만 넘긴다. 묶음은 한 줄 고르기(탭), 처음에는 내용이 있는 첫 묶음.
+// 점선(AI 추정) 카드에는 '이 연결이 맞나요? 맞아요 · 아니에요'(우주의 점선과 같은 POST /feedback) — 사용자가 매긴 정답이 개인 고리로 간다.
 import Link from "next/link";
 import { useState } from "react";
 import { unquote } from "@/components/ResultCard";
 import { CONFLICT } from "@/components/universeLook";
-import { getInsight, type InsightEnd, type InsightPair } from "@/lib/api";
+import { getInsight, sendFeedback, type InsightEnd, type InsightPair } from "@/lib/api";
 import { useKindName, useLoad } from "@/lib/use";
 
 const LINE = { 실선: "실선 · 글에 직접 씀", 점선: "점선 · AI 추정" };
@@ -24,18 +25,30 @@ function End({ e, label, year, o }: { e: InsightEnd; label?: string; year: strin
   );
 }
 
-function Card({ title, meta, line, children }: { title: React.ReactNode; meta?: string; line?: keyof typeof LINE | null; children: React.ReactNode }) {
+type Said = Record<string, "맞아요" | "아니에요">;
+type Say = (rid: string, v: "맞아요" | "아니에요") => void;
+
+function Card({ title, meta, line, rid, said, onSay, children }: { title: React.ReactNode; meta?: string; line?: keyof typeof LINE | null;
+  rid?: string | null; said?: Said; onSay?: Say; children: React.ReactNode }) {
+  const shown = rid && said?.[rid] === "맞아요" ? "실선" : line;   // 맞아요 → 실선(우주와 같음)
   return (
     <li className="ins-card">
-      <div className="ins-card-head">{title}{meta && <span className="sub">{meta}</span>}{line && <span className="badge">{LINE[line]}</span>}</div>
+      <div className="ins-card-head">{title}{meta && <span className="sub">{meta}</span>}{shown && <span className="badge">{LINE[shown]}</span>}</div>
       {children}
+      {shown === "점선" && rid && onSay && (
+        <div className="ins-check" role="group" aria-label="이 연결이 맞나요?">
+          <span className="sub">이 연결이 맞나요?</span>
+          <button className="small" onClick={() => onSay(rid, "맞아요")}>맞아요</button>
+          <button className="small" onClick={() => onSay(rid, "아니에요")}>아니에요</button>
+        </div>
+      )}
     </li>
   );
 }
 
-function Pair({ p, labels, year, o }: { p: InsightPair; labels?: [string, string]; year: string; o?: boolean }) {
+function Pair({ p, labels, year, o, said, onSay }: { p: InsightPair; labels?: [string, string]; year: string; o?: boolean; said: Said; onSay: Say }) {
   return (
-    <Card title={<b>{p.star}</b>} meta={p.axis} line={p.line}>
+    <Card title={<b>{p.star}</b>} meta={p.axis} line={p.line} rid={p.rid} said={said} onSay={onSay}>
       <End e={p.from} label={labels?.[0]} year={year} o={o} />
       <End e={p.to} label={labels?.[1]} year={year} o={o} />
     </Card>
@@ -49,6 +62,12 @@ export default function InsightPage() {
   const kindName = useKindName();
   const [pick, setPick] = useState<string | null>(null);
   const [tab, setTab] = useState<string | null>(null);
+  const [said, setSaid] = useState<Said>({});
+  const say: Say = (rid, v) => {
+    setSaid((m) => ({ ...m, [rid]: v }));
+    sendFeedback({ target: "relation", target_id: rid, value: v }).catch(() => setSaid((m) => { const n = { ...m }; delete n[rid]; return n; }));
+  };
+  const keep = (p: { rid?: string | null }) => !(p.rid && said[p.rid] === "아니에요");   // 아니에요 → 그 연결은 지워져 카드도 빠진다
 
   if (err) return <main><p className="err" role="alert">{err}</p></main>;
   if (!data) return <main><p className="sub" role="status">나에 대해 알게 된 것을 불러오는 중…</p></main>;
@@ -69,11 +88,11 @@ export default function InsightPage() {
   const bare = suns.every((s) => !s.kept.length && !s.changed.length && !s.open.length && !s.settled.length) && !across.length;
   const groups: { name: string; tab: string; lead: string; empty: string; items: React.ReactNode[] }[] = [
     { name: "바뀐 생각", tab: "바뀐", lead: "같은 주제에서 예전과 다르게 쓴 생각이에요.", empty: "예전과 다르게 생각한 문장이 나오면 여기에 모여요.",
-      items: sun.changed.map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} labels={["그때", "지금"]} year={year} />) },
+      items: sun.changed.filter(keep).map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} labels={["그때", "지금"]} year={year} said={said} onSay={say} />) },
     { name: "아직 맞서는 생각", tab: "맞서는", lead: "서로 맞서는데 아직 정리한 글이 없는 두 생각이에요.", empty: "지금 서로 맞서 있는 생각은 없어요.",
-      items: sun.open.map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} year={year} o />) },
+      items: sun.open.filter(keep).map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} year={year} o said={said} onSay={say} />) },
     { name: "정리된 생각", tab: "정리된", lead: "맞서던 생각을 나중에 정리한 글이에요.", empty: "맞서던 생각을 정리한 문장이 나오면 여기에 모여요.",
-      items: sun.settled.map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} labels={["그때", "정리"]} year={year} />) },
+      items: sun.settled.filter(keep).map((p) => <Pair key={p.from.thought_id + p.to.thought_id} p={p} labels={["그때", "정리"]} year={year} said={said} onSay={say} />) },
     { name: "이어 온 생각", tab: "이어 온", lead: "같은 주제로 다시 쓴 생각이에요. 처음과 마지막 문장을 보여 드려요.", empty: "같은 주제를 다시 쓰면 이어 온 생각이 여기에 모여요.",
       items: sun.kept.map((k) => (
         <Card key={k.star} title={<b>{k.star}</b>} meta={`${k.times}번 이어졌어요`}>
@@ -81,10 +100,11 @@ export default function InsightPage() {
         </Card>
       )) },
     { name: "다른 영역과 이어진 생각", tab: across1, lead: `${other ?? "다른 해"}의 생각과 이어진 것이에요.`, empty: `${across1} 생각은 아직 없어요.`,
-      items: across.filter((a) => a.suns.includes(sun.name)).map((a) => {
+      items: across.filter((a) => a.suns.includes(sun.name) && keep(a)).map((a) => {
         const o = CONFLICT.has(a.type);
         return (
-          <Card key={a.type + a.from.thought_id + a.to.thought_id} title={<span className={o ? "badge o" : "badge v"}>{a.type}</span>} meta={a.suns.join(" ↔ ")}>
+          <Card key={a.type + a.from.thought_id + a.to.thought_id} title={<span className={o ? "badge o" : "badge v"}>{a.type}</span>} meta={a.suns.join(" ↔ ")}
+            line={a.line} rid={a.rid} said={said} onSay={say}>
             <End e={a.from} label={a.suns[0]} year={year} o={o} /><End e={a.to} label={a.suns[1]} year={year} o={o} />
           </Card>
         );

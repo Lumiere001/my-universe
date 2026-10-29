@@ -652,6 +652,8 @@ main.ins { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-d
 .ins-when { color: var(--faint); font-size: .84rem; line-height: 1.7; white-space: nowrap; }
 .ins-q p { margin: 0; border-left: 2px solid var(--accent); padding-left: 12px; line-height: 1.65; color: #dcdcdc; }
 .ins-q.o p { border-color: var(--orange); }
+.ins-check { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.ins-check .sub { font-size: .84rem; margin-right: auto; }
 @media (max-width: 899px) {
   main.ins { height: calc(100dvh - 49px - 64px - env(safe-area-inset-bottom)); padding: 10px 16px 6px; gap: 6px; }
   .ins-head h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -672,3 +674,12 @@ main.ins { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-d
   main.ins { height: auto; }
   .ins-stars, .ins-list { overflow: visible; max-height: none; }
 }
+
+/* 내 반응에 맞춰 바꾼 설정(components/PrefNotice, docs/content/C-01): 반응을 누른 화면 위에 떠서 알리고 되돌리기. 아래 막대를 가리지 않게 */
+.pref-note { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: min(380px, calc(100vw - 32px)); margin: 0; gap: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+.pref-note h2 { margin: 0; font-size: .95rem; }
+.pref-item { display: flex; align-items: flex-start; gap: 10px; }
+.pref-item p { margin: 0; flex: 1; font-size: .9rem; }
+.pref-note > .primary { align-self: flex-end; }
+@media (max-width: 899px) { .pref-note { right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); } }

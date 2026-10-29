@@ -247,14 +247,14 @@ export async function getUniverse(): Promise<Universe> {
 }
 // 나에 대해 알게 된 것(docs/api-v8.md §2, 서버 app/service/rules/insight.py): 코드가 묶은 것, 날짜와 원문 인용만
 export type InsightEnd = { day: string; quote: string; record_id: string; thought_id: string };
-export type InsightPair = { star: string; line: "실선" | "점선" | null; from: InsightEnd; to: InsightEnd; axis?: string };
+export type InsightPair = { star: string; line: "실선" | "점선" | null; from: InsightEnd; to: InsightEnd; axis?: string; rid?: string | null };
 export type Insight = {
   period: { from: string; to: string; records: number } | null;
   suns: { name: string; records: number;
     stars: { name: string; records: number; first: string; last: string; kinds: Record<string, number> }[];
     kept: { star: string; times: number; from: InsightEnd; to: InsightEnd }[];
     changed: InsightPair[]; open: InsightPair[]; settled: InsightPair[] }[];
-  across: { type: string; suns: [string, string]; from: InsightEnd; to: InsightEnd }[];
+  across: { type: string; suns: [string, string]; from: InsightEnd; to: InsightEnd; rid?: string | null; line?: "실선" | "점선" | null }[];
 };
 export async function getInsight(): Promise<Insight> {
   return MOCK ? (await mock()).getInsight() : json("GET", "/insight");
@@ -264,8 +264,11 @@ export async function getOntology(): Promise<Ontology> {
 }
 
 /* ---------- 피드백 ---------- */
-export async function sendFeedback(f: Feedback): Promise<{ ok: boolean; state: unknown }> {
-  return MOCK ? (await mock()).sendFeedback(f) : json("POST", "/feedback", f);
+// tuned = 이 반응으로 서버가 그 사람 설정을 한 칸 옮김(개인 고리) → 알림(PrefNotice)을 다시 불러오게 알린다
+export async function sendFeedback(f: Feedback): Promise<{ ok: boolean; state: unknown; tuned?: PrefNote[] }> {
+  const r: { ok: boolean; state: unknown; tuned?: PrefNote[] } = MOCK ? await (await mock()).sendFeedback(f) : await json("POST", "/feedback", f);
+  if (r.tuned?.length && typeof window !== "undefined") window.dispatchEvent(new Event("pref-tuned"));
+  return r;
 }
 
 /* ---------- 사람 ---------- */
@@ -473,6 +476,9 @@ export type OpsSummary = {
     next_day_with_suggestion: NextDay; next_day_without_suggestion: NextDay };
   other_values: { thoughts: number; kind: number; certainty: number; value: number };
   feedback_text: { consented: number; not_consented: number };
+  // 개인 지표(사람마다 그 사람 반응으로) — 운영에는 분포만: 잴 수 있는 사람 수 · 중앙값 · 자기 기준보다 나빠진 사람 수
+  personal?: { links_yes: { users: number; median: number | null; worse: number }; dislike: { users: number; median: number | null; worse: number };
+    fixes: { users: number; median: number | null } };
 };
 export type OpsFeedback = { days: number; wrong: boolean; users: number;
   items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null }[];
@@ -480,6 +486,7 @@ export type OpsFeedback = { days: number; wrong: boolean; users: number;
 export type OpsDigest = { days: number; users: number; lines: string[]; est_usd: number;
   groups: { reason: string; items: number[]; count: number; fix_where: string; suggestion: string }[] };
 export type PrefSuggestion = { setting: "cross_links" | "suggestions"; from: string; to: string; reason: string };
+export type PrefNote = PrefSuggestion & { id: string; at: string; seen?: boolean };
 const mockOps = () => import("./mock-ops");
 export async function getOpsSummary(): Promise<OpsSummary> {
   return MOCK ? (await mockOps()).summary : json("GET", "/ops/summary");
@@ -491,11 +498,18 @@ export async function getOpsFeedback(days = 30): Promise<OpsFeedback> {
 export async function summarizeFeedback(days = 30): Promise<OpsDigest> {
   return MOCK ? (await mockOps()).digest : json("POST", `/ops/feedback/summarize?days=${days}`);
 }
-export async function getPrefSuggestions(): Promise<{ suggestions: PrefSuggestion[] }> {
-  return MOCK ? { suggestions: [] } : json("GET", "/settings/suggestions");
+// 내 반응으로 자동으로 바꾼 설정 알림(아직 안 본 것). 가짜 데이터는 window.__pref(e2e 가 넣음)
+const mockPref = () => ((globalThis as { __pref?: PrefNote[] }).__pref ??= []);
+export async function getPrefSuggestions(): Promise<{ suggestions: PrefSuggestion[]; applied: PrefNote[] }> {
+  return MOCK ? { suggestions: [], applied: mockPref().filter((x) => !x.seen) } : json("GET", "/settings/suggestions");
 }
 export async function markPrefSeen(): Promise<{ ok: boolean }> {
-  return MOCK ? { ok: true } : json("POST", "/settings/suggestions/seen");
+  if (MOCK) { mockPref().forEach((x) => { x.seen = true; }); return { ok: true }; }
+  return json("POST", "/settings/suggestions/seen");
+}
+export async function undoPref(id: string): Promise<{ ok: boolean }> {
+  if (MOCK) { mockPref().forEach((x) => { if (x.id === id) x.seen = true; }); return { ok: true }; }
+  return json("POST", `/settings/suggestions/${encodeURIComponent(id)}/undo`);
 }
 
 /* ---------- 말로 쓰기 · 읽어 주기 (WS21, docs/api-v8.md §10) ---------- */

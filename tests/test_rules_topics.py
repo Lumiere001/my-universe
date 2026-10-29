@@ -116,7 +116,7 @@ def test_insight_groups_by_sun_and_star_with_quotes(monkeypatch):
                                T("c", "r3", "2026-10-01", "회사 고르기", "커리어"), T("d", "r2", "2026-09-01", "부모님", "인간관계"),
                                T("e", "r4", "2026-09-05", "산책", "그 밖")]}
     rels = [{"type": "이어짐", "from": "a", "to": "b"}, {"type": "바뀜", "from": "a", "to": "c", "line": "실선"},
-            {"type": "긴장", "from": "b", "to": "d"}]
+            {"id": "b>d", "type": "긴장", "from": "b", "to": "d", "line": "점선"}]
     out = insight(ts, rels)
     assert out["period"] == {"from": "2026-08-01", "to": "2026-10-01", "records": 4}
     career, people = out["suns"]
@@ -125,7 +125,7 @@ def test_insight_groups_by_sun_and_star_with_quotes(monkeypatch):
                                   "kinds": {"해석": 3}}
     assert career["kept"][0]["times"] == 1 and career["changed"][0]["to"]["quote"] == "c 인용"
     assert out["across"] == [{"type": "긴장", "suns": ["커리어", "인간관계"], "from": _end(ts["b"]),
-                              "to": _end(ts["d"])}]
+                              "to": _end(ts["d"]), "rid": "b>d", "line": "점선"}]   # 카드에서 맞아요 · 아니에요를 누를 관계 id
 
 
 def test_insight_resolution_closes_only_the_earlier_side():

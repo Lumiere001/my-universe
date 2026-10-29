@@ -377,7 +377,10 @@ def speak(state, ctx):
     day = diary.today()
     with ctx.repo.session(ctx.uid) as s:
         settings, onboarding = diary.profile(s)
-        msgs = [diary.message(s, r) for r in s.rows("messages", order="created_at")]
+        rows = s.rows("messages", order="created_at")
+        msgs = [diary.message(s, r) for r in rows]
+        bad = {f["target_id"] for f in s.rows("feedback", target="message", value="별로")}   # 개인 금지: 이 사람이 '별로'라 한 한마디
+        disliked = [m.get("text", "") for r, m in zip(rows, msgs) if r["entry_id"] in bad and m.get("text")][-5:]
         done = [e for e in diary.entries(s, status="done") if e["id"] != ctx.entry_id]
         states = diary.states(s)
         asp = (diary.aspirations(s) or [None])[-1]
@@ -403,6 +406,7 @@ def speak(state, ctx):
         "thoughts": [{k: t[k] for k in ("thought", "kind", "certainty", "quote")} for t in state["today"]],
         "weather": state.get("weather"), "addressee": state["record"].get("addressee"), "written_at": state["written_at"],
         "past_messages": [m.get("text", "") for m in msgs],
+        "disliked": disliked,
         "past_check_ins": [m["check_in"] for m in msgs if m.get("check_in")],
         "crisis": state.get("crisis"), "crisis_unsure": state.get("crisis_unsure"),
         "aspiration": {"said": asp["said"], "value": (asp["values"] or [""])[0], "obstacle": asp.get("obstacle"),

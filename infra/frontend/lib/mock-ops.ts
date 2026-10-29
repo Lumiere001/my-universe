@@ -30,6 +30,8 @@ export const summary: OpsSummary = {
     run_errors: [{ step: "observe", code: "studio_timeout", count: 2 }, { step: "record_agent", code: "llm_failed", count: 1 }],
     recent: [{ entry_id: "e_9b01aa7c22e0", step: "past", code: "studio_timeout", at: "2026-10-19T23:02:55+09:00" }] },
   eval: [{ file: "2026-10-08-all.json", gate_ok: true, regressions: 0, passed: 130, total: 132, est_usd: 0 }],
+  personal: { links_yes: { users: 9, median: 0.75, worse: 1 }, dislike: { users: 6, median: 0.2, worse: 0 },
+    fixes: { users: 12, median: 1.5 } },
   satisfaction: { yes: 18, no: 5, yes_ratio: 0.783,
     reactions: { "맞아요": 18, "아니에요": 5, "좋아요": 21, "별로": 4, "불편한 점 한 줄": 3, "지켰어요": 6, "그만둘래요": 1 },
     by_config: { "2/2": { "맞아요": 18, "아니에요": 5, "좋아요": 21, "별로": 4 } }, next_day: nd(31, 17) },

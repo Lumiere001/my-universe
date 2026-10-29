@@ -15,6 +15,9 @@ test("운영 화면", async ({ page }, info) => {
   await expect(page.getByRole("heading", { level: 1, name: "운영" })).toBeVisible();
   await expect(page.getByRole("region", { name: "추정 비용" })).toContainText("예산 $50");
   await expect(page.getByRole("region", { name: "만족 · 지향" })).toContainText("가까워졌다는 느낌");
+  const me = page.getByRole("region", { name: "사람마다 · 개인 지표" });   // 개인 고리: 운영은 분포만
+  await expect(me).toContainText("75%");
+  await expect(me).toContainText("9명 · 자기 기준보다 나빠진 사람 1명");
   await expect(page.getByRole("table", { name: "피드백" })).toHaveCount(0);       // 원문은 누르기 전엔 없음
   await expect(page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true }).getByRole("link", { name: "운영", includeHidden: true })).toHaveCount(0);   // 메뉴에 없음
   // 휴대폰에서도 가로로 넘치지 않는다(표는 자기 칸 안에서만 밀림)

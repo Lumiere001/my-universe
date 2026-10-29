@@ -16,6 +16,7 @@ ctx (모두 선택, 없으면 기본값):
   person_history  편지 상대와의 지난 기록 요약 목록
   written_at      쓴 시각(ISO 문자열 또는 datetime)
   past_messages   그 사용자의 지난 한마디 전체(오래된 것 → 최근)
+  disliked        그 사용자가 '별로'를 누른 한마디(최근 5개) — 같은 말 · 비슷한 말로 다시 쓰지 않는다(개인 금지 목록)
   aspiration      {"said", "value", "obstacle", "if_then"} 또는 None
   reached         되고 싶은 모습에 닿은 순간 [{"quote", "note"}] (관측 Agent가 원문 근거로 찾은 것)
   commitments     [{"text", "state", "due", "overdue"}]  (열린 다짐 · 기한 지난 다짐)
@@ -291,6 +292,8 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     if tone["name"] == "팩폭" and not gentle:  # 살살인 날은 센 예시 · 세기 문장을 빼야 실제로 낮아진다
         sys.append(f"[팩폭 세기] {fb['strength']}")
     sys.append("[지킬 것]\n" + _lines(rules))
+    if ctx.get("disliked"):   # 개인 금지(온톨로지 feedback '별로': 그 말은 다시 쓰지 않는다)
+        sys.append("[이 사람이 '별로'라고 한 한마디 — 같은 말 · 비슷한 말투와 내용으로 다시 쓰지 않는다]\n" + _lines(ctx["disliked"]))
 
     # 상황별 지시. v8.json 에 있는 문장은 거기서 읽고, 없는 상황(늦은 밤 · 복잡한 날 · 쉼)만 여기 적는다.
     sl = []

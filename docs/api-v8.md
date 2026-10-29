@@ -137,7 +137,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 - `PATCH /diary/{id}/day` `{"day": "YYYY-MM-DD"}` → EntryResult. 글이 다루는 날을 고친다(`day_basis: "확실"`, `day_check: false`). 정리 결과(생각 · 관계)는 다시 돌리지 않는다. 정리 중이면 409 `already_running`, 남의 · 없는 기록은 404.
 - `GET /universe` → 아래 Universe
 - **작은 별 묶음(2026-10-29, `rules.groups`):** 새 작은 별이 생긴 글이 끝나면(그래프 `group_stars`) 쌓인 작은 별 전체를 Solar 가 같은 고민끼리 묶고(①) 묶음마다 해를 고른다(②). 작은 별은 지우지 않고 별 enc 에 묶음 머리(`group`)만 적는다. `/universe` · `/insight` · `/diary` · `/diary/{id}` · `/export` 의 작은 별(`star`, `topic`, `star_id`)은 **묶음 머리**로 나온다. 묶기는 관측 전에 돌아 지난 생각 고르기 · 관측 Agent · 관계 규칙(판단형은 같은 주제 안)도 묶음 단위로 본다. 기록 Agent 에게는 작은 별 이름 전체를 준다. 묶음의 해로 별 · 생각 · 기록의 해를 옮긴다(사용자가 옮긴 별 `pin` 은 그대로). `PATCH /stars/{id}`(해 옮기기) · `POST /stars/merge` 는 묶음 전체에 적용, 거절한 합치기 짝은 같은 묶음에 넣지 않는다. 모드를 바꾼 뒤(`ONTOLOGY_PROFILE`) 처음 `/universe` · `/insight` 를 열면 한 번 다시 묶는다(기존 해 옮기기). `STAR_GROUPS=0` 이면 끔. **일관성(2026-10-30):** 다시 묶을 때 지난 묶음 번호를 함께 보내 분명할 때만 나누고, 지난 묶음끼리는 합치지 않는다(코드로도 막음, `keep_old_apart`). 작은 별이 지난번 새로 묶었을 때의 1.5배가 되면 그때만 처음부터 새로 묶는다(설정 `groups_fresh_at`). 해는 매번 다시 고른다.
-- `GET /insight`(2026-10-29) → 나에 대해 알게 된 것. 끝난 기록의 생각 · 남은 관계를 코드가 묶는다(AI 요약 · 판정 없음, 원문 인용과 날짜만):
+- `GET /insight`(2026-10-29) → 나에 대해 알게 된 것. 끝난 기록의 생각 · 남은 관계를 코드가 묶는다(AI 요약 · 판정 없음, 원문 인용과 날짜만): 카드의 관계에는 `rid`(관계 id)가 붙고(다른 영역과의 관계는 `line` 도), 화면은 점선 카드에서 이 id 로 `POST /feedback` 맞아요 · 아니에요를 보낸다(2026-10-30).
   `{"period": {"from", "to", "records"}, "suns": [{"name", "records", "stars": [{"name", "records", "first", "last", "kinds"}], "kept": [{"star", "times", "from", "to"}], "changed": [Pair], "open": [Pair], "settled": [Pair]}], "across": [{"type", "suns", "from", "to"}]}`.
   Pair = `{"star", "line", "from": End, "to": End, "axis"?}`, End = `{"day", "quote", "record_id", "thought_id"}`. kept = 이어짐(작은 별마다 처음 · 마지막), changed = 바뀜, open = 해소가 붙지 않은 긴장, settled = 해소, across = 해를 넘는 관계. 두 영역 모드의 '그 밖'은 빠진다. 기록이 없으면 `{"period": null, "suns": [], "across": []}`.
 
@@ -192,7 +192,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 ## 3. 피드백 · 상태 버튼
 
-`POST /feedback` `{"target": "relation|message|vow|question|tension|entry|app|weather", "target_id": "r1|null", "value": "맞아요|아니에요|좋아요|별로|오늘은 위로만|지켰어요|그만둘래요|불편한 점 한 줄|오늘은 살살|날씨 건너뜀", "text": "불편한 점 한 줄일 때만(500자), 그때는 꼭 — 보이는 글자가 없으면 422 invalid_input"}` → `{"ok": true, "state": {"type", "status", "mistake"} 또는 null}`
+`POST /feedback` `{"target": "relation|message|vow|question|tension|entry|app|weather", "target_id": "r1|null", "value": "맞아요|아니에요|좋아요|별로|오늘은 위로만|지켰어요|그만둘래요|불편한 점 한 줄|오늘은 살살|날씨 건너뜀", "text": "불편한 점 한 줄일 때만(500자), 그때는 꼭 — 보이는 글자가 없으면 422 invalid_input"}` → `{"ok": true, "state": {"type", "status", "mistake"} 또는 null, "tuned": [자동으로 옮긴 설정 알림]}`(2026-10-30 개인 고리: 반응이 한쪽으로 쌓이면 그 사람 설정을 한 칸 바로 옮김 — 아래 `/settings/suggestions`)
 
 - 맞아요/아니에요(`target_id` = 관계 id `옛생각id>새생각id`) → 점선을 실선으로 확인(바뀜 후보면 확정) / 관계 지우기, 지켰어요/그만둘래요(`target_id` = 다짐 생각 id) → 닫힘, 오늘은 살살 · 오늘은 위로만 → 오늘 하루 설정(`gentle_today` · `comfort_only_today` = 오늘 날짜), 날씨 건너뜀 → `weather_ask: false`(다음엔 날씨를 묻지 않음). 맞지 않는 대상(이미 닫힌 다짐 등)이면 409 `invalid_target`. 모든 피드백은 맞춤 신호로 저장(불편한 점 한 줄의 글만 암호화). 실행 기록(runs)에는 그때의 Studio 설정 번호 `studio_config`('기록 판/관측 판', 예 `2/2`)를, 피드백에는 누른 때가 아니라 그 대상(기록 · 생각 · 관계)의 기록을 처리한 마지막 실행의 설정 번호를 남긴다(기록과 상관없는 피드백은 null). '아니에요'로 지운 관계는 종류 · 두 생각 id 를 그 피드백의 암호문에 남긴다(오답 재료, 기록을 지우면 같이 지움).
 
@@ -256,7 +256,7 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 
 화면 `/ops`(메뉴에 없음, 검색 제외). `/ops/*` 는 백엔드 환경변수 `ADMIN_EMAILS`(쉼표 목록, 운영자 구글 계정)의 계정만 열린다. 아니면 403 `not_admin`, 비어 있으면 아무도 못 본다. 코드: `app/api/ops.py` · `app/repository/ops.py`, 마이그레이션 `20261014000200_v8_ops.sql`.
 
-- `GET /ops/summary` → 모든 사용자의 숫자 · 코드 · id · 시각만(원문 0건). DB 는 운영 전용 역할 `app_ops` 로 읽고, 이 역할은 평문 칸에만 select 권한이 있다(암호문 `enc` · `steps_enc`, 작은 별 · 사람 · 해 이름 표는 권한 없음).
+- `GET /ops/summary` → 모든 사용자의 숫자 · 코드 · id · 시각만(원문 0건). `personal`(2026-10-30): 개인 지표 분포만 — `links_yes`(AI 추정 선 '맞아요' 비율) · `dislike`(한마디 '별로' 비율)마다 `{users(반응 5번 넘는 사람 수), median, worse(최근 14일이 그 전보다 15%p 이상 나쁜 사람 수)}`, `fixes`(끝난 글 10편당 고침 · 옮김 · 합침) `{users, median}`. 사람 id 는 나가지 않는다. DB 는 운영 전용 역할 `app_ops` 로 읽고, 이 역할은 평문 칸에만 select 권한이 있다(암호문 `enc` · `steps_enc`, 작은 별 · 사람 · 해 이름 표는 권한 없음).
   - `cost`: `{"total_usd", "month_usd", "budget_usd": 50, "used_ratio", "warn"(80% 이상), "over"(100% 이상), "by_step"}` — 운영 `runs.est_usd` 합계(예산은 v8.json `limits.studio_budget_usd`). 개발 · 시험 원장(`runs/cost_ledger.jsonl`)은 따로.
   - `runs`: 단계별 `{step, count, avg_ms, fails, est_usd}`, 글 한 편(기록 id)당 평균 시간 · 비용, 최근 30번. `gates`: 실명 관문이 막은 요청(`real_name_leak`), 말 걸기 검사로 다시 만든 한마디(voice `meta.checks > 0`). `failures`: 실패한 기록 수 · 코드별 · 최근 30개, 단계 · 코드별 실행 오류. `eval`: 골든셋 결과 파일(`eval/results`) 요약 — 배포 번들에는 `eval/` 이 없어 `null`.
   - `satisfaction`: 점선 맞아요 비율 · 버튼별 반응 수 · 설정 번호별 반응 · 다음 날 다시 쓴 비율(`{pairs, returned, ratio}`, 사용자가 서비스를 쓴 날 = 기록을 만든 날 + 대화한 날, 다음 날이 다 지난 날만 셈). `direction.multi_sun`: 최근 14일 사용자별 글의 해 가짓수 평균 · 2개 이상 비율 · 전체 평균. `direction.closer_feeling` 은 늘 `null`('가까워졌다는 느낌'은 묻지 않음, 2026-10-13).
@@ -268,8 +268,11 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
   - `other_values`: 목록 밖 값('기타')이 나온 수(종류 · 확신 · 가치). `feedback_text`: '불편한 점 한 줄' 수(동의한 사용자 · 동의하지 않은 사용자). `users`: 사용자 수 · 최근 7일 쓴 사람 · 운영자 열람 동의 수.
 - `GET /ops/feedback?days=30&wrong=false` → 운영자 열람에 동의한 사용자(가장 최근 동의가 지금 판이고 `operator_read` 참)만, 그 사용자 세션(`app_user` · RLS)으로 풀어 글 칸만 가명 처리: `{"days", "wrong", "users", "items": [{"user": "사용자 1", "at", "target", "value", "text"(불편한 점 한 줄의 글), "target_text"(관계: '[종류] 그때 생각 → 지금 생각 (설명)' · 한마디 · 다짐 · 기록 요약), "config"}], "other_candidates": [{"field", "original", "count"}], "not_consented": {값: 수}}`. 마음 상태 버튼(오늘은 위로만 · 살살)은 '상태 버튼'으로만(풀지 않음). 부를 때마다 사용자별 열람 기록 한 줄(`ops_reads`: 운영자 id · 사용자 id · `feedback|wrong|summarize` · 본 수). `wrong=true` 면 오답 재료('아니에요' · '별로' · '불편한 점 한 줄')만, 새 값 후보 없이.
 - `POST /ops/feedback/summarize?days=30` → 피드백 정리 Agent(Solar 한 번, 누를 때만): 동의한 오답 재료(가명, 최근 200줄까지)를 이유(잘못 나눔 · 틀린 연결 · 설교 같음 · 같은 말 반복 · 화면 · 기타)별로 묶고 고칠 곳(기록 Agent · 관측 Agent · 말 걸기 규칙 · 화면)을 제안: `{"days", "users", "lines": [가명 줄], "groups": [{"reason", "items": [줄 번호], "count", "fix_where", "suggestion"}], "est_usd"}`. 보내기 전 실명 관문(`llm.guard`), 비용은 운영자 계정의 `runs`(`step="ops_summarize"`)에. 형식 · 호출 실패는 502 `summarize_failed`(열람 기록 없음).
-- `GET /settings/suggestions` → `{"suggestions": [{"setting": "cross_links|suggestions", "from", "to", "reason"}]}`: 내 피드백으로 본 "이 설정으로 바꿀까요?". 영역을 넘는 관계에 '아니에요'(또는 '맞아요')를, 제안이 든 한마디에 '별로'(또는 '좋아요')를 3번 이상 · 반대쪽의 두 배 이상 누르면 한 칸 옮기기를 제안한다(바꾸는 것은 사용자, 화면: 설정 맨 위 카드).
-- `POST /settings/suggestions/seen` → `{"ok": true}`: 제안을 보고 골랐음(바꿨든 그대로 뒀든). 그 뒤의 피드백만 다시 센다.
+- **개인 고리(2026-10-30):** 영역을 넘는 관계에 '아니에요'(또는 '맞아요')를, 제안이 든 한마디에 '별로'(또는 '좋아요')를 3번 이상 · 반대쪽의 두 배 이상 누르면, `POST /feedback` 이 묻지 않고 그 사람 설정(`cross_links` · `suggestions`)을 한 칸 옮기고 알림을 남긴다(`ops.auto_pref`). 다이얼마다 옮긴 뒤의 반응만 다시 센다(`pref_seen_by`). 예전의 "이 설정으로 바꿀까요?" 카드는 없앴다.
+- `GET /settings/suggestions` → `{"suggestions": [], "applied": [{"id", "setting", "from", "to", "reason", "at", "seen"}]}`: 아직 안 본 자동 변경 알림(화면: 어디서든 오른쪽 아래 알림, C-01).
+- `POST /settings/suggestions/{id}/undo` → `{"ok": true, "undone", "settings"}`: 알림 하나 되돌리기(설정이 아직 그 값이면 원래 값으로). 없는 id 는 404 `not_found`.
+- `POST /settings/suggestions/seen` → `{"ok": true}`: 알림을 봤음(이대로 두기).
+- **'별로' 받은 한마디:** 최근 5개를 그 사람의 다음 한마디 프롬프트에 「이 사람이 '별로'라고 한 한마디 — 같은 말 · 비슷한 말투와 내용으로 다시 쓰지 않는다」로 넣는다(가명 처리, `voice` ctx `disliked`).
 - 주 1회 오답 모으기: `scripts/collect_feedback.py`(운영 DB 를 직접 읽지 않고 `GET /ops/feedback?wrong=true` 를 부름) → `runs/wrong/YYYY-MM-DD.jsonl`(git 제외). 토큰은 운영 화면의 '스크립트용 토큰 복사'(운영자 로그인 토큰)를 `OPS_TOKEN` 으로.
 
 ## 7. WS5 구현 메모

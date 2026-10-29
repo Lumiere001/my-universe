@@ -12,6 +12,7 @@ import { Suspense, useEffect, useState } from "react";
 import Calendar, { countByDay, dayOf, useEntries } from "@/components/Calendar";
 import Icon, { type IconName } from "@/components/Icon";
 import Landing from "@/components/Landing";
+import PrefNotice from "@/components/PrefNotice";
 import { KeeperLook } from "@/components/Keeper";
 import { ApiError, getConsent, getMe, MOCK, supabase } from "@/lib/api";
 
@@ -145,6 +146,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <span className="crumb">나의 우주{title && <> › <b>{title}</b></>}</span>
         </header>
         {page}
+        <PrefNotice />
       </div>
       <nav className="tabbar" aria-label="바로 가기">
         {TABS.map(([href, name, icon]) => (
