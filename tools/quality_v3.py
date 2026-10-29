@@ -48,7 +48,7 @@ v2 = _load("studio_run_v2", "tools/studio_run_v2.py")   # records() · metrics()
 
 LEDGER = Path("/Users/east_star/Projects/my-universe/runs/cost_ledger.jsonl")   # 원장은 본 저장소(git 제외)
 PER_POST_USD = 0.10              # 기록 + 관측 Studio 1쪽씩(PRD §5.7) + Solar 위기 · 한마디(≈ $0.002)
-CAP_USD, TOTAL_STOP_USD = 4.0, 45.0   # 판 하나(29편 ≈ $2.9 + 다시 시도 여유), 승인 누적 $50 앞에서 멈춤
+CAP_USD, TOTAL_STOP_USD = 4.0, 58.0   # 판 하나(29편 ≈ $2.9 + 다시 시도 여유), 승인 누적 $60(2026-10-30 동규, 전에는 $50) 앞에서 멈춤
 STOP_STREAK = 3                  # 연달아 이만큼 글이 실패하면 Studio 가 막힌 것으로 보고 멈춘다
 NAMES = json.loads((ROOT / "data/virtual/expected.json").read_text(encoding="utf-8"))["names"]
 
