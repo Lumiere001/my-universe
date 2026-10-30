@@ -16,7 +16,7 @@ from app.exceptions import ApiError
 from app.models import In
 from app.repository import diary
 
-VERSION = "2026-10-13"   # 동의 문구 판. infra/frontend/app/consent · privacy · terms 문구를 바꾸면 올린다(모두 다시 물음)
+VERSION = "2026-11-01"   # 동의 문구 판. infra/frontend/app/consent · privacy · terms 문구를 바꾸면 올린다(모두 다시 물음)
 
 router = APIRouter(tags=["동의"])
 
