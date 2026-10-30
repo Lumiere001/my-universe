@@ -31,7 +31,7 @@ const universe: Universe = {
     { id: "d5", name: "영성·신앙", custom: false, planet_count: 1 },
   ],
   stars: [
-    { id: "s1", sun_id: "d1", name: "진로", planet_count: 5 },
+    { id: "s1", sun_id: "d1", name: "진로", planet_count: 5, members: [{ id: "s1a", name: "면접 준비" }, { id: "s1b", name: "팀 찾기" }] },
     { id: "s2", sun_id: "d1", name: "배움과 기록", planet_count: 2 },
     { id: "s3", sun_id: "d2", name: "혼자와 함께", planet_count: 3 },
     { id: "s4", sun_id: "d2", name: "가족", planet_count: 1 },
@@ -499,4 +499,13 @@ export async function transcribe(piece: Blob): Promise<{ text: string; seconds: 
 export async function speak(text: string): Promise<Blob> {
   ((window as unknown as VoiceLog).__spoken ??= []).push(text);
   return new Blob([new Uint8Array(44)], { type: "audio/wav" });
+}
+/* ---------- 작은 별 떼어 내기(묶음 나누기) ---------- */
+export async function detachStar(id: string) {
+  await sleep(120);
+  for (const st of universe.stars as { members?: { id: string; name: string }[] }[]) {
+    const m = st.members?.find((x) => x.id === id);
+    if (m) { st.members = st.members!.filter((x) => x.id !== id); return { id, name: m.name }; }
+  }
+  throw new Error("not_found");
 }

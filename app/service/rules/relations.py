@@ -156,3 +156,20 @@ def filter_relations(cands, thoughts, states=None):
         if best[k["id"]] is not k:
             dropped.append({"cand": k, "reason": f"같은 두 생각 사이 관계는 하나({best[k['id']]['type']} 우선)"})
     return [k for k in kept if best[k["id"]] is k], dropped
+
+
+def personal_filter(kept, thoughts, rejected):
+    """개인 고리(2026-10-30, 개인 맞춤 Ops ④): 이 사람이 '아니에요'로 지운 연결과 종류가 같고 두 생각의 묶음(작은 별 머리)이 같은
+    AI 추정(점선) 관계는 이 사람에게 다시 보이지 않는다. 글쓴이가 직접 쓴 변화(실선)는 그대로.
+    rejected: {(종류, frozenset({묶음 이름, 묶음 이름}))}. thoughts: {id: {topic, ...}}(topic = 묶음 이름).
+    → (남은 것, 버린 것 [{cand, reason}])"""
+    if not rejected:
+        return kept, []
+    out, dropped = [], []
+    for r in kept:
+        key = (r["type"], frozenset((thoughts[r["from"]].get("topic"), thoughts[r["to"]].get("topic"))))
+        if r.get("line") == "점선" and key in rejected:
+            dropped.append({"cand": r, "reason": "이 사람이 아니라고 한 연결과 같음(개인 규칙)"})
+        else:
+            out.append(r)
+    return out, dropped

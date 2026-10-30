@@ -7,6 +7,8 @@ app/repository/edit.py
 끝나지 않은 기록의 단계 저장값(steps_enc)도 같이 고친다 — 이어 하기 때 지운 별 · 생각 id 로 저장하지 않게.
 """
 
+from collections import Counter
+
 from app.repository import diary
 from app.service.rules.relations import is_question
 from app.service.rules.states import parse_due
@@ -187,6 +189,36 @@ def declined(s):
     return {r["target_id"] for r in s.rows("feedback", target="star", value=DECLINED)}
 
 
+DETACHED = "떼어 냄"
+
+
+def detach_star(s, sid):
+    """작은 별 하나를 묶음에서 떼어 낸다(개인 고리 — 큰 묶음 쏠림을 사용자가 바로잡기, 2026-10-30). 같은 묶음의 다른 별과는
+    합치지 않음(DECLINED) 짝으로 남겨 다음 묶기에서도 같이 묶지 않는다. 떼어 낸 별이 머리였으면 남은 별 중 기록이 가장 많은 별이
+    새 머리. 별 · 생각은 그대로(해도 그대로). → 떼어 낸 별 또는 None(없거나 혼자인 별)."""
+    st = star(s, sid)
+    if not st:
+        return None
+    all_ = diary.stars(s)
+    head = diary.star_heads(all_)[sid]["id"]
+    members = [x for x in all_ if diary.star_heads(all_)[x["id"]]["id"] == head]
+    others = [x for x in members if x["id"] != sid]
+    if not others:
+        return None
+    for x in others:
+        if pair_id(sid, x["id"]) not in declined(s):
+            lesson(s, "star", pair_id(sid, x["id"]), DECLINED, a=st["name"], b=x["name"])
+    if st.get("group"):
+        diary.set_star(s, st, group=None)
+    else:   # 머리를 떼면 남은 별 중 글이 가장 많은 별이 새 머리
+        n = Counter(t["star_id"] for t in diary.thoughts(s, star_id=[x["id"] for x in others]))
+        new = max(others, key=lambda x: (n[x["id"]], -others.index(x)))
+        for x in others:
+            diary.set_star(s, x, group=None if x is new else new["id"])
+    lesson(s, "star", sid, DETACHED, topic=st["name"], group=star(s, head)["name"] if head != sid else st["name"])
+    return star(s, sid)
+
+
 ##################################################
 # 생각
 ##################################################
@@ -265,3 +297,26 @@ def hide_thoughts(s, tids):
         return out
     _fix_steps(s, drop)
     return n
+
+
+REJECT_HINTS = 5   # 관측 Agent 입력에 붙이는 '이 사람이 아니라고 한 연결' 수(최근 것부터)
+
+
+def rejected_links(s):
+    """이 사람이 '아니에요'로 지운 관계 → [{type, topics: frozenset(묶음 이름 둘), quotes: (그때, 지금)}](오래된 것 → 최근).
+    지운 관계의 두 생각은 남아 있으니 지금의 묶음 머리 이름으로 본다(묶음이 바뀌면 따라 바뀐다)."""
+    rows = [r for r in s.rows("feedback", target="relation", value="아니에요", order="created_at")]
+    rels = [(diary.unseal(s, "feedback", r["id"], r["enc"]) or {}).get("relation") for r in rows if r.get("enc")]
+    rels = [x for x in rels if x and x.get("from") and x.get("to")]
+    if not rels:
+        return []
+    ts = {t["id"]: t for t in diary.thoughts(s, id=list({i for x in rels for i in (x["from"], x["to"])}))}
+    heads = diary.star_heads(diary.stars(s))
+    name = lambda t: heads[t["star_id"]]["name"] if t and t.get("star_id") in heads else (t or {}).get("topic")   # noqa: E731
+    out = []
+    for x in rels:
+        a, b = ts.get(x["from"]), ts.get(x["to"])
+        if a and b:
+            out.append({"type": x["type"], "topics": frozenset((name(a), name(b))),
+                        "quotes": (a.get("quote") or a.get("text") or "", b.get("quote") or b.get("text") or "")})
+    return out

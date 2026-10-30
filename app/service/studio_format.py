@@ -98,9 +98,10 @@ def _line(local_id, t, with_day):
     return f"<li>{_e(' · '.join(bits))}</li>"
 
 
-def observe_html(today_day, today, past, aspiration=None):
+def observe_html(today_day, today, past, aspiration=None, rejected=()):
     """오늘 생각 · 고른 지난 생각(관련 높은 것이 앞) · 되고 싶은 모습 → (HTML, {로컬 ID: 생각 id}).
-    생각 dict: id, topic, kind, certainty, quote, (day, domain, self_change, record_type). aspiration: {"said", "value"} 또는 None."""
+    생각 dict: id, topic, kind, certainty, quote, (day, domain, self_change, record_type). aspiration: {"said", "value"} 또는 None.
+    rejected: 이 사람이 '아니에요'로 지운 연결 [{type, quotes: (그때, 지금)}] — 맨 끝에 '참고(일기 내용 아님)'로(개인 맞춤 Ops ④)."""
     ids = {f"T{i}": t["id"] for i, t in enumerate(today, 1)} | {f"P{i}": p["id"] for i, p in enumerate(past, 1)}
     rows_t = "".join(_line(f"T{i}", t, False) for i, t in enumerate(today, 1))
     rows_p = "".join(_line(f"P{i}", p, True) for i, p in enumerate(past, 1)) or "<li>없음</li>"
@@ -109,6 +110,9 @@ def observe_html(today_day, today, past, aspiration=None):
         asp = f"<li>{_e(aspiration['said'])}" + (f" · 가치: {_e(aspiration['value'])}" if aspiration.get("value") else "") + "</li>"
     body = (f"<h1>관측 입력</h1><h2>오늘 글의 생각 ({_e(today_day)})</h2><ul>{rows_t}</ul>"
             f"<h2>관련 과거 생각</h2><ul>{rows_p}</ul><h2>되고 싶은 모습</h2><ul>{asp}</ul>")
+    if rejected:   # ID 가 없는 줄이라 관계로 고를 수 없다. 비슷한 연결을 다시 내지 않게 하는 참고만
+        rows_r = "".join(f"<li>[{_e(r['type'])}] “{_e(r['quotes'][0][:60])}” → “{_e(r['quotes'][1][:60])}”</li>" for r in rejected)
+        body += f"<h2>참고: 이 사람이 아니라고 한 연결(일기 내용 아님)</h2><ul>{rows_r}</ul>"
     return _PAGE.format(t="관측 입력", b=body), ids
 
 

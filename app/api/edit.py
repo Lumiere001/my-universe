@@ -185,6 +185,17 @@ def merge(body: MergeIn, user=Depends(get_user), repo=Depends(get_repo)):
     return out
 
 
+@router.post("/stars/{sid}/detach", summary="작은 별을 묶음에서 떼어 내기(같은 묶음의 다른 별과는 다시 묶지 않음)")
+def detach(sid: str, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        if edit.busy(s):
+            raise ApiError(409, "busy", "정리 중인 기록이 끝난 뒤에 다시 해 주세요.")
+        st = edit.detach_star(s, sid)
+        if not st:
+            raise ApiError(404, "not_found", "떼어 낼 작은 별을 찾지 못했어요(혼자인 별은 뗄 수 없어요). 화면을 새로 고쳐 주세요.")
+    return {"id": st["id"], "name": st["name"]}
+
+
 @router.post("/stars/merge/decline", summary="합치기 제안 거절(이 짝은 다시 제안하지 않음)")
 def decline(body: MergeIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:

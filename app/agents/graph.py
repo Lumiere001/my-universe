@@ -27,6 +27,7 @@ from app.repository import diary, edit
 from app.service import voice as voice_rules
 from app.service.rules import groups as group_rules
 from app.service.rules import advance, clean_record, clean_text, filter_relations, link_domain, place_stars, reask_trigger, to_sun
+from app.service.rules.relations import personal_filter
 from app.service.rules.topics import profile
 from app.service.rules.normalize import key as norm_key
 from app.service.safety import RealNameLeak, detect_crisis, find_new_names
@@ -296,8 +297,9 @@ def observe(state, ctx):
         return {"observed": {}}
     with ctx.repo.session(ctx.uid) as s:
         asp = (diary.aspirations(s) or [None])[-1]
+        rejected = edit.rejected_links(s)[-edit.REJECT_HINTS:]
     a = {"said": asp["said"], "value": (asp["values"] or [""])[0]} if asp else None
-    return {"observed": tools.run_observe_agent(state["day"], grouped(state["today"]), state["past"], a, state["people"])}
+    return {"observed": tools.run_observe_agent(state["day"], grouped(state["today"]), state["past"], a, state["people"], rejected)}
 
 
 @node("rules")
@@ -311,7 +313,10 @@ def rules(state, ctx):
               "quote": r.get("evidence") or None} for r in obs.get("relations", [])]
     with ctx.repo.session(ctx.uid) as s:
         states = diary.states(s)
+        rejected = {(r["type"], r["topics"]) for r in edit.rejected_links(s)}
     kept, dropped = filter_relations(cands, ts, states)
+    kept, mine = personal_filter(kept, ts, rejected)   # 개인 고리: 이 사람이 아니라고 한 연결과 같은 AI 추정은 다시 안 보인다
+    dropped += mine
     quote = {frozenset((c["a"], c["b"])): c["quote"] for c in cands if c["quoted"]}
     for k in kept:
         k["quote"] = quote.get(frozenset((k["from"], k["to"])))

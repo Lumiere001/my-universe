@@ -281,7 +281,7 @@ def eval_results(base=None, keep=5):
 
 
 PERSONAL_MIN = 5   # ponytail: 사람 하나의 비율을 믿을 최소 반응 수(근거 없음). 파일럿 반응이 쌓이면 다시 정한다
-FIXES = ("고침", "옮김", "합침")
+FIXES = ("고침", "옮김", "합침", "떼어 냄")
 
 
 def _rate(rows, good, bad):

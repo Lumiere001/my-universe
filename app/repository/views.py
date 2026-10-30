@@ -248,7 +248,9 @@ def universe(s):
     return {
         "suns": [{"id": x["id"], "name": x["name"], "custom": x["custom"], "planet_count": sun_count[x["id"]]}
                  for x in suns if x["name"] in shown and (sun_count[x["id"]] or x["custom"])],
-        "stars": [{"id": x["id"], "sun_id": x["sun_id"], "name": x["name"], "planet_count": count[x["id"]]}
+        "stars": [{"id": x["id"], "sun_id": x["sun_id"], "name": x["name"], "planet_count": count[x["id"]],
+                   # 묶음에 든 다른 작은 별(떼어 내기 · rules.groups). 혼자인 별은 빈 목록
+                   "members": [{"id": m["id"], "name": m["name"]} for m in stars if m["id"] != x["id"] and heads[m["id"]]["id"] == x["id"]]}
                   for x in stars if count[x["id"]]],
         "planets": planets,
         "links": [{"id": r["id"], "from_planet": r["from_record"], "to_planet": r["to_record"], "type": r["type"],

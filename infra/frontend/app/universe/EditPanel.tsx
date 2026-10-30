@@ -4,7 +4,7 @@
 // 우주 위 떠 있는 '우주 고치기' 단추로 여는 칸(PC 오른쪽 · 휴대폰 아래, 2026-10-28). 머리줄(제목 · 닫기)은 우주 화면이 넘겨준다.
 import { useState } from "react";
 import {
-  addSun, declineMerge, fixThought, getMergeCandidates, getSuns, mergeStars, moveStar, setSunAxis,
+  addSun, declineMerge, detachStar, fixThought, getMergeCandidates, getSuns, mergeStars, moveStar, setSunAxis,
   why, type Thought, type Universe,
 } from "@/lib/api";
 import { useKindName, useLoad, useOntology } from "@/lib/use";
@@ -85,6 +85,26 @@ export default function EditPanel({ data, onChanged, head }: { data: Universe; o
                 {!all.some((s) => s.id === st.sun_id) && <option value={st.sun_id}>{sunName(st.sun_id)}</option>}
                 {all.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {data.stars.some((st) => st.members?.length) && (
+        <section className="stack" aria-label="묶음 나누기">
+          <h3 style={{ margin: 0, fontSize: "1rem" }}>묶음 나누기</h3>
+          <p className="sub" style={{ margin: 0 }}>한 묶음에 다른 고민이 섞였으면 작은 별을 떼어 내요. 뗀 별은 그 묶음과 다시 같이 묶이지 않아요.</p>
+          {data.stars.filter((st) => st.members?.length).map((st) => (
+            <div key={st.id} className="row" style={{ alignItems: "baseline" }}>
+              <span style={{ flex: "0 0 auto" }}><b>{st.name}</b> <span className="sub">묶음</span></span>
+              <span className="row tight" style={{ flex: "1 1 200px" }}>
+                {st.members!.map((m) => (
+                  <span key={m.id} className="badge">{m.name}{" "}
+                    <button className="small" disabled={busy} aria-label={`“${m.name}” 떼어 내기`}
+                      onClick={() => run(async () => { await detachStar(m.id); return `“${m.name}”을(를) “${st.name}” 묶음에서 떼었어요. 다시 같이 묶지 않아요.`; })}>떼어 내기</button>
+                  </span>
+                ))}
+              </span>
             </div>
           ))}
         </section>

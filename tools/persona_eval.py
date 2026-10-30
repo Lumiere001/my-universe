@@ -114,8 +114,27 @@ def record_once(repo, uid, rec, prior):
     return items, vecs, usd
 
 
-def run_persona(k, d, tag, repeat):
+def press_like_user(repo, uid, d, n_of, entry_id):
+    """가상 사용자가 이 글에서 새로 보인 AI 추정(점선) 관계마다 정답대로 누른다: 심어 둔 연결 → 맞아요, 아니면 → 아니에요.
+    누르기 전 제안을 센다(개인 맞춤 Ops ④ 시험 — 아니에요가 쌓이면 다음 글의 제안이 깨끗해지나). 실제 API 함수(POST /feedback)를 부른다."""
+    from app.api.routes import feedback
+    from app.models import FeedbackIn
+    planted = {(g["from_entry"], g["to_entry"]) for g in d["links"]}
+    with repo.session(uid) as s:
+        mine = [r for r in diary.relations(s) if r["to_record"] == entry_id]
+    pair = lambda r: tuple(sorted((n_of.get(r["from_record"]), n_of.get(r["to_record"]))))   # noqa: E731
+    shown = {"total": len(mine), "planted": sum(pair(r) in planted for r in mine), "dotted": sum(r["line"] == "점선" for r in mine)}
+    shown["unplanted"] = shown["total"] - shown["planted"]
+    for r in mine:
+        if r["line"] == "점선" and None not in pair(r):
+            feedback(FeedbackIn(target="relation", target_id=r["id"], value="맞아요" if pair(r) in planted else "아니에요"),
+                     user={"id": uid}, repo=repo)
+    return shown
+
+
+def run_persona(k, d, tag, repeat, react=False):
     repo, uid = setup(k, d, tag)
+    n_of = {}
     what = (f"{config.ONTOLOGY_PROFILE or 'v8'} · 맞추기 {config.STAR_JOIN_SIM or '끔'} · 묶기 {'켬' if config.STAR_GROUPS else '끔'} · 설정 "
             f"{config.V8_RECORD_CONFIG_ID}/{config.V8_OBSERVE_CONFIG_ID}")
     out, spent, streak = [], 0.0, 0
@@ -130,6 +149,9 @@ def run_persona(k, d, tag, repeat):
             q3.ledger_line(f"가상 인물 {k} {rec['n']}/20 {tag}({what}, 서비스 길)"
                            + (f" — 실패 {','.join(r['errors'])}" if r["errors"] else ""), r["calls"], r["usd"])
             out.append({"n": rec["n"], **{x: r[x] for x in ("entry_id", "status", "errors", "seconds", "calls", "usd", "step_ms")}})
+            n_of[r["entry_id"]] = rec["n"]
+            if react and r["status"] == "done":
+                out[-1]["shown"] = press_like_user(repo, uid, d, n_of, r["entry_id"])
             with repo.session(uid) as s:   # 글마다 우주의 묶음 · 해(무료) → 묶음 흔들림(churn)
                 out[-1]["groups"] = {x["id"]: [x.get("group") or x["id"], x["sun_id"]] for x in diary.stars(s)}
             print(k, rec["n"], r["status"], f"생각 {len(r['thoughts'])}", f"{r['seconds']}초", f"${r['usd']}", flush=True)
@@ -358,6 +380,7 @@ def main(argv=None):
     ap.add_argument("--tag", default="")
     ap.add_argument("--repeat", type=int, default=0)
     ap.add_argument("--tau", type=float)
+    ap.add_argument("--react", action="store_true", help="가상 사용자가 점선 관계에 정답대로 맞아요 · 아니에요를 누름(개인 맞춤 Ops ④)")
     a = ap.parse_args(argv)
     if a.cmd == "check":
         for k in a.persona:
@@ -387,7 +410,7 @@ def main(argv=None):
         path = RESULTS / f"{date.today().isoformat()}-persona-{a.tag}.json"
         (RESULTS / "vectors").mkdir(parents=True, exist_ok=True)
         for k in a.persona:
-            res, vecs = run_persona(k, load(k), a.tag, a.repeat)
+            res, vecs = run_persona(k, load(k), a.tag, a.repeat, a.react)
             out["personas"][k] = {**res, "score": score(load(k), res)}
             (RESULTS / "vectors" / f"{path.stem}-{k}.json").write_text(json.dumps(vecs), encoding="utf-8")
             path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")   # 인물마다 저장(중간에 멈춰도 남게)

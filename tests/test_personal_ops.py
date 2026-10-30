@@ -44,3 +44,29 @@ def test_personal_metrics_per_user_and_spread_only():
     assert spread["dislike"] == {"users": 1, "median": 1.0, "worse": 0}
     assert spread["fixes"] == {"users": 2, "median": 1.0}
     assert "u1" not in json.dumps(spread)                            # 운영에는 사람 id 없이 분포만
+
+
+def test_rejected_link_hides_same_kind_between_same_groups():
+    """개인 맞춤 Ops ④: 이 사람이 '아니에요'로 지운 연결과 종류 · 두 묶음이 같은 AI 추정(점선)은 다시 안 보인다. 실선(글쓴이가 직접 쓴 변화)은 그대로."""
+    from app.service.rules.relations import personal_filter
+    ts = {"a": {"topic": "이직 고민"}, "b": {"topic": "엄마"}, "c": {"topic": "이직 고민"}, "d": {"topic": "운동"}}
+    kept = [{"type": "긴장", "from": "a", "to": "b", "line": "점선"}, {"type": "긴장", "from": "b", "to": "c", "line": "실선"},
+            {"type": "이어짐", "from": "a", "to": "b", "line": "점선"}, {"type": "긴장", "from": "a", "to": "d", "line": "점선"}]
+    out, dropped = personal_filter(kept, ts, {("긴장", frozenset(("엄마", "이직 고민")))})
+    assert [(r["type"], r["to"]) for r in out] == [("긴장", "c"), ("이어짐", "b"), ("긴장", "d")]
+    assert dropped[0]["reason"].startswith("이 사람이 아니라고 한 연결")
+    assert personal_filter(kept, ts, set()) == (kept, [])
+
+
+def test_rejected_links_and_observe_hint(env):
+    from app.repository import edit
+    from app.service import studio_format as sf
+    write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        a, b = diary.thoughts(s)[:2]
+        diary.add_feedback(s, "relation", f"{a['id']}>{b['id']}", "아니에요", relation={"type": "긴장", "from": a["id"], "to": b["id"]})
+        got = edit.rejected_links(s)
+    assert len(got) == 1 and got[0]["type"] == "긴장" and len(got[0]["topics"]) >= 1 and got[0]["quotes"][0]
+    html, ids = sf.observe_html("2026-10-02", [], [], None, [{"type": "긴장", "quotes": ["그때 문장", "지금 문장"]}])
+    assert "이 사람이 아니라고 한 연결(일기 내용 아님)" in html and "[긴장] “그때 문장” → “지금 문장”" in html and ids == {}
+    assert "아니라고 한 연결" not in sf.observe_html("2026-10-02", [], [], None)[0]

@@ -73,11 +73,12 @@ def run_record_agent(title, text, topics, people):
 OBS_KEYS = ("id", "topic", "domain", "kind", "certainty", "quote", "self_change", "day", "record_type")
 
 
-def run_observe_agent(day, today, past, aspiration, people):
-    """오늘 생각 · 고른 지난 생각 · 되고 싶은 모습 → parse_observe 결과(원래 이름으로 되돌린 것)."""
+def run_observe_agent(day, today, past, aspiration, people, rejected=()):
+    """오늘 생각 · 고른 지난 생각 · 되고 싶은 모습 · 이 사람이 아니라고 한 연결 → parse_observe 결과(원래 이름으로 되돌린 것)."""
     pick = lambda ts: [{k: t.get(k) or "" for k in OBS_KEYS} for t in ts]   # noqa: E731
-    m, table = mask_obj({"today": pick(today), "past": pick(past), "asp": aspiration or {}}, people)
-    html, ids = sf.observe_html(day, m["today"], m["past"], m["asp"] or None)
+    rej = [{"type": r["type"], "quotes": list(r["quotes"])} for r in rejected]
+    m, table = mask_obj({"today": pick(today), "past": pick(past), "asp": aspiration or {}, "rej": rej}, people)
+    html, ids = sf.observe_html(day, m["today"], m["past"], m["asp"] or None, m["rej"])
     return unmask_obj(sf.parse_observe(studio.run("observe", html), ids), table)
 
 

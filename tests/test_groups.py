@@ -104,7 +104,7 @@ def test_regroup_once_after_mode_change(env, monkeypatch):
         sun = {x["id"]: x["name"] for x in diary.suns(s)}
         assert {sun[t["sun_id"]] for t in diary.thoughts(s)} == {"커리어"}
         assert diary.profile(s)[0]["groups_profile"] == "two"
-        assert json.dumps(views.universe(s)["stars"], ensure_ascii=False).count('"name"') == 1
+        assert len(views.universe(s)["stars"]) == 1 and len(views.universe(s)["stars"][0]["members"]) == 1   # 머리 하나, 묶인 작은 별 하나
 
 
 def test_observer_sees_group_names_before_save(env, monkeypatch):
@@ -114,9 +114,9 @@ def test_observer_sees_group_names_before_save(env, monkeypatch):
     seen = []
     real = graph.tools.run_observe_agent
 
-    def spy(day, today, past, asp, people):
+    def spy(day, today, past, asp, people, rejected=()):
         seen.append(({t["topic"] for t in today}, {t["topic"] for t in past}))
-        return real(day, today, past, asp, people)
+        return real(day, today, past, asp, people, rejected)
     monkeypatch.setattr(graph.tools, "run_observe_agent", spy)
     write(env, U1, "첫날", DAY1[1], "2026-10-01T22:00:00+09:00")
     _, _, r = write(env, U1, "둘째", "걷기를 적었다.", "2026-10-02T22:00:00+09:00")
@@ -154,3 +154,30 @@ def test_regroup_carries_last_groups_until_stars_grow(env, monkeypatch):
     assert head and seen[2]["걷기 기록"] == head and seen[2]["엄마 통화"] is None and seen[2]["동생 통화"] is None   # 별 4개 → 이어 받기
     with env.repo.session(U1) as s:
         assert diary.profile(s)[0]["groups_fresh_at"] == 3
+
+
+def test_detach_star_leaves_group_and_stays_apart(env, monkeypatch):
+    """작은 별 떼어 내기(2026-10-30): 묶음에서 빠지고, 같은 묶음의 별과는 다시 묶지 않는다(거절 짝). 머리를 떼면 남은 별이 새 머리."""
+    _topics_by_title(env, monkeypatch, {"첫날": "아침 걷기", "둘째": "걷기 기록", "셋째": "걷기 친구"})
+    env.fake.group_answer = [[1, 2, 3]]
+    for i, title in enumerate(("첫날", "둘째", "셋째"), 1):
+        write(env, U1, title, "걷기를 적었다.", f"2026-10-0{i}T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        st = {x["name"]: x for x in diary.stars(s)}
+        head = st["아침 걷기"]["id"]
+        u = views.universe(s)
+        assert {m["name"] for m in next(x for x in u["stars"] if x["id"] == head)["members"]} == {"걷기 기록", "걷기 친구"}
+        assert edit.detach_star(s, st["걷기 친구"]["id"])["name"] == "걷기 친구"
+        st = {x["name"]: x for x in diary.stars(s)}
+        assert not st["걷기 친구"].get("group") and st["걷기 기록"]["group"] == head
+        assert edit.pair_id(st["걷기 친구"]["id"], head) in edit.declined(s)
+        edit.detach_star(s, head)                                         # 머리를 떼면 남은 별이 새 머리
+        st = {x["name"]: x for x in diary.stars(s)}
+        assert not st["아침 걷기"].get("group") and not st["걷기 기록"].get("group")
+        assert edit.detach_star(s, st["걷기 기록"]["id"]) is None          # 혼자인 별은 뗄 수 없음
+        assert sum(f["value"] == "떼어 냄" for f in s.rows("feedback")) == 2
+    write(env, U1, "넷째", "걷기를 적었다.", "2026-10-04T22:00:00+09:00")   # 다음 묶기가 같은 셋을 다시 묶으려 해도
+    with env.repo.session(U1) as s:
+        heads = diary.star_heads(diary.stars(s))
+        st = {x["name"]: x for x in diary.stars(s)}
+        assert heads[st["걷기 친구"]["id"]]["id"] != heads[st["아침 걷기"]["id"]]["id"]

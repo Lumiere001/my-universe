@@ -121,6 +121,11 @@ test("우주 화면", async ({ page }, info) => {
     await expect(panel.getByLabel("새 해 이름")).toHaveAccessibleDescription(/사람 이름은 넣지 말아 주세요/);
     await expect(page.getByTestId("planet-card")).toHaveCount(0);   // 칸은 한 자리: 도구 칸이 열리면 행성 카드는 닫힘
     await shot("07-edit-panel");
+    const split = panel.getByRole("region", { name: "묶음 나누기" });            // 큰 묶음 쏠림을 사람이 바로잡기(2026-10-30)
+    await expect(split).toContainText("진로");
+    await split.getByRole("button", { name: "“팀 찾기” 떼어 내기" }).click();
+    await expect(panel).toContainText("“팀 찾기”을(를) “진로” 묶음에서 떼었어요. 다시 같이 묶지 않아요.");
+    await expect(split.getByRole("button", { name: "“팀 찾기” 떼어 내기" })).toHaveCount(0);
     await panel.getByRole("button", { name: "닫기" }).click();
   });
 

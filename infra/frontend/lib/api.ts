@@ -43,7 +43,7 @@ export type EntrySummary = {
 };
 export type Universe = {
   suns: { id: string; name: string; custom: boolean; planet_count: number }[];
-  stars: { id: string; sun_id: string; name: string; planet_count: number }[];
+  stars: { id: string; sun_id: string; name: string; planet_count: number; members?: { id: string; name: string }[] }[];   // members = 묶음에 든 다른 작은 별
   planets: { id: string; star_id: string; sun_id: string; written_at: string; title: string; order: number;
     ring: boolean; people: string[]; weather: Weather | null;
     // 크기 = 생각 수, 밝기 = 확신, '?' = 열린 질문, 고리: 열림(빈 고리) · 채워짐(지킨 다짐)
@@ -437,6 +437,10 @@ export async function getMergeCandidates(): Promise<{ candidates: MergeCandidate
 }
 export async function mergeStars(from_id: string, into_id: string): Promise<{ id: string; name: string }> {
   return MOCK ? { id: into_id, name: into_id } : json("POST", "/stars/merge", { from_id, into_id });
+}
+// 작은 별을 묶음에서 떼어 내기(같은 묶음의 별과 다시 묶지 않음)
+export async function detachStar(id: string): Promise<{ id: string; name: string }> {
+  return MOCK ? (await mock()).detachStar(id) : json("POST", `/stars/${encodeURIComponent(id)}/detach`);
 }
 export async function declineMerge(from_id: string, into_id: string): Promise<{ ok: boolean }> {
   return MOCK ? { ok: true } : json("POST", "/stars/merge/decline", { from_id, into_id });
