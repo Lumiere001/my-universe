@@ -483,6 +483,9 @@ export type OpsSummary = {
   // 개인 지표(사람마다 그 사람 반응으로) — 운영에는 분포만: 잴 수 있는 사람 수 · 중앙값 · 자기 기준보다 나빠진 사람 수
   personal?: { links_yes: { users: number; median: number | null; worse: number }; dislike: { users: number; median: number | null; worse: number };
     fixes: { users: number; median: number | null } };
+  // 개인 고리가 도는 모습: 개인 층이 켜진 사람 수, 다이얼마다 자동으로 옮긴 수 · 방향 · 되돌린 수(min = 옮기는 문턱, 반응 수)
+  personal_loop?: { on: { auto: number; disliked: number; rejected: number; fixed: number };
+    dials: { setting: string; moved: number; users: number; undone: number; to: Record<string, number> }[]; min: number };
 };
 export type OpsFeedback = { days: number; wrong: boolean; users: number;
   items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null }[];

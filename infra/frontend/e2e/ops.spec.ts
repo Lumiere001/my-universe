@@ -18,6 +18,12 @@ test("운영 화면", async ({ page }, info) => {
   const me = page.getByRole("region", { name: "사람마다 · 개인 지표" });   // 개인 고리: 운영은 분포만
   await expect(me).toContainText("75%");
   await expect(me).toContainText("9명 · 자기 기준보다 나빠진 사람 1명");
+  const loop = page.getByRole("region", { name: "개인 고리" });   // 개인 고리가 도는 모습: 다이얼마다 자동으로 옮긴 수 · 되돌림(사람 id 없이)
+  await expect(loop).toContainText("설정이 자동으로 바뀐 사람");
+  await expect(loop.getByRole("table", { name: "다이얼별 자동 조정" })).toContainText("다른 영역과 이어진 선 보이기");
+  await expect(loop.getByRole("table", { name: "다이얼별 자동 조정" })).toContainText("숨김 4 · 항상 1");
+  await expect(page.getByRole("heading", { name: /사람마다 · 개인 맞춤 관리/ })).toBeVisible();   // 전체 관리와 개인 맞춤 관리를 나눠 봄
+  await expect(page.getByText("자동 조정 되돌림")).toBeVisible();
   await expect(page.getByRole("table", { name: "피드백" })).toHaveCount(0);       // 원문은 누르기 전엔 없음
   await expect(page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true }).getByRole("link", { name: "운영", includeHidden: true })).toHaveCount(0);   // 메뉴에 없음
   // 휴대폰에서도 가로로 넘치지 않는다(표는 자기 칸 안에서만 밀림)

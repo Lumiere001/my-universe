@@ -91,6 +91,7 @@ export default function OpsPage() {
   if (!s) return <main><p className="sub">불러오는 중…</p></main>;
   const c = s.cost;
   const worse = s.personal ? s.personal.links_yes.worse + s.personal.dislike.worse : null;
+  const loop = s.personal_loop ? undoRate(s.personal_loop.dials) : null;
   return (
     <main className="wide ops">
       <div className="ops-head">
@@ -104,9 +105,12 @@ export default function OpsPage() {
         <Glance label="점선 맞아요" value={pct(s.satisfaction.yes_ratio)} note={`맞아요 ${s.satisfaction.yes} · 아니에요 ${s.satisfaction.no}`} />
         <Glance label="다음 날 다시 씀" value={pct(s.satisfaction.next_day.ratio)} note={`${s.satisfaction.next_day.returned}/${s.satisfaction.next_day.pairs}일`} />
         {worse !== null && <Glance label="개인 지표 나빠진 사람" value={`${worse}명`} ok={worse === 0} note="자기 기준보다 15%p 넘게" />}
+        {loop && <Glance label="자동 조정 되돌림" value={pct(loop.ratio)} ok={loop.ratio == null || loop.ratio < UNDO_WARN}
+          note={`옮김 ${loop.moved} · 되돌림 ${loop.undone}`} />}
       </section>
 
       <div className="ops-grid">
+        <h2 className="ops-group">모두에게 같은 것 · 전체 관리 <span className="sub">공통 틀(온톨로지 · Agent 설정 · 규칙)이 잘 도는지, 비용 · 실패 · 반응</span></h2>
         <Card label="추정 비용" desc="운영 서버에서 쓴 AI 호출 비용(추정). 개발 · 시험 호출(runs/cost_ledger.jsonl)과 Upstage 콘솔 청구는 따로 봐요."
           title={<>추정 비용 {c.over ? <span className="badge o">예산을 넘었어요</span> : c.warn && <span className="badge o">예산의 80%를 넘었어요</span>}</>}>
           <div className="ops-stats">
@@ -136,19 +140,6 @@ export default function OpsPage() {
           <Table label="설정 번호별 반응" head={["설정", "맞아요", "아니에요", "좋아요", "별로"]} num={[1, 2, 3, 4]}
             rows={Object.entries(s.satisfaction.by_config).map(([k, v]) => [k, v["맞아요"] ?? 0, v["아니에요"] ?? 0, v["좋아요"] ?? 0, v["별로"] ?? 0])} />
         </Card>
-
-        {s.personal && (
-          <Card full label="사람마다 · 개인 지표" title={<>사람마다 · 개인 지표 <span className="sub">(분포만, 사람별 값은 보지 않아요)</span></>}
-            desc="사람마다 설정은 반응에 맞춰 자동으로 한 칸씩 바뀌고(되돌리기 가능), 여기서는 그 고리가 잘 도는지만 봐요. 반응이 5번 넘게 쌓인 사람만 세고, 나빠진 사람 = 최근 14일이 그 전보다 15%p 이상 나쁨.">
-            <div className="ops-stats">
-              <Stat label="AI 추정 선 맞아요 (중앙값)" value={pct(s.personal.links_yes.median)}
-                note={`${s.personal.links_yes.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.links_yes.worse}명`} />
-              <Stat label="한마디 별로 (중앙값)" value={pct(s.personal.dislike.median)}
-                note={`${s.personal.dislike.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.dislike.worse}명`} />
-              <Stat label="글 10편당 고친 수 (중앙값)" value={s.personal.fixes.median ?? "—"} note={`${s.personal.fixes.users}명 · 고침 · 옮김 · 합침`} />
-            </div>
-          </Card>
-        )}
 
         <Card label="말 걸기" title="말 걸기 · 한마디" desc="별지기 한마디에 제안을 얼마나 넣고, 사용자가 어떻게 받았는지.">
           <div className="ops-stats">
@@ -201,10 +192,56 @@ export default function OpsPage() {
               usd(r.est_usd), r.code ? <Name key="c" k={r.code} map={CODE} /> : "", r.config ?? "", r.entry_id ?? ""])} />
         </Card>
 
+        <h2 className="ops-group">사람마다 · 개인 맞춤 관리 <span className="sub">사람마다 반응으로 자동으로 도는 개인 고리 — 분포와 사람 수만</span></h2>
+        {s.personal && (
+          <Card full label="사람마다 · 개인 지표" title={<>사람마다 · 개인 지표 <span className="sub">(분포만, 사람별 값은 보지 않아요)</span></>}
+            desc="사람마다 설정은 반응에 맞춰 자동으로 한 칸씩 바뀌고(되돌리기 가능), 여기서는 그 고리가 잘 도는지만 봐요. 반응이 5번 넘게 쌓인 사람만 세고, 나빠진 사람 = 최근 14일이 그 전보다 15%p 이상 나쁨.">
+            <div className="ops-stats">
+              <Stat label="AI 추정 선 맞아요 (중앙값)" value={pct(s.personal.links_yes.median)}
+                note={`${s.personal.links_yes.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.links_yes.worse}명`} />
+              <Stat label="한마디 별로 (중앙값)" value={pct(s.personal.dislike.median)}
+                note={`${s.personal.dislike.users}명 · 자기 기준보다 나빠진 사람 ${s.personal.dislike.worse}명`} />
+              <Stat label="글 10편당 고친 수 (중앙값)" value={s.personal.fixes.median ?? "—"} note={`${s.personal.fixes.users}명 · 고침 · 옮김 · 합침 · 떼어 냄`} />
+            </div>
+          </Card>
+        )}
+
+        {s.personal_loop && <LoopCard l={s.personal_loop} />}
+
+        <h2 className="ops-group">사용자 목소리 · 공통 틀을 고칠 재료 <span className="sub">동의한 사용자의 피드백 원문 · 여러 사람의 같은 고침 · 오답 모으기</span></h2>
         <FeedbackPanel counts={s.feedback_text} />
         <ScriptToken />
       </div>
     </main>
+  );
+}
+
+const DIAL: Record<string, string> = { cross_links: "다른 영역과 이어진 선 보이기", suggestions: "다음 걸음 제안 빈도" };
+const UNDO_WARN = 0.3;   // ponytail: 자동 조정의 30% 넘게 되돌리면 문턱(반응 3번)이 낮다고 본다. 파일럿 뒤 다시 정한다
+const undoRate = (ds: { moved: number; undone: number }[]) => {
+  const moved = ds.reduce((a, d) => a + d.moved, 0), undone = ds.reduce((a, d) => a + d.undone, 0);
+  return { moved, undone, ratio: moved ? undone / moved : null };
+};
+
+// 개인 고리: 개인 층이 켜진 사람 수 + 다이얼마다 자동으로 옮긴 수 · 방향 · 되돌림(사람 id 없이)
+function LoopCard({ l }: { l: NonNullable<OpsSummary["personal_loop"]> }) {
+  return (
+    <Card full label="개인 고리" title={<>개인 고리 · 자동으로 맞춘 것 <span className="sub">(사람 id 없이)</span></>}
+      desc={`반응이 한쪽으로 ${l.min}번 이상(반대쪽의 두 배) 쌓이면 그 사람 설정이 한 칸 바뀌고 알림이 떠요. 되돌림이 많으면 문턱이 낮다는 뜻이고, 여러 사람이 같은 방향으로 옮기면 기본값(공통 틀)을 바꿀 후보예요.`}>
+      <div className="ops-stats">
+        <Stat label="설정이 자동으로 바뀐 사람" value={`${l.on.auto}명`} />
+        <Stat label="'별로' 금지 목록이 있는 사람" value={`${l.on.disliked}명`} note="그 한마디는 그 사람에게 다시 안 씀" />
+        <Stat label="'아니에요' 규칙이 있는 사람" value={`${l.on.rejected}명`} note="지운 연결은 다른 묶음 사이에서 다시 안 보임" />
+        <Stat label="고침으로 고정한 사람" value={`${l.on.fixed}명`} note="고침 · 옮김 · 합침 · 떼어 냄" />
+      </div>
+      <Table label="다이얼별 자동 조정" head={["설정", "옮김", "사람", "되돌림", "어디로"]} num={[1, 2, 3]}
+        rows={l.dials.map((d) => {
+          const r = d.moved ? d.undone / d.moved : null;
+          return [DIAL[d.setting] ?? d.setting, d.moved, `${d.users}명`,
+            <span key="u" className={r != null && r >= UNDO_WARN ? "ops-warn" : undefined}>{d.undone} ({pct(r)})</span>,
+            Object.entries(d.to).map(([k, v]) => `${k} ${v}`).join(" · ")];
+        })} />
+    </Card>
   );
 }
 

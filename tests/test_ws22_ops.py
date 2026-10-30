@@ -422,6 +422,14 @@ def test_personal_loop_two_users_move_apart(c, env):  # noqa: F811
     personal = c.get("/ops/summary", headers=HA).json()["personal"]
     assert personal["links_yes"] == {"users": 2, "median": 0.5, "worse": 0} and personal["dislike"]["users"] == 0
     assert U1 not in json.dumps(personal) and U2 not in json.dumps(personal)
+    note = next(x for x in c.get("/settings/suggestions", headers=H1).json()["applied"] if x["setting"] == "cross_links")
+    c.post(f"/settings/suggestions/{note['id']}/undo", headers=H1)   # U1 이 하나를 되돌림
+    c.post(f"/settings/suggestions/{note['id']}/undo", headers=H1)   # 두 번 눌러도 한 번
+    loop = c.get("/ops/summary", headers=HA).json()["personal_loop"]   # 운영: 개인 고리가 도는 모습(사람 id 없이)
+    dials = {d["setting"]: d for d in loop["dials"]}
+    assert dials["cross_links"] == {"setting": "cross_links", "moved": 2, "users": 2, "undone": 1, "to": {"숨김": 1, "항상": 1}}
+    assert dials["suggestions"]["to"] == {"적게": 1, "많이": 1} and loop["on"]["auto"] == 2 and loop["min"] == 3
+    assert U1 not in json.dumps(loop) and U2 not in json.dumps(loop)
 
 
 ##################################################

@@ -327,6 +327,30 @@ def personal_spread(per, drop=0.15):
     return out
 
 
+def personal_loop(fb):
+    """개인 고리가 도는 모습(사람 id 없이): 개인 층이 켜진 사람 수와, 다이얼마다 자동으로 옮긴 수 · 방향 · 사람 수 · 되돌린 수.
+    되돌림이 많으면 문턱(PREF_MIN)이 낮다는 뜻이고, 여러 사람이 같은 방향으로 옮기면 공통 틀(기본값)을 바꿀 후보다."""
+    def who(ok):
+        return len({str(f["user_id"]) for f in fb if ok(f)})
+    dials = {}
+    for f in fb:
+        if f["target"] == "setting" and f["value"] in (AUTO, UNDO):
+            key, _, to = (f["target_id"] or "").partition(":")
+            d = dials.setdefault(key, {"setting": key, "moved": 0, "users": set(), "undone": 0, "to": Counter()})
+            if f["value"] == AUTO:
+                d["moved"] += 1
+                d["users"].add(str(f["user_id"]))
+                d["to"][to] += 1
+            else:
+                d["undone"] += 1
+    return {"on": {"auto": who(lambda f: f["target"] == "setting" and f["value"] == AUTO),
+                   "disliked": who(lambda f: f["target"] == "message" and f["value"] == "별로"),
+                   "rejected": who(lambda f: f["target"] == "relation" and f["value"] == "아니에요"),
+                   "fixed": who(lambda f: f["value"] in FIXES)},
+            "dials": [{**d, "users": len(d["users"]), "to": dict(d["to"])} for d in dials.values()],
+            "min": PREF_MIN}
+
+
 def summary(r, version, budget, now=None):
     """운영 화면 한 장. r = reader(repo). 원문 0건(숫자 · 코드 · id · 시각만)."""
     now = now or datetime.now(timezone.utc)
@@ -352,6 +376,7 @@ def summary(r, version, budget, now=None):
         "voice": voice(msgs, runs, fb, days, today),
         "other_values": other_counts(r.rows("thoughts")),
         "personal": personal_spread(personal(fb, entries, today)),
+        "personal_loop": personal_loop(fb),
         "feedback_text": {"consented": sum(str(f["user_id"]) in readers and f["value"] == "불편한 점 한 줄" for f in fb),
                           "not_consented": sum(str(f["user_id"]) not in readers and f["value"] == "불편한 점 한 줄" for f in fb)},
     }
@@ -446,6 +471,7 @@ def framework_candidates(per_user, min_users=2):
 
 STEPS = {"cross_links": ("숨김", "눌렀을 때", "항상"), "suggestions": ("적게", "보통", "많이")}
 PREF_MIN = 3   # ponytail: 고정 문턱(연구 근거 없음, 이만큼 같은 쪽으로 누르면 묻는다). 피드백이 쌓이면 다시 정한다
+AUTO, UNDO = "자동 조정", "되돌림"   # 개인 고리가 남기는 원문 없는 기록(feedback target='setting', target_id='다이얼:값') — 운영은 이것만 센다
 REASON = {("cross_links", -1): "다른 영역과 이어진 선에 '아니에요'를 자주 눌렀어요.",
           ("cross_links", 1): "다른 영역과 이어진 선에 '맞아요'를 자주 눌렀어요.",
           ("suggestions", -1): "다음 걸음 제안이 든 한마디에 '별로'를 자주 눌렀어요.",
@@ -492,6 +518,8 @@ def auto_pref(s):
     diary.save_profile(s, settings={m["setting"]: m["to"] for m in moves},
                        onboarding={"pref_seen_by": {**seen, **{m["setting"]: at for m in moves}},
                                    "pref_auto": (ob.get("pref_auto") or [])[-9:] + notes})
+    for m in moves:   # 설정 · 알림은 암호문이라 운영이 못 읽는다 → 무엇을 어디로 옮겼는지만 평문 기록으로
+        diary.add_feedback(s, "setting", f"{m['setting']}:{m['to']}", AUTO)
     return notes
 
 
@@ -503,6 +531,8 @@ def pref_undo(s, note_id):
     if not n:
         return None
     back = {n["setting"]: n["from"]} if st.get(n["setting"]) == n["to"] else {}
+    if not n.get("undone"):
+        diary.add_feedback(s, "setting", f"{n['setting']}:{n['from']}", UNDO)
     marks = [{**x, "seen": True, "undone": True} if x["id"] == note_id else x for x in notes]
     diary.save_profile(s, settings=back, onboarding={"pref_auto": marks, "pref_seen_by": {
         **(ob.get("pref_seen_by") or {}), n["setting"]: diary.now().isoformat()}})

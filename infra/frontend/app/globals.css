@@ -699,6 +699,9 @@ main.ins { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-d
 .ops-tile.warn .state { color: var(--orange); }
 .ops-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .ops-grid > .full { grid-column: 1 / -1; }
+.ops-group { grid-column: 1 / -1; margin: 10px 0 -4px; font-size: 1.05rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.ops-group .sub { font-size: .8rem; font-weight: 400; }
+.ops-warn { color: var(--orange); }
 .ops-grid > *, .ops-two > * { min-width: 0; }   /* 긴 표가 칸을 넓히지 않고 자기 안에서만 밀리게 */
 .ops .card { margin: 0; }
 .ops h2 { margin: 0; font-size: 1.05rem; }
