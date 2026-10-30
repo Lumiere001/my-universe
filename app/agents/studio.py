@@ -54,8 +54,9 @@ def _once(agent_id, config_id, html, timeout):
             r = client().responses.retrieve(r.id, include=["all"])
     finally:
         _delete_file(up.id)
-    if r.status != "completed":
-        raise StudioError("studio_failed")
+    if r.status != "completed":   # Studio 는 요청 한도 초과를 HTTP 429 가 아니라 실패 상태 + error.code 로 돌려준다(2026-10-30 확인)
+        code = getattr(getattr(r, "error", None), "code", None)
+        raise StudioError("studio_rate_limited" if code == "rate_limit_exceeded" else "studio_failed")
     steps = [o.content[0].text for o in r.output if getattr(o, "content", None)]
     if len(steps) < 3:
         raise StudioError("studio_bad_output")
@@ -77,8 +78,9 @@ def run(kind, html):
                            else (config.OBSERVE_AGENT_ID, config.V8_OBSERVE_CONFIG_ID))
     with trace.span("studio.run", kind="AGENT", system="upstage", op="invoke_agent", agent=kind, config_id=str(config_id)):
         m.check(html, f"studio_{kind}")
-        last, usd0 = None, m.usd
-        for attempt in (1, 2):
+        last, usd0, tries = None, m.usd, 0
+        for attempt in (1, 2, 3):   # 보통은 두 번, 요청 한도 초과면 쉬었다가 세 번까지
+            tries = attempt
             t0 = time.time()
             try:
                 data, pages = _once(agent_id, config_id, html, config.STUDIO_TIMEOUT_S)
@@ -87,13 +89,16 @@ def run(kind, html):
                 m.add(config.PRICE_STUDIO_PAGE)   # 실패해도 과금될 수 있어 크게 잡는다
                 logger.log("external", what=f"studio_{kind}", ok=False, attempts=attempt,
                            code=getattr(e, "code", type(e).__name__))
-                if attempt == 1 and getattr(e, "status_code", None) == 429:   # 너무 잦은 요청이면 조금 쉬고 다시(업스테이지 가이드 3.1)
-                    time.sleep(config.STUDIO_RETRY_WAIT_S)
+                limited = getattr(e, "status_code", None) == 429 or getattr(e, "code", None) == "studio_rate_limited"
+                if attempt == 3 or (attempt == 2 and not limited):
+                    break
+                if limited:   # 너무 잦은 요청이면 쉬고 다시(업스테이지 가이드 3.1). 여러 사람이 동시에 쓸 때(파일럿) 실패하지 않게 점점 길게
+                    time.sleep(config.STUDIO_RETRY_WAIT_S * (4 if getattr(e, "code", None) == "studio_rate_limited" else 1) * attempt)
                 continue
             m.add(pages * config.PRICE_STUDIO_PAGE)
             logger.log("external", what=f"studio_{kind}", ok=True, attempts=attempt, pages=pages,
                        ms=int((time.time() - t0) * 1000))
             trace.set(attempts=attempt, pages=pages, est_usd=m.usd - usd0)
             return data
-        trace.set(attempts=2, est_usd=m.usd - usd0)
+        trace.set(attempts=tries, est_usd=m.usd - usd0)
         raise last if isinstance(last, StudioError) else StudioError("studio_failed")
