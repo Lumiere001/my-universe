@@ -137,3 +137,14 @@ def test_insight_resolution_closes_only_the_earlier_side():
     rels = [{"type": "긴장", "from": "x", "to": "y"}, {"type": "해소", "from": "y", "to": "z"}, {"type": "긴장", "from": "z", "to": "w"}]
     (sun,) = insight(ts, rels)["suns"]
     assert [(p["from"]["thought_id"], p["to"]["thought_id"]) for p in sun["open"]] == [("z", "w")]
+
+
+def test_insight_changed_skips_the_shortcut_of_a_chain():
+    """바뀜이 x → y → z 로 이어지면 x → z 카드는 빼서 같은 변화가 겹쳐 보이지 않게(가상 인물 A, 2026-10-30)."""
+    from app.service.rules import insight
+    T = lambda i, day: {"id": i, "record_id": f"r{i}", "day": day, "topic": "도움 요청", "domain": "미래 안정", "kind": "해석",  # noqa: E731
+                        "quote": i}
+    ts = {i: T(i, d) for i, d in (("x", "2026-07-24"), ("y", "2026-08-14"), ("z", "2026-08-19"), ("w", "2026-08-01"))}
+    rels = [{"type": "바뀜", "from": a, "to": b} for a, b in (("x", "y"), ("y", "z"), ("x", "z"), ("w", "z"))]
+    (sun,) = insight(ts, rels)["suns"]
+    assert [(p["from"]["thought_id"], p["to"]["thought_id"]) for p in sun["changed"]] == [("x", "y"), ("y", "z"), ("w", "z")]

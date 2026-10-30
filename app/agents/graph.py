@@ -13,6 +13,7 @@ LangGraph Super Graph: 일기 한 편을 safety → names → record → past �
 - 대화에서 온 초안(entries.confirmed = '확인 전')은 voice 뒤 save 앞에서 멈춘다. 확인 화면이 고친 뒤 다시 돌리면 save 만 돈다(WS20).
 """
 
+import re
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -188,6 +189,13 @@ def _quote_ok(quote, source):
     return bool(q) and q in tools.norm(source)
 
 
+def _from_source(quote, source):
+    """통과한 인용을 원문 글자 그대로(띄어쓰기 · 줄바꿈까지)로. 검사는 띄어쓰기를 지우고 해서 Studio 가 줄 바뀐 자리에
+    띄어쓰기를 넣은 인용(이름보다 → 이 름보다)도 통과하고 그대로 화면에 나왔다(가상 인물 A, 2026-10-30)."""
+    m = re.search(r"\s*".join(map(re.escape, tools.norm(quote))), source)
+    return m.group() if m else quote
+
+
 @node("record_clean")
 def record_clean(state, ctx):
     raw = parse_record(state["record_raw"])
@@ -205,6 +213,7 @@ def record_clean(state, ctx):
     source = f"{state.get('title', '')}\n{state['text']}"
     kept = [t for t in rec["thoughts"] if _quote_ok(t["quote"], source)]   # 원문에 없는 인용은 버린다(1차 G1)
     for t in kept:
+        t["quote"] = _from_source(t["quote"], source)
         if {"가치 이름", "빈 주제"} & set(t["problems"]):
             t["topic"], t["domain"] = OTHER_TOPIC, topics.get(OTHER_TOPIC) or t["domain"]
     info = {k: rec[k] for k in ("summary", "addressee", "events", "record_type", "original")}

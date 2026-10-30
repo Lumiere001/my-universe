@@ -409,3 +409,11 @@ def test_two_domain_mode_forces_unmatched_topics_into_two_suns(env, monkeypatch)
     with env.repo.session(U1) as s:
         sun = {x["id"]: x["name"] for x in diary.suns(s)}
         assert {sun[t["sun_id"]] for t in diary.thoughts(s)} == {"인간관계"}
+
+
+def test_quote_shown_as_written_in_the_diary():
+    """인용 검사는 띄어쓰기를 지우고 해서 Studio 가 줄 바뀐 자리에 넣은 띄어쓰기(이 름보다)도 통과한다 → 원문 글자 그대로 보인다."""
+    from app.agents.graph import _from_source
+    src = "제목\n나는 아직 첫 직장은 이름보다\n배우는 속도가 중요하다고 생각한다."
+    assert _from_source("첫 직장은 이 름보다 배우는 속도가", src) == "첫 직장은 이름보다\n배우는 속도가"
+    assert _from_source("원문에 없음", src) == "원문에 없음"

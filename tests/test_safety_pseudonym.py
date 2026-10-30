@@ -316,3 +316,15 @@ def test_titles_without_names(text):
 def test_forget_drops_title_with_name():
     person = {"name": "고민석", "nicknames": ["민석"], "relation": "팀장"}
     assert forget("민석 팀장님이 칭찬했다. 고민석 팀장님은 말이 짧다.", person) == "팀장이 칭찬했다. 팀장은 말이 짧다."
+
+
+def test_common_words_are_not_people():
+    """떡볶이를 · 그래도: 이름이 아닌데 사람으로 자동 등록 · 질문되던 말(가상 인물 A, 2026-10-30). 이름답지 않은 '이가'꼴은
+    사람 행동 낱말이 없으면 묻기만 하고(가명은 그대로) 자동 등록하지 않는다."""
+    found = find_new_names("저녁에 떡볶이를 먹었다. 엄마는 그래도 큰 회사가 낫지 않냐고 다시 물었다.", [])
+    assert found == {"auto": [], "ask": []}
+    assert find_new_names("태호는 아직 결과를 기다리는 중이라 미안했다.", [{"name": "정태호", "nicknames": ["태호"]}])["ask"] == []
+    found = find_new_names("똘똘이가 어제 왔다.", [])
+    assert found["auto"] == [] and [a["name"] for a in found["ask"]] == ["똘똘"]
+    assert find_new_names("똘똘이가 전화했다.", [])["auto"] == ["똘똘"]
+    assert "똘똘" not in mask("똘똘이가 어제 왔다.", [])[0]   # 묻는 동안에도 밖으로는 가명

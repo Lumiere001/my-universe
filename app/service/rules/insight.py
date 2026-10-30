@@ -13,6 +13,18 @@ def _end(t):
     return {"day": t["day"], "quote": t.get("quote", ""), "record_id": t["record_id"], "thought_id": t["id"]}
 
 
+def _no_shortcuts(rs):
+    """바뀜이 A → B → C 로 이어지면 A → C 는 빼고 보인다(같은 변화가 세 장으로 겹쳐 보였다, 가상 인물 A 2026-10-30).
+    관계는 늘 앞 날짜 → 뒤 날짜라 돌지 않는다."""
+    nxt = {}
+    for r in rs:
+        nxt.setdefault(r["a"]["id"], set()).add(r["b"]["id"])
+
+    def reach(x, goal):
+        return any(n == goal or reach(n, goal) for n in nxt.get(x, ()))
+    return [r for r in rs if not any(reach(m, r["b"]["id"]) for m in nxt[r["a"]["id"]] - {r["b"]["id"]})]
+
+
 def insight(thoughts, relations, suns=()):
     """thoughts: {id: {id, record_id, day, topic, domain, kind, quote}}, relations: 남은 관계 [{type, from, to, line, axis}].
     suns: 사용자가 추가한 해. 돌려줌: {period, suns: [{name, records, stars, kept, changed, open, settled}], across}.
@@ -51,7 +63,7 @@ def insight(thoughts, relations, suns=()):
                     k["from"] = _end(r["a"])
         out.append({"name": sun, "records": len({t["record_id"] for t in ts}), "stars": stars,
                     "kept": sorted(kept.values(), key=lambda k: -k["times"]),
-                    "changed": [pair(r) for r in mine if r["type"] == "바뀜"],
+                    "changed": [pair(r) for r in _no_shortcuts([r for r in mine if r["type"] == "바뀜"])],
                     "open": [pair(r) for r in mine if r["type"] == "긴장" and not {r["a"]["id"], r["b"]["id"]} & resolved],
                     "settled": [pair(r) for r in mine if r["type"] == "해소"]})
     across = [{"type": r["type"], "suns": [r["a"]["domain"], r["b"]["domain"]], "from": _end(r["a"]), "to": _end(r["b"]),
