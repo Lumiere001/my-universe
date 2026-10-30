@@ -56,7 +56,9 @@ def _once(agent_id, config_id, html, timeout):
         _delete_file(up.id)
     if r.status != "completed":   # Studio 는 요청 한도 초과를 HTTP 429 가 아니라 실패 상태 + error.code 로 돌려준다(2026-10-30 확인)
         code = getattr(getattr(r, "error", None), "code", None)
-        raise StudioError("studio_rate_limited" if code == "rate_limit_exceeded" else "studio_failed")
+        e = StudioError("studio_rate_limited" if code == "rate_limit_exceeded" else "studio_failed")
+        e.detail = code or r.status   # Studio 가 준 이유(원문 없는 짧은 코드) — 실패 원인을 기록에서 보려고
+        raise e
     steps = [o.content[0].text for o in r.output if getattr(o, "content", None)]
     if len(steps) < 3:
         raise StudioError("studio_bad_output")
@@ -88,7 +90,7 @@ def run(kind, html):
                 last = e
                 m.add(config.PRICE_STUDIO_PAGE)   # 실패해도 과금될 수 있어 크게 잡는다
                 logger.log("external", what=f"studio_{kind}", ok=False, attempts=attempt,
-                           code=getattr(e, "code", type(e).__name__))
+                           code=getattr(e, "code", type(e).__name__), detail=getattr(e, "detail", None))
                 limited = getattr(e, "status_code", None) == 429 or getattr(e, "code", None) == "studio_rate_limited"
                 if attempt == 3 or (attempt == 2 and not limited):
                     break

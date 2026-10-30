@@ -19,7 +19,7 @@ from app.core import config
 ALLOWED = {"step", "ms", "est_usd", "calls", "code", "user_id", "entry_id", "what", "ok", "status",
            "checks", "next_kind", "thoughts", "relations", "dropped", "past", "people_new",
            "questions", "attempts", "pages", "skipped", "path", "method", "http", "count", "tokens_in", "tokens_out",
-           "model"}
+           "model", "detail"}
 MAX_STR = 40
 _lock = threading.Lock()
 
