@@ -297,9 +297,8 @@ def observe(state, ctx):
         return {"observed": {}}
     with ctx.repo.session(ctx.uid) as s:
         asp = (diary.aspirations(s) or [None])[-1]
-        rejected = edit.rejected_links(s)[-edit.REJECT_HINTS:]
     a = {"said": asp["said"], "value": (asp["values"] or [""])[0]} if asp else None
-    return {"observed": tools.run_observe_agent(state["day"], grouped(state["today"]), state["past"], a, state["people"], rejected)}
+    return {"observed": tools.run_observe_agent(state["day"], grouped(state["today"]), state["past"], a, state["people"])}
 
 
 @node("rules")

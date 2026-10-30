@@ -299,9 +299,6 @@ def hide_thoughts(s, tids):
     return n
 
 
-REJECT_HINTS = 5   # 관측 Agent 입력에 붙이는 '이 사람이 아니라고 한 연결' 수(최근 것부터)
-
-
 def rejected_links(s):
     """이 사람이 '아니에요'로 지운 관계 → [{type, topics: frozenset(묶음 이름 둘), quotes: (그때, 지금)}](오래된 것 → 최근).
     지운 관계의 두 생각은 남아 있으니 지금의 묶음 머리 이름으로 본다(묶음이 바뀌면 따라 바뀐다)."""

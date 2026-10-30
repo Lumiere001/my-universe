@@ -114,9 +114,9 @@ def test_observer_sees_group_names_before_save(env, monkeypatch):
     seen = []
     real = graph.tools.run_observe_agent
 
-    def spy(day, today, past, asp, people, rejected=()):
+    def spy(day, today, past, asp, people):
         seen.append(({t["topic"] for t in today}, {t["topic"] for t in past}))
-        return real(day, today, past, asp, people, rejected)
+        return real(day, today, past, asp, people)
     monkeypatch.setattr(graph.tools, "run_observe_agent", spy)
     write(env, U1, "첫날", DAY1[1], "2026-10-01T22:00:00+09:00")
     _, _, r = write(env, U1, "둘째", "걷기를 적었다.", "2026-10-02T22:00:00+09:00")

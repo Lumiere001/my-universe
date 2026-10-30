@@ -160,7 +160,8 @@ def filter_relations(cands, thoughts, states=None):
 
 def personal_filter(kept, thoughts, rejected):
     """개인 고리(2026-10-30, 개인 맞춤 Ops ④): 이 사람이 '아니에요'로 지운 연결과 종류가 같고 두 생각의 묶음(작은 별 머리)이 같은
-    AI 추정(점선) 관계는 이 사람에게 다시 보이지 않는다. 글쓴이가 직접 쓴 변화(실선)는 그대로.
+    AI 추정(점선) 관계는 이 사람에게 다시 보이지 않는다 — 서로 다른 두 묶음 사이 관계만. 글쓴이가 직접 쓴 변화(실선)는 그대로.
+    저장한 가상 인물 12판으로 다시 재 보면 정답 밖 관계 2% 를 막고 심은 연결은 하나도 막지 않는다(같은 묶음 안까지 막으면 49% · 44%).
     rejected: {(종류, frozenset({묶음 이름, 묶음 이름}))}. thoughts: {id: {topic, ...}}(topic = 묶음 이름).
     → (남은 것, 버린 것 [{cand, reason}])"""
     if not rejected:
@@ -168,7 +169,8 @@ def personal_filter(kept, thoughts, rejected):
     out, dropped = [], []
     for r in kept:
         key = (r["type"], frozenset((thoughts[r["from"]].get("topic"), thoughts[r["to"]].get("topic"))))
-        if r.get("line") == "점선" and key in rejected:
+        # 서로 다른 두 묶음 사이만: 같은 묶음 안까지 막으면 진짜 연결도 44% 막았다(저장한 12판으로 다시 재 봄, 다른 묶음 사이만이면 0%)
+        if r.get("line") == "점선" and len(key[1]) == 2 and key in rejected:
             dropped.append({"cand": r, "reason": "이 사람이 아니라고 한 연결과 같음(개인 규칙)"})
         else:
             out.append(r)

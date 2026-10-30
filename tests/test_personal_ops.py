@@ -54,22 +54,20 @@ def test_rejected_link_hides_same_kind_between_same_groups():
             {"type": "이어짐", "from": "a", "to": "b", "line": "점선"}, {"type": "긴장", "from": "a", "to": "d", "line": "점선"}]
     out, dropped = personal_filter(kept, ts, {("긴장", frozenset(("엄마", "이직 고민")))})
     assert [(r["type"], r["to"]) for r in out] == [("긴장", "c"), ("이어짐", "b"), ("긴장", "d")]
+    same = [{"type": "이어짐", "from": "a", "to": "c", "line": "점선"}]   # 같은 묶음 안은 막지 않는다(진짜 연결까지 막았다)
+    assert personal_filter(same, ts, {("이어짐", frozenset(("이직 고민",)))}) == (same, [])
     assert dropped[0]["reason"].startswith("이 사람이 아니라고 한 연결")
     assert personal_filter(kept, ts, set()) == (kept, [])
 
 
-def test_rejected_links_and_observe_hint(env):
+def test_rejected_links_reads_what_the_person_removed(env):
     from app.repository import edit
-    from app.service import studio_format as sf
     write(env, U1, *DAY1, "2026-10-01T22:00:00+09:00")
     with env.repo.session(U1) as s:
         a, b = diary.thoughts(s)[:2]
         diary.add_feedback(s, "relation", f"{a['id']}>{b['id']}", "아니에요", relation={"type": "긴장", "from": a["id"], "to": b["id"]})
         got = edit.rejected_links(s)
     assert len(got) == 1 and got[0]["type"] == "긴장" and len(got[0]["topics"]) >= 1 and got[0]["quotes"][0]
-    html, ids = sf.observe_html("2026-10-02", [], [], None, [{"type": "긴장", "quotes": ["그때 문장", "지금 문장"]}])
-    assert "이 사람이 아니라고 한 연결(일기 내용 아님)" in html and "[긴장] “그때 문장” → “지금 문장”" in html and ids == {}
-    assert "아니라고 한 연결" not in sf.observe_html("2026-10-02", [], [], None)[0]
 
 
 def test_framework_candidates_only_when_several_people_fix_the_same_way():

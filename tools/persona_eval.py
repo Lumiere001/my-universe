@@ -39,7 +39,7 @@ spec.loader.exec_module(q3)   # _entry · Spy · 원장: 품질 측정과 같은
 
 PERSONAS, RESULTS = ROOT / "eval/personas", ROOT / "eval/results"
 K = 3                     # pass^k: 같은 글 k번이 모두 같아야 통과(강의 4강 p.33)
-CAP_USD = 3.5             # 인물 하나(20편 ≈ $2 + 반복 · 다시 시도 여유)
+CAP_USD = 10.0            # 인물 하나(20편 ≈ $2 + 반복 · 다시 시도 여유). 2026-10-30: Studio 요청 한도로 다시 시도한 호출까지 세어 $3.5 에서 멈춰 올림(동규 「요금 상관없이」)
 OTHER = graph.OTHER_TOPIC
 
 
