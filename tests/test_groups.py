@@ -181,3 +181,22 @@ def test_detach_star_leaves_group_and_stays_apart(env, monkeypatch):
         heads = diary.star_heads(diary.stars(s))
         st = {x["name"]: x for x in diary.stars(s)}
         assert heads[st["걷기 친구"]["id"]]["id"] != heads[st["아침 걷기"]["id"]]["id"]
+
+
+def test_big_group_is_checked_again_and_split():
+    """큰 묶음 쏠림(2026-10-30): 작은 별의 30% 이상 · 4개 이상을 먹은 묶음만 한 번 더 보고, 섞였다면 나눈다."""
+    assert groups.big([[0, 1, 2, 3], [4], [5]], 6) == [0] and groups.big([[0, 1, 2], [3]], 4) == []
+    assert groups.big([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9]] + [[i] for i in range(10, 20)], 20) == [0]   # 20개면 30% = 6개부터
+    text = groups.split_input([{**star("a", "가게", 3), "prev": "a"}, star("b", "로스팅", 1)], [0, 1])
+    assert "지난 묶음" not in text and "가게" in text and "로스팅" in text
+
+
+def test_group_stars_splits_big_group(env, monkeypatch):
+    from app.agents import tools
+    env.fake.group_answer = [[1, 2, 3, 4], [5]]
+    env.fake.split_answer = [[1, 2], [3, 4]]
+    rows = [star(c, n, 1) for c, n in zip("abcde", ("가게 정리", "가게 계속", "로스팅 공부", "맛 재현", "엄마"))]
+    with tools.llm.guard([]):
+        got, _ = tools.group_stars(rows, [])
+    assert sorted(map(sorted, got)) == [[0, 1], [2, 3], [4]]
+

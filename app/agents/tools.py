@@ -90,6 +90,10 @@ def group_stars(stars, people, custom=()):
     ask = lambda system, user: llm.chat([{"role": "system", "content": system},   # noqa: E731
                                          {"role": "user", "content": user}], temperature=0)
     groups = group_rules.keep_old_apart(stars, group_rules.parse_groups(ask(group_rules.GROUP_SYSTEM, group_rules.group_input(ms)), len(stars)))
+    for gi in reversed(group_rules.big(groups, len(stars))):   # 큰 묶음 쏠림: 섞였는지 그 묶음만 한 번 더 본다
+        ids = groups[gi]
+        sub = group_rules.parse_groups(ask(group_rules.SPLIT_SYSTEM, group_rules.split_input(ms, ids)), len(ids))
+        groups[gi:gi + 1] = [[ids[j] for j in part] for part in sub]
     choices = group_rules.sun_choices(custom)
     suns = group_rules.parse_suns(ask(group_rules.sun_system(choices), group_rules.sun_input(ms, groups)), len(groups), choices)
     return groups, suns

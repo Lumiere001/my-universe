@@ -20,6 +20,7 @@ from app.service.rules.topics import base, profile
 O = load()
 EXAMPLES = 2   # 작은 별마다 원문 예 몇 개
 CUT = 50       # 예 하나의 글자 수
+BIG_SHARE, BIG_MIN = 0.3, 4   # ponytail: 작은 별의 30% 이상(그리고 4개 이상)을 먹은 묶음은 한 번 더 본다(A~F 비교에서 고른 값)
 FRESH_GROW = 1.5   # ponytail: 작은 별이 이만큼 늘면 한 번 새로 묶음(A~F 다시 묶기에서 고른 값). 별이 수백 개면 2배로 올려 볼 것
 
 GROUP_SYSTEM = (
@@ -74,6 +75,22 @@ def parse_groups(text, n):
         if ids:
             out.append(ids)
     return out + [[i] for i in range(n) if i not in seen]
+
+
+SPLIT_SYSTEM = ("너는 일기 앱에서 작은 별 묶음 하나를 다시 본다. 아래 별들은 지금 한 묶음이다. "
+                "서로 다른 고민 · 목표 · 관계가 섞였으면 고민마다 나눠라. 정말 같은 고민이면 하나로 둔다.\n"
+                'JSON 만 답한다: {"groups": [[별 번호, ...], ...]} — 모든 별 번호가 정확히 한 번씩 나와야 한다.')
+
+
+def big(groups, n):
+    """다시 볼 큰 묶음(쏠림, 2026-10-30): 작은 별의 BIG_SHARE 이상이고 BIG_MIN 개 이상. 가상 인물 A~F 다시 묶기 12판 평균
+    가장 큰 묶음 비율 0.38 → 0.27, 같은 주제 F1 0.755 → 0.765, 묶음 정밀도 0.64 → 0.69(E 쏠림 0.70 → 0.83), 흔들림 9.0 → 12.3%."""
+    return [i for i, ids in enumerate(groups) if len(ids) >= max(BIG_MIN, round(BIG_SHARE * n))]
+
+
+def split_input(stars, ids):
+    """큰 묶음 하나의 별만 Solar 에 다시 보인다(지난 묶음 표시 없이)."""
+    return group_input([{**stars[i], "prev": None} for i in ids])
 
 
 def keep_old_apart(stars, groups):

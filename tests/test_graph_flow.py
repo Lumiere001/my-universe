@@ -29,6 +29,7 @@ class FakeUpstage:
 
     def __init__(self):
         self.sent, self.store, self.calls = [], {}, {"record": 0, "observe": 0, "chat": 0, "embed": 0}
+        self.split_answer = None
         self.group_answer, self.sun_answer = [], []
         self.fail_observe = 0
         self.classify = "생각·성찰"   # 기록 Agent Classify 갈래(글 유형)
@@ -88,6 +89,10 @@ class FakeUpstage:
         self.sent.append(json.dumps(messages, ensure_ascii=False))
         if messages[0]["content"] == groups.GROUP_SYSTEM:   # 작은 별 묶기: 기본은 모두 혼자(시험이 group_answer 로 정함)
             return _o(choices=[_o(message=_o(content=json.dumps({"groups": self.group_answer})))],
+                      usage=_o(prompt_tokens=100, completion_tokens=10))
+        if messages[0]["content"] == groups.SPLIT_SYSTEM:   # 큰 묶음 다시 보기: 기본은 나누지 않음(시험이 split_answer 로 정함)
+            n = len(re.findall(r"^\d+\. ", messages[-1]["content"], re.M))
+            return _o(choices=[_o(message=_o(content=json.dumps({"groups": self.split_answer or [list(range(1, n + 1))]})))],
                       usage=_o(prompt_tokens=100, completion_tokens=10))
         if messages[0]["content"].startswith("너는 일기 앱에서 생각 묶음이"):
             return _o(choices=[_o(message=_o(content=json.dumps({"suns": self.sun_answer}, ensure_ascii=False)))],
