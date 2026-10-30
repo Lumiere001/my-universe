@@ -56,6 +56,10 @@ export const feedback: OpsFeedback = {
   ],
   other_candidates: [{ field: "kind", original: "회상", count: 3 }, { field: "addressee", original: "미래의 나", count: 1 }],
   not_consented: { "불편한 점 한 줄": 1, "별로": 2 },
+  framework_candidates: [
+    { kind: "아니에요", what: "긴장", users: 2, count: 5, words: [] },
+    { kind: "옮김", what: "커리어 → 인간관계", users: 2, count: 3, words: ["결혼", "준비"] },
+  ],
 };
 
 export const digest: OpsDigest = {

@@ -70,3 +70,16 @@ def test_rejected_links_and_observe_hint(env):
     html, ids = sf.observe_html("2026-10-02", [], [], None, [{"type": "긴장", "quotes": ["그때 문장", "지금 문장"]}])
     assert "이 사람이 아니라고 한 연결(일기 내용 아님)" in html and "[긴장] “그때 문장” → “지금 문장”" in html and ids == {}
     assert "아니라고 한 연결" not in sf.observe_html("2026-10-02", [], [], None)[0]
+
+
+def test_framework_candidates_only_when_several_people_fix_the_same_way():
+    """⑤ 공통 틀 후보: 두 사람 이상이 같은 방향으로 고친 것만, 옮김의 낱말도 두 사람 이상이 쓴 것만(한 사람의 이름 · 버릇은 안 보임)."""
+    u1 = [{"kind": "옮김", "from": "커리어", "to": "인간관계", "topic": "결혼 준비 일정"}, {"kind": "아니에요", "type": "긴장"},
+          {"kind": "고침", "field": "kind", "from": "다짐", "to": "해석"}]
+    u2 = [{"kind": "옮김", "from": "커리어", "to": "인간관계", "topic": "결혼 준비 다툼"}, {"kind": "아니에요", "type": "긴장"},
+          {"kind": "아니에요", "type": "긴장"}, {"kind": "옮김", "from": "인간관계", "to": "커리어", "topic": "도현 회사"}]
+    got = ops.framework_candidates([u1, u2])
+    assert got[0] == {"kind": "아니에요", "what": "긴장", "users": 2, "count": 3, "words": []}
+    move = next(c for c in got if c["kind"] == "옮김")
+    assert move["what"] == "커리어 → 인간관계" and move["users"] == 2 and move["words"] == ["결혼", "준비"]
+    assert not any(c["kind"] == "고침" or "도현" in c["what"] for c in got)   # 한 사람만 한 것은 안 나옴

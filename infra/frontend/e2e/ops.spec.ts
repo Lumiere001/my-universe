@@ -26,6 +26,7 @@ test("운영 화면", async ({ page }, info) => {
 
   await page.getByRole("button", { name: "최근 30일 열어 보기" }).click();
   await expect(page.getByRole("table", { name: "피드백" })).toContainText("사용자 1");
+  await expect(page.getByRole("table", { name: "공통 틀 후보" })).toContainText("커리어 → 인간관계");   // ⑤: 여러 사람의 같은 고침
   await page.getByRole("button", { name: /피드백 정리/ }).click();
   await expect(page.getByLabel("피드백 정리 결과")).toContainText("설교 같음");
   await page.getByLabel("피드백 정리 결과").scrollIntoViewIfNeeded();

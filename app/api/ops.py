@@ -59,8 +59,9 @@ def _consented(repo, r, days, wrong):
             if not consent.operator_read(s):   # 그 사용자 세션으로 한 번 더(판 · 선택 동의)
                 continue
             items, cands = ops.user_feedback(s, since, wrong)
+            lessons = ops.user_lessons(s, since)
             people = diary.people(s)
-        if not items and not cands:
+        if not items and not cands and not lessons:
             continue
         texts = [x[k] or "" for x in items for k in ("text", "target_text")] + [c["original"] for c in cands]
         masked = iter(tools.mask_obj(texts, people)[0])
@@ -69,7 +70,11 @@ def _consented(repo, r, days, wrong):
                 x[k] = next(masked) or None
         for c in cands:
             c["original"] = next(masked)
-        out.append({"uid": uid, "alias": f"사용자 {i}", "people": people, "items": items, "cands": cands})
+        if lessons:   # 주제 이름도 가명으로
+            topics = iter(tools.mask_obj([x.get("topic") or "-" for x in lessons], people)[0])
+            for x in lessons:
+                x["topic"] = next(topics)
+        out.append({"uid": uid, "alias": f"사용자 {i}", "people": people, "items": items, "cands": cands, "lessons": lessons})
     return out
 
 
@@ -93,7 +98,9 @@ def ops_feedback(days: int = Days, wrong: bool = False, admin=Depends(get_admin)
             "items": [{"user": u["alias"], **x} for u in users for x in u["items"]],
             "other_candidates": [{"field": f, "original": w, "count": n}
                                  for (f, w), n in sorted(cands.items(), key=lambda x: (-x[1], x[0]))],
-            "not_consented": dict(rest.most_common())}
+            "not_consented": dict(rest.most_common()),
+            # 공통 틀 후보(개인 맞춤 Ops ⑤): 동의한 사용자 중 2명 이상이 같은 방향으로 고친 것만
+            "framework_candidates": ops.framework_candidates([u["lessons"] for u in users])}
 
 
 SUMMARIZE = """너는 일기장 '나의 우주'의 피드백 정리 도우미다. 사용자들이 남긴 피드백(사람 이름은 가명)을 이유별로 묶는다.

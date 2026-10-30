@@ -486,7 +486,9 @@ export type OpsSummary = {
 };
 export type OpsFeedback = { days: number; wrong: boolean; users: number;
   items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null }[];
-  other_candidates: { field: string; original: string; count: number }[]; not_consented: Record<string, number> };
+  other_candidates: { field: string; original: string; count: number }[]; not_consented: Record<string, number>;
+  // 공통 틀 후보(개인 맞춤 Ops ⑤): 동의한 사용자 중 2명 이상이 같은 방향으로 고친 것만
+  framework_candidates?: { kind: string; what: string; users: number; count: number; words: string[] }[] };
 export type OpsDigest = { days: number; users: number; lines: string[]; est_usd: number;
   groups: { reason: string; items: number[]; count: number; fix_where: string; suggestion: string }[] };
 export type PrefSuggestion = { setting: "cross_links" | "suggestions"; from: string; to: string; reason: string };

@@ -399,6 +399,47 @@ def user_feedback(s, since, wrong_only=False):
     return items, cands
 
 
+LESSONS = ("옮김", "고침", "합침", "떼어 냄", "아니에요")
+
+
+def user_lessons(s, since):
+    """동의한 사용자 한 명이 AI 정리를 고친 것(since 뒤) → [{kind, from, to, topic, type}] (개인 맞춤 Ops ⑤의 재료, 가명 처리 전)."""
+    out = []
+    for f in s.rows("feedback", order="created_at"):
+        if f["created_at"] < since or f["value"] not in LESSONS or not f.get("enc"):
+            continue
+        e = diary.unseal(s, "feedback", f["id"], f["enc"]) or {}
+        if f["value"] == "아니에요":
+            if (e.get("relation") or {}).get("type"):
+                out.append({"kind": "아니에요", "type": e["relation"]["type"]})
+        elif f["value"] == "고침":
+            out.append({"kind": "고침", "field": e.get("field"), "from": e.get("from"), "to": e.get("to")})
+        else:
+            out.append({"kind": f["value"], "from": e.get("from"), "to": e.get("to") or e.get("into"), "topic": e.get("topic") or e.get("from")})
+    return out
+
+
+def framework_candidates(per_user, min_users=2):
+    """공통 틀 후보(개인 맞춤 Ops ⑤, 2026-10-30): 여러 사람이 같은 방향으로 고친 것만 모은다(min_users 명 이상 — 한 사람의 버릇이나
+    이름이 운영자에게 드러나지 않게). per_user: [[lesson, ...], ...](사용자마다, 주제 이름은 가명 처리된 것).
+    → [{kind, what, users, count, words}] (사람 수 · 횟수 많은 순). 옮김의 words 는 min_users 명 이상이 쓴 주제 낱말만."""
+    agg = {}
+    for i, lessons in enumerate(per_user):
+        for x in lessons:
+            what = {"옮김": lambda: f"{x.get('from')} → {x.get('to')}", "고침": lambda: f"{x.get('field')}: {x.get('from')} → {x.get('to')}",
+                    "아니에요": lambda: str(x.get("type")), "떼어 냄": lambda: "묶음에서 떼어 냄", "합침": lambda: "작은 별 합침"}[x["kind"]]()
+            a = agg.setdefault((x["kind"], what), {"users": set(), "count": 0, "words": defaultdict(set)})
+            a["users"].add(i)
+            a["count"] += 1
+            if x["kind"] == "옮김":
+                for w in (x.get("topic") or "").split():
+                    a["words"][w].add(i)
+    out = [{"kind": k, "what": w, "users": len(a["users"]), "count": a["count"],
+            "words": sorted((t for t, us in a["words"].items() if len(us) >= min_users), key=lambda t: -len(a["words"][t]))[:5]}
+           for (k, w), a in agg.items() if len(a["users"]) >= min_users]
+    return sorted(out, key=lambda c: (-c["users"], -c["count"], c["kind"], c["what"]))
+
+
 ##################################################
 # 선호 맞추기 제안(사용자 자기 피드백, PRD §8.0 선호 · §8.7 바로 반영)
 ##################################################

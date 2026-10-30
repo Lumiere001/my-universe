@@ -236,6 +236,9 @@ function FeedbackPanel({ counts }: { counts: OpsSummary["feedback_text"] }) {
           <Table label="피드백" head={["사용자", "때", "대상", "버튼", "남긴 말", "대상 문장", "설정"]}
             rows={fb.items.map((x) => [x.user, when(x.at), x.target, x.value, x.text ?? "", x.target_text ?? "", x.config ?? ""])} />
           <p className="sub" style={{ margin: 0 }}>동의 안 한 사용자: {Object.entries(fb.not_consented).map(([k, v]) => `${k} ${v}`).join(" · ") || "없음"}</p>
+          <h3>공통 틀 후보 <span className="sub">(2명 이상이 같은 방향으로 고친 것 · 바꿀지는 사람이 정하고 가상 인물 · 골든셋으로 시험)</span></h3>
+          <Table label="공통 틀 후보" head={["고친 것", "방향", "사람", "횟수", "자주 나온 낱말"]} num={[2, 3]}
+            rows={(fb.framework_candidates ?? []).map((x) => [x.kind, x.what, `${x.users}명`, x.count, x.words.join(" · ") || "—"])} />
           <h3>목록 밖 값 새 후보 <span className="sub">(정하는 것은 사람)</span></h3>
           <Table label="새 값 후보" head={["칸", "원래 말", "횟수"]} num={[2]} rows={fb.other_candidates.map((x) => [x.field, x.original, x.count])} />
         </div>
