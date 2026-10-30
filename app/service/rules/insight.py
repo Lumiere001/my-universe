@@ -25,6 +25,17 @@ def _no_shortcuts(rs):
     return [r for r in rs if not any(reach(m, r["b"]["id"]) for m in nxt[r["a"]["id"]] - {r["b"]["id"]})]
 
 
+def _one_per_pair(rs):
+    """같은 작은 별에서 같은 두 기록 사이 관계는 카드 하나만(실선 먼저). 앞 글의 생각 둘이 뒤 글의 같은 생각과 이어져
+    '지금' 인용이 두 번 보였다(가상 인물 E 7/4 → 8/20, 2026-10-31)."""
+    key = lambda r: (r["b"]["topic"], r["a"]["record_id"], r["b"]["record_id"])   # noqa: E731
+    keep = {}
+    for r in rs:
+        if key(r) not in keep or (r.get("line") == "실선" and keep[key(r)].get("line") != "실선"):
+            keep[key(r)] = r
+    return [r for r in rs if keep[key(r)] is r]
+
+
 def insight(thoughts, relations, suns=()):
     """thoughts: {id: {id, record_id, day, topic, domain, kind, quote}}, relations: 남은 관계 [{type, from, to, line, axis}].
     suns: 사용자가 추가한 해. 돌려줌: {period, suns: [{name, records, stars, kept, changed, open, settled}], across}.
@@ -63,9 +74,10 @@ def insight(thoughts, relations, suns=()):
                     k["from"] = _end(r["a"])
         out.append({"name": sun, "records": len({t["record_id"] for t in ts}), "stars": stars,
                     "kept": sorted(kept.values(), key=lambda k: -k["times"]),
-                    "changed": [pair(r) for r in _no_shortcuts([r for r in mine if r["type"] == "바뀜"])],
-                    "open": [pair(r) for r in mine if r["type"] == "긴장" and not {r["a"]["id"], r["b"]["id"]} & resolved],
-                    "settled": [pair(r) for r in mine if r["type"] == "해소"]})
+                    "changed": [pair(r) for r in _one_per_pair(_no_shortcuts([r for r in mine if r["type"] == "바뀜"]))],
+                    "open": [pair(r) for r in _one_per_pair([r for r in mine if r["type"] == "긴장"
+                                                             and not {r["a"]["id"], r["b"]["id"]} & resolved])],
+                    "settled": [pair(r) for r in _one_per_pair([r for r in mine if r["type"] == "해소"])]})
     across = [{"type": r["type"], "suns": [r["a"]["domain"], r["b"]["domain"]], "from": _end(r["a"]), "to": _end(r["b"]),
                "rid": r.get("id"), "line": r.get("line")}
               for r in rels if r["a"].get("domain") != r["b"].get("domain")

@@ -148,3 +148,16 @@ def test_insight_changed_skips_the_shortcut_of_a_chain():
     rels = [{"type": "바뀜", "from": a, "to": b} for a, b in (("x", "y"), ("y", "z"), ("x", "z"), ("w", "z"))]
     (sun,) = insight(ts, rels)["suns"]
     assert [(p["from"]["thought_id"], p["to"]["thought_id"]) for p in sun["changed"]] == [("x", "y"), ("y", "z"), ("w", "z")]
+
+
+def test_insight_one_card_per_two_records():
+    """앞 글의 생각 둘이 뒤 글의 같은 생각과 '바뀜'으로 이어지면 카드는 하나(실선 먼저). 다른 작은 별이면 따로(가상 인물 E, 2026-10-31)."""
+    from app.service.rules import insight
+    T = lambda i, rec, day, topic="실습": {"id": i, "record_id": rec, "day": day, "topic": topic, "domain": "미래 안정",  # noqa: E731
+                                          "kind": "해석", "quote": i}
+    ts = {"a1": T("a1", "r1", "2026-07-04"), "a2": T("a2", "r1", "2026-07-04"), "b": T("b", "r2", "2026-08-20"),
+          "c1": T("c1", "r1", "2026-07-04", "가게"), "c2": T("c2", "r2", "2026-08-20", "가게")}
+    rels = [{"type": "바뀜", "from": "a1", "to": "b", "line": "점선"}, {"type": "바뀜", "from": "a2", "to": "b", "line": "실선"},
+            {"type": "바뀜", "from": "c1", "to": "c2", "line": "점선"}]
+    (sun,) = insight(ts, rels)["suns"]
+    assert [(p["from"]["thought_id"], p["to"]["thought_id"]) for p in sun["changed"]] == [("a2", "b"), ("c1", "c2")]
