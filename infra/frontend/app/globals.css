@@ -652,6 +652,7 @@ main.ins { max-width: 1280px; height: calc(100dvh - 49px); display: flex; flex-d
 .ins-when { color: var(--faint); font-size: .84rem; line-height: 1.7; white-space: nowrap; }
 .ins-q p { margin: 0; border-left: 2px solid var(--accent); padding-left: 12px; line-height: 1.65; color: #dcdcdc; }
 .ins-q.o p { border-color: var(--orange); }
+.ins-qs { display: grid; gap: 8px; min-width: 0; }
 .ins-check { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .ins-check .sub { font-size: .84rem; margin-right: auto; }
 @media (max-width: 899px) {

@@ -25,15 +25,28 @@ def _no_shortcuts(rs):
     return [r for r in rs if not any(reach(m, r["b"]["id"]) for m in nxt[r["a"]["id"]] - {r["b"]["id"]})]
 
 
-def _one_per_pair(rs):
-    """같은 작은 별에서 같은 두 기록 사이 관계는 카드 하나만(실선 먼저). 앞 글의 생각 둘이 뒤 글의 같은 생각과 이어져
-    '지금' 인용이 두 번 보였다(가상 인물 E 7/4 → 8/20, 2026-10-31)."""
-    key = lambda r: (r["b"]["topic"], r["a"]["record_id"], r["b"]["record_id"])   # noqa: E731
-    keep = {}
+def _cards(rs, pair):
+    """같은 작은 별 · 같은 두 기록 사이 관계는 카드 하나로 합치고 양쪽 원문은 모두 보인다(froms · tos). 앞 글의 생각 둘이 뒤 글의
+    같은 생각과 이어져 '지금' 인용이 두 번 보였다(가상 인물 E 7/4 → 8/20, 2026-10-31). 하나만 남기면 다른 '그때' 문장이 사라졌다.
+    모두 실선일 때만 실선, 맞아요 · 아니에요는 점선 관계 모두에(rids)."""
+    groups = {}
     for r in rs:
-        if key(r) not in keep or (r.get("line") == "실선" and keep[key(r)].get("line") != "실선"):
-            keep[key(r)] = r
-    return [r for r in rs if keep[key(r)] is r]
+        groups.setdefault((r["b"]["topic"], r["a"]["record_id"], r["b"]["record_id"]), []).append(r)
+    out = []
+    for g in groups.values():
+        c = pair(g[0])
+        if len(g) > 1:
+            lines = {r.get("line") for r in g}
+            c["line"] = lines.pop() if len(lines) == 1 else "점선"
+            c["rids"] = [r["id"] for r in g if r.get("line") == "점선" and r.get("id")]
+            c["rid"] = c["rids"][0] if c["rids"] else None
+            axes = list(dict.fromkeys(r["axis"] for r in g if r.get("axis")))
+            if axes:
+                c["axis"] = " / ".join(axes)
+        c["froms"] = list({e["thought_id"]: e for e in (_end(r["a"]) for r in g)}.values())
+        c["tos"] = list({e["thought_id"]: e for e in (_end(r["b"]) for r in g)}.values())
+        out.append(c)
+    return out
 
 
 def insight(thoughts, relations, suns=()):
@@ -74,10 +87,9 @@ def insight(thoughts, relations, suns=()):
                     k["from"] = _end(r["a"])
         out.append({"name": sun, "records": len({t["record_id"] for t in ts}), "stars": stars,
                     "kept": sorted(kept.values(), key=lambda k: -k["times"]),
-                    "changed": [pair(r) for r in _one_per_pair(_no_shortcuts([r for r in mine if r["type"] == "바뀜"]))],
-                    "open": [pair(r) for r in _one_per_pair([r for r in mine if r["type"] == "긴장"
-                                                             and not {r["a"]["id"], r["b"]["id"]} & resolved])],
-                    "settled": [pair(r) for r in _one_per_pair([r for r in mine if r["type"] == "해소"])]})
+                    "changed": _cards(_no_shortcuts([r for r in mine if r["type"] == "바뀜"]), pair),
+                    "open": _cards([r for r in mine if r["type"] == "긴장" and not {r["a"]["id"], r["b"]["id"]} & resolved], pair),
+                    "settled": _cards([r for r in mine if r["type"] == "해소"], pair)})
     across = [{"type": r["type"], "suns": [r["a"]["domain"], r["b"]["domain"]], "from": _end(r["a"]), "to": _end(r["b"]),
                "rid": r.get("id"), "line": r.get("line")}
               for r in rels if r["a"].get("domain") != r["b"].get("domain")

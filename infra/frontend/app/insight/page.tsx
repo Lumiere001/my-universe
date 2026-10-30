@@ -16,30 +16,32 @@ const LINE = { 실선: "실선 · 글에 직접 씀", 점선: "점선 · AI 추�
 const josa = (w: string) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 ? "과" : "와"; };   // 받침 있으면 '과'
 const day = (d: string, year?: string) => { const [y, m, dd] = d.split("-"); return `${y === year ? "" : `${y}년 `}${+m}월 ${+dd}일`; };
 
-function End({ e, label, year, o }: { e: InsightEnd; label?: string; year: string; o?: boolean }) {
+// more: 같은 기록의 다른 문장(두 기록 사이 관계를 카드 하나로 합쳤을 때, rules.insight._cards)
+function End({ e, more = [], label, year, o }: { e: InsightEnd; more?: InsightEnd[]; label?: string; year: string; o?: boolean }) {
   return (
     <div className={o ? "ins-q o" : "ins-q"}>
       <span className="ins-when">{label && <>{label} · </>}<Link href={`/history?id=${encodeURIComponent(e.record_id)}`}>{day(e.day, year)}</Link></span>
-      <p>“{unquote(e.quote)}”</p>
+      <div className="ins-qs">{[e, ...more.filter((x) => x.thought_id !== e.thought_id)].map((x) => <p key={x.thought_id}>“{unquote(x.quote)}”</p>)}</div>
     </div>
   );
 }
 
 type Said = Record<string, "맞아요" | "아니에요">;
-type Say = (rid: string, v: "맞아요" | "아니에요") => void;
+type Say = (rids: string[], v: "맞아요" | "아니에요") => void;
+const ridsOf = (p: { rid?: string | null; rids?: string[] }) => p.rids ?? (p.rid ? [p.rid] : []);   // 합친 카드는 점선 관계 모두
 
-function Card({ title, meta, line, rid, said, onSay, children }: { title: React.ReactNode; meta?: string; line?: keyof typeof LINE | null;
-  rid?: string | null; said?: Said; onSay?: Say; children: React.ReactNode }) {
-  const shown = rid && said?.[rid] === "맞아요" ? "실선" : line;   // 맞아요 → 실선(우주와 같음)
+function Card({ title, meta, line, rids = [], said, onSay, children }: { title: React.ReactNode; meta?: string; line?: keyof typeof LINE | null;
+  rids?: string[]; said?: Said; onSay?: Say; children: React.ReactNode }) {
+  const shown = rids.length && rids.every((r) => said?.[r] === "맞아요") ? "실선" : line;   // 맞아요 → 실선(우주와 같음)
   return (
     <li className="ins-card">
       <div className="ins-card-head">{title}{meta && <span className="sub">{meta}</span>}{shown && <span className="badge">{LINE[shown]}</span>}</div>
       {children}
-      {shown === "점선" && rid && onSay && (
+      {shown === "점선" && rids.length > 0 && onSay && (
         <div className="ins-check" role="group" aria-label="이 연결이 맞나요?">
           <span className="sub">이 연결이 맞나요?</span>
-          <button className="small" onClick={() => onSay(rid, "맞아요")}>맞아요</button>
-          <button className="small" onClick={() => onSay(rid, "아니에요")}>아니에요</button>
+          <button className="small" onClick={() => onSay(rids, "맞아요")}>맞아요</button>
+          <button className="small" onClick={() => onSay(rids, "아니에요")}>아니에요</button>
         </div>
       )}
     </li>
@@ -48,9 +50,9 @@ function Card({ title, meta, line, rid, said, onSay, children }: { title: React.
 
 function Pair({ p, labels, year, o, said, onSay }: { p: InsightPair; labels?: [string, string]; year: string; o?: boolean; said: Said; onSay: Say }) {
   return (
-    <Card title={<b>{p.star}</b>} meta={p.axis} line={p.line} rid={p.rid} said={said} onSay={onSay}>
-      <End e={p.from} label={labels?.[0]} year={year} o={o} />
-      <End e={p.to} label={labels?.[1]} year={year} o={o} />
+    <Card title={<b>{p.star}</b>} meta={p.axis} line={p.line} rids={ridsOf(p)} said={said} onSay={onSay}>
+      <End e={p.from} more={p.froms} label={labels?.[0]} year={year} o={o} />
+      <End e={p.to} more={p.tos} label={labels?.[1]} year={year} o={o} />
     </Card>
   );
 }
@@ -63,11 +65,11 @@ export default function InsightPage() {
   const [pick, setPick] = useState<string | null>(null);
   const [tab, setTab] = useState<string | null>(null);
   const [said, setSaid] = useState<Said>({});
-  const say: Say = (rid, v) => {
+  const say: Say = (rids, v) => rids.forEach((rid) => {
     setSaid((m) => ({ ...m, [rid]: v }));
     sendFeedback({ target: "relation", target_id: rid, value: v }).catch(() => setSaid((m) => { const n = { ...m }; delete n[rid]; return n; }));
-  };
-  const keep = (p: { rid?: string | null }) => !(p.rid && said[p.rid] === "아니에요");   // 아니에요 → 그 연결은 지워져 카드도 빠진다
+  });
+  const keep = (p: { rid?: string | null; rids?: string[] }) => !ridsOf(p).some((r) => said[r] === "아니에요");   // 아니에요 → 그 연결은 지워져 카드도 빠진다
 
   if (err) return <main><p className="err" role="alert">{err}</p></main>;
   if (!data) return <main><p className="sub" role="status">나에 대해 알게 된 것을 불러오는 중…</p></main>;
@@ -104,7 +106,7 @@ export default function InsightPage() {
         const o = CONFLICT.has(a.type);
         return (
           <Card key={a.type + a.from.thought_id + a.to.thought_id} title={<span className={o ? "badge o" : "badge v"}>{a.type}</span>} meta={a.suns.join(" ↔ ")}
-            line={a.line} rid={a.rid} said={said} onSay={say}>
+            line={a.line} rids={ridsOf(a)} said={said} onSay={say}>
             <End e={a.from} label={a.suns[0]} year={year} o={o} /><End e={a.to} label={a.suns[1]} year={year} o={o} />
           </Card>
         );

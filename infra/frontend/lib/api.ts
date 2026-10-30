@@ -247,7 +247,8 @@ export async function getUniverse(): Promise<Universe> {
 }
 // 나에 대해 알게 된 것(docs/api-v8.md §2, 서버 app/service/rules/insight.py): 코드가 묶은 것, 날짜와 원문 인용만
 export type InsightEnd = { day: string; quote: string; record_id: string; thought_id: string };
-export type InsightPair = { star: string; line: "실선" | "점선" | null; from: InsightEnd; to: InsightEnd; axis?: string; rid?: string | null };
+export type InsightPair = { star: string; line: "실선" | "점선" | null; from: InsightEnd; to: InsightEnd; axis?: string; rid?: string | null;
+  froms?: InsightEnd[]; tos?: InsightEnd[]; rids?: string[] };   // 같은 두 기록 사이 관계를 합친 카드: 양쪽 문장 모두 · 점선 관계 모두
 export type Insight = {
   period: { from: string; to: string; records: number } | null;
   suns: { name: string; records: number;

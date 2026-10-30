@@ -146,6 +146,8 @@ test("점선 카드에서 맞아요 · 아니에요(사용자가 매긴 정답) 
   page.on("pageerror", (e) => errors.push(e.message));
   const data = structuredClone(two);
   data.suns[0].open = data.suns[0].open.map((p, i) => ({ ...p, rid: `r${i}` }));   // 서버는 관계 id(rid)를 함께 준다
+  const o0 = data.suns[0].open[0];   // 같은 두 기록 사이 관계 둘을 합친 카드(rules.insight._cards): 문장 모두 · 버튼은 두 관계에
+  data.suns[0].open[0] = { ...o0, froms: [o0.from, { ...o0.from, thought_id: "t-more", quote: "같은 글의 다른 문장" }], tos: [o0.to], rids: ["r0", "r0b"] } as unknown as typeof o0;
   await fake(page, data);
   await page.addInitScript(() => {   // 반응이 쌓여 서버가 그 사람 설정을 한 칸 옮긴 뒤(가짜)
     (window as unknown as { __pref: unknown }).__pref = [{ id: "p1", at: "2026-10-30T09:00:00+09:00", setting: "cross_links",
@@ -162,6 +164,7 @@ test("점선 카드에서 맞아요 · 아니에요(사용자가 매긴 정답) 
   const cards = shown(page).locator(".ins-card");
   const n = await cards.count();
   await expect(cards.first().getByRole("group", { name: "이 연결이 맞나요?" })).toBeVisible();
+  await expect(cards.first()).toContainText("같은 글의 다른 문장");
   await cards.first().getByRole("button", { name: "맞아요" }).click();
   await expect(cards.first()).toContainText("실선 · 글에 직접 씀");               // 맞아요 → 실선, 버튼은 사라짐
   await expect(cards.first().getByRole("group", { name: "이 연결이 맞나요?" })).toHaveCount(0);
