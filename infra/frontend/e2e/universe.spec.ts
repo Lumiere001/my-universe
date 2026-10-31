@@ -73,6 +73,7 @@ test("우주 화면", async ({ page }, info) => {
     await card.getByRole("link", { name: "정리한 결과 보기" }).click();
     await expect(page).toHaveURL(/\/universe\/e11$/);
     const r = page.getByTestId("result");
+    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();   // 첫 칸은 원문(PRD v9 Q19)
     await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("혼자는 충전, 함께는 성장이다.");
     await shot("03-result-card");
     await page.getByRole("link", { name: "← 우주로 돌아가기" }).click();

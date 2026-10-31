@@ -40,6 +40,11 @@ PHOTO_READ_MODEL = os.getenv("PHOTO_READ_MODEL") or "document-parse"
 
 # 온톨로지 모드(2026-10-29 멘토링): "two" = 해를 커리어 · 인간관계 둘로 묶음(v8.json profiles). 비우면 기준 축 9개(지금 운영).
 ONTOLOGY_PROFILE = os.getenv("ONTOLOGY_PROFILE", "")
+# 고른 시각 알림(PRD v9 Q8, Web Push). 키는 vault _secrets 에 두고 배포 환경 변수로만 넣는다. 없으면 알림 기능이 꺼진 채로 돈다
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@example.com")
+CRON_SECRET = os.getenv("CRON_SECRET", "")   # 예약 작업(POST /push/due)만 아는 값
 # 작은 별 맞추기(WS27): 기록 Agent 가 새 이름을 내도 같은 해의 기존 작은 별 중심과 중심 보정 코사인이 이만큼 이상이면
 # 그 별에 붙인다. 비우면 끔(이름이 같을 때만 같은 별 — 지금 운영). 값은 가상 인물 시험(tools/persona_eval.py)으로 정한다.
 STAR_JOIN_SIM = float(os.getenv("STAR_JOIN_SIM") or 0) or None

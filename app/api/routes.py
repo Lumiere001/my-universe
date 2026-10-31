@@ -6,18 +6,23 @@ app/api/routes.py
 
 import time
 import unicodedata
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Path, Response
+from datetime import datetime
 
-from app.agents import graph
-from app.core import auth, config, logger
+from fastapi import APIRouter, Depends, Header, Path, Response
+
+from app.agents import graph, tools
+from app.api import consent
+from app.core import auth, config, llm, logger
 from app.core.ontology import load
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
-from app.models import AnswerIn, AspirationIn, DeclineIn, FeedbackIn, PersonIn, PersonPatch, SettingsPatch
+from app.models import AnswerIn, AskIn, PushIn, AspirationIn, DeclineIn, FeedbackIn, PersonIn, PersonPatch, SettingsPatch, WhyIn
 from app.repository import diary, ops, views
-from app.service import voice
+from app.service import brief, chat, push, voice
+from app.service.rules.topics import cos
+from app.service.safety import detect_crisis, unmask
 from app.service.rules import press
 
 router = APIRouter()
@@ -75,11 +80,94 @@ def universe(user=Depends(get_user), repo=Depends(get_repo)):
         return views.universe(s)
 
 
+Period = Literal["week", "month", "all"]
+PERIOD_LABEL = {"week": "이번 주", "month": "이번 달", "all": "처음부터"}
+
+
 @router.get("/insight", tags=["우주"], summary="나에 대해 알게 된 것: 해 → 작은 별 → 이어 온 · 바뀐 · 맞서는 · 정리된 생각(원문 인용)")
-def insight(user=Depends(get_user), repo=Depends(get_repo)):
+def insight(period: Period = "all", user=Depends(get_user), repo=Depends(get_repo)):
     graph.ensure_groups(repo, user["id"])   # 모드를 바꾼 뒤 처음 열 때 한 번 작은 별 묶기(rules.groups)
     with repo.session(user["id"]) as s:
-        return views.insight(s)
+        return views.insight(s, period)
+
+
+@router.get("/insight/brief", tags=["우주"], summary="흐름 요약(PRD v9 Q10): 기간 안 원문 재료로만, 문장마다 출처 · 새 기록이 있을 때만 다시 씀")
+def insight_brief(period: Period = "month", user=Depends(get_user), repo=Depends(get_repo)):
+    uid = user["id"]
+    graph.ensure_groups(repo, uid)
+    with repo.session(uid) as s:
+        ins = views.insight(s, period)
+        people = diary.people(s)
+        last = s.rows("entries", status="done", order="updated_at desc", limit=1)
+        key = f"{period}:{(ins['period'] or {}).get('records')}:{last[0]['updated_at'] if last else ''}"
+        cache = (diary.profile(s)[1].get("brief") or {}).get(period)
+        start = brief.since(period, diary.today())
+        reached = [{"record_id": r["entry_id"], "day": diary.local_day(r["at"]), "quote": r.get("quote", "")}
+                   for a in diary.aspirations(s)[-1:] for r in a["reached"] if not start or diary.local_day(r["at"]) >= str(start)]
+    if cache and cache.get("key") == key:
+        return cache["out"]
+    if not ins["period"] or ins["period"]["records"] < brief.MIN_RECORDS:
+        return {"state": "few" if ins["period"] else "none", "sections": []}
+    text, refs = brief.material(ins, reached)
+    t0 = time.time()
+    try:
+        m, table = tools.mask_obj({"t": text, "suns": [x["name"] for x in ins["suns"]]}, people)
+        secs, _ = brief.parse(llm.chat(brief.brief_messages(m["t"], PERIOD_LABEL[period], m["suns"]), temperature=0.3),
+                              refs, lambda x: unmask(x, table))
+    except Exception as e:   # 요약은 덤: 못 만들면 궤적 카드만(화면이 '다시 시도'를 보인다)
+        logger.log("error", step="brief", code=type(e).__name__)
+        secs = []
+    out = {"state": "ok" if secs else "failed", "sections": secs}
+    with repo.session(uid) as s:
+        diary.add_run(s, None, "brief", (time.time() - t0) * 1000, 1, meta={"period": period, "sections": len(secs)})   # 운영 지표
+        if secs:
+            ob = diary.profile(s)[1]
+            diary.save_profile(s, onboarding={"brief": {**(ob.get("brief") or {}), period: {"key": key, "out": out}}})
+    return out
+
+
+ASK_HITS = 8   # 묻기 칸이 Solar 에 넘기는 원문 수(낱말 찾기 + 뜻 찾기)
+
+
+@router.post("/insight/ask", tags=["우주"], summary="내 일기에 묻기(PRD v9 Q11): 찾은 원문만으로 답, 일기로 남기지 않음")
+def insight_ask(body: AskIn, user=Depends(get_user), repo=Depends(get_repo)):
+    uid, q = user["id"], body.question.strip()
+    with repo.session(uid) as s:
+        consent.check(s)
+        people = diary.people(s)
+        entries = [e for e in diary.entries(s, status="done")]
+        texts = [(e["id"], diary.local_day(e["written_at"]), e["data"].get("text", "")) for e in entries]
+        day_of = {e["id"]: diary.local_day(e["written_at"]) for e in entries}
+    if detect_crisis(q, people)["crisis"]:   # 위기 낱말이면 찾지 않고 대화의 위기 대응과 같은 위로 한 줄
+        return {"state": "crisis", "sentences": [], "message": voice.CRISIS_SAFE["다정하게"][0]}
+    hits = [{"entry_id": h["entry_id"], "day": h["day"], "quote": h["quote"]} for h in chat.sentence_hits(q, texts)]
+    t0 = time.time()
+    try:
+        m, table = tools.mask_obj({"q": q}, people)
+        qv = llm.embed([m["q"]], query=True)[0]
+        vecs = repo.vectors.get(uid)
+        near = sorted(vecs, key=lambda k: -cos(qv, vecs[k]))[:ASK_HITS]
+        with repo.session(uid) as s:
+            hits += [{"entry_id": t["entry_id"], "day": day_of.get(t["entry_id"], ""), "quote": t.get("quote") or t.get("text", "")}
+                     for t in diary.thoughts(s, id=near) if t["entry_id"] in day_of]
+        seen, refs = set(), {}
+        for h in hits:
+            if h["quote"] and h["quote"] not in seen and len(refs) < ASK_HITS:
+                seen.add(h["quote"])
+                refs[f"R{len(refs) + 1}"] = h
+        if not refs:
+            return {"state": "none", "sentences": []}
+        lines = [f"[{k} {h['day']}] “{h['quote']}”" for k, h in refs.items()]
+        mm, table = tools.mask_obj({"q": q, "lines": lines}, people)
+        secs, found = brief.parse(llm.chat(brief.ask_messages(mm["q"], "\n".join(mm["lines"])), temperature=0.2),
+                                  {k: {"entry_id": h["entry_id"], "day": h["day"]} for k, h in refs.items()}, lambda x: unmask(x, table))
+    except Exception as e:
+        logger.log("error", step="ask", code=type(e).__name__)
+        return {"state": "failed", "sentences": []}
+    with repo.session(uid) as s:
+        diary.add_run(s, None, "ask", (time.time() - t0) * 1000, 2, meta={"found": bool(secs)})   # 운영 지표(물음 글은 남기지 않음)
+    sents = [x for sec in secs for x in sec["sentences"]]
+    return {"state": "ok" if sents and found is not False else "none", "sentences": sents}
 
 
 ##################################################
@@ -200,16 +288,94 @@ def get_aspiration(user=Depends(get_user), repo=Depends(get_repo)):
 @router.post("/aspiration", tags=["되고 싶은 모습"], summary="새 판(이력 보존)")
 def save_aspiration(body: AspirationIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
-        diary.add_aspiration(s, body.now, body.want, body.obstacle, body.if_then, body.values)
-        diary.save_profile(s, onboarding={"aspiration": "set", "aspiration_step": None})
+        diary.add_aspiration(s, body.now, body.want, body.obstacle, body.if_then, body.values, body.why, body.scene)
+        diary.save_profile(s, onboarding={"aspiration": "set", "aspiration_step": None, "intro": True})
         return views.aspiration_api(diary.aspirations(s)[-1])
 
 
-@router.post("/aspiration/decline", tags=["되고 싶은 모습"], summary="skip = 이번엔 넘어가기, stop = 그만 묻기")
+@router.post("/aspiration/values", tags=["되고 싶은 모습"], summary="이유에서 가치 칩 제안(임베딩 비슷함, PRD v9)")
+def suggest_values(body: WhyIn, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        consent.check(s)
+        people = diary.people(s)
+    try:
+        return {"values": tools.suggest_values(body.why, people)}
+    except Exception:   # 제안은 덤: 못 하면 칩만 보이고 사용자가 고른다
+        return {"values": []}
+
+
+@router.post("/aspiration/decline", tags=["되고 싶은 모습"], summary="skip = 이번엔 넘어가기, stop = 그만 묻기, later = 처음 인터뷰 나중에")
 def decline_aspiration(body: DeclineIn, user=Depends(get_user), repo=Depends(get_repo)):
     with repo.session(user["id"]) as s:
-        diary.save_profile(s, onboarding={"aspiration": body.mode, "aspiration_step": None})
+        # later: '아직 안 함'으로 남겨 며칠 쓴 뒤 다시 권한다(PRD v9 Q3-2). 처음 인터뷰만 지난 것으로 적는다
+        diary.save_profile(s, onboarding={"intro": True} if body.mode == "later"
+                           else {"aspiration": body.mode, "aspiration_step": None, "intro": True})
     return {"ok": True}
+
+
+##################################################
+# 고른 시각 알림(PRD v9 Q8)
+##################################################
+
+@router.get("/push/key", tags=["알림"], summary="알림 공개 키(없으면 알림 기능 꺼짐)")
+def push_key():
+    return {"public_key": config.VAPID_PUBLIC_KEY or None}
+
+
+@router.get("/push/subscribe", tags=["알림"], summary="이 사람의 알림 시각들(기기마다 하나)")
+def push_list(user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        return {"subs": [{"id": r["id"], "notify_at": r["notify_at"]} for r in s.rows("push_subs")]}
+
+
+@router.post("/push/subscribe", tags=["알림"], summary="알림 켜기 · 시각 바꾸기(같은 기기는 하나로 바꿈)")
+def push_subscribe(body: PushIn, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        for r in s.rows("push_subs"):
+            if diary.unseal(s, "push_subs", r["id"], r["enc"]).get("endpoint") == body.endpoint:
+                s.delete("push_subs", id=r["id"])
+        pid = diary.new_id("ps")
+        s.insert("push_subs", {"id": pid, "notify_at": body.notify_at, "last_sent": None,
+                               "enc": diary.seal(s, "push_subs", pid, {"endpoint": body.endpoint, "keys": body.keys})})
+    return {"ok": True, "notify_at": body.notify_at}
+
+
+@router.delete("/push/subscribe", tags=["알림"], status_code=204, summary="알림 끄기(이 사람의 모든 기기)")
+def push_unsubscribe(user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        s.delete("push_subs")
+    return Response(status_code=204)
+
+
+@router.post("/push/due", tags=["알림"], include_in_schema=False)
+def push_due(x_cron_secret: Annotated[str | None, Header()] = None, repo=Depends(get_repo)):
+    """30분마다 예약 작업(.github/workflows/push.yml)이 부른다. 이 30분 자리를 고른 사람에게 하루 한 번, 고른 별지기 말투의 한 줄.
+    보낼 사람만 app_ops 로 고르고(평문 칸), 구독을 풀어 보내는 일은 그 사용자 세션에서. 만료된 구독은 지운다."""
+    if not config.CRON_SECRET or x_cron_secret != config.CRON_SECRET:
+        raise ApiError(403, "forbidden", "예약 작업만 부를 수 있어요.")
+    if not (config.VAPID_PUBLIC_KEY and config.VAPID_PRIVATE_KEY):
+        return {"off": True, "sent": 0}
+    now = datetime.now(diary.TZ)
+    at, today = push.slot(now), now.date()
+    with ops.reader(repo) as r:
+        due = [x for x in r.rows("push_subs") if x["notify_at"] == at and str(x["last_sent"] or "") != str(today)]
+    sent = gone = 0
+    for x in due:
+        with repo.session(x["user_id"]) as s:
+            row = s.rows("push_subs", id=x["id"])
+            last = s.rows("entries", status="done", order="written_at desc", limit=1)
+            if not row or not push.should_send(today, row[0]["last_sent"], diary.local_day(last[0]["written_at"]) if last else None):
+                continue
+            res = push.send(diary.unseal(s, "push_subs", x["id"], row[0]["enc"]), push.payload(diary.profile(s)[0]["tone"]),
+                            config.VAPID_PRIVATE_KEY, config.VAPID_SUBJECT)
+            if res == "gone":
+                s.delete("push_subs", id=x["id"])
+                gone += 1
+            elif res == "ok":
+                s.update("push_subs", {"last_sent": today}, id=x["id"])
+                sent += 1
+    logger.log("step", step="push_due", slot=at, due=len(due), sent=sent, gone=gone)
+    return {"slot": at, "due": len(due), "sent": sent, "gone": gone}
 
 
 ##################################################
@@ -222,7 +388,8 @@ def me(user=Depends(get_user), repo=Depends(get_repo)):
         st, ob = diary.profile(s)
         n = len(s.rows("entries", status="done"))
     return {"user": user, "settings": st,
-            "onboarding": {"entries": n, "aspiration": ob["aspiration"], "weather_asked": ob["weather_asked"]}}
+            "onboarding": {"entries": n, "aspiration": ob["aspiration"], "weather_asked": ob["weather_asked"],
+                           "intro": bool(ob.get("intro")) or n > 0}}   # 이미 쓰던 사람은 처음 인터뷰로 보내지 않음
 
 
 @router.delete("/me", tags=["나"], status_code=204, summary="계정과 모든 기록 지우기(되돌릴 수 없음)")

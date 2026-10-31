@@ -135,7 +135,7 @@ def test_heavy_and_widen_pick():
 def test_widen_question_kind_and_heavy_skips_it():
     base = {"days_written": 5, "weather": "맑음", "aspiration": {"said": "x"}, "text": "공원을 걸었다."}
     w = {"kind": "axis", "key": "sun:여가", "name": "여가"}
-    assert voice.next_question_kind({**base, "widen": w}) == "widen"
+    assert voice.next_question_kind({**base, "widen": w}) == "reason"                # PRD v9: 넓혀 보기도 숨은 이유 후보
     assert "여가" in voice.base_question("widen", {"widen": w})
     assert voice.next_question_kind({**base, "widen": w, "heavy": True}) == ""      # 무거운 날엔 넓히지 않음
     assert "넓혀 보기" in voice.situations({**base, "widen": {"kind": "twin", "key": "twin:p"}})

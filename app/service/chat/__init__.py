@@ -87,9 +87,6 @@ def opening(p, from_entry=None, invite=False):
         name = from_entry.get("title") or (from_entry.get("summary") or "")[:40] or "그날"
         return {"kind": "continue", "text": f"{from_entry['day']}에 쓴 '{name}' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?",
                 "sources": list(from_entry.get("quotes") or [])}
-    if p.get("vow"):
-        v = p["vow"]["text"]
-        return {"kind": "vow", "text": f"지난번에 적은 다짐, '{v}' 요즘은 어때요? 떠오르는 만큼 편하게 들려줘요.", "sources": [v]}
     if p.get("kind") == "first":
         return {"kind": "first", "text": p["text"], "sources": []}
     if p.get("kind") == "aspiration" and p.get("text"):
@@ -157,6 +154,14 @@ def situations(text, *, crisis=False, hour=None, recall=False, wrap=False, past=
     return out
 
 
+def with_direction(sit, direction):
+    """숨은 이유가 멀어짐인 대화(PRD v9 Q5-1): 사용자 말이 닿으면 한 번, 마칠 때까지 못 건넸으면 마치기 전에 한 번.
+    무거운 날 · 위기엔 꺼내지 않는다."""
+    if not direction or "무거운 날" in sit:
+        return sit
+    return [*sit, "어디로 가자(마치기 전)" if "대화를 마칠 때" in sit else "어디로 가자"]
+
+
 LINES = {
     "무거운 날": "마음이 무거운 날: 공감과 있는 그대로 인정. 질문은 하나만. 해결책을 늘어놓거나 '힘내'를 쓰지 않는다.",
     "고된 하루를 마친 밤": "고된 하루를 마친 밤: 수고를 먼저 알아주고 짧게 묻는다. 하루를 평가하거나 할 일을 상기시키지 않는다.",
@@ -168,6 +173,11 @@ LINES = {
                   "하셨는데'처럼 날짜와 원문을 따옴표로 글자 그대로 옮겨 떠올리고, 오늘 이야기와 이어 묻는다(이 대화에서 이미 꺼낸 "
                   "기록은 다시 꺼내지 않는다). 억지로 잇지는 않고, 바뀐 생각을 잘못처럼 말하지 않는다.",
     "대화를 마칠 때": "대화를 마칠 때: 오늘 이야기를 한 줄로만 되짚는다. 질문하지 않고 붙잡지 않는다(정리 제안은 코드가 붙인다).",
+    "어디로 가자": "이 사람이 정한 작은 걸음(direction)이 있다. 사용자의 말이 그 걸음과 닿는 이야기(피곤함 · 미룸 같은)면 이번 답에서 "
+              "한 번, direction 을 따옴표로 글자 그대로 인용해 '오늘은 ~해 볼까요?'처럼 묻는 꼴로 건넨다. 닿지 않으면 꺼내지 않는다. "
+              "멀어졌다 · 못 하고 있다 같은 판정은 하지 않는다.",
+    "어디로 가자(마치기 전)": "대화를 마치기 전 한 번: 오늘 이야기를 한 줄로 되짚은 뒤, 이 사람이 정한 작은 걸음(direction)을 따옴표로 "
+                       "글자 그대로 인용해 묻는 꼴로 가볍게 건넨다(판정 없이). 이때만 질문 하나를 넣어도 된다.",
     "긴 이야기": "사용자가 한 번에 긴 이야기를 들려줬다(말로 한 녹음 등): 다 되짚지 않는다. 들었다는 걸 한 문장으로 알리고, "
               "가장 마음이 실린 한 가지만 받아 그것만 짧게 이어 묻는다. 모두 세 문장 · 200자 안.",
 }
@@ -207,6 +217,8 @@ def messages(ctx, sit, avoid=()):
     if avoid:
         sys.append("[다시 쓰기] 지난 답에 문제가 있었다. 고칠 것:\n" + voice._lines(avoid))
     u = {k: ctx[k] for k in ("summary",) if ctx.get(k)}
+    if any(x.startswith("어디로 가자") for x in sit):
+        u["direction"] = ctx["direction"]
     if ctx.get("past"):
         u["past"] = ctx["past"][:PAST_IN_PROMPT]
     u["turns"] = (ctx.get("turns") or [])[-TURNS_IN_PROMPT:]
@@ -231,14 +243,16 @@ def parse(raw):
     return str(d.get("reply") or d.get("message") or "").strip(), None if found is None else found in (True, "true")
 
 
-def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=False, wrap=False):
+def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=False, wrap=False, direction=False):
     """대화 답의 문제 목록(비면 통과): 한마디와 같은 검사(넘지 않는 선 · 원문에 없는 인용 · 반복 · 사람 판정 · 위기) + 질문 하나만."""
     out = checks.problems(reply, "", sources=sources, past=past_replies, comfort=crisis, aspiration=False, gentle=gentle,
                           tone=tone, crisis=crisis)
     if crisis and (m := ECHO.search(reply or "")):
         out.append(f"위기 바람을 다시 꺼냄: '{m.group(0)}'")
+    if direction and checks.JUDGE.search(reply or ""):   # '어디로 가자'가 걸린 대화는 판정하는 말 금지(PRD v9 Q5-2)
+        out.append("판정하는 말(멀어졌다 · 못 하고 있다 금지)")
     n = len(re.findall(r"[?？]", checks._QUOTE.sub("", reply or "")))   # 인용 속 물음표는 세지 않는다
-    if n > (0 if crisis or wrap else 1):
+    if n > (0 if crisis or (wrap and not direction) else 1):   # 마칠 때도 '어디로 가자'를 건넬 땐 질문 하나
         out.append(f"질문 {n}개(한 번에 하나만)")
     return out
 
@@ -276,8 +290,9 @@ def respond(ctx):
     → {"text", "kind": "reply|recall|wrap", "mode": "normal|comfort", "tone", "check_in", "found", "checks": [문제 개수…]}"""
     ctx = voice.soften(ctx)   # 위기 턴은 팩폭도 다정하게
     tone, crisis = ctx.get("tone"), bool(ctx.get("crisis"))
-    sit = situations(ctx.get("text"), crisis=crisis, hour=ctx.get("hour"), recall=ctx.get("recall"), wrap=ctx.get("wrap"),
-                     past=ctx.get("past"), first=ctx.get("first"), comfort_only=ctx.get("comfort_only"))
+    sit = with_direction(situations(ctx.get("text"), crisis=crisis, hour=ctx.get("hour"), recall=ctx.get("recall"),
+                                    wrap=ctx.get("wrap"), past=ctx.get("past"), first=ctx.get("first"),
+                                    comfort_only=ctx.get("comfort_only")), ctx.get("direction"))
     kind = "wrap" if ctx.get("wrap") else "recall" if ctx.get("recall") else "reply"
     base = {"kind": kind, "mode": "comfort" if "무거운 날" in sit else "normal", "tone": tone,
             "check_in": voice.check_in_line(tone, ctx.get("past_check_ins")) if crisis or ctx.get("crisis_unsure") else ""}
@@ -295,7 +310,8 @@ def respond(ctx):
         src = [f"{p.get('thought', '')} {p.get('quote', '')}" for p in ctx.get("past") or []] if kind == "recall" \
             else ctx.get("sources") or []
         probs = problems(text, sources=src, past_replies=ctx.get("past_replies"), tone=tone,
-                         crisis=crisis, gentle=bool(ctx.get("gentle")), wrap=kind == "wrap")
+                         crisis=crisis, gentle=bool(ctx.get("gentle")), wrap=kind == "wrap",
+                         direction="어디로 가자(마치기 전)" in sit or "어디로 가자" in sit)
         if len(text) > MAX_REPLY:
             probs.append(f"너무 김({len(text)}자)")
         if checks._norm(text) == checks._norm(ctx.get("text")):   # 사용자 말을 그대로 되풀이한 답(--live 에서 본 꼴)

@@ -18,7 +18,9 @@ H1, H2 = {"Authorization": "Bearer tok1"}, {"Authorization": "Bearer tok2"}
 RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations",
                "past", "reached", "message", "next_question", "people_questions",
                "source", "day", "day_basis", "day_check", "confirmed", "record_type",   # 기록 칸(WS11)
-               "observation"}   # 관측 상태 · 한계(WS15)
+               "observation",   # 관측 상태 · 한계(WS15)
+               "text", "talk",   # 원문 · 그날 대화(PRD v9 Q19)
+               "reason"}   # 직접 쓴 글의 숨은 이유 한 줄(PRD v9 Q7)
 
 
 @pytest.fixture
@@ -225,6 +227,20 @@ def test_aspiration_and_north_star(client):
     assert ns["text"] == "꾸준한 사람" and ns["reached_planets"] == []
     assert client.post("/aspiration/decline", headers=H1, json={"mode": "stop"}).json()["ok"]
     assert client.get("/me", headers=H1).json()["onboarding"]["aspiration"] == "stop"
+
+
+def test_aspiration_interview_five_and_later(client):
+    """PRD v9: 처음 인터뷰 다섯 질문(이유 · 장면 칸), '나중에 할래요'는 아직 안 함으로 남기고 처음 인터뷰만 지난 것으로."""
+    assert client.get("/me", headers=H1).json()["onboarding"]["intro"] is False
+    assert client.post("/aspiration/decline", headers=H1, json={"mode": "later"}).json()["ok"]
+    ob = client.get("/me", headers=H1).json()["onboarding"]
+    assert ob["intro"] is True and ob["aspiration"] == "none"                         # 며칠 뒤 다시 권함
+    a = client.post("/aspiration", headers=H1, json={"want": "곁에 있어 주는 친구", "why": "힘들 때 혼자였던 게 싫어서",
+                                                     "scene": "친구에게 먼저 안부를 묻는 저녁", "obstacle": "피곤하면 미룬다",
+                                                     "if_then": "피곤하면 오 분만 연락하겠다"}).json()
+    assert (a["why"], a["scene"]) == ("힘들 때 혼자였던 게 싫어서", "친구에게 먼저 안부를 묻는 저녁")
+    assert client.get("/aspiration", headers=H1).json()["current"]["scene"] == "친구에게 먼저 안부를 묻는 저녁"
+    assert isinstance(client.post("/aspiration/values", headers=H1, json={"why": "힘들 때 혼자였던 게 싫어서"}).json()["values"], list)
 
 
 def test_delete_and_isolation(client, env):  # noqa: F811

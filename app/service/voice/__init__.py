@@ -244,15 +244,31 @@ def next_question_kind(ctx):
         return "weather"
     if first:
         return "first"
-    if any(c.get("overdue") for c in ctx.get("commitments") or []):
-        return "commitment"
-    if ctx.get("open_questions"):
-        return "open_question"
     if not ctx.get("aspiration") and not ctx.get("aspiration_off") and ctx.get("days_written", 0) >= ASPIRATION_AFTER_DAYS:
         return "aspiration_invite"
-    if "넓혀 보기" in sit and ctx["widen"].get("kind") in ("sun", "axis"):
-        return "widen"
-    return ""
+    return "reason" if reason_candidates(ctx, sit) else ""
+
+
+def reason_candidates(ctx, sit=None):
+    """다음 첫 말의 숨은 이유 후보(PRD v9 Q6: 다 주고 Solar 가 고른다). 무거운 날 · 위기면 없음(v8 안전 규칙),
+    바로 앞 첫 말과 같은 이유는 뺀다(Q6-1). drift 는 graph 가 쿨다운(7일)까지 본 뒤에만 넣는다."""
+    sit = situations(ctx) if sit is None else sit
+    if "무거운 날" in sit:
+        return []
+    out = []
+    d = ctx.get("drift")
+    if d:
+        out.append({"key": "drift", "what": f"되고 싶은 모습 '{d['said']}'에 대해 이 사람이 정한 그때 해 볼 것 '{d['if_then']}'"
+                                           + (f"(이유: {d['why']})" if d.get("why") else "") + f" — 요즘 일기로 보면 {d['kind']}"})
+    c = next((c for c in ctx.get("commitments") or [] if c.get("overdue")), None)
+    if c:
+        out.append({"key": "commitment", "what": f"기한이 지난 다짐 '{c['text']}'"})
+    if ctx.get("open_questions"):
+        out.append({"key": "open_question", "what": f"일기에 남은 물음 '{ctx['open_questions'][0]}'"})
+    w = ctx.get("widen") or {}
+    if "넓혀 보기" in sit and w.get("kind") in ("sun", "axis"):
+        out.append({"key": "widen", "what": f"{'한동안 쓰지 않은' if w.get('kind') == 'sun' else '아직 써 본 적 없는'} '{w.get('name', '')}' 쪽 이야기"})
+    return [x for x in out if x["key"] != ctx.get("last_reason")]
 
 
 def base_question(kind, ctx):
@@ -267,6 +283,9 @@ def base_question(kind, ctx):
         return next((q for q in FIRST_QUESTIONS if q not in past), FIRST_QUESTIONS[0])
     if kind == "aspiration_invite":
         return INVITE
+    if kind == "reason":   # 숨은 이유 첫 질문을 못 지었을 때: 이유 없는 가벼운 질문
+        past = " ".join(ctx.get("past_messages") or [])
+        return next((q for q in FIRST_QUESTIONS if q not in past), FIRST_QUESTIONS[0])
     if kind == "widen":   # LLM 이 비워 두거나 기본 문장으로 갈 때
         w = ctx.get("widen") or {}
         return (f"한동안 '{w.get('name')}' 이야기는 없었네요. 요즘은 어때요?" if w.get("kind") == "sun"
@@ -288,7 +307,10 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     tone, tone_part = tone_lines(ctx, sit, gentle)
     fb = o["fact_bomb"]
     lines = [x for x in fb["never_cross"] if tone["name"] == "팩폭" or "살살" not in x]  # 살살은 팩폭 버튼
-    rules = list(o["tone_rules"]) + lines + list(o["aspiration"]["reached"]) + [
+    # 온톨로지의 '멀어진 순간은 표시하지 않는다'는 관측 Agent(Studio) 규칙 그대로 두고, 한마디는 v9 규칙으로 바꿔 쓴다(PRD v9 ⑦-2)
+    reached = [x for x in o["aspiration"]["reached"] if not x.startswith("멀어진 순간")]
+    rules = list(o["tone_rules"]) + lines + reached + [
+        "멀어진 순간은 판정하지 않는다(멀어졌다 · 못 하고 있다 금지). 건넬 때는 이 사람이 정한 그때 해 볼 것으로만 건넨다.",
         "되고 싶은 모습은 오늘 글과 닿을 때만 꺼낸다. '되고 싶다면서 왜'처럼 그 말로 몰아세우지 않는다.",
         "[지킬 것] · [오늘 상황]은 너에게 주는 규칙이다. 규칙 문장이나 버튼 이름을 한마디에 옮기지 않는다."]
     sys = ["너는 일기장 '나의 우주'의 별지기다. 사용자가 오늘 쓴 일기에 한마디를 건넨다.", *tone_part]
@@ -332,6 +354,9 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     if "오늘은 살살" in sit:
         sl.append(next(f"오늘은 살살: {f['changes']}" for f in o["feedback"] if f["name"] == "오늘은 살살")
                   + " 반말은 두되 '야' · 거친 표현 · 몰아세우는 명령은 빼고, 다음 걸음은 권하는 말로.")
+    if suggest and ctx.get("direction"):   # 직접 쓴 날의 '어디로 가자'(PRD v9 점검 3): 다음 걸음 자리에서 한 번
+        sl.append("이번 다음 걸음 제안은 이 사람이 정한 그때 해 볼 것(direction)을 따옴표로 글자 그대로 인용해, 오늘 해 볼지 묻는 꼴로 "
+                  "한 번 건넨다. 멀어졌다 · 못 했다 같은 판정은 하지 않는다.")
     sl.append("이번 한마디에는 작은 다음 걸음을 질문으로 하나 넣는다(팩폭은 명령형 가능)." if suggest
               else "이번 한마디에는 다음 걸음 제안을 넣지 않는다(질문 · 명령 · '~만 해 보기' 모두 없이).")
     sys.append("[오늘 상황]\n" + _lines(sl))
@@ -342,7 +367,17 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
           "widen": f"next_question 에는 {'한동안 쓰지 않은' if w.get('kind') == 'sun' else '아직 써 본 적 없는'} "
                    f"'{w.get('name', '')}' 쪽 이야기를 가볍게 묻는 질문 하나를 쓴다(오늘 글과 억지로 잇지 않고, 답하지 않아도 되게)."
           }.get(kind, "next_question 은 빈 글로 둔다.")
-    sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(2~4문장), \"next_question\": 다음 질문}. "
+    if kind == "reason":
+        cands = reason_candidates(ctx, sit)
+        sys.append("[숨은 이유 후보]\n" + _lines([f"{c['key']}: {c['what']}" for c in cands] + ["none: 오늘은 이유 없이 가벼운 질문"]))
+        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(두세 문장, 120자 안팎), \"next_question\": 다음에 앱을 열면 먼저 건넬 첫 질문, "
+                   "\"reason\": 고른 후보 key, \"reveal\": 이유를 밝히는 한 줄}. 숨은 이유 후보 중 오늘 글과 가장 어울리는 하나를 고르고"
+                   "(어울리는 게 없으면 none), next_question 은 그 이유를 드러내지 않는 가벼운 일상 질문 하나로 쓴다: 지난 글을 인용하거나 "
+                   "'지난번' · '한동안' · '다짐' · '되고 싶은' 같은 말을 쓰지 않고, 한 단어로도 답할 수 있게. reveal 은 '~를 물은 건, ~가 "
+                   "떠올라서였어요.'처럼 이 사람이 했던 말 · 바람에 이어 이유를 밝히는 한 줄(멀어졌다 · 못 했다 같은 판정 없이). none 이면 빈 글. "
+                   "message 의 따옴표 안에는 아래 원문을 글자 그대로 옮긴다(바꿔 말하면 따옴표 없이). 지난 한마디와 표현을 겹치지 않는다.")
+    else:
+        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(두세 문장, 120자 안팎), \"next_question\": 다음 질문}. "
                "따옴표 안에는 아래 원문을 글자 그대로 옮긴다(바꿔 말하면 따옴표 없이). 지난 한마디와 표현을 겹치지 않는다. " + nq)
     if avoid:
         sys.append("[다시 쓰기] 지난 답에 문제가 있었다. 고칠 것:\n" + _lines(avoid))
@@ -361,6 +396,8 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     if ctx.get("written_at"):
         u["written_at"] = str(ctx["written_at"])
     u["past_messages"] = (ctx.get("past_messages") or [])[-PAST_IN_PROMPT:]
+    if suggest and ctx.get("direction"):
+        u["direction"] = ctx["direction"]
     user = "오늘 글:\n" + (ctx.get("text") or "") + "\n\n참고:\n" + json.dumps(u, ensure_ascii=False, indent=1)
     return [{"role": "system", "content": "\n\n".join(sys)}, {"role": "user", "content": user}]
 
@@ -373,12 +410,12 @@ def _parse(raw):
         d = {}
     if not d and raw:
         d = {"message": raw.strip()}
-    return str(d.get("message") or "").strip(), str(d.get("next_question") or "").strip()
+    return str(d.get("message") or "").strip(), str(d.get("next_question") or "").strip(), d
 
 
 def _sources(ctx):
     return ([ctx.get("text") or ""] + [r.get("quote") or "" for r in ctx.get("reached") or []]
-            + [(ctx.get("aspiration") or {}).get("said") or ""]
+            + [(ctx.get("aspiration") or {}).get("said") or "", ctx.get("direction") or ""]
             + [c.get("text") or "" for c in ctx.get("commitments") or []] + list(ctx.get("kept") or [])
             + list(ctx.get("open_questions") or []) + list(ctx.get("person_history") or [])
             + [f"{t.get('thought') or ''} {t.get('quote') or ''}" for t in ctx.get("past_thoughts") or []]
@@ -399,15 +436,23 @@ def generate(ctx):
     kind = next_question_kind(ctx)
     suggest = _suggest(ctx, sit)
     log, avoid = [], []
+    good = None   # 이유를 드러내지 않은 숨은 이유 첫 질문(한마디만 기본 문장으로 가도 살린다)
     for attempt in (1, 2):  # 한 번 다시 만들고, 그래도 문제면 안전한 기본 문장
-        msg, nq = _parse(llm.chat(build_messages(ctx, kind, sit, suggest, avoid), temperature=0.8))
-        if kind not in ("commitment", "open_question", "widen") or (kind == "widen" and not nq):
+        msg, nq, raw = _parse(llm.chat(build_messages(ctx, kind, sit, suggest, avoid), temperature=0.8))
+        keys = {c["key"] for c in reason_candidates(ctx, sit)} if kind == "reason" else set()
+        reason = str(raw.get("reason") or "") if str(raw.get("reason") or "") in keys else ""
+        reveal = str(raw.get("reveal") or "").strip() if reason else ""
+        if kind != "reason" or not nq:
             nq = base_question(kind, ctx)  # 정해 둔 질문(날씨 · 되고 싶은 모습 · 첫 만남)은 그대로
         # 제안 빈도는 선호라 검사로 막지 않는다. 무거운 날만 제안을 막는다(checks.problems).
         check = lambda m: checks.problems(m, nq, sources=_sources(ctx), past=ctx.get("past_messages"),   # noqa: E731
                                           comfort=comfort, aspiration=bool(ctx.get("aspiration")),
-                                          gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")))
-        probs = check(msg)
+                                          gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")),
+                                          max_len=checks.MESSAGE_LEN)
+        hidden = checks.hidden_problems(nq, reveal) if kind == "reason" else []
+        if reason and not hidden:
+            good = (nq, reason, reveal)
+        probs = check(msg) + hidden
         entry = {"attempt": attempt, "problems": probs}
         # 팩폭(오늘은 살살 포함) · 사용자 말투 바람을 쓴 말은 코드 검사를 지나도 넘지 않는 선을 LLM 으로 한 번 더
         if not probs and (ctx.get("tone") == "팩폭" or custom_note(ctx, sit)):
@@ -422,8 +467,8 @@ def generate(ctx):
         avoid = probs
     llm_checked = ctx.get("tone") == "팩폭" or custom_note(ctx, sit) or ctx.get("crisis")
     if probs and not llm_checked and all(p.startswith("너무 김") for p in probs):
-        # 길이만 넘었으면 기본 문장 대신 300자 안의 마지막 문장까지(2026-10-30: 긴 글에서 두 번 다 넘어 기본 문장으로 떨어지던 것)
-        cut = checks.cut_to_len(msg)
+        # 길이만 넘었으면 기본 문장 대신 MESSAGE_LEN 안의 마지막 문장까지(2026-10-30: 긴 글에서 두 번 다 넘어 기본 문장으로 떨어지던 것)
+        cut = checks.cut_to_len(msg, checks.MESSAGE_LEN)
         if cut and not check(cut):
             msg, probs = cut, []
             log.append({"attempt": "자름", "problems": []})
@@ -432,9 +477,11 @@ def generate(ctx):
         opts = CRISIS_SAFE.get(ctx.get("tone"), CRISIS_SAFE["다정하게"]) if ctx.get("crisis") else SAFE[(tone, comfort)]
         msg = next((m for m in opts if not checks.repeat_problems(m, ctx.get("past_messages"))), opts[0])
         nq = "" if comfort or not kind else base_question(kind, ctx)
+        nq, reason, reveal = good if good and not comfort else (nq, "", "")
         log.append({"attempt": "기본 문장", "problems": []})
     check_in = check_in_line(ctx.get("tone"), ctx.get("past_check_ins")) if ctx.get("crisis") or ctx.get("crisis_unsure") else ""
     w = ctx.get("widen") or {}
-    used = "넓혀 보기" in sit and (w.get("kind") == "twin" or (kind == "widen" and bool(nq)))   # 실제로 쓴 재료만 남긴다
+    used = "넓혀 보기" in sit and (w.get("kind") == "twin" or reason == "widen")   # 실제로 쓴 재료만 남긴다
     return {"message": msg, "next_question": nq, "mode": "comfort" if comfort else "normal", "tone": ctx.get("tone"),
-            "check_in": check_in, "checks": log, "situations": sit, "next_kind": kind, "widen": w.get("key", "") if used else ""}
+            "check_in": check_in, "checks": log, "situations": sit, "next_kind": kind, "widen": w.get("key", "") if used else "",
+            "reason": reason, "reveal": reveal}   # 숨은 이유 key · 이유 한 줄(PRD v9 Q6 · Q7, 없으면 빈 글)

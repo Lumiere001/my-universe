@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아쓴 글을 칸에 채움
 import PhotoInput from "@/components/PhotoInput";
-import ResultCard from "@/components/ResultCard";
+import AfterSave from "@/components/AfterSave";
 import { localToday } from "@/components/EntryTools";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt, Markdown, WriteHelp } from "@/components/WriteParts";
 import { FAIL, getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
@@ -87,8 +87,13 @@ export default function WritePage() {
   if (result) return (
     <main>
       {result.duplicate && <DuplicateNote id={result.id} />}
-      <ResultCard r={result} onChange={setResult} />
-      <button onClick={again}>새 글 쓰기</button>
+      <AfterSave r={result} reason={result.reason ?? undefined}>
+        <div className="row">
+          <Link className="btn small" href={`/history?id=${encodeURIComponent(result.id)}`}>일기 보기</Link>
+          <Link className="btn small" href="/universe">우주에서 보기</Link>
+          <button className="small" onClick={again}>새 글 쓰기</button>
+        </div>
+      </AfterSave>
     </main>
   );
 
@@ -96,7 +101,10 @@ export default function WritePage() {
   return (
     <main className="write">
       <h1 className="sr">직접 쓰기</h1>
-      <p className="sub" style={{ margin: 0 }}>글로 적으면 별지기가 생각 단위로 나눠 우주에 띄우고, 지난 기록과 이어 보여 드려요.</p>
+      <div className="row" style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
+        <p className="sub" style={{ margin: 0 }}>글로 적으면 별지기가 생각 단위로 나눠 우주에 띄우고, 지난 기록과 이어 보여 드려요.</p>
+        <Link className="btn small" href="/" style={{ flex: "none", whiteSpace: "nowrap" }}><Icon name="talk" size={16} />대화로</Link>
+      </div>
       <KeeperPrompt />
       <form onSubmit={submit} className="diary-form" aria-label="일기 쓰기">
         <div className="paper">

@@ -18,6 +18,7 @@ from app.service import studio_format as sf
 from app.service import voice
 from app.service.rules import groups as group_rules
 from app.service.rules import pick_past
+from app.service.rules import topics as topic_rules
 from app.service.safety import mask, unmask
 
 SEP = "\n␞\n"   # 조각 사이 구분 줄(사람 이름 규칙에 걸리지 않는 글자)
@@ -111,6 +112,35 @@ def embed(texts, people):
 
 
 @lru_cache(maxsize=1)
+def _value_vectors():
+    vs = load()["values"]
+    return [v["name"] for v in vs], llm.embed([f"{v['name']}: {v['definition']}. {v['example']}" for v in vs])
+
+
+def suggest_values(why, people, top=2, floor=0.3):
+    """되고 싶은 모습의 '이유'에서 기대는 가치 후보(PRD v9 Q3-1b: 별지기가 골라 제안, 사용자가 확인).
+    가명 처리한 이유 글과 가치 10개(이름 · 뜻 · 예)의 임베딩 비슷함 위에서 top 개(floor 아래는 뺌)."""
+    if not (why or "").strip():
+        return []
+    names, vecs = _value_vectors()
+    q = llm.embed([mask_obj([why], people)[0][0]], query=True)[0]
+    ranked = sorted(((topic_rules.cos(q, v), n) for v, n in zip(vecs, names)), reverse=True)
+    return [n for sim, n in ranked[:top] if sim >= floor]
+
+
+SAME_OBSTACLE = ("일기 속 생각이 사용자가 말한 '내 안에서 걸리는 것'과 같은 이야기인지만 판단한다. 같은 기분 · 습관 · 생각이 "
+                 "다시 나타난 것이면 true, 낱말만 겹치고 뜻이 다르면(예: 피곤해서 쉬었더니 좋았다) false. JSON 하나만: {\"same\": true|false}")
+
+
+def same_obstacle(thought, obstacle, people):
+    """멀어짐 후보 확인(PRD v9 Q4): 비슷함으로 잡은 생각이 정말 그 걸림과 같은 이야기인가(가명 처리, Solar 한 번)."""
+    m, _ = mask_obj({"o": obstacle, "t": f"{thought.get('thought') or ''} / {thought.get('quote') or ''}"}, people)
+    raw = llm.chat([{"role": "system", "content": SAME_OBSTACLE},
+                    {"role": "user", "content": f"내 안에서 걸리는 것: {m['o']}\n일기 속 생각: {m['t']}"}], temperature=0)
+    return bool(re.search(r'"same"\s*:\s*true', raw or ""))
+
+
+@lru_cache(maxsize=1)
 def sun_vectors():
     """기준 축 9개의 대표 낱말 벡터와 중심(이미 만들어 둔 파일, 지금 임베딩 모델 것만)."""
     ops = config.BASE_DIR / "data" / "ops"
@@ -152,14 +182,15 @@ def search_past(repo, uid, entry_id, today):
 ##################################################
 
 VOICE_TEXT = ("text", "summary", "thoughts", "reached", "aspiration", "commitments", "kept", "open_questions", "disliked",
-              "person_history", "past_messages", "past_thoughts", "changes", "widen", "tone_note")
+              "person_history", "past_messages", "past_thoughts", "changes", "widen", "tone_note", "drift", "direction")
 
 
 def speak(ctx, people):
     """voice.generate 를 가명 글로 부르고 한마디 · 다음 질문을 원래 이름으로 되돌린다(안부 한 줄은 고정 문장이라 그대로)."""
     m, table = mask_obj({k: ctx[k] for k in VOICE_TEXT if ctx.get(k)}, people)
     out = voice.generate({**ctx, **m})
-    return {**out, "message": unmask(out["message"], table), "next_question": unmask(out["next_question"], table)}
+    return {**out, "message": unmask(out["message"], table), "next_question": unmask(out["next_question"], table),
+            "reveal": unmask(out.get("reveal") or "", table)}
 
 
 def norm(s):

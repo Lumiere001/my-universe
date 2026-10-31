@@ -8,11 +8,12 @@ from collections import Counter
 
 from app.core.ontology import load
 from app.repository import diary, drafts
+from app.service import brief
 from app.service.rules import insight as rules_insight, universe_view
 from app.service.safety import forget_word
 
 NEXT_KIND = {"weather": "weather", "aspiration": "aspiration", "aspiration_invite": "aspiration", "first": "free",
-             "commitment": "free", "open_question": "free", "": "none", None: "none"}
+             "commitment": "free", "open_question": "free", "reason": "free", "": "none", None: "none"}   # reason: 숨은 이유 첫 질문(PRD v9)
 # 보기(OPTIONS)는 서버로 돌아오는 값이라 그대로, 물음만 보기와 맞춘다(docs/content/C-02 사람 질문)
 QUESTION = {"동명이인": "글에 나온 '{n}'은(는) 사람 목록에 있는 '{n}'과(와) 같은 사람인가요?",
             "별명": "글에 나온 '{n}'은(는) 사람 목록에 있는 누군가를 부르는 다른 이름인가요?",
@@ -96,7 +97,8 @@ def entry_result(s, eid):
     d = e["data"]
     base = {"id": eid, "status": e["status"], "step": e["step"] or "", "written_at": diary.iso(e["written_at"]),
             **record_fields(e),
-            "title": d.get("title", ""), "weather": e["weather"], "crisis": e["crisis"], "info": None,
+            "title": d.get("title", ""), "text": d.get("text", ""), "talk": d.get("talk"),   # 원문 · 그날 대화(PRD v9 Q19, 없으면 None)
+            "weather": e["weather"], "crisis": e["crisis"], "info": None,
             "thoughts": [], "relations": [], "past": [], "reached": [], "message": None, "next_question": None,
             "people_questions": [], "observation": None}
     if e["status"] != "done":
@@ -132,6 +134,7 @@ def entry_result(s, eid):
                         "check_in": msg.get("check_in") or None} if m else None,
             "next_question": {"kind": NEXT_KIND.get(m[0]["next_kind"], "free"), "text": msg.get("next_question", "")} if m else None,
             "people_questions": qs,
+            "reason": msg.get("shown_reason") or None,   # 직접 쓴 글: 쓰기 화면 위 질문의 숨은 이유 한 줄(PRD v9 Q7)
             "observation": observation(base, ts, rels, past_ids, pts)}
 
 
@@ -182,9 +185,12 @@ def export(s, eid=None):
                         for x in suns if x["id"] in used_sun or (x["custom"] and not eid)]}
 
 
-def insight(s):
-    """나에 대해 알게 된 것(rules.insight): 끝난 기록의 생각 · 남은 관계로. 본인 것만(세션이 사용자로 묶여 있음)."""
-    entries = {e["id"]: e for e in diary.entries(s, status="done")}
+def insight(s, period="all"):
+    """나에 대해 알게 된 것(rules.insight): 끝난 기록의 생각 · 남은 관계로. 본인 것만(세션이 사용자로 묶여 있음).
+    period: week · month · all(PRD v9 Q10 기간 칩) — 그 기간에 쓴 기록만."""
+    start = brief.since(period, diary.today())
+    entries = {e["id"]: e for e in diary.entries(s, status="done")
+               if not start or diary.local_day(e["written_at"]) >= str(start)}
     if not entries:
         return rules_insight({}, [])
     suns = diary.suns(s)
@@ -307,7 +313,8 @@ def person_api(p):
 
 
 def aspiration_api(a):
-    return {"id": a["id"], "said": a["said"], "values": a["values"], "obstacle": a.get("obstacle", ""),
+    return {"id": a["id"], "said": a["said"], "why": a.get("why", ""), "scene": a.get("scene", ""), "values": a["values"],
+            "obstacle": a.get("obstacle", ""),
             "if_then": a.get("if_then", ""), "said_at": diary.iso(a["said_at"]),
             "reached": [{"entry_id": x["entry_id"], "quote": x.get("quote", ""), "at": diary.iso(x["at"])} for x in a["reached"]]}
 

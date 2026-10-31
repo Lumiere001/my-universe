@@ -30,7 +30,8 @@ def recent(s, limit=5):
     return [_row(s, r) for r in s.rows("conversations", order="updated_at desc", limit=limit)]
 
 
-DATA = ("turns", "summary", "summary_at", "from_entry", "sources", "drafted", "crisis")
+DATA = ("turns", "summary", "summary_at", "from_entry", "sources", "drafted", "crisis",
+        "reason", "direction_done")   # reason: 첫 말의 숨은 이유 {key, reveal, direction}(PRD v9 Q5-1 · Q7)
 
 
 def save(s, c):
@@ -38,6 +39,11 @@ def save(s, c):
     s.update("conversations", {"entry_id": c.get("entry_id"), "updated_at": diary.now(),
                                "turn_count": sum(t["role"] == "user" for t in c.get("turns", [])),
                                "enc": diary.seal(s, "conversations", c["id"], {k: c[k] for k in DATA if k in c})}, id=c["id"])
+
+
+def by_entry(s, eid):
+    r = s.rows("conversations", entry_id=eid, limit=1)
+    return _row(s, r[0]) if r else None
 
 
 def delete(s, **eq):

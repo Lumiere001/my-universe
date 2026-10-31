@@ -26,10 +26,11 @@ from app.core import config, llm, logger, trace
 from app.core.ontology import load
 from app.repository import diary, edit
 from app.service import voice as voice_rules
+from app.service.rules import drift as drift_rules
 from app.service.rules import groups as group_rules
 from app.service.rules import advance, clean_record, clean_text, filter_relations, link_domain, place_stars, reask_trigger, to_sun
 from app.service.rules.relations import personal_filter
-from app.service.rules.topics import profile
+from app.service.rules.topics import cos as topic_cos, profile
 from app.service.rules.normalize import key as norm_key
 from app.service.safety import RealNameLeak, detect_crisis, find_new_names
 from app.service.studio_format import parse_record
@@ -119,7 +120,8 @@ def node(name, progress=None):
                         diary.add_run(s, ctx.entry_id, name, (time.time() - t0) * 1000, m.calls, m.usd, code)
                     raise
             done = state.get("done", []) + [name]
-            meta = {"checks": out.pop("_checks")} if "_checks" in out else {}   # 문제 개수만(상황 · 문제 이름은 남기지 않음)
+            # '_' 로 시작하는 칸은 운영 지표(평문 meta): 문제 개수 · 숨은 이유 종류만(상황 · 문제 이름 · 원문은 남기지 않음)
+            meta = {k[1:]: out.pop(k) for k in [k for k in out if k.startswith("_")]}
             ms = (time.time() - t0) * 1000
             with ctx.repo.session(ctx.uid) as s:
                 if name != "save":
@@ -306,7 +308,9 @@ def observe(state, ctx):
         return {"observed": {}}
     with ctx.repo.session(ctx.uid) as s:
         asp = (diary.aspirations(s) or [None])[-1]
-    a = {"said": asp["said"], "value": (asp["values"] or [""])[0]} if asp else None
+    # 장면 · 이유를 더해 닿은 날을 더 잘 찾게 한다(PRD v9 Q4). 옛 판에는 없어서 있는 것만
+    a = {"said": asp["said"], "value": (asp["values"] or [""])[0],
+         **{k: asp[k] for k in ("scene", "why") if asp.get(k)}} if asp else None
     return {"observed": tools.run_observe_agent(state["day"], grouped(state["today"]), state["past"], a, state["people"])}
 
 
@@ -385,6 +389,32 @@ def _widen_cands(s, state, done, days_written):
     return out
 
 
+DRIFT_SIM = 0.45   # ponytail: 걸림 문장과 일기 생각의 비슷함 문턱값(짐작). 확인은 Solar 가 한다 — 되돌림이 쌓이면 개인 다이얼로
+
+
+def _obstacle_hit(state, asp, ctx):
+    """이번 글에 '내 안의 걸림'(인터뷰 4번)이 다시 나왔나(PRD v9 Q4): 걸림 벡터와 가장 비슷한 생각 → Solar 로 같은 이야기인지 확인.
+    → {"day", "entry_id", "quote"} 또는 None. 원문 근거(생각의 인용)만 남긴다."""
+    today = [t for t in state["today"] if t.get("id")]
+    if not today:
+        return None
+    vecs = ctx.repo.vectors.get(ctx.uid, ids=[t["id"] for t in today])
+    q = tools.embed([asp["obstacle"]], state["people"])[0]
+    sim, t = max(((topic_cos(q, vecs[t["id"]]), t) for t in today if t["id"] in vecs), default=(0.0, None), key=lambda x: x[0])
+    if t is None or sim < DRIFT_SIM or not tools.same_obstacle(t, asp["obstacle"], state["people"]):
+        return None
+    return {"day": state["day"], "entry_id": ctx.entry_id, "quote": t.get("quote") or t.get("thought") or ""}
+
+
+def _vow_missed_hit(state, states, ctx):
+    """이미 어긋났던 다짐이 또 어긋남(PRD v9 Q4) — 걸림이 되풀이된 것으로 센다(호출 없음)."""
+    missed = {norm_key(g.get("topic")) for g in (states or {}).values() if g["kind"] == "다짐" and "실수" in g.get("marks", [])}
+    ts = {t["id"]: t for t in state["today"]}
+    r = next((r for r in state["relations"] if r["type"] == "어긋남" and r["to"] in ts
+              and norm_key(ts[r["to"]].get("topic")) in missed - {norm_key(None)}), None)
+    return {"day": state["day"], "entry_id": ctx.entry_id, "quote": ts[r["to"]].get("quote") or ""} if r else None
+
+
 @node("voice", "voice")
 def speak(state, ctx):
     day = diary.today()
@@ -403,6 +433,9 @@ def speak(state, ctx):
         history = _person_history(s, person, done) if person else []
         days = len({diary.local_day(e["written_at"]) for e in done})
         widen = voice_rules.pick_widen(_widen_cands(s, state, done, days), [m.get("widen", "") for m in msgs])
+        src = (s.rows("entries", id=ctx.entry_id) or [{}])[0].get("source") or "텍스트"
+        since = ((asp["reached"][-1]["at"] if asp["reached"] else asp["said_at"]) if asp else None)
+        after = sum(1 for e in done if since and e["written_at"] > since)
     vow_kept = {r["from"] for r in state["relations"] if r.get("vow_kept")}
     ts = {t["id"]: t for t in state["today"] + state["past"]}
     changes = [{"before": ts[r["from"]].get("thought", ""), "after": ts[r["to"]].get("thought", ""), "day": ts[r["from"]].get("day")}
@@ -422,8 +455,8 @@ def speak(state, ctx):
         "disliked": disliked,
         "past_check_ins": [m["check_in"] for m in msgs if m.get("check_in")],
         "crisis": state.get("crisis"), "crisis_unsure": state.get("crisis_unsure"),
-        "aspiration": {"said": asp["said"], "value": (asp["values"] or [""])[0], "obstacle": asp.get("obstacle"),
-                       "if_then": asp.get("if_then")} if asp else None,
+        "aspiration": {"said": asp["said"], "value": (asp["values"] or [""])[0], "why": asp.get("why", ""),
+                       "obstacle": asp.get("obstacle"), "if_then": asp.get("if_then")} if asp else None,
         "reached": [{"quote": r["evidence"], "note": r.get("explanation", "")} for r in state.get("reached", [])],
         "commitments": commitments[:5],
         "kept": [text_of.get(k, "") for k in vow_kept if text_of.get(k)],
@@ -440,15 +473,32 @@ def speak(state, ctx):
         "settings": {"gentle": _flag(settings, "gentle_today", day), "comfort_only": _flag(settings, "comfort_only_today", day),
                      "suggest": {"적게": "안 함", "보통": "가끔", "많이": "자주"}.get(settings.get("suggestions"), "가끔")},
     }
+    # 멀어짐 · 가까워지지 못함(PRD v9 Q4): '그때 해 볼 것'이 있어야 건넬 말이 있다. 대화로 쓴 날은 다음 첫 말의 숨은 이유 후보로,
+    # 직접 쓴 날은 이번 한마디의 다음 걸음 자리에서 한 번(점검 3). 원문 근거(hit)는 무거운 날에도 남긴다
+    drift, hits, said = None, onboarding.get("drift_hits") or [], onboarding.get("drift_said")
+    if asp and asp.get("if_then"):
+        hit = (_obstacle_hit(state, asp, ctx) if asp.get("obstacle") else None) or _vow_missed_hit(state, states, ctx)
+        hits = drift_rules.merge_hits(hits, hit, ctx.entry_id)
+        dk = drift_rules.kind(hits, day, since, after, said)
+        drift = {"kind": dk, "said": asp["said"], "why": asp.get("why", ""), "if_then": asp["if_then"]} if dk else None
+    ctx_v["last_reason"] = (msgs[-1].get("reason") or "") if msgs else ""
+    ctx_v["drift"] = drift if src == "대화" else None
+    ctx_v["direction"] = drift["if_then"] if drift and src != "대화" else ""
     later = reask and bool(state.get("crisis_unsure") or "무거운 날" in voice_rules.situations(ctx_v))
     if later:   # 위기 · 무거운 날(위기 판정 실패 포함)엔 되고 싶은 모습을 다시 묻지 않고 다음 글로 미룬다
         reask, ctx_v["aspiration_off"] = False, True
     out = tools.speak(ctx_v, state["people"])
     checks = sorted({p.split(":")[0] for c in out["checks"] for p in c.get("problems", [])})
+    used = out.get("reason") == "drift" or bool(ctx_v["direction"]) and tools.norm(ctx_v["direction"]) in tools.norm(out["message"])
     return {"voice": {**{k: out[k] for k in ("message", "next_question", "mode", "next_kind", "tone", "check_in")},
                       "widen": widen["key"] if widen and out.get("widen") else "", "reask": reask, "reask_later": later,
+                      "reason": out.get("reason") or "", "reveal": out.get("reveal") or "",
+                      # 직접 쓴 글이면 쓰기 화면 위 질문(지난 한마디의 다음 질문)의 이유 한 줄을 저장 뒤에 보인다(Q7)
+                      "shown_reason": ((msgs[-1].get("reveal") or "") if msgs and src != "대화" else ""),
+                      "drift_hits": hits, "drift_said": day if used else said,
                       "repeated": any(p.startswith("지난 한마디") for c in out["checks"] for p in c.get("problems", []))},   # WS22
-            "_checks": len(checks)}
+            # 숨은 이유는 종류 이름만 평문으로(PRD v9 Q6-1: 이유별 반응을 셈). 멀어짐 여부 · 근거는 암호문에만
+            "_checks": len(checks), **({"_reason": out["reason"]} if out.get("reason") else {})}
 
 
 @node("save", "save")
@@ -485,7 +535,9 @@ def save(state, ctx):
                               "suggested": voice_rules.checks.has_suggestion(v["message"]), "repeated": v.get("repeated"),   # WS22
                               "enc": diary.seal(s, "messages", mid, {"text": v["message"], "next_question": v["next_question"],
                                                                      "mode": v["mode"], "check_in": v.get("check_in", ""),
-                                                                     "widen": v.get("widen", "")})})
+                                                                     "widen": v.get("widen", ""), "reason": v.get("reason", ""),
+                                                                     "reveal": v.get("reveal", ""),
+                                                                     "shown_reason": v.get("shown_reason", "")})})
         stars = Counter(t["star_id"] for t in state["today"])
         star = max(stars, key=lambda k: (stars[k], -[t["star_id"] for t in state["today"]].index(k))) if stars else None
         sun = next((t["sun_id"] for t in state["today"] if t["star_id"] == star), None)
@@ -499,6 +551,8 @@ def save(state, ctx):
                              "enc": diary.seal(s, "entries", eid, data), "steps_enc": None, "error_code": None,
                              "record_type": info.get("record_type"), "updated_at": diary.now()}, id=eid)
         ob = {"weather_asked": True} if v["next_kind"] == "weather" else {}
+        if "drift_hits" in v:   # 멀어짐 근거 · 마지막으로 건넨 날(PRD v9 Q4 · Q5-2, 프로필 암호문 안)
+            ob.update(drift_hits=v["drift_hits"], drift_said=v.get("drift_said"))
         if v.get("reask"):
             # 이번엔 넘어가기 뒤 계기가 생김 → 되고 싶은 모습을 다시 묻는다(GET /aspiration should_ask)
             ob.update(aspiration="none", reask_pending=False)

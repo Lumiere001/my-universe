@@ -1,13 +1,16 @@
 "use client";
+// 흐름 탭(PRD v9 ⑥ · Q10 · Q11): 맨 위 기간 칩(이번 주 · 이번 달 · 처음부터)과 요약 | 자세히.
+// 요약 = Solar 가 기간 안 원문 재료로만 쓴 소제목 · 짧은 문단(문장마다 날짜 칩 → 그 일기) + 내 일기에 묻기(답은 일기로 안 남음).
+// 자세히 = 아래 '나에 대해 알게 된 것'(규칙만, 원문 인용 카드).
 // 나에 대해 알게 된 것(docs/content/U-11): GET /insight 를 해마다 — 자주 쓴 주제(작은 별) | 바뀐 · 맞서는 · 정리된 · 이어 온 · 다른 영역과 이어진 생각.
 // AI 요약 · 판정 없이 날짜와 원문 인용만(서버 app/service/rules/insight.py). 날짜를 누르면 그 기록(/history?id=).
 // 한 화면: PC 두 칸 · 휴대폰 위아래, 목록은 그 칸 안에서만 넘긴다. 묶음은 한 줄 고르기(탭), 처음에는 내용이 있는 첫 묶음.
 // 점선(AI 추정) 카드에는 '이 연결이 맞나요? 맞아요 · 아니에요'(우주의 점선과 같은 POST /feedback) — 사용자가 매긴 정답이 개인 고리로 간다.
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { unquote } from "@/components/ResultCard";
 import { CONFLICT } from "@/components/universeLook";
-import { getInsight, sendFeedback, type InsightEnd, type InsightPair } from "@/lib/api";
+import { askDiary, getBrief, getInsight, sendFeedback, why, type Answer, type Brief, type InsightEnd, type InsightPair, type Period, type Sentence } from "@/lib/api";
 import { useKindName, useLoad } from "@/lib/use";
 
 const LINE = { 실선: "실선 · 글에 직접 씀", 점선: "점선 · AI 추정" };
@@ -57,10 +60,91 @@ function Pair({ p, labels, year, o, said, onSay }: { p: InsightPair; labels?: [s
   );
 }
 
-const Back = () => <Link href="/universe" className="btn">← 우주로 돌아가기</Link>;
 
-export default function InsightPage() {
-  const [data, err] = useLoad(getInsight, "알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
+const PERIODS: [Period, string][] = [["week", "이번 주"], ["month", "이번 달"], ["all", "처음부터"]];
+
+export default function FlowPage() {
+  const [period, setPeriod] = useState<Period>("month");
+  const [view, setView] = useState<"brief" | "detail">("brief");
+  return (
+    <main className="ins">
+      <h1 className="sr">흐름</h1>
+      <div className="row flow-bar">
+        <div className="seg" role="group" aria-label="기간">
+          {PERIODS.map(([k, name]) => <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}>{name}</button>)}
+        </div>
+        <div className="seg" role="group" aria-label="보기">
+          <button type="button" aria-pressed={view === "brief"} onClick={() => setView("brief")}>요약</button>
+          <button type="button" aria-pressed={view === "detail"} onClick={() => setView("detail")}>자세히</button>
+        </div>
+      </div>
+      {view === "brief" ? <BriefView period={period} onDetail={() => setView("detail")} /> : <InsightDetail key={period} period={period} />}
+    </main>
+  );
+}
+
+const Chips = ({ x }: { x: Sentence }) => <>{x.sources.map((s) => (
+  <Link key={s.entry_id + s.day} className="src-chip" href={`/history?id=${encodeURIComponent(s.entry_id)}`}>{day(s.day, String(new Date().getFullYear()))}</Link>))}</>;
+
+function BriefView({ period, onDetail }: { period: Period; onDetail: () => void }) {
+  const [b, setB] = useState<Brief | null>(null);
+  const [err, setErr] = useState("");
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    setB(null); setErr("");
+    getBrief(period).then(setB, (e) => setErr(why(e, "흐름 요약을 불러오지 못했어요.")));
+  }, [period, n]);
+  const again = <button className="small" onClick={() => setN(n + 1)}>다시 시도</button>;
+  const detail = <button className="small" onClick={onDetail}>자세히 보기</button>;
+  return (
+    <div className="flow-body">
+      {!b && !err && <p className="sub" role="status">이 기간의 흐름을 정리하는 중…</p>}
+      {err && <p className="err" role="alert">{err} {again}</p>}
+      {b?.state === "few" && <p className="sub">아직 모으는 중이에요. 이 기간에 일기가 세 편 넘게 쌓이면 흐름을 요약해 드려요. {detail}</p>}
+      {b?.state === "none" && <p className="sub">이 기간에 쓴 일기가 없어요. <Link href="/">이야기하기</Link>로 첫 기록을 남겨 보세요.</p>}
+      {b?.state === "failed" && <p className="sub" role="alert">요약을 만들지 못했어요. 원문 카드는 자세히에서 볼 수 있어요. {again} {detail}</p>}
+      {b?.state === "ok" && b.sections.map((sec) => (
+        <section key={sec.title} className="brief-sec" aria-label={sec.title}>
+          <h2>{sec.title}</h2>
+          {sec.sentences.map((x) => <p key={x.text}>{x.text} <Chips x={x} /></p>)}
+        </section>
+      ))}
+      {b?.state === "ok" && <p className="ins-note">내가 쓴 원문만으로 정리했어요. 날짜를 누르면 그 일기로 가요.</p>}
+      <AskBox />
+    </div>
+  );
+}
+
+function AskBox() {
+  const [q, setQ] = useState("");
+  const [a, setA] = useState<Answer | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const ask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!q.trim() || busy) return;
+    setBusy(true); setErr(""); setA(null);
+    try { setA(await askDiary(q.trim())); } catch (x) { setErr(why(x, "불러오지 못했어요. 다시 눌러 주세요.")); } finally { setBusy(false); }
+  };
+  return (
+    <section className="card stack ask-box" aria-label="내 일기에 묻기">
+      <form className="row" onSubmit={ask} style={{ flexWrap: "nowrap" }}>
+        <label htmlFor="ask" className="sr">내 일기에 묻기</label>
+        <input id="ask" value={q} maxLength={300} onChange={(e) => setQ(e.target.value)} placeholder="내 일기에 물어보세요" />
+        <button type="submit" className="primary small" disabled={busy || !q.trim()}>{busy ? "찾는 중…" : "묻기"}</button>
+      </form>
+      {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
+      {a?.state === "ok" && a.sentences.map((x) => <p key={x.text} style={{ margin: 0 }}>{x.text} <Chips x={x} /></p>)}
+      {a?.state === "none" && <p className="sub" style={{ margin: 0 }}>찾은 기록이 없어요. 다른 말로 물어봐 주세요.</p>}
+      {a?.state === "failed" && <p className="sub" role="alert" style={{ margin: 0 }}>답을 만들지 못했어요. 다시 눌러 주세요.</p>}
+      {a?.state === "crisis" && <p style={{ margin: 0 }}>{a.message}</p>}
+      <p className="sub" style={{ margin: 0, fontSize: ".8rem" }}>찾은 원문으로만 답하고, 묻고 답한 것은 일기로 남지 않아요.</p>
+    </section>
+  );
+}
+
+function InsightDetail({ period: chosen }: { period: Period }) {
+  const [data, err] = useLoad(() => getInsight(chosen), "알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const kindName = useKindName();
   const [pick, setPick] = useState<string | null>(null);
   const [tab, setTab] = useState<string | null>(null);
@@ -71,13 +155,10 @@ export default function InsightPage() {
   });
   const keep = (p: { rid?: string | null; rids?: string[] }) => !ridsOf(p).some((r) => said[r] === "아니에요");   // 아니에요 → 그 연결은 지워져 카드도 빠진다
 
-  if (err) return <main><p className="err" role="alert">{err}</p></main>;
-  if (!data) return <main><p className="sub" role="status">나에 대해 알게 된 것을 불러오는 중…</p></main>;
+  if (err) return <p className="err" role="alert">{err}</p>;
+  if (!data) return <p className="sub" role="status">나에 대해 알게 된 것을 불러오는 중…</p>;
   if (!data.period || !data.suns.length) return (
-    <main className="stack">
-      <div className="row" style={{ justifyContent: "space-between" }}><h1 style={{ margin: 0 }}>나에 대해 알게 된 것</h1><Back /></div>
-      <p className="sub">아직 모을 생각이 없어요. <Link href="/">이야기하기</Link>나 <Link href="/write">직접 쓰기</Link>로 기록을 남기면, 쌓인 기록에서 알게 된 것을 여기에 모아요.</p>
-    </main>
+    <p className="sub">이 기간에 모을 생각이 없어요. <Link href="/">이야기하기</Link>나 <Link href="/write">직접 쓰기</Link>로 기록을 남기면, 쌓인 기록에서 알게 된 것을 여기에 모아요.</p>
   );
 
   const { period, suns, across } = data;
@@ -117,8 +198,7 @@ export default function InsightPage() {
   const when = (a: string, b: string) => (a === b ? day(a, year) : `${day(a, year)} ~ ${day(b, year)}`);
 
   return (
-    <main className="ins">
-      <div className="ins-head"><h1>나에 대해 알게 된 것</h1><Back /></div>
+    <>
       <p className="ins-lead">{period.from === period.to ? day(period.from) : `${day(period.from)} ~ ${day(period.to, period.from.slice(0, 4))}`}에 남긴 기록 {period.records}편에서, 내 생각이 어디에 오래 머물고 어떻게 이어지고 바뀌었는지 모았어요.</p>
       {bare && <p className="sub" role="status" style={{ margin: 0 }}>아직 서로 이어진 생각이 없어요. 기록이 쌓일수록 이어지고 바뀐 생각이 여기에 모여요.</p>}
       <div className="ins-bar-row">
@@ -157,6 +237,6 @@ export default function InsightPage() {
           {g.items.length > 0 && <ul className="ins-list">{g.items}</ul>}
         </section>
       </div>
-    </main>
+    </>
   );
 }

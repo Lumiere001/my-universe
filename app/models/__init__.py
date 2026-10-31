@@ -93,6 +93,8 @@ class AnswerIn(In):
 class AspirationIn(In):
     now: str = Field(default="", max_length=500)
     want: str = Field(min_length=1, max_length=500)
+    why: str = Field(default="", max_length=500)     # 이유(PRD v9)
+    scene: str = Field(default="", max_length=500)   # 장면(PRD v9)
     obstacle: str = Field(default="", max_length=500)
     if_then: str = Field(default="", max_length=500)
     values: list[str] = Field(default_factory=list, max_length=3)
@@ -107,8 +109,22 @@ class DayIn(In):
     day: date   # 글이 다루는 날(사용자가 고침)
 
 
+class PushIn(In):
+    endpoint: str = Field(min_length=10, max_length=1000, pattern=r"^https://")
+    keys: dict[str, str] = Field(max_length=4)      # {p256dh, auth}
+    notify_at: str = Field(pattern=r"^([01][0-9]|2[0-3]):(00|30)$")   # 한국 시각, 30분 단위
+
+
+class AskIn(In):
+    question: str = Field(min_length=1, max_length=300)
+
+
+class WhyIn(In):
+    why: str = Field(min_length=1, max_length=500)
+
+
 class DeclineIn(In):
-    mode: Literal["skip", "stop"]
+    mode: Literal["skip", "stop", "later"]   # later = 처음 인터뷰의 '나중에 할래요'(아직 안 함으로 남아 며칠 뒤 다시 권함)
 
 
 class SettingsPatch(In):
@@ -123,7 +139,7 @@ class SettingsPatch(In):
     keeper_name: Optional[str] = Field(default=None, min_length=1, max_length=12)   # 별지기 이름(화면에만 씀)
     # 꾸미기(WS25, 화면에만 씀 · LLM 에 보내지 않음). 값 목록 = infra/frontend/components/universeLook.ts 의 THEMES · KEEPER_LOOKS
     theme: Optional[Literal["밤하늘", "새벽", "오로라", "먹"]] = None
-    keeper_look: Optional[Literal["글자", "별", "달", "고양이", "행성"]] = None
+    keeper_look: Optional[Literal["행성", "별", "달", "고양이", "글자"]] = None   # 첫 값 = 기본(PRD v9 Q17-2)
     tts_voice: Optional[str] = None   # 읽어 주기 목소리(config.TTS_VOICES 의 이름)
 
     @field_validator("tts_voice")

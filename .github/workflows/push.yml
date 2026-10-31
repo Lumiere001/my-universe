@@ -1,0 +1,15 @@
+# 고른 시각 알림(PRD v9 Q8): 30분마다 백엔드 POST /push/due 를 부른다. 저장소 Variables 에 API_URL,
+# Secrets 에 CRON_SECRET(백엔드 환경 변수와 같은 값)을 넣으면 켜진다(없으면 건너뜀). 예약 작업은 몇 분씩 늦을 수 있어 '그 시각쯤'.
+name: push
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  due:
+    if: vars.API_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS --max-time 120 -X POST -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" "${{ vars.API_URL }}/push/due"

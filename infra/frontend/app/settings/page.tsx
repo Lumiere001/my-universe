@@ -4,9 +4,10 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
+import { PushRow } from "@/components/PushSetting";
 import { KeeperNameField, KEEPER, rememberSettings } from "@/components/Keeper";
 import { OneLine } from "@/components/ResultCard";
-import { KEEPER_LOOKS, KEEPER_SVG, THEME_NAMES, THEMES, themeOf } from "@/components/universeLook";
+import { KEEPER_LOOKS, KEEPER_SVG, LOOK_TONE, THEME_NAMES, THEMES, themeOf, type KeeperLook } from "@/components/universeLook";
 import { deleteMe, getMe, MOCK, patchSettings, supabase, why, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [group, setGroup] = useState<Group>(lastGroup);
   const [preview, setPreview] = useState<Tone | null>(null);
+  const [pending, setPending] = useState<KeeperLook | null>(null);   // 경고 · 말투 적기를 기다리는 모습
   const [warn, setWarn] = useState(false);
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState("");
@@ -70,21 +72,23 @@ export default function SettingsPage() {
       return true;
     } catch (e) { setMsg(""); setFail(why(e, "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.")); return false; }
   };
-  const pickTone = (t: Tone) => {
-    setPreview(t); setWarn(false);
+  // 모습을 고르면 말투가 따라온다(PRD v9 Q17). 팩폭은 경고를 본 뒤, 직접 정하기는 말투를 적은 뒤에 모습과 함께 저장
+  const pickLook = (k: KeeperLook) => {
+    const t = LOOK_TONE[k] as Tone;
+    setPreview(t); setWarn(false); setPending(k);
     if (t === "팩폭" && !s.fact_bomb_ack) { setWarn(true); return; }
     if (t === CUSTOM && !s.tone_note) return;   // 원하는 말투를 먼저 적는다(아래 칸)
-    save({ tone: t });
+    save({ tone: t, keeper_look: k });
   };
   const pickGroup = (g: Group) => { lastGroup = g; setGroup(g); };
   const shownName = preview ?? s.tone;
   const shown = onto.tones.find((t) => t.name === shownName) ?? onto.tones[0];
-  const keeper = s.keeper_name || KEEPER, look = s.keeper_look ?? "글자";
+  const keeper = s.keeper_name || KEEPER, look = s.keeper_look ?? "행성";   // 기본 별지기 = 행성 · 다정하게(PRD v9 Q17-2)
   const noteOk = note.trim().length > 0 && !(s.tone === CUSTOM && note.trim() === (s.tone_note ?? ""));
 
   return (
     <main className="set-page">
-      <h1>설정</h1>
+      <h1 className="sr">설정</h1>
       <p className="sub">별지기의 말투와 우주 보기를 내게 맞게 바꿔요.</p>
       {msg && <p className="toast" role="status">{msg}</p>}
       {fail && <p className="err" role="alert">{fail}</p>}
@@ -101,25 +105,15 @@ export default function SettingsPage() {
             <Row name="별지기 이름" desc="말풍선 이름표에 보여요." htmlFor="keeper">
               {() => <KeeperNameField value={keeper} onSave={(n) => save({ keeper_name: n })} />}
             </Row>
-            <Row name="별지기 모습" desc="말풍선 동그라미에 들어가요.">
-              {(by) => (
-                <div className="seg looks" role="group" aria-labelledby={by}>
-                  {KEEPER_LOOKS.map((k) => (
-                    <button key={k} type="button" className="small look" aria-pressed={look === k} onClick={() => save({ keeper_look: k })}>
-                      {k === "글자" ? <span className="letter" aria-hidden>{keeper.slice(0, 1)}</span>
-                        : <img src={`/keeper/${KEEPER_SVG[k]}.svg`} alt="" />}<span className="look-name">{k === "글자" ? "이름 글자" : k}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Row>
             <section aria-label="말투">
-              <Row name="별지기 말투" desc="한마디와 이야기하기에서 쓰는 말투예요.">
-                {() => (
-                  <div className="seg" role="group" aria-label="말투 고르기">
-                    {onto.tones.map((t) => (
-                      <button key={t.name} type="button" className="small" aria-pressed={s.tone === t.name} onClick={() => pickTone(t.name as Tone)}>
-                        {t.name}{"warning" in t ? " ⚠" : ""}
+              <Row name="별지기 고르기" desc="모습을 고르면 그 모습의 말투로 말을 걸어요. 한마디 · 이야기하기 · 알림에 같이 써요.">
+                {(by) => (
+                  <div className="seg looks" role="group" aria-labelledby={by}>
+                    {KEEPER_LOOKS.map((k) => (
+                      <button key={k} type="button" className="small look" aria-pressed={look === k} onClick={() => pickLook(k)}>
+                        {k === "글자" ? <span className="letter" aria-hidden>{keeper.slice(0, 1)}</span>
+                          : <img src={`/keeper/${KEEPER_SVG[k]}.svg`} alt="" />}
+                        <span className="look-name">{k === "글자" ? "이름 글자" : k}<span className="sr"> · </span><br />{LOOK_TONE[k]}{LOOK_TONE[k] === "팩폭" ? " ⚠" : ""}</span>
                       </button>
                     ))}
                   </div>
@@ -132,7 +126,7 @@ export default function SettingsPage() {
 
               {shownName === CUSTOM && (
                 <form className="set-more stack" aria-label="직접 정하기"
-                  onSubmit={async (e) => { e.preventDefault(); if (noteOk && await save({ tone: CUSTOM, tone_note: note.trim() })) setPreview(null); }}>
+                  onSubmit={async (e) => { e.preventDefault(); if (noteOk && await save({ tone: CUSTOM, tone_note: note.trim(), keeper_look: "글자" })) setPreview(null); }}>
                   <label htmlFor="tone-note" style={{ color: "var(--text)", fontWeight: 600 }}>원하는 말투를 적어 주세요</label>
                   <textarea id="tone-note" rows={2} maxLength={NOTE_MAX} value={note} onChange={(e) => setNote(e.target.value)}
                     placeholder="예: 친한 언니처럼 반말로, 이모지 하나만" aria-describedby="tone-note-hint" />
@@ -151,7 +145,7 @@ export default function SettingsPage() {
                   <p style={{ margin: 0 }}><b>그래도 넘지 않는 선 {onto.fact_bomb.never_cross.length}가지</b></p>
                   <ol style={{ margin: 0, paddingLeft: 20 }}>{onto.fact_bomb.never_cross.map((x) => <li key={x}>{x}</li>)}</ol>
                   <div className="row">
-                    <button className="danger" onClick={async () => { await save({ tone: "팩폭", fact_bomb_ack: true }); setWarn(false); }}>알겠어요, 팩폭으로 할게요</button>
+                    <button className="danger" onClick={async () => { await save({ tone: "팩폭", fact_bomb_ack: true, keeper_look: pending ?? "별" }); setWarn(false); }}>알겠어요, 팩폭으로 할게요</button>
                     <button onClick={() => { setWarn(false); setPreview(null); }}>취소</button>
                   </div>
                 </div>
@@ -179,6 +173,12 @@ export default function SettingsPage() {
           </>)}
 
           {group === "말 걸기" && (<>
+            <Row name="고른 시각 알림" desc="앱을 닫아 둬도 하루 한 번 먼저 말을 걸어요. 알림 글은 고른 별지기 말투예요.">
+              {() => <PushRow />}
+            </Row>
+            <Row name="되고 싶은 모습" desc="다시 정하거나, 그만 묻기를 다시 켤 수 있어요.">
+              {() => <Link className="btn small" href="/aspiration">되고 싶은 모습 열기</Link>}
+            </Row>
             <Row name="다음 걸음 제안 빈도" desc="별지기 한마디에 작은 다음 걸음을 얼마나 자주 넣을지 골라요.">
               {(by) => <Seg by={by} options={["적게", "보통", "많이"] as const} value={s.suggestions} onPick={(v) => save({ suggestions: v })} />}
             </Row>

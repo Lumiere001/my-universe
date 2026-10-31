@@ -4,6 +4,7 @@ import re
 import typing
 from pathlib import Path
 
+from app.core.ontology import load
 from app.models import SettingsPatch
 from tests.test_api_flow import H1, H2, client  # noqa: F401  (client 픽스처)
 from tests.test_graph_flow import env  # noqa: F401  (env 픽스처)
@@ -18,7 +19,7 @@ def _choices(field):
 
 def test_defaults_are_old_look(client):  # noqa: F811
     st = client.get("/me", headers=H1).json()["settings"]
-    assert (st["theme"], st["keeper_look"]) == ("밤하늘", "글자")
+    assert (st["theme"], st["keeper_look"], st["tone"]) == ("밤하늘", "행성", "다정하게")   # PRD v9 Q17-2: 기본 별지기 = 행성 · 다정하게
 
 
 def test_pick_theme_and_keeper(client):  # noqa: F811
@@ -41,9 +42,11 @@ def test_front_lists_match_backend():
     themes = re.findall(r'^  "([^"]+)":', block, re.M)
     assert themes == _choices("theme") and themes[0] == "밤하늘"   # 첫 값 = 기본
     looks = re.findall(r'"([^"]+)"', re.search(r"KEEPER_LOOKS = \[(.*?)\]", LOOK_TS).group(1))
-    assert looks == _choices("keeper_look") and looks[0] == "글자"
+    assert looks == _choices("keeper_look") and looks[0] == "행성"
     svg = dict(re.findall(r'(\S+): "(\w+)"', re.search(r"KEEPER_SVG[^=]*= \{(.*?)\}", LOOK_TS).group(1)))
-    assert sorted(svg) == sorted(looks[1:])
+    assert sorted(svg) == sorted(x for x in looks if x != "글자")
+    tones = dict(re.findall(r'(\S+): "([^"]+)"', re.search(r"LOOK_TONE = \{(.*?)\}", LOOK_TS).group(1)))   # 모습 = 말투(Q17)
+    assert sorted(tones) == sorted(looks) and set(tones.values()) == {t["name"] for t in load()["tones"]}
     for f in svg.values():
         text = (FRONT / "public" / "keeper" / f"{f}.svg").read_text(encoding="utf-8")
         assert text.startswith("<svg") and "<script" not in text   # 정적 그림만

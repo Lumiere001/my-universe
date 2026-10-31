@@ -43,7 +43,8 @@ def prompt(s):
         t = (due or [t for t in ts if t["entry_id"] == eid] or [None])[0]
         if t and t.get("text"):
             vow = {"thought_id": t["id"], "text": t["text"], "overdue": t in due}
-    return {"kind": kind, "text": text, "vow": vow}
+    reason = {"key": msg.get("reason") or "", "reveal": msg.get("reveal") or ""} if text and msg.get("reason") else None
+    return {"kind": kind, "text": text, "vow": vow, "reason": reason}
 
 
 @router.get("/diary/prompt", summary="쓰기 화면 위 별지기 말풍선(첫 만남 질문 · 지난 질문 · 다짐 안부)")

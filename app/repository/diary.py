@@ -18,11 +18,12 @@ from app.service.safety import forget
 TZ = ZoneInfo(config.TIMEZONE)
 SETTINGS = {"tone": "다정하게", "tone_note": "", "fact_bomb_ack": False, "gentle_today": None, "comfort_only_today": None,
             "suggestions": "보통", "cross_links": "눌렀을 때", "weather_ask": True, "keeper_name": "별지기",
-            "theme": "밤하늘", "keeper_look": "글자",   # 꾸미기(WS25): 기본값 = 예전 모습
+            "theme": "밤하늘", "keeper_look": "행성",   # 꾸미기(WS25). PRD v9 Q17-2: 기본 별지기 = 행성(앱 아이콘과 같은 모습) · 다정하게
             "tts_voice": next(iter(config.TTS_VOICES))}   # 읽어 주기 목소리: 기본 = 예전 목소리
-ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False}
+ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": False,
+              "intro": False}   # intro: 처음 시작 인터뷰(PRD v9 Q13)를 지났는지(정했거나 '나중에 할래요')
 ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
-              "feedback", "conversations")
+              "feedback", "conversations", "push_subs")
 MOOD_FEEDBACK = ("오늘은 위로만", "오늘은 살살")   # 마음 상태 버튼: 값은 enc 에만, 평문 칸에는 MOOD_LABEL
 MOOD_LABEL = "상태 버튼"
 
@@ -279,6 +280,14 @@ def entry(s, eid):
     return r
 
 
+def keep_talk(s, eid, turns):
+    """확인한 대화 일기에 그날 대화 전체(별지기 말 포함)를 기록 암호문 안에 남긴다(PRD v9 Q19). 따로 표를 두지 않아
+    기록을 지우면 같이 지워지고, 다시 정리해도(graph save 가 data 를 펼쳐 씀) 남는다."""
+    e = entry(s, eid)
+    data = {**e["data"], "talk": [{"role": t["role"], "text": t["text"], "at": t.get("at")} for t in turns]}
+    s.update("entries", {"enc": seal(s, "entries", eid, data), "updated_at": now()}, id=eid)
+
+
 def checkpoint(s, eid, step, steps):
     s.update("entries", {"step": step, "steps_enc": seal(s, "entries.steps", eid, steps), "updated_at": now()}, id=eid)
     until = now() + timedelta(seconds=config.RUN_LOCK_S)
@@ -351,7 +360,7 @@ def delete_entry(s, vectors, eid):
 
 
 WIPE = ("aspiration_reached", "messages", "relations", "thought_people", "people_questions", "thoughts", "states",
-        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles", "consents", "conversations")
+        "entries", "stars", "suns", "people", "aspirations", "feedback", "runs", "profiles", "consents", "conversations", "push_subs")
 
 
 def wipe(s):
@@ -434,12 +443,13 @@ def aspirations(s):
     return out
 
 
-def add_aspiration(s, now_text, said, obstacle, if_then, values):
+def add_aspiration(s, now_text, said, obstacle, if_then, values, why="", scene=""):
+    """why · scene: PRD v9 다섯 질문의 이유 · 장면(암호문 안이라 DB 구조는 그대로). now(요즘의 나)는 옛 판 호환으로만 남김."""
     aid = new_id("a")
     version = len(s.rows("aspirations")) + 1
     s.insert("aspirations", {"id": aid, "version": version, "values": list(values), "said_at": now(),
-                             "enc": seal(s, "aspirations", aid, {"now": now_text, "said": said, "obstacle": obstacle,
-                                                                 "if_then": if_then})})
+                             "enc": seal(s, "aspirations", aid, {"now": now_text, "said": said, "why": why, "scene": scene,
+                                                                 "obstacle": obstacle, "if_then": if_then})})
     return aid
 
 

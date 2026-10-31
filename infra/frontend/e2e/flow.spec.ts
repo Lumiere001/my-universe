@@ -1,7 +1,7 @@
 // 핵심 흐름: 쓰기 → 진행 → 결과 카드 → 피드백 → 우주 → 행성 → 해 → 사람 고르기 → 되고 싶은 모습 → 팩폭 경고 → 개인정보처리방침 → 위기 글(평소 결과 + 안부 한 줄)
 // → 끊김 뒤 이어서 하기 → 사람 지우기 → 지난 기록. 캡처는 docs/images/v8/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
-import { nav as menuNav } from "./menu";
+import { nav as menuNav, openResult } from "./menu";
 import path from "node:path";
 import { josa, particle } from "../lib/josa";
 
@@ -50,9 +50,19 @@ test("핵심 흐름", async ({ page }, info) => {
     await shot("02-progress");
   });
 
+  await test.step("저장 뒤: 짧은 한마디 · 확인 카드 하나씩(PRD v9 Q16 · Q18)", async () => {
+    const a = page.getByTestId("after-save");
+    await expect(a.getByTestId("saved-message")).toBeVisible({ timeout: 15_000 });
+    await expect(a.getByRole("group", { name: "한마디 피드백" }).getByRole("button")).toHaveCount(2);   // 겉 단추는 좋아요 · 별로
+    await shot("03a-after-save");
+    await openResult(page);
+  });
+
   await test.step("결과 카드", async () => {
     const r = page.getByTestId("result");
     await expect(r).toBeVisible({ timeout: 15_000 });
+    await expect(r.getByRole("region", { name: "원문" })).toContainText("관심 있는 팀 세 곳");       // 원문이 첫 칸(PRD v9 Q19)
+    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();
     await expect(r.getByRole("region", { name: "별지기 한마디" })).toContainText("다정하게");
     await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("아쉬웠던 점"); // 온톨로지 보이는 이름
     await expect(r.getByText("스스로 쓴 변화: 예전에는 큰 회사")).toBeVisible();
@@ -121,17 +131,27 @@ test("핵심 흐름", async ({ page }, info) => {
     await shot("08-person");
   });
 
-  await test.step("되고 싶은 모습 대화형 폼", async () => {
+  await test.step("되고 싶은 모습: 별지기와 대화하듯 다섯 질문 → 요약 → 고칠래요(PRD v9 Q3)", async () => {
     await nav("되고 싶은 모습");
     await page.getByRole("button", { name: "새로 적기" }).click();
-    const answers = ["바쁘다는 말로 자꾸 미루는 사람", "어디서든 배우고, 한 약속은 지키는 사람", "피곤하면 다 내일로 미룬다", "피곤하면 오 분만 하고 자겠다"];
+    const answers = ["어디서든 배우고, 한 약속은 지키는 사람", "내 말을 믿어 주는 사람들이 있어서", "미뤄 둔 연락을 저녁 전에 끝내는 날",
+      "피곤하면 다 내일로 미룬다", "피곤하면 오 분만 하고 자겠다"];
+    const box = page.locator("#asp-input");
     for (const [i, a] of answers.entries()) {
-      await page.locator("#asp").fill(a);
+      await box.fill(a);
       if (i === 2) await shot("09-aspiration-form");
-      await page.getByRole("button", { name: "다음", exact: true }).click();
+      await box.press("Enter");
     }
-    await page.getByRole("button", { name: "성취" }).click();
-    await page.getByRole("button", { name: "규범" }).click();
+    const sum = page.getByRole("generic", { name: "이렇게 적어 둘게요" }).or(page.locator(".asp-sum"));
+    await expect(sum).toContainText("“내 말을 믿어 주는 사람들이 있어서”");
+    await sum.getByRole("button", { name: "고칠래요" }).nth(2).click();                     // 장면만 다시 묻기
+    await box.fill("미뤄 둔 연락을 저녁 먹기 전에 끝내는 날");
+    await box.press("Enter");
+    await expect(page.locator(".asp-sum")).toContainText("저녁 먹기 전에");
+    for (const v of ["성취", "규범"]) {
+      const b = page.locator(".asp-sum").getByRole("button", { name: v, exact: true });
+      if ((await b.getAttribute("aria-pressed")) !== "true") await b.click();
+    }
     await page.getByRole("button", { name: "북극성으로 띄우기" }).click();
     await expect(page.getByText("북극성으로 띄웠어요")).toBeVisible();
     await expect(page.getByRole("region", { name: "지금의 북극성" })).toContainText("어디서든 배우고, 한 약속은 지키는 사람");
@@ -142,29 +162,29 @@ test("핵심 흐름", async ({ page }, info) => {
   await test.step("설정: 팩폭은 경고 확인 뒤에만", async () => {
     await nav("설정");
     await page.getByRole("group", { name: "설정 묶음" }).getByRole("button", { name: "별지기", exact: true }).click();
-    await page.getByRole("button", { name: /^담백하게/ }).click();
+    await page.getByRole("button", { name: /^달 · 담백하게/ }).click();
     await expect(page.getByText("미리보기")).toBeVisible();
-    await page.getByRole("button", { name: /^팩폭/ }).click();
+    await page.getByRole("button", { name: /^별 · 팩폭/ }).click();
     const w = page.getByTestId("fact-bomb-warning");
     await expect(w).toContainText("거친 말이 나와요");
     await expect(w.locator("li")).toHaveCount(4);
-    await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "false"); // 아직 안 골라짐
+    await expect(page.getByRole("button", { name: /^별 · 팩폭/ })).toHaveAttribute("aria-pressed", "false"); // 아직 안 골라짐
     await shot("11-fact-bomb-warning", true);
     await w.getByRole("button", { name: /팩폭으로 할게요/ }).click();
-    await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /^별 · 팩폭/ })).toHaveAttribute("aria-pressed", "true");
   });
 
   await test.step("설정 · 직접 정하기: 원하는 말투를 적어야 고름", async () => {
-    await page.getByRole("button", { name: "직접 정하기" }).click();
+    await page.getByRole("button", { name: /^이름 글자 · 직접 정하기/ }).click();
     const box = page.getByRole("form", { name: "직접 정하기" });
-    await expect(page.getByRole("button", { name: "직접 정하기" })).toHaveAttribute("aria-pressed", "false");   // 적기 전엔 안 골라짐
+    await expect(page.getByRole("button", { name: /^이름 글자 · 직접 정하기/ })).toHaveAttribute("aria-pressed", "false");   // 적기 전엔 안 골라짐
     await expect(box.getByRole("button", { name: "이 말투로 할게요" })).toBeDisabled();
     await box.getByLabel("원하는 말투를 적어 주세요").fill("친한 언니처럼 반말로, 이모지 하나만");
     await expect(box).toContainText("20 / 200");
     await box.getByRole("button", { name: "이 말투로 할게요" }).click();
-    await expect(page.getByRole("button", { name: "직접 정하기" })).toHaveAttribute("aria-pressed", "true");
-    await page.getByRole("button", { name: /^팩폭/ }).click();   // 이어지는 흐름은 팩폭으로(경고는 이미 확인함)
-    await expect(page.getByRole("button", { name: /^팩폭/ })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /^이름 글자 · 직접 정하기/ })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: /^별 · 팩폭/ }).click();   // 이어지는 흐름은 팩폭으로(경고는 이미 확인함)
+    await expect(page.getByRole("button", { name: /^별 · 팩폭/ })).toHaveAttribute("aria-pressed", "true");
   });
 
   await test.step("설정 · 개인정보와 계정 → 개인정보처리방침", async () => {
@@ -177,11 +197,14 @@ test("핵심 흐름", async ({ page }, info) => {
     await nav("직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill(CRISIS);
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
+    await expect(page.getByTestId("after-save").getByTestId("saved-message")).toBeVisible({ timeout: 15_000 });   // 저장 뒤 한마디(위로)
+    await openResult(page);
     const r = page.getByTestId("result");
     await expect(r).toBeVisible({ timeout: 15_000 });
     const voice = r.getByRole("region", { name: "별지기 한마디" });
     await expect(voice).toContainText("다정하게"); // 팩폭이어도 그 글만 다정하게
     await expect(voice.getByTestId("check-in")).toBeVisible();
+    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();   // 첫 칸은 원문
     await expect(r.getByRole("region", { name: "생각 목록" })).toBeVisible();
     await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
     expect(await page.locator("body").innerText(), "단체 이름 · 전화번호").not.toMatch(HOTLINE);
@@ -197,7 +220,8 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(resume).toBeVisible({ timeout: 15_000 });
     await shot("13-resume");
     await resume.click();
-    await expect(page.getByTestId("result")).toBeVisible({ timeout: 15_000 });
+    await openResult(page);
+    await page.getByTestId("result").getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();
     await expect(page.getByRole("region", { name: "별지기 한마디" })).toContainText("팩폭"); // 바꾼 말투가 반영됨
   });
 
@@ -219,7 +243,7 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(page.getByText("지은을 지웠어요. 글 1곳의 이름을 “동생”으로 바꿨어요.")).toBeVisible();
   });
 
-  await test.step("지난 기록: 달력 → 그날 기록 → 돌아오기 · 사이드바 작은 달력 · 주제별", async () => {
+  await test.step("일기장: 달력 → 그날 기록 → 돌아오기 · 주제별(PRD v9: 사이드바 없음)", async () => {
     await nav("지난 기록");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { name: "10월 3일 토요일" })).toBeVisible();   // 처음엔 가장 최근 기록의 날
@@ -233,13 +257,8 @@ test("핵심 흐름", async ({ page }, info) => {
     await page.getByRole("button", { name: "← 목록으로 돌아가기" }).click();
     await expect(main.getByRole("heading", { name: "9월 20일 일요일" })).toBeVisible();   // 고른 날 그대로
 
-    const side = page.getByRole("complementary", { name: "사이드바" });
-    const drawer = !(await side.isVisible());
-    if (drawer) await page.getByRole("button", { name: "메뉴 열기 · 닫기" }).click();
-    await side.getByRole("button", { name: "9월 12일, 기록 1편" }).click();   // 작은 달력도 고른 날의 달(9월)
-    await expect(page).toHaveURL(/\/history\?day=2026-09-12/);
+    await main.getByRole("button", { name: "9월 12일, 기록 1편" }).click();   // 큰 달력에서 같은 달의 다른 날
     await expect(main.getByRole("button", { name: /9\/12 작은 회사 탐방/ })).toBeVisible();
-    if (drawer) await expect(side).toBeHidden();
 
     await main.getByRole("button", { name: "주제별" }).click();
     await expect(main.getByRole("button", { name: /^진로, 기록/ })).toHaveAttribute("aria-pressed", "true");   // 가장 많은 작은 별

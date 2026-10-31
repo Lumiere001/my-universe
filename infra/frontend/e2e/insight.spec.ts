@@ -5,7 +5,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import path from "node:path";
 import two from "./fixtures/insight-two.json";
-import { nav } from "./menu";
+import { nav, openResult } from "./menu";
 
 const OUT = path.resolve(__dirname, "../../../docs/screens/ws-insight");
 const tabs = (page: Page) => page.getByRole("group", { name: "생각 묶음 고르기" });
@@ -16,6 +16,11 @@ const oneScreen = async (page: Page) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), "가로로 넘치지 않음").toBeLessThanOrEqual(1);
 };
 const fake = (page: Page, v: unknown) => page.addInitScript((x) => { (window as unknown as { __insight: unknown }).__insight = x; }, v);
+
+const detail = async (page: import("@playwright/test").Page) => {
+  await nav(page, "흐름");
+  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+};
 
 test("나에 대해 알게 된 것", async ({ page }, info) => {
   const dev = info.project.name;
@@ -28,10 +33,10 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     await expect(page.locator(".uni canvas")).toBeVisible();
     await page.waitForTimeout(800);
     await shot("00-universe-entry");
-    await page.getByRole("group", { name: "우주 도구" }).getByRole("link", { name: "알게 된 것" }).click();
+    await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
     await page.waitForURL("**/insight");
-    await expect(page.locator(".crumb")).toHaveText("나의 우주 › 우주 › 알게 된 것");
-    await expect(page.getByRole("heading", { level: 1, name: "나에 대해 알게 된 것" })).toBeAttached();
+    await expect(page.locator(".top-title")).toHaveText("흐름");
+    await expect(page.getByRole("heading", { level: 1, name: "흐름" })).toBeAttached();
     await expect(page.getByText("2026년 3월 8일 ~ 9월 20일에 남긴 기록 17편에서")).toBeVisible();
     const suns = page.getByRole("group", { name: "해 고르기" });
     await expect(suns.getByRole("button")).toHaveCount(5);
@@ -75,9 +80,9 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     await nav(page, "직접 쓰기");
     await page.getByLabel(/마음껏 적어/).fill("가상 인물 하늘의 글. 관심 있는 팀을 찾아보기로 했지만 또 미뤘다. 그래도 배우는 느낌이 중요하다는 걸 알았다.");
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
-    await expect(page.getByTestId("result")).toBeVisible({ timeout: 30_000 });
+    await openResult(page);
     await nav(page, "우주");
-    await page.getByRole("group", { name: "우주 도구" }).getByRole("link", { name: "알게 된 것" }).click();
+    await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
     await page.waitForURL("**/insight");
     await expect(page.getByText("2026년 3월 8일 ~ 10월 3일에 남긴 기록 18편에서")).toBeVisible();
     await expect(pick(page, "바뀐")).toHaveAttribute("aria-pressed", "true");   // 바뀐 생각이 생기면 첫 탭
@@ -95,6 +100,7 @@ test("기록이 많을 때(두 영역 모드) 한 화면 · 목록은 칸 안에
   page.on("pageerror", (e) => errors.push(e.message));
   await fake(page, two);
   await page.goto("/insight");
+  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
   await expect(page.getByText("2026년 7월 1일 ~ 10월 25일에 남긴 기록 19편에서")).toBeVisible();
   await expect(page.getByRole("group", { name: "해 고르기" }).getByRole("button")).toHaveText(["커리어 15편", "인간관계 15편"]);
   await expect(page.getByRole("region", { name: "자주 쓴 주제" }).locator("li")).toHaveCount(two.suns[0].stars.length);
@@ -115,7 +121,8 @@ test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 
   const shot = (name: string) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png` });
   await fake(page, { period: null, suns: [], across: [] });
   await page.goto("/insight");
-  await expect(page.getByText("아직 모을 생각이 없어요.")).toBeVisible();
+  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+  await expect(page.getByText("이 기간에 모을 생각이 없어요.")).toBeVisible();
   await expect(page.locator("main").getByRole("link", { name: "직접 쓰기" })).toHaveAttribute("href", "/write");
   await shot("05-empty");
 
@@ -125,7 +132,7 @@ test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 
     suns: [{ name: "건강", records: 1, stars: [{ name: "아침 걷기", records: 1, first: end.day, last: end.day, kinds: { 다짐: 1 } }], kept: [], changed: [], open: [], settled: [] }],
     across: [] });
   await nav(page, "우주");
-  await page.getByRole("group", { name: "우주 도구" }).getByRole("link", { name: "알게 된 것" }).click();
+  await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
   await expect(page.getByText("2026년 10월 1일에 남긴 기록 1편에서")).toBeVisible();      // 하루면 날짜 하나
   await expect(page.getByRole("status").filter({ hasText: "아직 서로 이어진 생각이 없어요." })).toBeVisible();
   await expect(page.getByRole("group", { name: "해 고르기" })).toHaveCount(0);   // 해가 하나면 고르기 없음
@@ -137,7 +144,7 @@ test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 
 
   await page.evaluate(() => { (window as unknown as { __insight: unknown }).__insight = "fail"; });
   await nav(page, "우주");
-  await page.getByRole("group", { name: "우주 도구" }).getByRole("link", { name: "알게 된 것" }).click();
+  await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
   await expect(page.locator("main").getByRole("alert")).toHaveText("알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
 });
 
@@ -154,6 +161,7 @@ test("점선 카드에서 맞아요 · 아니에요(사용자가 매긴 정답) 
       from: "눌렀을 때", to: "숨김", reason: "다른 영역과 이어진 선에 '아니에요'를 자주 눌렀어요." }];
   });
   await page.goto("/insight");
+  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
   await expect(page.getByText("2026년 7월 1일 ~ 10월 25일에 남긴 기록 19편에서")).toBeVisible();
   const note = page.getByRole("status").filter({ hasText: "내 반응에 맞춰 설정을 바꿨어요" });
   await expect(note).toContainText("다른 영역과 이어진 선 보이기: 눌렀을 때 → 숨김");

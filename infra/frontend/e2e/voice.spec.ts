@@ -92,7 +92,7 @@ test("말로 이야기하기 → 요약 확인 · 읽어 주기 · 쓰기 칸 �
     await page.getByRole("button", { name: "대화 마치고 정리하기" }).click();
     const card = page.getByTestId("confirm-card");
     await expect(card).toBeVisible();
-    await card.getByRole("button", { name: "확인하고 우주에 저장" }).click();
+    await card.getByRole("button", { name: "맞아요, 저장할게요" }).click();
     await expect(page.getByTestId("saved-message")).toBeVisible();
     const said = await page.getByTestId("saved-message").locator(".bubble").innerText();
     await expect.poll(() => spoken(page)).toContain(said);

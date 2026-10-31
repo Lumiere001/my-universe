@@ -42,11 +42,20 @@ def test_aspiration_invite_after_some_days_only():
     assert kind({"days_written": 3, "text": LONG, "aspiration": {"said": "x"}}) == ""  # 이미 있음
 
 
-def test_commitment_and_open_question():
+def test_hidden_reason_candidates():
+    """PRD v9 Q6: 기한 지난 다짐 · 열린 물음 · 멀어짐은 모두 숨은 이유 후보 → 다음 질문 종류는 'reason'(Solar 가 고름).
+    바로 앞 첫 말과 같은 이유는 빼고(Q6-1), 무거운 날엔 후보가 없다."""
+    from app.service.voice import reason_candidates
     c = {"days_written": 5, "text": LONG, "aspiration": {"said": "x"}}
-    assert kind({**c, "commitments": [{"text": "메일 보내기", "state": "열림", "overdue": True}]}) == "commitment"
+    vow = {"commitments": [{"text": "메일 보내기", "state": "열림", "overdue": True}]}
+    assert kind({**c, **vow}) == "reason"
     assert kind({**c, "commitments": [{"text": "메일 보내기", "state": "열림"}]}) == ""
-    assert kind({**c, "open_questions": ["어디서 일하고 싶지?"]}) == "open_question"
+    assert kind({**c, "open_questions": ["어디서 일하고 싶지?"]}) == "reason"
+    drift = {"drift": {"kind": "멀어짐", "said": "곁에 있는 친구", "why": "", "if_then": "피곤하면 오 분만 연락하겠다"}}
+    both = reason_candidates({**c, **vow, **drift})
+    assert [x["key"] for x in both] == ["drift", "commitment"] and "피곤하면 오 분만 연락하겠다" in both[0]["what"]
+    assert [x["key"] for x in reason_candidates({**c, **vow, **drift, "last_reason": "drift"})] == ["commitment"]
+    assert reason_candidates({**c, **vow, "heavy": True}) == [] and kind({**c, **vow, "heavy": True}) == ""
 
 
 def test_heavy_day_and_crisis_no_question():

@@ -12,7 +12,7 @@ const load = () => (cached ??= getMe().then((m) => { showKeeperLook(m.settings.k
   () => { cached = null; return null; }));
 
 export function showKeeperLook(look?: string | null) {
-  const file = KEEPER_SVG[look as keyof typeof KEEPER_SVG], h = document.documentElement;
+  const file = KEEPER_SVG[(look ?? "행성") as keyof typeof KEEPER_SVG], h = document.documentElement;   // 기본 = 행성(PRD v9)
   if (file) { h.dataset.keeper = file; h.style.setProperty("--keeper", `url(/keeper/${file}.svg)`); }
   else { delete h.dataset.keeper; h.style.removeProperty("--keeper"); }
 }

@@ -227,8 +227,8 @@ def delete_entry(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
 
 @router.post("/diary/{eid}/confirm", summary="요약 확인: 고친 것(요약 · 생각 종류 · 생각 빼기)을 넣고 우주에 저장(WS20)")
 def confirm(body: ConfirmIn, eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
-    """확인을 기다리는 초안만. 고친 것 · 맞아요는 오답 재료(feedback, 암호문)로 남기고, 저장하면 그 대화의 턴을 지운다
-    (확인한 정리본 = 기록만 남김). save 는 외부 호출이 없지만 대화 길의 마지막이라 동의를 같이 본다."""
+    """확인을 기다리는 초안만. 고친 것 · 맞아요는 오답 재료(feedback, 암호문)로 남기고, 저장하면 그 대화의 턴을 기록 안으로
+    옮기고 대화 행은 지운다(PRD v9 Q19: 정리본과 대화를 함께 봄). save 는 외부 호출이 없지만 대화 길의 마지막이라 동의를 같이 본다."""
     uid = user["id"]
     with repo.session(uid) as s:
         e = diary.entry(s, eid)
@@ -254,5 +254,8 @@ def confirm(body: ConfirmIn, eid: Id, user=Depends(get_user), repo=Depends(get_r
         with repo.session(uid) as s:
             diary.unlock(s, eid)
     with repo.session(uid) as s:
+        c = conversations.by_entry(s, eid)
+        if c and c.get("turns"):
+            diary.keep_talk(s, eid, c["turns"])
         conversations.delete(s, entry_id=eid)
         return views.entry_result(s, eid)

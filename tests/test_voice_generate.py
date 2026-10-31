@@ -302,7 +302,8 @@ def test_aspiration_reached_ok_and_prompted(fake):
     r = voice.generate(ctx(tone="다정하게", reached=reached))
     assert r["checks"] == [{"attempt": 1, "problems": []}]
     assert "되고 싶은 모습에 닿음" in r["situations"]
-    assert all(x in sys_prompt(fake) for x in load()["aspiration"]["reached"])
+    kept = [x for x in load()["aspiration"]["reached"] if not x.startswith("멀어진 순간")]   # PRD v9: 멀어짐은 판정 없이 건넴
+    assert all(x in sys_prompt(fake) for x in kept) and "멀어진 순간은 판정하지 않는다" in sys_prompt(fake)
 
 
 def test_numbers_in_fact_bomb_allowed():
@@ -379,13 +380,21 @@ def test_fixed_question_used_verbatim(fake):
     assert r["next_kind"] == "weather" and r["next_question"] == voice.base_question("weather", {})
 
 
-def test_llm_question_only_for_commitment(fake):
-    fake["answers"] = [{"message": "핑계 그만.", "next_question": "달리기, 이번 주엔 한 번 나갔어?"}]
+def test_hidden_reason_question(fake):
+    """PRD v9 Q6 · Q7: 기한 지난 다짐은 숨은 이유 후보 → Solar 가 고르고, 첫 질문은 이유를 드러내지 않으며 이유 한 줄을 남긴다."""
+    fake["answers"] = [{"message": "핑계 그만.", "next_question": "요즘 아침엔 몇 시쯤 일어나?", "reason": "commitment",
+                        "reveal": "아침 이야기를 물은 건, 주 3회 아침 달리기를 하겠다고 했던 게 떠올라서였어요."}]
     c = ctx(commitments=[{"text": "주 3회 아침 달리기", "state": "열림", "overdue": True}])
     r = voice.generate(c)
-    assert r["next_kind"] == "commitment" and r["next_question"] == "달리기, 이번 주엔 한 번 나갔어?"
-    fake["answers"] = [{"message": "핑계 그만.", "next_question": "끼어든 질문"}]
-    assert voice.generate(ctx())["next_question"] == ""                               # 고를 질문이 없으면 빈 글
+    assert r["next_kind"] == "reason" and r["next_question"] == "요즘 아침엔 몇 시쯤 일어나?"
+    assert r["reason"] == "commitment" and r["reveal"].startswith("아침 이야기를 물은 건")
+    fake["answers"] = [{"message": "핑계 그만.", "next_question": "지난번 다짐, 달리기 나갔어?", "reason": "commitment", "reveal": "x"},
+                       {"message": "핑계 그만.", "next_question": "요즘 아침은 어때?", "reason": "commitment", "reveal": "x"}]
+    r = voice.generate(c)
+    assert r["next_question"] == "요즘 아침은 어때?" and "이유를 드러냄" in r["checks"][0]["problems"][0]   # 드러내면 다시 씀
+    fake["answers"] = [{"message": "핑계 그만.", "next_question": "끼어든 질문", "reason": "없는 후보"}]
+    r = voice.generate(ctx())
+    assert r["next_question"] == "" and r["reason"] == ""                              # 고를 이유가 없으면 빈 글
 
 
 def test_no_commitment_checkin_on_heavy_day():
@@ -592,11 +601,11 @@ def test_talk_uses_same_custom_note():
 
 
 def test_too_long_twice_is_cut_at_sentence_not_safe_line(fake):
-    """길이만 두 번 넘으면 기본 문장 대신 300자 안의 마지막 문장까지(2026-10-30). 다른 문제가 섞이면 예전처럼 기본 문장."""
+    """길이만 두 번 넘으면 기본 문장 대신 MESSAGE_LEN(150자) 안의 마지막 문장까지(2026-10-30, PRD v9 Q16). 다른 문제가 섞이면 예전처럼 기본 문장."""
     long = "팀 세 곳을 찾아보기로 한 마음이 오늘 기록에 그대로 남아 있어요. " * 8
     fake["answers"] = [{"message": long, "next_question": ""}]
     r = voice.generate(ctx(tone="다정하게"))
     assert r["checks"][-1] == {"attempt": "자름", "problems": []}
-    assert len(r["message"]) <= checks.MAX_LEN and r["message"].endswith("요.") and r["message"] in long
+    assert len(r["message"]) <= checks.MESSAGE_LEN and r["message"].endswith("요.") and r["message"] in long
     assert checks.cut_to_len("가" * 400) is None
 

@@ -17,3 +17,19 @@ self.addEventListener("fetch", (e) => {
   if (e.request.mode !== "navigate") return;
   e.respondWith(fetch(e.request).catch(() => caches.match(OFFLINE)));
 });
+
+// 고른 시각 알림(PRD v9 Q8): 서버가 보낸 한 줄(일기 내용 없음)을 띄우고, 누르면 이야기 화면을 연다(이미 열려 있으면 그 창으로)
+self.addEventListener("push", (e) => {
+  let d = { title: "나의 우주", body: "오늘 하루는 어땠어요?", url: "/" };
+  try { d = { ...d, ...e.data.json() }; } catch { /* 글만 오면 기본 문장 */ }
+  e.waitUntil(self.registration.showNotification(d.title, { body: d.body, icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", data: { url: d.url } }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/";
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ws) => {
+    const w = ws.find((x) => new URL(x.url).origin === self.location.origin);
+    return w ? w.focus().then((x) => x.navigate(url)) : self.clients.openWindow(url);
+  }));
+});

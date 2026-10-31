@@ -7,12 +7,13 @@
 // 드물게 쓰는 '이어 하지 않은 대화' · '이 대화 지우기'는 '더 보기'(브라우저 기본 popover) 안에.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import AfterSave from "@/components/AfterSave";
 import ConfirmCard from "@/components/ConfirmCard";
 import Icon from "@/components/Icon";
 import { useKeeperName } from "@/components/Keeper";
 import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
-  deleteTalk, finishTalk, getDiary, getTalk, listTalks, sayTalk, startTalk, why,
+  deleteTalk, finishTalk, fixTalk, getDiary, getTalk, listTalks, sayTalk, startTalk, why,
   type Conversation, type EntryResult, type StreamError,
 } from "@/lib/api";
 
@@ -38,7 +39,7 @@ export default function TalkPage() {
 
   const open = async (x: Conversation) => {
     setC(x); setSaved(null); setDraft(null); setErr("");
-    if (x.entry_id) {
+    if (x.entry_id && !x.stale_draft) {   // '고칠 게 있어요' 뒤거나 말이 늘었으면 옛 초안 대신 대화를 이어 간다
       const r = await getDiary(x.entry_id).catch(() => null);
       if (r?.status === "confirm") setDraft(r);
     }
@@ -74,6 +75,11 @@ export default function TalkPage() {
         if (now && now.turn_count > c.turn_count) { setC(now); setText(""); setErr(""); }
       }
     } finally { setBusy(""); }
+  };
+  const fix = async () => {   // 정리본에 고칠 것 · 더할 것: 별지기가 다시 묻고, 답한 뒤 다시 정리(PRD v9 Q9)
+    if (!c) return;
+    setC(await fixTalk(c.id));
+    setDraft(null);
   };
   const finish = async () => {
     if (!c) return;
@@ -112,7 +118,6 @@ export default function TalkPage() {
       </div>
     </div>
   );
-  const m = saved?.message;
   // 받아쓴 말은 바로 대화 턴으로. 한 번에 보낼 수 있는 길이를 넘으면 칸에 두고 줄여 달라고 한다.
   const heard = (t: string) => {
     if (t.length <= 8000) return send(t, "voice");
@@ -126,7 +131,8 @@ export default function TalkPage() {
   return (
     <main className="chat" onClickCapture={voice.on ? voice.unlock : undefined}>
       <div className="chat-head">
-        <h1>이야기하기</h1>
+        <h1 className="sr">이야기하기</h1>
+        <Link className="btn small" href="/write" style={{ flex: "none", whiteSpace: "nowrap" }}><Icon name="write" size={16} />직접 쓰기</Link>
         <div className="row tight">
           <button className="tbtn" aria-pressed={voice.on} onClick={voice.toggle}
             aria-label="별지기 말 읽어 주기" title={`별지기 말 읽어 주기 ${voice.on ? "켜짐" : "꺼짐"}`}>
@@ -140,7 +146,7 @@ export default function TalkPage() {
           )}
         </div>
       </div>
-      {!said && <p className="sub chat-lead">별지기와 이야기하면 내가 한 말로 일기를 정리하고, 지난 기록과 이어 드려요. 글로 쓰고 싶으면 <Link href="/write">직접 쓰기</Link>.</p>}
+      {!said && <p className="sub chat-lead">별지기와 이야기하면 내가 한 말로 일기를 정리하고, 지난 기록과 이어 드려요.</p>}
 
       <div id="talk-more" popover="auto" ref={moreRef} className="pop">
         {left.length > 0 && (
@@ -172,15 +178,6 @@ export default function TalkPage() {
 
       <section className="chat-log" aria-label="대화" aria-live="polite">
         {c?.turns.map(bubble)}
-        {m && (
-          <div className="voice" style={{ marginBottom: 12 }} data-testid="saved-message">
-            <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
-            <div style={{ minWidth: 0 }}>
-              <div className="bubble"><p style={{ margin: 0, ...PRE }}>{m.text}</p></div>
-              {m.check_in && <p className="sub" style={{ margin: "6px 0 0", ...PRE }}>{m.check_in}</p>}
-            </div>
-          </div>
-        )}
         {busy && <p className="sub" role="status">{busy}</p>}
         {steps.length > 0 && <ol className="steps">{steps.map((s, i) => <li key={s} className={i < steps.length - 1 ? "done" : "now"}>{s}</li>)}</ol>}
         {err && <p className="err" role="alert">{err}</p>}
@@ -188,16 +185,16 @@ export default function TalkPage() {
       </section>
 
       {saved ? (
-        <section className="card stack" aria-label="저장했어요" style={{ margin: 0 }}>
-          <p style={{ margin: 0 }}>우주에 저장했어요. 새 행성이 떴어요.</p>
+        <AfterSave r={saved}>
           <div className="row">
-            <Link className="btn" href="/universe">우주에서 보기</Link>
-            <Link className="btn" href={`/history?id=${encodeURIComponent(saved.id)}`}>정리한 결과 보기</Link>
-            <button onClick={() => fresh()}>새 대화 시작</button>
+            <Link className="btn small" href={`/history?id=${encodeURIComponent(saved.id)}`}>일기 보기</Link>
+            <Link className="btn small" href="/universe">우주에서 보기</Link>
+            <button className="small" onClick={() => fresh()}>새 대화</button>
           </div>
-        </section>
+        </AfterSave>
       ) : draft ? (
-        <ConfirmCard r={draft} onSaved={(r) => { setSaved(r); setDraft(null); voice.say(r.message?.text); }} />
+        <ConfirmCard r={draft} reason={c?.reason ?? undefined} onFix={fix}
+          onSaved={(r) => { setSaved(r); setDraft(null); voice.say(r.message?.text); }} />
       ) : c && (
         <form className="chat-foot" aria-label="말하기" onSubmit={(e) => { e.preventDefault(); send(text); }}>
           <button type="button" className={c.wrap ? "small primary" : "small"} onClick={finish} disabled={!!busy || !c.turn_count}>
@@ -205,7 +202,7 @@ export default function TalkPage() {
           <div className="composer">
             <label htmlFor="talk-input" className="sr">별지기에게 답하기</label>
             <textarea id="talk-input" rows={2} value={text} onChange={(e) => setText(e.target.value)} disabled={!!busy}
-              placeholder="편하게 적어 주세요. Enter로 보내고, Shift + Enter로 줄을 바꿔요." maxLength={8000}
+              placeholder="편하게 적어 주세요." maxLength={8000}
               // Enter 는 보내기, Shift + Enter 는 줄바꿈. 한글 조합 중(isComposing)의 Enter 는 글자 확정이라 보내지 않는다
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(text); } }} />
             <div className="tools">

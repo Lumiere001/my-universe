@@ -1,6 +1,7 @@
 // WS18 사진(손글씨) 입력(가짜 데이터 모드): 형식 밖 파일 · 큰 HEIC 는 친절한 오류 → 두 쪽 순서 바꾸기 · 빼기 →
 // 글자 읽기(쪽 순서대로 쓰기 칸에 채움, 사진은 화면에서도 비움) → 고쳐서 띄우기. 사진은 tests/fixtures/photos 의 가상 손글씨(지호).
 // 실제 글자 읽기(Upstage) · 로컬 백엔드 확인은 e2e-real/ws18.spec.ts.
+import { openResult } from "./menu";
 import { expect, test } from "@playwright/test";
 import path from "node:path";
 
@@ -49,6 +50,7 @@ test("사진으로 쓰기", async ({ page }) => {
     await expect(diary).toHaveValue(/3번째 사진/);
     await diary.fill((await diary.inputValue()).replace("도서관", "학교 도서관"));
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
+    await openResult(page);
     await expect(page.getByTestId("result")).toBeVisible({ timeout: 15_000 });
   });
   expect(errors).toEqual([]);

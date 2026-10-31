@@ -37,6 +37,7 @@ COLS = {
     "feedback": ("user_id", "target", "target_id", "value", "studio_config", "created_at"),
     "runs": ("user_id", "entry_id", "step", "ms", "calls", "est_usd", "error_code", "meta", "studio_config", "created_at"),
     "consents": ("user_id", "version", "operator_read", "created_at"),
+    "push_subs": ("id", "user_id", "notify_at", "last_sent"),   # 고른 시각 알림 예약 작업이 보낼 사람만 고름(PRD v9 Q8)
 }
 WARN_AT = 0.8            # 추정 비용 합계가 예산의 80% 를 넘으면 경고, 100% 면 넘음
 DROP_AFTER = timedelta(hours=24)   # 마지막 턴 뒤 이만큼 지나도 '정리하기'가 없으면 그만둔 대화

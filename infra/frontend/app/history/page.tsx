@@ -110,19 +110,20 @@ function History() {
   return (
     <main className="hist">
       <div className="hist-head">
-        <h1>지난 기록</h1>
+        <h1 className="sr">일기장</h1>
         <div className="seg" role="group" aria-label="보기">
           <button type="button" aria-pressed={view === "cal"} onClick={() => setView("cal")}>달력</button>
           <button type="button" aria-pressed={view === "topic"} onClick={() => setView("topic")}>주제별</button>
         </div>
         <input type="search" aria-label="찾기" placeholder="제목 · 요약에서 찾기" value={find} onChange={(e) => setFind(e.target.value)} />
         <Link className="btn primary small" href={view === "cal" && day && day <= localToday() ? `/write?day=${day}` : "/write"}>일기 쓰기</Link>
-        {all.length > 0 && (
-          <details className="pop">
-            <summary aria-label="더 보기">⋯</summary>
-            <div><DownloadJson label="모든 기록 파일로 내려받기(JSON)" /></div>
-          </details>
-        )}
+        <details className="pop">
+          <summary aria-label="더 보기">⋯</summary>
+          <div className="stack">
+            <Link href="/import">지난 일기 가져오기</Link>
+            {all.length > 0 && <DownloadJson label="모든 기록 파일로 내려받기(JSON)" />}
+          </div>
+        </details>
       </div>
       <p className="sub hist-lead">지난 글을 다시 열면, 그 글이 어떤 지난 생각과 이어졌는지 함께 보여요.</p>
       {all.length === 0 ? (

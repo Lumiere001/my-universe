@@ -104,7 +104,8 @@ function Quote({ text, pre = "", c = false, gold = false }: { text: string; pre?
   return <button type="button" className={cls + " clamp"} aria-expanded={open} onClick={() => setOpen(!open)}>{body}</button>;
 }
 
-type Tab = "thoughts" | "links" | "same" | "more";
+type Tab = "orig" | "thoughts" | "links" | "same" | "more";
+const FROM: Record<string, string> = { 대화: "대화로 씀", 사진: "사진에서 읽음", "지난 글 묶음": "가져온 글", 텍스트: "직접 씀" };
 
 // onChange: 날짜를 고치면 고친 결과로 바꿔 그린다
 export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?: (r: EntryResult) => void }) {
@@ -133,6 +134,7 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
   const same = me ? uni!.planets.filter((p) => p.star_id === me.star_id && p.id !== r.id).sort((a, b) => b.written_at.localeCompare(a.written_at)) : [];
 
   const tabs = ([
+    ["orig", "원문", r.text !== undefined],
     ["thoughts", `생각 ${r.thoughts.length}`, r.thoughts.length > 0],
     ["links", `이어진 생각 ${r.relations.length}`, r.relations.length > 0],
     ["same", `같은 주제 ${same.length}`, same.length > 0],
@@ -216,6 +218,22 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
           <button key={k} type="button" className="small" aria-pressed={on === k} aria-controls={uid + k} onClick={() => setSel([r.id, k])}>{name}</button>
         ))}
       </div>
+
+      {r.text !== undefined && (
+        <section className="rc-pane stack" aria-label="원문" {...pane("orig")}>
+          <p style={{ margin: 0 }}><span className="badge">{FROM[r.source ?? "텍스트"] ?? r.source}</span></p>
+          <p className="orig-text" style={{ margin: 0, ...PRE }}>{r.text}</p>
+          {r.source === "대화" && (r.talk?.length ? (
+            <details className="rc-talk">
+              <summary>그날 대화 {r.talk.length}줄</summary>
+              {r.talk.map((t, i) => (
+                <p key={i} className={t.role === "user" ? "me" : "sub"} style={{ margin: "6px 0 0", ...PRE }}>
+                  <b>{t.role === "user" ? "나" : keeper}</b> {t.text}</p>
+              ))}
+            </details>
+          ) : <p className="sub" style={{ margin: 0 }}>이 일기는 대화가 남아 있지 않아요(대화를 보관하기 전에 쓴 일기).</p>)}
+        </section>
+      )}
 
       {r.thoughts.length > 0 && (
         <section className="rc-pane" aria-label="생각 목록" {...pane("thoughts")}>

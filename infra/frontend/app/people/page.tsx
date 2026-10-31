@@ -48,7 +48,7 @@ export default function PeoplePage() {
 
   return (
     <main className="ppl-page">
-      <h1>사람 목록</h1>
+      <h1 className="sr">사람 목록</h1>
       <p className="sub">일기에 나온 사람과, 그 사람과 얽힌 내 생각을 모아 봐요.</p>
       {err && <p className="err" role="alert">{err}</p>}
       {!data && !err && <p className="sub">사람 목록을 불러오는 중…</p>}

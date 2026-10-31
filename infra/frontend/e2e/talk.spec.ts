@@ -30,13 +30,14 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();   // 칸이 비면 보내기는 꺼짐(답이 붙음)
   };
 
-  await test.step("별지기가 먼저 묻는다(다짐 안부)", async () => {
-    await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기하기(2026-10-14 결정), 직접 쓰기는 /write
-    await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeVisible();
-    const menu = page.getByRole("navigation", { name: "메뉴", exact: true, includeHidden: true });
-    await expect(menu.getByRole("link", { name: "이야기하기", exact: true, includeHidden: true })).toHaveAttribute("aria-current", "page");
-    await expect(menu.getByRole("link", { name: "직접 쓰기", exact: true, includeHidden: true })).toHaveAttribute("href", "/write");
-    await expect(talk).toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
+  await test.step("별지기가 먼저 묻는다(숨은 이유 첫 질문 — 다짐을 대놓고 인용하지 않음, PRD v9 ②)", async () => {
+    await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기 탭(대화), 직접 쓰기는 위쪽 단추
+    await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeAttached();
+    const tabs = page.getByRole("navigation", { name: "탭", exact: true });
+    await expect(tabs.getByRole("link", { name: "이야기", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("link", { name: "직접 쓰기" })).toHaveAttribute("href", "/write");
+    await expect(talk).toContainText("요즘 저녁엔 뭐 하면서 쉬어요?");
+    await expect(talk).not.toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
     await shot("01-start");
   });
 
@@ -51,28 +52,25 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await shot("02-chat", true);
   });
 
-  await test.step("대화 마치고 정리하기 → 요약 확인에서 고쳐 저장", async () => {
+  await test.step("대화 마치고 정리하기 → 정리본 확인 → 고칠 게 있어요(다시 묻기) → 다시 정리 → 저장(PRD v9 Q9 · Q7)", async () => {
     await page.getByRole("button", { name: "대화 마치고 정리하기" }).click();
     const card = page.getByTestId("confirm-card");
     await expect(card).toBeVisible();
-    await card.getByRole("group", { name: "요약이 맞나요" }).getByRole("button", { name: "고칠래요" }).click();
-    await card.getByLabel("요약 고치기").fill("팀 한 곳에 메일을 보냈고, 부모님께는 아직 말하지 못했다.");
-    const groups = card.getByRole("group", { name: "이 생각이 맞나요" });
-    await groups.nth(0).getByRole("button", { name: "맞아요" }).click();
-    await groups.nth(1).getByRole("button", { name: "고칠래요" }).click();
-    await card.locator("select").first().selectOption("해석");
-    await groups.nth(3).getByRole("button", { name: "고칠래요" }).click();
-    await card.getByLabel("이 생각 빼기").last().check();
-    await expect(card.getByText("뺄 생각")).toBeVisible();
+    await expect(card.getByTestId("reason-line")).toContainText("떠올라서였어요");            // 숨은 이유 한 줄은 맨 아래
+    await expect(card.locator("textarea")).toHaveCount(0);                                     // 글을 직접 고치는 칸 없음
     await shot("03-confirm", true);
-    await card.getByRole("button", { name: "확인하고 우주에 저장" }).click();
-    await expect(page.getByTestId("saved-message")).toBeVisible();
-    await expect(page.getByRole("region", { name: "저장했어요" })).toBeVisible();
+    await card.getByRole("button", { name: "고칠 게 있어요" }).click();
+    await expect(talk).toContainText("어떤 부분을 고치거나 더하고 싶어요?");
+    await say("부모님께 말 못 한 것도 꼭 넣어 줘.", 5);
+    await page.getByRole("button", { name: "대화 마치고 정리하기" }).click();
+    await page.getByTestId("confirm-card").getByRole("button", { name: "맞아요, 저장할게요" }).click();
+    const after = page.getByTestId("after-save");
+    await expect(after.getByTestId("saved-message")).toBeVisible();
     await shot("04-saved");
   });
 
   await test.step("위기 말 → 위로 + 안부 한 줄(질문 · 단체 안내 없음)", async () => {
-    await page.getByRole("button", { name: "새 대화 시작" }).last().click();
+    await page.getByTestId("after-save").getByRole("button", { name: "새 대화" }).click();
     await say("요즘 너무 지쳐서 사라지고 싶다는 생각이 들어.", 1);
     const reply = talk.locator(".voice").last();
     await expect(reply.getByTestId("check-in")).toBeVisible();
@@ -88,7 +86,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await expect(talk).toContainText("이어 해 볼까요");
   });
 
-  await test.step("좁은 휴대폰(360px)에서도 아래 막대 7개가 가로로 넘치지 않음", async () => {
+  await test.step("좁은 휴대폰(360px)에서도 아래 탭 넷이 가로로 넘치지 않음", async () => {
     await page.setViewportSize({ width: 360, height: 780 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
     if (dev === "mobile") await shot("06-nav-360");

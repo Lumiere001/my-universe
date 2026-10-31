@@ -1,4 +1,4 @@
-// 화면 기록 겸 e2e: 가짜 데이터 모드로 빌드해 띄우고, 휴대폰(390x844)과 PC(1440x900)로 핵심 흐름을 돌며 캡처한다.
+// 화면 기록 겸 e2e: 가짜 데이터 모드로 빌드해 띄우고, 휴대폰(390x844)으로 핵심 흐름을 돌며 캡처한다(PRD v9: 휴대폰 사용자만, PC 화면은 이번에 안 함).
 import { defineConfig } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT) || 3100; // 다른 갈래와 겹치면 E2E_PORT 로 바꿈
@@ -17,13 +17,12 @@ export default defineConfig({
   },
   projects: [
     { name: "mobile", use: { browserName: "chromium", viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
-    { name: "pc", use: { browserName: "chromium", viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
     command: `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     env: { NEXT_PUBLIC_MOCK: "1" },
     timeout: 300_000,
-    reuseExistingServer: false,
+    reuseExistingServer: !!process.env.E2E_REUSE,   // 고치는 동안 떠 있는 가짜 데이터 서버(web-mock)에 붙이기: E2E_REUSE=1 E2E_PORT=3020
   },
 });

@@ -21,6 +21,8 @@ export type Relation = {
 export type EntryResult = {
   // confirm = 대화 초안이 save 앞에서 멈춰 요약 확인을 기다림(WS20)
   id: string; status: "processing" | "done" | "failed" | "confirm"; step: string; written_at: string; title: string;
+  text?: string; talk?: { role: "keeper" | "user"; text: string; at?: string | null }[] | null;   // 원문 · 그날 대화(PRD v9 Q19)
+  reason?: string | null;   // 그 글을 쓰게 한 첫 질문의 숨은 이유 한 줄(PRD v9 Q7, 직접 쓰기 저장 뒤)
   weather: Weather | null; crisis: boolean;
   info: { summary: string; addressee: string; addressee_person: string | null; events: string[] } | null;
   thoughts: Thought[]; relations: Relation[];
@@ -62,7 +64,7 @@ export type PersonThoughts = { person: { id: string; name: string; relation: str
 export type Person = { id: string; name: string; nickname: string; relation: string; auto: boolean; planets: string[];
   forget_as?: string };   // 지우면 이름 자리에 들어갈 말(서버 pseudonym.forget_word: 엄마 → 부모 …)
 export type Aspiration = {
-  id: string; said: string; values: string[]; obstacle: string; if_then: string; said_at: string;
+  id: string; said: string; why?: string; scene?: string; values: string[]; obstacle: string; if_then: string; said_at: string;
   reached: { entry_id: string; quote: string; at: string }[];
 };
 export type AspirationState = { current: Aspiration | null; history: Aspiration[]; ask: { should_ask: boolean; step: number } };
@@ -74,7 +76,7 @@ export type Settings = {
   tts_voice?: string;   // 읽어 주기 목소리(값 목록은 app/settings/page.tsx VOICES = 서버 config.TTS_VOICES)
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
-  onboarding: { entries: number; aspiration: string; weather_asked: boolean } };
+  onboarding: { entries: number; aspiration: string; weather_asked: boolean; intro?: boolean } };   // intro: 처음 인터뷰를 지났나(PRD v9)
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
 export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string;
@@ -257,8 +259,35 @@ export type Insight = {
     changed: InsightPair[]; open: InsightPair[]; settled: InsightPair[] }[];
   across: { type: string; suns: [string, string]; from: InsightEnd; to: InsightEnd; rid?: string | null; line?: "실선" | "점선" | null }[];
 };
-export async function getInsight(): Promise<Insight> {
-  return MOCK ? (await mock()).getInsight() : json("GET", "/insight");
+// 고른 시각 알림(PRD v9 Q8)
+export type PushSub = { endpoint: string; keys: Record<string, string>; notify_at: string };
+export async function getPushKey(): Promise<{ public_key: string | null }> {
+  return MOCK ? { public_key: "mock" } : json("GET", "/push/key");
+}
+export async function listPush(): Promise<{ subs: { id: string; notify_at: string }[] }> {
+  return MOCK ? (await mock()).listPush() : json("GET", "/push/subscribe");
+}
+export async function subscribePush(s: PushSub): Promise<{ ok: boolean; notify_at: string }> {
+  return MOCK ? (await mock()).subscribePush(s) : json("POST", "/push/subscribe", s);
+}
+export async function unsubscribePush(): Promise<void> {
+  if (MOCK) return (await mock()).unsubscribePush();
+  await json("DELETE", "/push/subscribe");
+}
+export type Period = "week" | "month" | "all";
+export async function getInsight(period: Period = "all"): Promise<Insight> {
+  return MOCK ? (await mock()).getInsight() : json("GET", `/insight?period=${period}`);
+}
+// 흐름 요약(PRD v9 Q10) · 내 일기에 묻기(Q11): 문장마다 출처(기록 · 날짜). state: ok · few(기록이 셋보다 적음) · none · failed · crisis
+export type Source = { entry_id: string; day: string };
+export type Sentence = { text: string; sources: Source[] };
+export type Brief = { state: "ok" | "few" | "none" | "failed"; sections: { title: string; sentences: Sentence[] }[] };
+export type Answer = { state: "ok" | "none" | "failed" | "crisis"; sentences: Sentence[]; message?: string };
+export async function getBrief(period: Period): Promise<Brief> {
+  return MOCK ? (await mock()).getBrief(period) : json("GET", `/insight/brief?period=${period}`);
+}
+export async function askDiary(question: string): Promise<Answer> {
+  return MOCK ? (await mock()).askDiary(question) : json("POST", "/insight/ask", { question });
 }
 export async function getOntology(): Promise<Ontology> {
   return MOCK ? (await import("./ontology.json")).default : json("GET", "/ontology");
@@ -297,11 +326,17 @@ export async function answerPersonQuestion(id: string, answer: string): Promise<
 export async function getAspiration(): Promise<AspirationState> {
   return MOCK ? (await mock()).getAspiration() : json("GET", "/aspiration");
 }
-export async function saveAspiration(a: { now: string; want: string; obstacle: string; if_then: string; values: string[] }): Promise<Aspiration> {
+export type AspirationInput = { want: string; why: string; scene: string; obstacle: string; if_then: string; values: string[] };
+export async function saveAspiration(a: AspirationInput): Promise<Aspiration> {
   return MOCK ? (await mock()).saveAspiration(a) : json("POST", "/aspiration", a);
 }
-export async function declineAspiration(mode: "skip" | "stop"): Promise<{ ok: boolean }> {
-  return MOCK ? { ok: true } : json("POST", "/aspiration/decline", { mode });
+// 이유에서 기대는 가치 후보(별지기 제안, PRD v9). 못 하면 빈 목록
+export async function suggestValues(why: string): Promise<{ values: string[] }> {
+  return MOCK ? (await mock()).suggestValues(why) : json("POST", "/aspiration/values", { why });
+}
+// later = 처음 인터뷰의 '나중에 할래요'(며칠 뒤 다시 권함)
+export async function declineAspiration(mode: "skip" | "stop" | "later"): Promise<{ ok: boolean }> {
+  return MOCK ? (await mock()).declineAspiration(mode) : json("POST", "/aspiration/decline", { mode });
 }
 
 /* ---------- 나 · 설정 ---------- */
@@ -334,6 +369,8 @@ export type TalkTurn = {
 export type Conversation = {
   id: string; created_at: string; updated_at: string; turns: TalkTurn[]; summary: string;
   from_entry: string | null; entry_id: string | null; turn_count: number; wrap: boolean;
+  stale_draft?: boolean;   // 만든 초안 뒤로 말이 늘었거나 '고칠 게 있어요'를 누름 → 확인 카드 대신 대화를 이어 감
+  reason?: string | null;  // 첫 말의 숨은 이유 한 줄(PRD v9 Q7) — 정리본 확인 화면 맨 아래
 };
 export type TalkProgress = { conversation_id: string; step: string; label: string };
 export type ConfirmInput = { summary?: string; fixes: { id: string; kind?: string; remove?: boolean }[]; agreed: string[] };
@@ -348,6 +385,10 @@ export async function startTalk(from_entry?: string): Promise<Conversation> {
 }
 export async function getTalk(id: string): Promise<Conversation> {
   return MOCK ? (await mock()).getTalk(id) : json("GET", `/talk/${encodeURIComponent(id)}`);
+}
+// 정리본에 '고칠 게 있어요'(PRD v9 Q9): 별지기가 다시 묻는 말이 대화에 붙는다
+export async function fixTalk(id: string): Promise<Conversation> {
+  return MOCK ? (await mock()).fixTalk(id) : json("POST", `/talk/${encodeURIComponent(id)}/fix`);
 }
 export async function deleteTalk(id: string): Promise<void> {
   if (MOCK) return (await mock()).deleteTalk(id);

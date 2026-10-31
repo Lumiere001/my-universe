@@ -84,6 +84,21 @@ def delete_talk(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     return Response(status_code=204)
 
 
+FIX_ASK = "어떤 부분을 고치거나 더하고 싶어요? 말해 주면 그걸 담아 다시 정리할게요."
+
+
+@router.post("/talk/{cid}/fix", summary="정리본에 '고칠 게 있어요'(PRD v9 Q9): 별지기가 다시 묻는 말 한 줄을 붙임(LLM 없음)")
+def fix_talk(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
+    """글을 직접 고치지 않는다. 별지기 말을 대화에 붙이고, 사용자가 답한 뒤 다시 '대화 마치고 정리하기'를 누르면
+    대화가 늘어 초안을 새로 만든다(drafts). 운영 지표로 '고칠 게 있어요' 수를 남긴다."""
+    with repo.session(user["id"]) as s:
+        c = _get(s, cid)
+        c["turns"] = [*c.get("turns", []), {"role": "keeper", "kind": "fix", "text": FIX_ASK, "at": diary.iso(diary.now())}]
+        conversations.save(s, c)
+        diary.add_run(s, c.get("entry_id"), "confirm_fix")
+        return chat_graph.view(conversations.get(s, cid))
+
+
 def _turn_queue(repo, uid, cid, text, via="text"):
     q = queue.Queue()
 

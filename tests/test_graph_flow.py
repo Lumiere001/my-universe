@@ -102,9 +102,22 @@ class FakeUpstage:
                 raise self.crisis_llm
             return _o(choices=[_o(message=_o(content=self.crisis_llm))], usage=_o(prompt_tokens=100, completion_tokens=10))
         user = messages[-1]["content"]
+        if messages[0]["content"].startswith("너는 일기장 '나의 우주'의 흐름 요약"):   # PRD v9 흐름 요약: 첫 재료를 근거로
+            return _o(choices=[_o(message=_o(content=json.dumps({"sections": [{"title": "한눈에", "sentences": [
+                {"text": "걷기 이야기가 이어졌어요.", "sources": ["R1"]}, {"text": "근거 없는 말", "sources": ["R99"]}]}]},
+                ensure_ascii=False)))], usage=_o(prompt_tokens=100, completion_tokens=20))
+        if "자기 일기에 묻는 말에 답한다" in messages[0]["content"]:   # 내 일기에 묻기
+            return _o(choices=[_o(message=_o(content=json.dumps({"found": True, "sentences": [
+                {"text": "걷기를 이야기한 날이 있어요.", "sources": ["R1"]}]}, ensure_ascii=False)))],
+                usage=_o(prompt_tokens=100, completion_tokens=20))
         who = next((n for n in re.findall(r"([가-힣]{2})(?:이가|이랑|이도)", user)), "")
         msg = f"오늘도 걷기를 적어 줬네요. {who}와 함께한 시간이 힘이 됐겠어요."
-        return _o(choices=[_o(message=_o(content=json.dumps({"message": msg, "next_question": ""}, ensure_ascii=False)))],
+        out = {"message": msg, "next_question": ""}
+        hidden = re.search(r"\[숨은 이유 후보\]\n\W*(\w+): [^\n]*?'([^']+)'", messages[0]["content"])   # PRD v9: 첫 후보를 고름
+        if hidden:
+            out.update(reason=hidden.group(1), next_question=f"요즘 {hidden.group(2)} 쪽은 어때요?",
+                       reveal=f"그 이야기를 물은 건, {hidden.group(2)} 이야기가 떠올라서였어요.")
+        return _o(choices=[_o(message=_o(content=json.dumps(out, ensure_ascii=False)))],
                   usage=_o(prompt_tokens=100, completion_tokens=20))
 
     def _embed(self, model, input):
@@ -318,7 +331,8 @@ def test_mood_marks_only_inside_enc(env):
     t = env.repo.store.tables
     assert all("crisis" not in e for e in t["entries"])
     assert all("mode" not in m and "check_in" not in m for m in t["messages"])
-    assert all(set(r["meta"]) <= {"checks"} and isinstance(r["meta"].get("checks", 0), int) for r in t["runs"])
+    assert all(set(r["meta"]) <= {"checks", "reason"} and isinstance(r["meta"].get("checks", 0), int)   # reason: 숨은 이유 종류 이름만(PRD v9)
+               and r["meta"].get("reason", "commitment") in ("drift", "commitment", "open_question", "widen") for r in t["runs"])
     with env.repo.session(U1) as s:
         assert [e["crisis"] for e in diary.entries(s)].count(True) == 1
         assert {views.entry_result(s, e["id"])["message"]["mode"] for e in diary.entries(s)} == {"comfort", "normal"}

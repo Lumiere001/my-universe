@@ -83,17 +83,17 @@ test("꾸미기", async ({ page }, info) => {
     await page.evaluate(() => { delete (window as unknown as { __slowMe?: number }).__slowMe; });
   });
 
-  await test.step("별지기 모습을 고르면 말풍선 그림이 바뀜", async () => {
+  await test.step("별지기를 고르면 모습과 말투가 같이 바뀜(PRD v9 Q17)", async () => {
     await nav("설정");
     await group("별지기");
-    const looks = page.getByRole("group", { name: "별지기 모습" });
-    await expect(looks.getByRole("button", { name: "이름 글자" })).toHaveAttribute("aria-pressed", "true");   // 기본
+    const looks = page.getByRole("group", { name: "별지기 고르기" });
+    await expect(looks.getByRole("button", { name: /^행성 · 다정하게/ })).toHaveAttribute("aria-pressed", "true");   // 기본
     const who = page.getByRole("region", { name: "말투" }).locator(".voice .who");
-    await expect(who).toHaveText("별");
-    for (const [k, f] of [["별", "star"], ["달", "moon"], ["행성", "planet"], ["고양이", "cat"]]) {
-      await looks.getByRole("button", { name: k, exact: true }).click();
+    for (const [k, f, tone] of [["달", "moon", "담백하게"], ["행성", "planet", "다정하게"], ["고양이", "cat", "고양이처럼"]]) {
+      await looks.getByRole("button", { name: new RegExp(`^${k} · `) }).click();
       await expect(page.locator("html")).toHaveAttribute("data-keeper", f);
       await expect(who).toHaveCSS("background-image", new RegExp(`/keeper/${f}\\.svg`));
+      await expect(page.getByRole("region", { name: "말투" })).toContainText(tone);
     }
     await looks.scrollIntoViewIfNeeded();
     await shot("05-settings-decorate");
@@ -105,7 +105,7 @@ test("꾸미기", async ({ page }, info) => {
     await expect(voices.getByRole("button", { name: "따뜻한" })).toHaveAttribute("aria-pressed", "true");   // 기본 = 예전 목소리
     await voices.getByRole("button", { name: "차분한" }).click();
     await expect(voices.getByRole("button", { name: "차분한" })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByRole("status")).toHaveText("저장했어요.");
+    await expect(page.getByRole("status").filter({ hasText: "저장했어요." })).toBeVisible();   // 알림 줄도 status 라 거름
     const heard = page.waitForRequest(/\/voices\/matilda\.mp3$/);
     await page.getByRole("button", { name: "차분한 목소리 미리 듣기" }).click();
     await heard;

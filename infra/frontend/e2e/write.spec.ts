@@ -2,7 +2,7 @@
 // → .md · .txt 불러와 결과 → 같은 글 다시 보내면 '이미 정리한 글' → 날짜 확인 필요 → 고치기 → 지우면 목록 · 우주에서 사라짐 → 별지기 이름.
 // 캡처는 남기지 않는다(실제 백엔드 캡처는 e2e-real/ws13.spec.ts). 모두 가상 인물 하늘의 글 · 지어낸 글.
 import { expect, test } from "@playwright/test";
-import { nav as menuNav } from "./menu";
+import { nav as menuNav, openResult } from "./menu";
 
 const ymd = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 const YESTERDAY = ymd(new Date(Date.now() - 86_400_000));
@@ -14,9 +14,11 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   const nav = (name: string) => menuNav(page, name);
   const bubble = page.getByRole("region", { name: "별지기 말풍선" });
-  const submit = () => page.getByRole("button", { name: "우주에 띄우기" }).click();
+  // 저장 뒤 화면(PRD v9)에서 '일기 보기'로 결과 카드까지. 같은 글 다시 보내기처럼 저장 뒤 화면에 머무를 땐 open=false
+  const submit = async (open = true) => { await page.getByRole("button", { name: "우주에 띄우기" }).click(); if (open) await openResult(page); };
   const result = page.getByTestId("result");
-  const again = async () => { await page.getByRole("button", { name: "새 글 쓰기" }).click(); await expect(page.getByLabel(/마음껏 적어/)).toBeVisible(); };
+  // 앱 안에서 쓰기 화면으로(주소로 열면 가짜 데이터가 새로 시작돼 '날씨 안 묻기' 같은 앞 단계가 사라짐)
+  const again = async () => { await nav("직접 쓰기"); await expect(page.getByLabel(/마음껏 적어/)).toBeVisible(); };
 
   await test.step("말풍선(접힌 한 줄 → 누르면 펼침): 날씨 질문 + 다짐 안부 → 건너뛰면 날씨 질문 없음", async () => {
     await page.goto("/write");
@@ -97,7 +99,7 @@ test("쓰기 화면 작은 묶음", async ({ page }) => {
   await test.step("같은 글을 다시 보내면 '이미 정리한 글이에요' + 그 기록으로 가는 링크", async () => {
     await again();
     await page.getByLabel("글 파일(.txt · .md)에서 불러오기").setInputFiles({ name: "산책.txt", mimeType: "text/plain", buffer: Buffer.from(TXT) });
-    await submit();
+    await submit(false);
     const dup = page.getByRole("status", { name: "이미 정리한 글" });
     await expect(dup).toContainText("이미 정리한 글이에요", { timeout: 15_000 });
     await dup.getByRole("link", { name: "지난 기록에서 보기" }).click();

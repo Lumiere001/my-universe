@@ -129,7 +129,9 @@ def test_values_and_weather_detail():
     assert all(v["definition"] and v["schwartz"] for v in O["values"])
     assert {w["name"] for w in O["weather"] if w.get("comfort_only")} == {"비", "천둥"}
     assert len(O["fact_bomb"]["never_cross"]) == 4
-    assert len(O["aspiration"]["ask_steps"]) == 4
+    steps = O["aspiration"]["ask_steps"]   # PRD v9 다섯 질문: 방향 · 이유 · 장면 · 안쪽 걸림 · 그때
+    assert [x["key"] for x in steps] == ["want", "why", "scene", "obstacle", "if_then"]
+    assert all(x["question"] and x["hint"] and x["ack"] for x in steps) and steps[0]["avoid_ask"]
     assert [d["name"] for d in O["aspiration"]["declines"]] == ["이번엔 넘어가기", "그만 묻기"]
     assert len(O["people"]["ask_when"]) == 3
 

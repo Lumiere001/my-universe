@@ -33,7 +33,9 @@ export const themeOf = (t?: string | null): ThemeName => (t && t in THEMES ? t a
 export const themeColors = (t?: string | null) => ({ ...COLOR, ...THEMES[themeOf(t)] });
 
 // 별지기 모습: '글자' = 지금처럼 이름 첫 글자, 나머지는 public/keeper/<이름>.svg (백엔드 SettingsPatch.keeper_look 과 같은 목록)
-export const KEEPER_LOOKS = ["글자", "별", "달", "고양이", "행성"] as const;
+export const KEEPER_LOOKS = ["행성", "별", "달", "고양이", "글자"] as const;
+// PRD v9 Q17: 모습을 고르면 말투가 따라온다(모습 = 말투 한 묶음의 별지기). 행성이 기본(앱 아이콘과 같은 모습)
+export const LOOK_TONE = { 행성: "다정하게", 별: "팩폭", 달: "담백하게", 고양이: "고양이처럼", 글자: "직접 정하기" } as const;
 export type KeeperLook = (typeof KEEPER_LOOKS)[number];
 export const KEEPER_SVG: Record<Exclude<KeeperLook, "글자">, string> = { 별: "star", 달: "moon", 고양이: "cat", 행성: "planet" };
 export const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);

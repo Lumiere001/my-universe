@@ -95,8 +95,8 @@ def test_opening_by_situation():
     none = {"kind": "none", "text": "", "vow": None}
     lead = {"day": "2026-10-01", "title": "아침 걷기 시작", "summary": "걷기", "quotes": ["매일 아침 30분 걷기를 하겠다"]}
     assert chat.opening(first) == {"kind": "first", "text": voice.FIRST_QUESTIONS[0], "sources": []}   # 첫 만남: 정해 둔 질문
-    o = chat.opening(vow)
-    assert o["kind"] == "vow" and "매일 30분 걷겠다" in o["text"] and "왜" not in o["text"]               # 다짐 안부(추궁 없이)
+    o = chat.opening(vow)   # PRD v9 ②: 다짐을 첫 말에 대놓고 인용하지 않는다(다짐은 숨은 이유 후보로 한마디가 첫 질문을 지어 둠)
+    assert o == {"kind": "question", "text": vow["text"], "sources": []} and "매일 30분 걷겠다" not in o["text"]
     assert chat.opening(asked) == {"kind": "question", "text": asked["text"], "sources": []}         # 남겨 둔 질문
     assert chat.opening(none, invite=True)["text"] == voice.INVITE                                  # 되고 싶은 모습 계기
     assert chat.opening(none)["kind"] == "free"

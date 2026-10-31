@@ -107,7 +107,22 @@ def repeat_problems(text, past):
     return out
 
 
-MAX_LEN = 300  # 한마디는 짧게(2~4문장)
+MAX_LEN = 300  # 대화 답은 짧게(2~4문장)
+MESSAGE_LEN = 150  # 저장 뒤 한마디(PRD v9 Q16: 두세 문장, 120자 안팎 — 넘으면 150자에서 자름)
+
+
+# 숨은 이유(PRD v9 Q6 · Q7): 첫 질문은 이유를 드러내지 않고, 이유 한 줄 · '어디로 가자'는 판정하지 않는다
+HIDDEN = re.compile(r"지난번|한동안|다짐|되고 싶|예전에|[“”\"‘’]")
+JUDGE = re.compile(r"멀어지|멀어졌|못 하고|못하고|안 하고 있|또 미루|게을")
+
+
+def hidden_problems(next_q, reveal=""):
+    out = []
+    if next_q and HIDDEN.search(next_q):
+        out.append("첫 질문이 이유를 드러냄(지난 글 인용 · 지난번 · 한동안 · 다짐 · 되고 싶은 금지)")
+    if reveal and JUDGE.search(reveal):
+        out.append("이유 한 줄에 판정하는 말(멀어졌다 · 못 하고 있다 금지)")
+    return out
 
 
 def cut_to_len(msg, n=MAX_LEN):
@@ -117,7 +132,7 @@ def cut_to_len(msg, n=MAX_LEN):
     return head[: i + 1].strip() if i >= n // 3 else None
 
 
-def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False):
+def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False, max_len=MAX_LEN):
     """생성된 한마디 · 다음 질문의 문제 목록. crisis: 위기 글(기관 · 연락처 안내도 막음)."""
     both = f"{msg}\n{next_q}"
     out = line_problems(both)
@@ -139,8 +154,8 @@ def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, t
         out.append("냥 남발(한마디에 한 번까지)")
     if tone == "고양이처럼" and re.search(r"(^|[.?!]\s*)냥(?![가-힣])", msg):   # '냥, 오늘은 …'처럼 따로 떼어 쓴 냥(--live 에서 본 꼴)
         out.append("냥을 따로 떼어 씀(문장 맨 끝 말꼬리로만)")
-    if len(msg) > MAX_LEN:
-        out.append(f"너무 김({len(msg)}자, {MAX_LEN}자 안으로)")
+    if len(msg) > max_len:
+        out.append(f"너무 김({len(msg)}자, {max_len}자 안으로)")
     if not msg.strip():
         out.append("빈 한마디")
     return out

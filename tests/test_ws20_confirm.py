@@ -56,9 +56,12 @@ def test_confirm_saves_fixes_and_clears_turns(client, env, talk):  # noqa: F811
     assert done["info"]["summary"] == "아침 걷기를 시작했다."                               # 고친 값이 저장됨
     assert [(t["id"], t["kind"]) for t in done["thoughts"]] == [(t0["id"], "소망")]          # 종류 고침 · 생각 빼기
     assert done["message"]["text"]                                                     # 저장 뒤 한마디(대화 안 말풍선)
+    said = [t["text"] for t in done["talk"] if t["role"] == "user"]                      # 그날 대화는 기록 안에 남는다(PRD v9 Q19)
+    assert said == ["오늘부터 매일 아침 30분 걷기를 하겠다.", "민준이가 같이 걷자고 해서 고마웠다."]
+    assert done["talk"][0]["role"] == "keeper" and done["text"]                          # 별지기 첫 말 · 원문도 같이
     with env.repo.session(U1) as s:
         notes = [(f["value"], diary.unseal(s, "feedback", f["id"], f["enc"])) for f in s.rows("feedback", target="confirm")]
-        assert conversations.get(s, cid) is None                                       # 확인하면 턴은 지움
+        assert conversations.get(s, cid) is None                                       # 확인하면 대화 행은 지우고
         runs = {r["step"]: r for r in s.rows("runs")}                                   # 운영 지표 약속(WS22)
         assert runs["chat_done"]["entry_id"] == cid and runs["chat_done"]["meta"]["turns"] == 2
         assert runs["confirm"]["meta"] == {"items": 1 + len(r["thoughts"]), "edited": 3}
@@ -126,6 +129,21 @@ def test_new_turns_redraft_and_delete_talk_removes_draft(client, env, talk):  # 
     assert client.get(f"/diary/{r2['id']}", headers=H1).status_code == 404               # 확인 전 초안도 같이
     c = start(client)
     assert client.post(f"/talk/{c['id']}/finish/stream", headers=H1).json()["error"]["code"] == "no_turns"
+
+
+def test_fix_asks_again_then_redrafts(client, env, talk):  # noqa: F811
+    """PRD v9 Q9: '고칠 게 있어요'는 글을 고치지 않고 별지기가 다시 묻는 말을 붙인다 → 답하고 다시 정리하면 새 초안."""
+    cid = talked(client, "아침에 30분 걸었다.")
+    r1 = finish(client, cid)[-1][1]
+    assert client.get(f"/talk/{cid}", headers=H1).json()["stale_draft"] is False
+    c = client.post(f"/talk/{cid}/fix", headers=H1).json()
+    assert c["turns"][-1]["role"] == "keeper" and c["turns"][-1]["kind"] == "fix" and c["stale_draft"] is True
+    say(client, cid, "저녁엔 친구에게 안부 문자도 보냈다.")
+    r2 = finish(client, cid)[-1][1]
+    assert r2["id"] != r1["id"] and r2["status"] == "confirm"
+    assert client.get(f"/talk/{cid}", headers=H1).json()["stale_draft"] is False
+    with env.repo.session(U1) as s:
+        assert [r["step"] for r in s.rows("runs") if r["step"] == "confirm_fix"] == ["confirm_fix"]   # 운영 지표
 
 
 def test_list_page_stays_full_with_waiting_draft(client, env):  # noqa: F811

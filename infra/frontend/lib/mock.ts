@@ -90,6 +90,7 @@ let people: Person[] = [
 let settings: Settings = {
   tone: "다정하게", fact_bomb_ack: false, gentle_today: null, comfort_only_today: null,
   suggestions: "보통", cross_links: "눌렀을 때", weather_ask: true, keeper_name: "별지기", tone_note: "", tts_voice: "따뜻한",
+  keeper_look: "행성",
 };
 
 let aspiration: AspirationState = {
@@ -120,7 +121,7 @@ function result(id: string, input: DiaryInput): EntryResult {
   const head = `${input.title ?? ""} ${input.text.split("\n")[0]}`;
   const twoDays = /\d{1,2}\/\d{1,2}\s*~\s*\d{1,2}\/\d{1,2}/.test(head); // 날짜가 둘(3/27~3/29) → 날짜 확인 필요(서버 G2 흉내)
   return {
-    id, status: "done", step: "save", written_at: written, source: "텍스트",
+    id, status: "done", step: "save", written_at: written, source: "텍스트", text: input.text, talk: null,
     day: input.day ?? written.slice(0, 10), day_basis: input.day ? "확실" : "추정", day_check: !input.day && twoDays,
     title: input.title || "10/3 토요일 일기", weather: input.weather ?? null, crisis,
     info: { summary: "관심 있는 팀 세 곳을 찾아보기로 했지만 한 곳도 못 찾아봤고, 대신 일하는 곳보다 배우는 느낌이 중요하다는 쪽으로 생각이 정리됐다.",
@@ -212,7 +213,7 @@ export async function getDiary(id: string): Promise<EntryResult> {
   const p = universe.planets.find((x) => x.id === id);
   const base = result(id, { text: "", title: p?.title, written_at: p?.written_at, weather: p?.weather });
   // 지난 기록은 요약만 보여 준다(가짜 데이터에는 지난 글의 생각 목록이 없다)
-  return { ...base, info: { ...base.info!, summary: SUMMARY[id] ?? base.info!.summary, events: [] },
+  return { ...base, text: SUMMARY[id] ?? base.info!.summary, info: { ...base.info!, summary: SUMMARY[id] ?? base.info!.summary, events: [] },
     thoughts: PAST_THOUGHTS[id] ?? [], relations: [], past: [], people_questions: [], reached: [], next_question: null, message: null };
 }
 // 지난 글의 생각은 행성 카드 · 사람별 생각에 쓰는 몇 개만
@@ -265,6 +266,35 @@ const KINDS: Record<string, Record<string, number>> = {   // 가짜 데이터에
   s5: { 다짐: 2, "자기평가(부정)": 1, "자기평가(긍정)": 1 }, s6: { 감정: 1, 다짐: 1 }, s7: { 해석: 1 },
 };
 const TWIN_QUOTE: Record<string, string> = { e02: "큰 회사에 들어가는 게 맞다.", e15: "직접 가 보니 배우는 속도가 달랐다" };
+// 고른 시각 알림(PRD v9 Q8): 가짜는 메모리에만
+let pushAt: string | null = null;
+export async function listPush() { await sleep(80); return { subs: pushAt ? [{ id: "ps1", notify_at: pushAt }] : [] }; }
+export async function subscribePush(s: { notify_at: string }) { await sleep(150); pushAt = s.notify_at; return { ok: true, notify_at: s.notify_at }; }
+export async function unsubscribePush() { await sleep(80); pushAt = null; }
+// 흐름 요약 · 묻기(PRD v9): 가짜는 하늘 기록 몇 편을 근거로 한 고정 글
+const S = (entry_id: string, day: string) => ({ entry_id, day });
+export async function getBrief(period: "week" | "month" | "all") {
+  await sleep(500);
+  if (period === "week") return { state: "few" as const, sections: [] };
+  return { state: "ok" as const, sections: [
+    { title: "한눈에", sentences: [
+      { text: "큰 회사의 안정과 작은 팀의 배움 사이에서 오래 머물렀고, 점점 '배우는 느낌'이 더 중요하다는 쪽으로 기울었어요.", sources: [S("e02", "2026-03-14"), S("e15", "2026-09-20")] },
+      { text: "사람 이야기는 형 · 친구가 먼저 안부를 물어 준 날에 힘을 얻었다고 적었어요.", sources: [S("e04", "2026-04-02")] }] },
+    { title: "삶의 성취", sentences: [
+      { text: "3월엔 '큰 회사에 들어가는 게 맞다'고 썼는데, 9월엔 '직접 가 보니 배우는 속도가 달랐다'고 적었어요.", sources: [S("e02", "2026-03-14"), S("e15", "2026-09-20")] }] },
+    { title: "관계", sentences: [
+      { text: "혼자는 충전, 함께는 성장이라는 생각이 여러 번 이어졌어요.", sources: [S("e11", "2026-06-01")] }] },
+    { title: "되고 싶은 모습 쪽으로", sentences: [
+      { text: "'걷기를 2주째 이어 가고 있다'고 쓴 날, 한 약속을 지키는 모습에 닿았어요.", sources: [S("e12", "2026-07-10")] }] },
+  ] };
+}
+export async function askDiary(question: string) {
+  await sleep(700);
+  if (/죽고 싶|사라지고 싶/.test(question)) return { state: "crisis" as const, sentences: [], message: "그 마음을 혼자 두지 않을게요. 여기서 함께 있을게요." };
+  return { state: "ok" as const, sentences: [
+    { text: "진로 이야기는 3월에 '큰 회사에 들어가는 게 맞다'고 처음 썼어요.", sources: [S("e02", "2026-03-14")] },
+    { text: "9월에는 '직접 가 보니 배우는 속도가 달랐다'고 적었어요.", sources: [S("e15", "2026-09-20")] }] };
+}
 export async function getInsight(): Promise<Insight> {
   await sleep(120);
   const given = (globalThis as { __insight?: Insight | "fail" }).__insight;
@@ -371,8 +401,25 @@ export async function deletePerson(id: string) {
   return { ok: true, replaced };
 }
 export async function getAspiration() { await sleep(100); return structuredClone(aspiration); }
-export async function saveAspiration(a: { now: string; want: string; obstacle: string; if_then: string; values: string[] }) {
-  const n: Aspiration = { id: "a" + (aspiration.history.length + 3), said: a.want, values: a.values, obstacle: a.obstacle,
+// 처음 인터뷰를 지났나(PRD v9). 가짜 데이터 모드는 지난 것으로 시작하고(e2e), 주소에 ?intro 를 붙여 열면 처음 사람처럼.
+// 새로 고쳐도 남게 이 기기에 둔다
+const INTRO = "mock-intro";
+const introDone = () => {
+  try {
+    if (new URLSearchParams(location.search).has("intro")) localStorage.setItem(INTRO, "0");
+    return localStorage.getItem(INTRO) !== "0";
+  } catch { return true; }
+};
+const passIntro = () => { try { localStorage.setItem(INTRO, "1"); } catch { /* 저장소 막힘 */ } };
+export async function declineAspiration(mode: "skip" | "stop" | "later") { await sleep(150); if (mode === "later") passIntro(); return { ok: true }; }
+export async function suggestValues(why: string) {
+  await sleep(300);   // 진짜는 임베딩 비슷함. 가짜는 낱말 몇 개로 흉내
+  const hit = ontology.values.filter((v) => [v.name, ...v.definition.split(/[ ,·]+/)].some((w) => w.length > 1 && why.includes(w)));
+  return { values: (hit.length ? hit : ontology.values.filter((v) => v.name === "배려")).slice(0, 2).map((v) => v.name) };
+}
+export async function saveAspiration(a: { want: string; why: string; scene: string; obstacle: string; if_then: string; values: string[] }) {
+  passIntro();
+  const n: Aspiration = { id: "a" + (aspiration.history.length + 3), said: a.want, why: a.why, scene: a.scene, values: a.values, obstacle: a.obstacle,
     if_then: a.if_then, said_at: new Date().toISOString(), reached: [] };
   aspiration = { ...aspiration, current: n, history: aspiration.current ? [aspiration.current, ...aspiration.history] : aspiration.history };
   universe.north_star = { text: n.said, values: n.values, reached_planets: [], reached: [] };
@@ -381,7 +428,7 @@ export async function saveAspiration(a: { now: string; want: string; obstacle: s
 export async function getMe(): Promise<Me> {
   await sleep((globalThis as { __slowMe?: number }).__slowMe ?? 100);   // 시험: /me 가 /universe 보다 늦게 오는 경우
   return { user: { id: "mock", email: "haneul@example.com" }, settings: { ...settings },
-    onboarding: { entries: universe.planets.length, aspiration: "set", weather_asked: true } };
+    onboarding: { entries: universe.planets.length, aspiration: "set", weather_asked: true, intro: introDone() } };
 }
 export async function patchSettings(s: Partial<Settings>) {
   // 백엔드와 같은 규칙: 팩폭은 경고 확인 뒤에만
@@ -421,9 +468,10 @@ export async function startTalk(from?: string): Promise<Conversation> {
   for (const [k, c] of talks) if (!c.turn_count) talks.delete(k);
   const p = from && universe.planets.find((x) => x.id === from);
   const text = p ? `${p.written_at.slice(0, 10)}에 쓴 '${p.title}' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?`
-    : prompt.vow ? `지난번에 적은 다짐, '${prompt.vow.text}' 요즘은 어때요? 떠오르는 만큼 편하게 들려줘요.` : "오늘 하루는 어땠어요? 떠오르는 것부터 편하게 이야기해 줘요.";
+    : "요즘 저녁엔 뭐 하면서 쉬어요?";   // 숨은 이유 첫 질문(PRD v9 ②): 다짐을 대놓고 인용하지 않는다
+  const reason = p ? null : `저녁 이야기를 물은 건, '${prompt.vow?.text ?? "바쁘다는 생각이 들면 10분만 먼저 하겠다"}'고 했던 게 떠올라서였어요.`;
   const c: Conversation = { id: "c" + talkSeq++, created_at: now(), updated_at: now(), summary: "", from_entry: p ? from! : null,
-    entry_id: null, turn_count: 0, wrap: false, turns: [{ role: "keeper", kind: p ? "continue" : prompt.vow ? "vow" : "free", text, at: now() }] };
+    entry_id: null, turn_count: 0, wrap: false, reason, turns: [{ role: "keeper", kind: p ? "continue" : "question", text, at: now() }] };
   talks.set(c.id, c);
   return structuredClone(c);
 }
@@ -433,6 +481,13 @@ export async function getTalk(id: string) {
   return structuredClone(c);
 }
 export async function deleteTalk(id: string) { talks.delete(id); }
+export async function fixTalk(id: string) {
+  await sleep(150);
+  const c = talks.get(id)!;
+  c.turns.push({ role: "keeper", kind: "fix", text: "어떤 부분을 고치거나 더하고 싶어요? 말해 주면 그걸 담아 다시 정리할게요.", at: now() });
+  c.stale_draft = true;
+  return structuredClone(c);
+}
 export async function sayTalk(id: string, text: string, onProgress: (p: TalkProgress) => void, via: "text" | "voice" = "text"): Promise<Conversation> {
   const c = talks.get(id);
   if (!c) throw { entry_id: null, code: "not_found", message: "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.", resumable: false } as StreamError;
@@ -462,7 +517,7 @@ export async function finishTalk(id: string, h: StreamHandlers): Promise<EntryRe
   const r: EntryResult = { ...result(eid, { text, title: "오늘의 이야기" }), status: "confirm", step: "voice", source: "대화",
     day_basis: "확실", confirmed: "확인 전", message: null, next_question: null, reached: [], people_questions: [] };
   entries.set(eid, r);
-  c.entry_id = eid;
+  c.entry_id = eid; c.stale_draft = false;
   return structuredClone(r);
 }
 export async function confirmDiary(id: string, x: ConfirmInput): Promise<EntryResult> {
@@ -471,7 +526,8 @@ export async function confirmDiary(id: string, x: ConfirmInput): Promise<EntryRe
   if (!r || r.status !== "confirm") throw new Error("이미 저장했거나 확인할 수 없는 정리예요. 화면을 새로 고쳐 주세요.");
   const gone = new Set(x.fixes.filter((f) => f.remove).map((f) => f.id));
   const kind = new Map(x.fixes.filter((f) => f.kind).map((f) => [f.id, f.kind!]));
-  const done: EntryResult = { ...result(id, { text: "", title: r.title }), source: "대화", confirmed: "확인됨", day_basis: "확실",
+  const talk = [...talks.values()].find((c) => c.entry_id === id)?.turns.map((t) => ({ role: t.role, text: t.text, at: t.at })) ?? null;
+  const done: EntryResult = { ...result(id, { text: r.text ?? "", title: r.title }), source: "대화", talk, confirmed: "확인됨", day_basis: "확실",
     info: { ...r.info!, summary: x.summary ?? r.info!.summary },
     thoughts: r.thoughts.filter((t) => !gone.has(t.id)).map((t) => ({ ...t, kind: kind.get(t.id) ?? t.kind })) };
   entries.set(id, done);

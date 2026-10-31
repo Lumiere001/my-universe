@@ -1,15 +1,16 @@
 "use client";
 // 로그인 전 첫 화면(소개). Shell 이 로그아웃 상태에서 보여 주고, 로그인하면 Shell 이 바로 앱 화면을 연다.
+// PRD v9 Q13: 휴대폰에서 넘기는 카드 세 장(무엇을 해 주나 · 우주 · 내 일기를 지키는 법) → 구글로 시작. 자세한 약속은 그 아래.
 // 화면 캡처는 가짜 데이터 모드의 가상 인물 하늘 화면(지금 디자인) — scripts/make-images.mjs 가 만든다.
 import Link from "next/link";
 import { useState } from "react";
 import InstallGuide from "@/components/InstallGuide";
-import { DEV_LOGIN, supabase } from "@/lib/api";
+import { DEV_LOGIN, MOCK, supabase } from "@/lib/api";
 
-const STEPS = [
-  ["이야기하기 · 쓰기", "별지기와 말로 이야기하거나, 글 · 사진으로 오늘을 남겨요. 마음 날씨는 골라도 되고 건너뛰어도 돼요.", "/landing/write.jpg", 390, 668],
-  ["우주", "별지기가 글을 생각 단위로 나눠 삶의 영역(해) 곁에 행성으로 띄워요. 지난 생각과 이어지면 선이 생겨요.", "/landing/universe-mobile.jpg", 390, 624],
-  ["별지기 한마디", "지난 기록을 기억하는 별지기가 오늘 글에 맞춰 말을 걸어요. 말투는 다정하게부터 팩폭까지 골라요.", "/landing/message.jpg", 390, 230],
+const CARDS = [
+  ["별지기가 먼저 말을 걸어요", "앱을 열면 별지기가 가볍게 말을 걸어요. 편하게 이야기하면 내가 한 말로 일기 한 편을 정리해 드려요. 글 · 사진 · 말로 직접 써도 돼요.", "/landing/write.jpg", 390, 668],
+  ["생각이 우주가 돼요", "일기 속 생각이 행성이 되어 삶의 영역 곁을 돌아요. 지난 생각과 이어지고 바뀐 흐름을 원문 그대로 비춰 줘요.", "/landing/universe-mobile.jpg", 390, 624],
+  ["내 일기는 나만 봐요", "일기는 사람마다 다른 키로 암호화해 두고, AI에는 사람 이름을 가명으로 바꿔 보내요. 언제든 모든 기록을 지울 수 있어요.", "/landing/message.jpg", 390, 230],
 ] as const;
 
 export default function Landing() {
@@ -20,34 +21,27 @@ export default function Landing() {
     const r = await sb?.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }).catch(() => null);
     if (!r || r.error) setFail(true);
   };
-  const start = sb ? <>
+  const start = MOCK ? <a className="btn primary" href="/?intro">구글로 시작하기</a> : sb ? <>
     <button className="primary" onClick={google}>구글로 시작하기</button>
     {fail && <p className="err" role="alert">구글 로그인을 열지 못했어요. 잠시 뒤 다시 눌러 주세요.</p>}
   </> : <p className="err">로그인 설정이 없어요. NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_ANON_KEY 를 넣어 주세요.</p>;
 
   return (
     <main className="wide landing">
-      <section className="hero" aria-label="소개">
-        <div className="stack">
-          <h1>나의 우주</h1>
-          <p className="lead">말하듯 남긴 일기가 쌓이면, 지난 기록 속에서 내 생각이 어떻게 이어지고 바뀌어 왔는지 비춰 줘요.</p>
-          {start}
-          <p className="sub">구글 계정이면 누구나 바로 시작해요. 지금은 시험 단계예요.</p>
-        </div>
-        <img src="/landing/universe.jpg" width={1176} height={851} alt="일기로 만든 우주 화면. 삶의 영역마다 해가 있고, 그 곁을 기록 행성이 돌며 생각끼리 선으로 이어져 있어요." />
-      </section>
-
-      <section aria-labelledby="how">
-        <h2 id="how">쓰는 법</h2>
-        <ol className="how">
-          {STEPS.map(([name, text, src, w, h], i) => (
+      <section className="intro stack" aria-label="소개">
+        <h1>나의 우주</h1>
+        <p className="lead">말하듯 남긴 일기가 쌓이면, 지난 기록 속에서 내 생각이 어떻게 이어지고 바뀌어 왔는지 비춰 줘요.</p>
+        <ol className="intro-cards" aria-label="처음 쓰는 분께, 옆으로 넘겨 보세요">
+          {CARDS.map(([name, text, src, w, h], i) => (
             <li key={name} className="card">
-              <h3><span className="badge v">{i + 1}</span> {name}</h3>
+              <h2><span className="badge v">{i + 1}</span> {name}</h2>
               <p className="sub">{text}</p>
-              <img src={src} width={w} height={h} loading="lazy" alt={`${name} 화면`} />
+              <img src={src} width={w} height={h} loading={i ? "lazy" : undefined} alt={`${name} 화면`} />
             </li>
           ))}
         </ol>
+        {start}
+        <p className="sub">구글 계정이면 누구나 바로 시작해요. 지금은 시험 단계예요.</p>
       </section>
 
       <section className="card" aria-labelledby="promise">
