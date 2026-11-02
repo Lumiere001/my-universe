@@ -11,6 +11,7 @@ voice.build_messages 를 그대로 쓰지 않는 이유: 그쪽은 일기 한 �
 한 번에 질문 하나씩 이어 묻는 대화와 규칙이 다르다.
 """
 
+import difflib
 import json
 import re
 
@@ -149,6 +150,18 @@ def situations(text, *, crisis=False, hour=None, recall=False, wrap=False, past=
     return out
 
 
+def asked(topic, reply):
+    """답이 이어 둔 질문을 물었나: 질문 문장(마지막 '?' 문장)의 70% 넘게가 답에 이어서 들어 있으면 물은 것.
+    Solar 가 답 형식의 topic 칸을 잘 채우지 않아(2026-11-02 실측 0/3) 글로 본다. 바꿔 물으면 놓칠 수 있다 → 그때는 다음 턴에 한 번 더 기회."""
+    norm = lambda x: re.sub(r"[\s\W_]+", "", x or "")   # noqa: E731
+    qs = [q for q in re.split(r"(?<=[.!?？])\s+", topic or "") if "?" in q or "？" in q]   # 묻는 문장들(마지막 것)
+    q, r = norm(qs[-1] if qs else topic), norm(reply)
+    if not q or not r:
+        return False
+    m = difflib.SequenceMatcher(None, q, r).find_longest_match(0, len(q), 0, len(r))
+    return m.size >= 0.7 * len(q)
+
+
 def with_topic(sit, topic):
     """미리 지어 둔 질문(topic)이 있는 대화: 사용자 말과 닿을 때 한 번. 무거운 날 · 위기 · 지난 기록 물음 · 마칠 때 · '어디로 가자' 턴엔 꺼내지 않는다."""
     if not topic or any(x in sit for x in ("무거운 날", "지난 기록 물음", "대화를 마칠 때")) or any(x.startswith("어디로 가자") for x in sit):
@@ -180,9 +193,9 @@ LINES = {
               "멀어졌다 · 못 하고 있다 같은 판정은 하지 않는다.",
     "어디로 가자(마치기 전)": "대화를 마치기 전 한 번: 오늘 이야기를 한 줄로 되짚은 뒤, 이 사람이 정한 작은 걸음(direction)을 따옴표로 "
                        "글자 그대로 인용해 묻는 꼴로 가볍게 건넨다(판정 없이). 이때만 질문 하나를 넣어도 된다.",
-    "이어 둔 질문": "지난 일기를 보고 지어 둔 질문(topic)이 있다. 사용자의 이번 말이 그 질문과 닿을 때만 이번 답에서 한 번, 오늘 이야기에 "
-               "맞게 자연스럽게 바꿔 묻는다(질문은 이것 하나). 닿지 않으면 꺼내지 않는다. 왜 묻는지(지난번 · 한동안 · 다짐 같은 이유)는 "
-               "드러내지 않는다. 물었으면 답 형식의 topic 을 true 로.",
+    "이어 둔 질문": "지난 일기를 보고 지어 둔 질문(topic)이 있다. 사용자의 이번 말이 그 질문과 같은 주제(때 · 사람 · 일)면 이번 답의 "
+               "질문으로 topic 을 되도록 글자 그대로 묻는다(앞에 짧은 이음말만 붙인다. 질문은 이것 하나). 닿지 않으면 꺼내지 않는다. "
+               "왜 묻는지(지난번 · 한동안 · 다짐 같은 이유)는 드러내지 않는다. 물었으면 답 형식의 topic 을 true 로.",
     "긴 이야기": "사용자가 한 번에 긴 이야기를 들려줬다(말로 한 녹음 등): 다 되짚지 않는다. 들었다는 걸 한 문장으로 알리고, "
               "가장 마음이 실린 한 가지만 받아 그것만 짧게 이어 묻는다. 모두 세 문장 · 200자 안.",
 }
@@ -310,7 +323,7 @@ def respond(ctx):
     for _ in range(3 if "긴 이야기" in sit else 2):   # 긴 이야기는 한 번 더(e2e 에서 두 번 다 걸려 기본 문장이 되던 것, WS21)
         raw = llm.chat(messages(ctx, sit, avoid), temperature=0.2 if kind == "recall" else 0.5)
         text, found = parse(raw)
-        used = "이어 둔 질문" in sit and bool(re.search(r'"topic"\s*:\s*true', raw or ""))   # 이어 둔 질문을 건넸나(대화에서 한 번만)
+        used = "이어 둔 질문" in sit and (bool(re.search(r'"topic"\s*:\s*true', raw or "")) or asked(ctx["topic"], text))   # 대화에서 한 번만
         if kind == "recall":
             if found is None:   # JSON 없이 글만 옴: 지난 기록 원문을 그대로 인용했을 때만 찾은 것(인용 대조가 근거)
                 found = cited(text, ctx.get("past"))

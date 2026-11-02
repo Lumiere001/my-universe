@@ -396,14 +396,14 @@ main.write { display: flex; flex-direction: column; gap: 10px; min-height: calc(
 .rec-vow p { margin: 0; flex: 1 1 100%; font-size: .9rem; color: var(--muted); }
 
 .diary-form { flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px; }
-.paper { --ink: #2e2a24; --ink2: #6e6555; --rule: rgba(84, 120, 176, .26); --margin: rgba(208, 92, 92, .45); --edge: #d8ccb2; --line-h: 2.15rem;
+.paper { --ink: #2e2a24; --ink2: #6e6555; --rule: rgba(84, 120, 176, .26); --margin: rgba(208, 92, 92, .45); --edge: #d8ccb2; --line-h: 2rem;
   flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; padding: 10px 16px 6px 30px; color: var(--ink); position: relative;
   background: radial-gradient(120% 80% at 10% 0%, #fbf6ea 0%, #f3ead6 60%, #ece0c6 100%); border-radius: 6px 12px 12px 6px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .4); }
 .paper::before { content: ""; position: absolute; top: 0; bottom: 0; left: 20px; width: 1px; background: var(--margin); pointer-events: none; }   /* 붉은 여백선 */
 .diary-head { display: flex; align-items: center; gap: 4px; min-height: 36px; }
 .diary-date { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px; margin-left: -6px; border-radius: var(--r);
-  color: var(--ink2); font-family: var(--font-diary), cursive; font-size: 1.45rem; line-height: 1.2; cursor: pointer; }
+  color: var(--ink2); font-family: var(--font-diary), cursive; font-size: 1rem; line-height: 1.3; cursor: pointer; }
 .diary-date svg { color: var(--ink2); }
 .diary-date:hover { background: rgba(0, 0, 0, .05); }
 .diary-date:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -411,20 +411,20 @@ main.write { display: flex; flex-direction: column; gap: 10px; min-height: calc(
 .diary-date input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; cursor: pointer; }
 .paper .tbtn { color: var(--ink2); }
 .paper .tbtn:hover { background: rgba(0, 0, 0, .06); color: var(--ink); }
-.paper .inline-title { font-family: var(--font-diary), cursive; color: var(--ink); font-size: 2rem; line-height: 1.2; padding: 2px 0; font-weight: 400; }
+.paper .inline-title { font-family: var(--font-diary), cursive; color: var(--ink); font-size: 1.45rem; line-height: 1.3; padding: 2px 0; font-weight: 400; }
 .paper .inline-title::placeholder, .diary-text::placeholder { color: #a59b86; }
 .paper input:focus, .paper textarea:focus { box-shadow: none; }
 .weather-prop { display: flex; align-items: center; gap: 8px; min-height: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
 .weather-prop .k { flex: none; display: inline-flex; align-items: center; gap: 4px; color: var(--ink2); font-size: .85rem; }
 .weather-prop .chips { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .weather-prop .chips::-webkit-scrollbar { display: none; }
-.weather-prop .chips button { flex: none; background: none; color: var(--ink2); border: 1px dashed rgba(46, 42, 36, .35); border-radius: 999px; font-family: var(--font-diary), cursive; font-size: 1.15rem; }
+.weather-prop .chips button { flex: none; background: none; color: var(--ink2); border: 1px dashed rgba(46, 42, 36, .35); border-radius: 999px; font-family: var(--font-diary), cursive; font-size: .9rem; }
 .weather-prop .chips button:hover { background: rgba(0, 0, 0, .05); }
 .weather-prop .chips button[aria-pressed="true"] { background: rgba(84, 120, 176, .16); border: 1px solid rgba(84, 120, 176, .6); color: var(--ink); }
 /* 줄 그은 글 칸: 줄 간격과 같은 간격으로 파란 선, 글과 함께 넘어간다(background-attachment: local).
    글 칸은 남은 높이를 다 채우고 그 안에서만 넘어간다(글이 길어도 화면이 길어지지 않게) */
 .diary-body { position: relative; flex: 1 1 auto; min-height: 9rem; }
-.diary-text { position: absolute; inset: 0; width: 100%; height: 100%; font-family: var(--font-diary), cursive; font-size: 1.5rem; line-height: var(--line-h); color: var(--ink); }
+.diary-text { position: absolute; inset: 0; width: 100%; height: 100%; font-family: var(--font-diary), cursive; font-size: 1.08rem; line-height: var(--line-h); color: var(--ink); }
 textarea.diary-text, textarea.diary-text:hover, textarea.diary-text:focus { min-height: 0; padding: 0 2px; border: 0; border-radius: 0; box-shadow: none; resize: none; background-color: transparent;
   background-image: linear-gradient(transparent calc(var(--line-h) - 1px), var(--rule) calc(var(--line-h) - 1px)); background-size: 100% var(--line-h); background-attachment: local; }
 .paper .tools { margin: 0 -10px 0 -18px; padding: 6px 4px 0; border-top: 1px solid var(--rule); }
@@ -433,12 +433,12 @@ textarea.diary-text, textarea.diary-text:hover, textarea.diary-text:focus { min-
 
 /* 일기 원문 보기(일기장 → 한 편): 같은 종이, 줄에 맞춘 손글씨. 길면 종이째 길어진다 */
 .paper.read { padding-bottom: 14px; }
-.paper.read h1, .paper.read h2 { font-family: var(--font-diary), cursive; font-weight: 400; font-size: 2rem; line-height: 1.2; margin: 2px 0 0; color: var(--ink); }
-.paper .read-meta { margin: 0; color: var(--ink2); font-family: var(--font-diary), cursive; font-size: 1.3rem; line-height: 1.3; }
-.read-text { font-family: var(--font-diary), cursive; font-size: 1.5rem; line-height: var(--line-h); color: var(--ink);
+.paper.read h1, .paper.read h2 { font-family: var(--font-diary), cursive; font-weight: 400; font-size: 1.45rem; line-height: 1.3; margin: 2px 0 0; color: var(--ink); }
+.paper .read-meta { margin: 0; color: var(--ink2); font-family: var(--font-diary), cursive; font-size: .95rem; line-height: 1.4; }
+.read-text { font-family: var(--font-diary), cursive; font-size: 1.08rem; line-height: var(--line-h); color: var(--ink);
   background-image: linear-gradient(transparent calc(var(--line-h) - 1px), var(--rule) calc(var(--line-h) - 1px)); background-size: 100% var(--line-h); }
 .read-text > * { margin: 0; }
-.read-text h2, .read-text h3, .read-text h4 { font-size: 1.7rem; font-weight: 400; line-height: var(--line-h); }
+.read-text h2, .read-text h3, .read-text h4 { font-size: 1.2rem; font-weight: 400; line-height: var(--line-h); }
 .read-text ul, .read-text ol { padding-left: 1.2em; }
 .read-text blockquote { border-left: 2px solid var(--ink2); padding-left: 10px; color: var(--ink2); }
 .read-text hr { border: 0; height: var(--line-h); margin: 0; }

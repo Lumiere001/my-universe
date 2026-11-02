@@ -112,6 +112,12 @@ def test_topic_rules():
     for sit in (["무거운 날"], ["대화를 마칠 때"], ["지난 기록 물음"], ["어디로 가자"]):
         assert chat.with_topic(sit, "요즘 저녁엔 뭐 해요?") == sit                                  # 이런 턴엔 꺼내지 않음
     assert chat.with_topic([], "") == []
+    # Solar 가 topic 칸을 비워도 답에 그 질문이 들어 있으면 물은 것(2026-11-02 실측 답)
+    q = "요즘 저녁엔 뭐 하면서 쉬어요?"
+    assert chat.asked(q, "그런 날도 있죠. 요즘 저녁엔 뭐 하면서 쉬어요?")
+    assert chat.asked(q, "그런 날도 있죠. 요즘 저녁엔 뭐하면서 쉬어?")
+    assert not chat.asked(q, "점심은 뭐 드셨어요?") and not chat.asked(q, "그날 저녁은 어떻게 지나갔나요?")
+    assert chat.asked(voice.INVITE, "그렇군요. 되고 싶은 모습에 대해 잠깐 이야기해 볼까요?")
 
 
 @pytest.mark.parametrize("text,want", [
