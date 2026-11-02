@@ -1,22 +1,30 @@
 "use client";
-// 홈 화면에 설치 안내(설치형 웹앱). 소개 화면 · 설정 화면에서 보인다.
+// 홈 화면에 앱으로 받는 법(설치형 웹앱 = 우리 전용 앱). 받기 화면(Landing, bare) · 설정 · 알림 켜기에서 보인다.
 // 안드로이드 · PC 크롬: beforeinstallprompt 를 받아 '앱 설치' 버튼. 아이폰 · 아이패드 사파리: 공유 → 홈 화면에 추가 그림 안내.
 // 이미 설치한 앱으로 열었으면(display-mode: standalone) 아무것도 보이지 않는다.
 import { useEffect, useState } from "react";
 
 type Prompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 type Mode = "none" | "prompt" | "ios" | "android";
+export type Platform = "installed" | "ios" | "android" | "other";
 
-export default function InstallGuide() {
+// 지금 어디서 열었나(브라우저 밖에서만 부른다)
+export function platform(): Platform {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  if (matchMedia("(display-mode: standalone)").matches || nav.standalone) return "installed";
+  const ua = nav.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) return "ios";
+  return /Android/.test(ua) ? "android" : "other";
+}
+
+export default function InstallGuide({ bare }: { bare?: boolean }) {
   const [mode, setMode] = useState<Mode>("none");
   const [ev, setEv] = useState<Prompt | null>(null);
 
   useEffect(() => {
-    const nav = navigator as Navigator & { standalone?: boolean };
-    if (matchMedia("(display-mode: standalone)").matches || nav.standalone) return;
-    const ua = nav.userAgent;
-    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) setMode("ios");
-    else if (/Android/.test(ua)) setMode("android");
+    const p = platform();
+    if (p === "installed") return;
+    if (p === "ios" || p === "android") setMode(p);
     const got = (e: Event) => { e.preventDefault(); setEv(e as Prompt); setMode("prompt"); };
     const done = () => setMode("none");
     addEventListener("beforeinstallprompt", got);
@@ -30,23 +38,19 @@ export default function InstallGuide() {
     await ev.prompt();
     if ((await ev.userChoice).outcome === "accepted") setMode("none");
   };
+  const body = mode === "prompt" ? <button className="primary" onClick={install}>홈 화면에 설치</button>
+    : mode === "ios" ? (
+      <ol className="steps-num">
+        <li>사파리 아래 막대의 공유 버튼 <ShareIcon />을 눌러요.</li>
+        <li>목록을 내려 <b>홈 화면에 추가</b>를 눌러요.</li>
+        <li>오른쪽 위 <b>추가</b>를 눌러요.</li>
+      </ol>
+    ) : <p style={{ margin: 0 }}>크롬 오른쪽 위 메뉴(⋮)에서 <b>앱 설치</b>를 눌러요.</p>;
+  if (bare) return body;
   return (
-    <section className="card stack" aria-label="앱으로 설치">
+    <section className="card stack" aria-label="앱으로 받기">
       <h2>홈 화면에 앱으로 두기</h2>
-      {mode === "prompt" ? (
-        <>
-          <p className="sub" style={{ margin: 0 }}>스토어 없이 바로 설치돼요. 앱처럼 전체 화면으로 열려요.</p>
-          <button className="primary" onClick={install}>홈 화면에 설치</button>
-        </>
-      ) : mode === "ios" ? (
-        <ol style={{ margin: 0, paddingLeft: 20 }}>
-          <li>사파리 아래(아이패드는 위) 막대의 공유 버튼 <ShareIcon />을 눌러요.</li>
-          <li>목록을 내려 <b>&apos;홈 화면에 추가&apos;</b>를 눌러요.</li>
-          <li>오른쪽 위 <b>&apos;추가&apos;</b>를 누르면 홈 화면에 나의 우주가 생겨요.</li>
-        </ol>
-      ) : (
-        <p className="sub" style={{ margin: 0 }}>크롬 오른쪽 위 메뉴(⋮)에서 <b>&apos;홈 화면에 추가&apos;</b> 또는 <b>&apos;앱 설치&apos;</b>를 눌러요.</p>
-      )}
+      {body}
     </section>
   );
 }

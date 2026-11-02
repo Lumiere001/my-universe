@@ -73,7 +73,7 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     await expect(shown(page)).toContainText("정리 · 6월 20일“혼자는 충전, 함께는 성장”");
     await shown(page).getByRole("link", { name: "6월 20일" }).click();
     await page.waitForURL(/\/history\?id=e11$/);
-    await expect(page.getByRole("button", { name: "← 목록으로 돌아가기" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "← 목록" })).toBeVisible();
   });
 
   await test.step("글을 쓰면 바뀐 생각이 생긴다(그때 3/14 → 지금 10/3, 실선)", async () => {

@@ -1,21 +1,18 @@
 "use client";
-// 결과 카드(노트 한 장처럼, docs/DESIGN.md · 문구 docs/content/C-02). 한 화면에 가깝게(2026-10-28 동규):
-// 별지기 한마디(+ 안부 한 줄 · 버튼 한 줄) → 글 정보(제목 · 날 · 마음 날씨 · 해 › 작은 별 · 요약) → 있을 때만 작은 알림(닿은 순간 · 넓어진 우주 · 사람 질문 · 다음 질문)
-// → 나눠 보기: 생각 · 이어진 생각 · 같은 주제(같은 작은 별의 다른 기록) · 더 보기(관측 보고서 · 내려받기 · 불편한 점 한 줄) 중 하나만.
-// 숨긴 칸도 그려 두어(hidden) 누른 버튼 · 적던 글이 칸을 옮겨도 남는다.
+// 일기 한 편 보기(일기장 → 한 편 · 우주 → 정리한 결과). 문구 원본 docs/content/C-02. 순서와 이유는 아래 ResultCard 주석.
 // 위기 글도 같은 카드다(시험 단계, 2026-10-08 동규): 따로 뜨는 화면 · 단체 안내 없이, 한마디 아래 안부 한 줄만.
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { answerPersonQuestion, exportDiary, sendFeedback, why, type EntryResult, type Feedback, type Universe } from "@/lib/api";
 import { useKindName } from "@/lib/use";
-import { DayFix, WeatherSkip } from "./EntryTools";
+import { DayFix } from "./EntryTools";
 import { useKeeperName } from "./Keeper";
 import { localToday } from "./EntryTools";
 // 관측 보고서(WS15): '더 보기' 안에 관측 상태 · 한계 · 이 기록 JSON 내려받기.
 import UniverseGrew, { universeOnce } from "./UniverseGrew";
+import { Markdown } from "./WriteParts";
 
 const CONFLICT = new Set(["긴장", "어긋남", "목표 충돌"]);
-const day = (iso: string) => iso.slice(0, 10);
 const PRE = { whiteSpace: "pre-line" } as const;   // 요약 · 한마디의 줄바꿈을 그대로
 // 다짐 상태: 서버 값 → 보이는 말(docs/content/C-02)
 const VOW: Record<string, string> = { 열림: "진행 중", 지켜짐: "지켰어요", 그만둠: "그만뒀어요" };
@@ -104,9 +101,21 @@ function Quote({ text, pre = "", c = false, gold = false }: { text: string; pre?
   return <button type="button" className={cls + " clamp"} aria-expanded={open} onClick={() => setOpen(!open)}>{body}</button>;
 }
 
-type Tab = "orig" | "thoughts" | "links" | "same" | "more";
-const FROM: Record<string, string> = { 대화: "대화로 씀", 사진: "사진에서 읽음", "지난 글 묶음": "가져온 글", 텍스트: "직접 씀" };
+const FROM: Record<string, string> = { 대화: "별지기와 나눈 대화로 쓴 일기", 사진: "사진에서 읽은 일기", "지난 글 묶음": "가져온 일기", 텍스트: "직접 쓴 일기" };
+// 관계 → 처음 보는 사람도 읽히는 한 문장(온톨로지 관계 여섯). d = 지난 일기 날('10월 1일'), 없으면 '지난'
+const LINKED: Record<string, (d: string) => string> = {
+  이어짐: (d) => `${d} 일기와 이어지는 생각이에요`, 바뀜: (d) => `${d} 일기 때와 생각이 바뀌었어요`, 해소: (d) => `${d} 일기의 고민이 오늘 풀렸어요`,
+  긴장: (d) => `${d} 일기의 생각과 서로 당기고 있어요`, 어긋남: (d) => `${d} 일기에서 한 말과 오늘이 어긋나요`, "목표 충돌": (d) => `${d} 일기의 목표와 부딪혀요`,
+};
+const linked = (type: string, at?: string) => (LINKED[type] ?? ((d: string) => `${d} 일기와 ${type}`))(at ? shortDay(at) : "지난");
+const SHOW = 3;   // 확인해 주세요: 처음엔 셋만(나머지는 '더 확인하기')
+const longDay = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+const shortDay = (iso: string) => `${+iso.slice(5, 7)}월 ${+iso.slice(8, 10)}일`;
+const dayText = (d: string) => longDay.format(new Date(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)));
 
+// 일기 한 편(2026-11-02 동규): ① 내가 쓴 원문(종이 · 손글씨, 대화로 쓴 날은 정리본 → '대화 전체 보기'를 눌러야 대화)
+// → ② 별지기의 정리(요약 · 주제 · 한마디 · 찾은 생각 · 지난 기록과 이어진 곳 · 같은 주제) → ③ 확인해 주세요(헷갈린 것만).
+// 처음 보는 사람도 읽히게 칸마다 '누가 만든 것인지'를 이름으로 밝히고, 내부 말(말 거는 대상 · 실선/점선)은 쓰지 않는다.
 // onChange: 날짜를 고치면 고친 결과로 바꿔 그린다
 export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?: (r: EntryResult) => void }) {
   const kindName = useKindName();
@@ -114,9 +123,9 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
   const [vows, setVows] = useState<Record<string, string>>({});
   const [answered, setAnswered] = useState<Record<string, string>>({});
   const [askErr, setAskErr] = useState<Record<string, string>>({});
-  const [sel, setSel] = useState<[string, Tab] | null>(null);   // 고른 칸(다른 기록을 열면 처음 칸으로)
+  const [talk, setTalk] = useState<string | null>(null);   // 대화 전체를 펼친 기록 id
+  const [all, setAll] = useState<string | null>(null);     // 확인할 것을 다 펼친 기록 id
   const [uni, setUni] = useState<Universe | null>(null);
-  const uid = useId();
   useEffect(() => { universeOnce().then(setUni, () => setUni(null)); }, [r.id]);
 
   const thought = (id: string) => r.thoughts.find((t) => t.id === id);
@@ -132,191 +141,174 @@ export default function ResultCard({ r, onChange }: { r: EntryResult; onChange?:
   const star = me && uni!.stars.find((s) => s.id === me.star_id);
   const sun = me && uni!.suns.find((s) => s.id === me.sun_id);
   const same = me ? uni!.planets.filter((p) => p.star_id === me.star_id && p.id !== r.id).sort((a, b) => b.written_at.localeCompare(a.written_at)) : [];
-
-  const tabs = ([
-    ["orig", "원문", r.text !== undefined],
-    ["thoughts", `생각 ${r.thoughts.length}`, r.thoughts.length > 0],
-    ["links", `이어진 생각 ${r.relations.length}`, r.relations.length > 0],
-    ["same", `같은 주제 ${same.length}`, same.length > 0],
-    ["more", "더 보기", true],
-  ] as const).filter((x) => x[2]);
-  const on = tabs.find((x) => sel?.[0] === r.id && x[0] === sel[1])?.[0] ?? tabs[0][0];
-  const pane = (t: Tab) => ({ id: uid + t, hidden: on !== t });
+  const openVows = r.thoughts.filter((t) => t.state?.type === "다짐" && t.state.status === "열림");   // 답하면 그 자리에 '고마워요'
+  const guesses = r.relations.filter((x) => x.line === "점선" && x.needs_confirm);
+  const checks = r.day_check || r.people_questions.length > 0 || openVows.length > 0 || guesses.length > 0;
+  const day = r.day ?? r.written_at.slice(0, 10);
+  // 확인할 것(사람 이름 → 다짐 → 짐작한 연결 순, 확신 낮은 것부터)
+  const asks = [
+    ...r.people_questions.map((q) => (
+      <div key={q.id} className="rc-ask">
+        <p>{q.question}</p>
+        {answered[q.id] ? <p className="toast" role="status">“{answered[q.id]}”{ro(answered[q.id])} 기억할게요.</p> : (
+          <div className="row" role="group" aria-label={q.name + " 확인"}>
+            {q.options.map((o) => <button key={o} className="small" onClick={() => answer(q.id, o)}>{o}</button>)}
+            {askErr[q.id] && <span className="err" role="alert">{askErr[q.id]}</span>}
+          </div>
+        )}
+      </div>
+    )),
+    ...openVows.map((t) => (
+      <div key={t.id} className="rc-ask">
+        <p>이 다짐은 어떻게 됐어요? <span className="quote-inline">“{unquote(t.quote)}”</span></p>
+        <FeedbackButtons label="다짐 상태" target="vow" targetId={t.id} values={["지켰어요", "그만둘래요"]}
+          onDone={(v) => setVows({ ...vows, [t.id]: v === "지켰어요" ? "지켜짐" : "그만둠" })} />
+      </div>
+    )),
+    ...guesses.map((rel) => {
+      const p = past(rel.from);
+      return (
+        <div key={rel.id} className="rc-ask">
+          <p>{linked(rel.type, p?.written_at)}. 맞나요?</p>
+          {p && <Quote pre="그때 " text={rel.quote ?? p.text} />}
+          <FeedbackButtons label="이 연결이 맞나요" target="relation" targetId={rel.id} values={["맞아요", "아니에요"]} />
+        </div>
+      );
+    }),
+  ];
 
   return (
-    <div className="note rc" data-testid="result">
-      <h1 className="sr">정리한 결과</h1>
-      <p className="sr">이 글에서 찾은 생각과, 그 생각이 이어진 지난 기록을 원문 그대로 보여 드려요.</p>
-      {m && m.text && (
-        <section className="rc-voice" aria-label="별지기 한마디">
-          <div className="voice">
-            <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="sub">{keeper} · {m.tone}{m.mode === "comfort" ? " · 오늘은 위로만" : ""}</div>
-              <div className="bubble"><p style={{ margin: 0, ...PRE }}>{m.text}</p></div>
-              {m.check_in && <p className="sub" data-testid="check-in" style={{ margin: "6px 0 0", ...PRE }}>{m.check_in}</p>}
-              <div className="row rc-fb">
-                <FeedbackButtons label="한마디 피드백" target="message" targetId={r.id} values={["좋아요", "별로", "오늘은 위로만"]} />
-                <FeedbackButtons label="말의 세기" target="message" targetId={r.id} values={["오늘은 살살"]} />
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+    <div className="rc" data-testid="result">
 
-      {r.info && (
-        <section className="rc-head" aria-label="글 정보">
-          <h2>{r.title || "오늘의 글"}</h2>
-          <p className="sub rc-props" data-testid="entry-day">
-            {r.day ?? day(r.written_at)}{r.weather ? ` · 마음 날씨 ${r.weather}` : ""}{sun && star ? ` · ${sun.name} › ${star.name}` : ""} · 말 거는 대상: {r.info.addressee}
-          </p>
-          {r.day_check && <DayFix r={r} onFixed={onChange} />}
-          <p style={{ margin: 0, ...PRE }}>{r.info.summary}</p>
-          {r.info.events.length > 0 && <p className="sub" style={{ margin: "4px 0 0" }}>있었던 일: {r.info.events.join(" · ")}</p>}
-        </section>
-      )}
-
-      {r.reached.map((x) => (
-        <section key={x.aspiration_id + x.quote} className="rc-call g" aria-label="되고 싶은 모습에 닿은 순간">
-          <p style={{ margin: 0 }}><span className="badge g">북극성에 닿은 순간</span> “{unquote(x.quote)}”</p>
-          <p className="sub" style={{ margin: "2px 0 0" }}>{x.message}</p>
-        </section>
-      ))}
-
-      <UniverseGrew r={r} />
-
-      {r.people_questions.map((q) => (
-        <section key={q.id} className="rc-call row" aria-label="사람 질문">
-          <p style={{ margin: 0 }}>{q.question}</p>
-          {answered[q.id] ? <p className="toast" role="status" style={{ margin: 0 }}>“{answered[q.id]}”{ro(answered[q.id])} 기억할게요.</p> : (
-            <div className="row" role="group" aria-label={q.name + " 확인"} style={{ gap: 4 }}>
-              {q.options.map((o) => (
-                <button key={o} className="small" onClick={() => answer(q.id, o)}>{o}</button>
-              ))}
-              {askErr[q.id] && <span className="err" role="alert">{askErr[q.id]}</span>}
-            </div>
+      {/* ① 원문 */}
+      <section aria-label="원문" className="stack">
+        <article className="paper read">
+          <p className="read-meta" data-testid="entry-day">{dayText(day)}{r.weather ? ` · ${r.weather}` : ""}</p>
+          <h1>{r.title || "제목 없는 일기"}</h1>   {/* 종이 위 제목이 이 화면의 제목 */}
+          {r.text !== undefined && <div className="read-text"><Markdown text={r.text} /></div>}
+        </article>
+        <div className="rc-src">
+          <span className="sub">{FROM[r.source ?? "텍스트"] ?? r.source}</span>
+          {r.source === "대화" && !!r.talk?.length && (
+            <button type="button" className="small" aria-expanded={talk === r.id} onClick={() => setTalk(talk === r.id ? null : r.id)}>
+              {talk === r.id ? "대화 접기" : "대화 전체 보기"}</button>
           )}
-        </section>
-      ))}
-
-      {r.next_question && r.next_question.kind !== "none" && (
-        <section className="rc-call" aria-label="다음 질문">
-          <div className="voice">
-            <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, ...PRE }}>{r.next_question.text}</p>
-              {r.next_question.kind === "aspiration" && <p style={{ margin: "6px 0 0" }}><Link href="/aspiration">되고 싶은 모습 적어 보기</Link></p>}
-              {r.next_question.kind === "weather" && <p className="sub" style={{ margin: "6px 0 0" }}>다음 글을 쓸 때 마음 날씨를 골라 주세요. 고르지 않아도 괜찮아요.</p>}
-              {r.next_question.kind === "weather" && <WeatherSkip />}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="seg rc-tabs" role="group" aria-label="나눠 보기">
-        {tabs.map(([k, name]) => (
-          <button key={k} type="button" className="small" aria-pressed={on === k} aria-controls={uid + k} onClick={() => setSel([r.id, k])}>{name}</button>
-        ))}
-      </div>
-
-      {r.text !== undefined && (
-        <section className="rc-pane stack" aria-label="원문" {...pane("orig")}>
-          <p style={{ margin: 0 }}><span className="badge">{FROM[r.source ?? "텍스트"] ?? r.source}</span></p>
-          <p className="orig-text" style={{ margin: 0, ...PRE }}>{r.text}</p>
-          {r.source === "대화" && (r.talk?.length ? (
-            <details className="rc-talk">
-              <summary>그날 대화 {r.talk.length}줄</summary>
-              {r.talk.map((t, i) => (
-                <p key={i} className={t.role === "user" ? "me" : "sub"} style={{ margin: "6px 0 0", ...PRE }}>
-                  <b>{t.role === "user" ? "나" : keeper}</b> {t.text}</p>
-              ))}
-            </details>
-          ) : <p className="sub" style={{ margin: 0 }}>이 일기는 대화가 남아 있지 않아요(대화를 보관하기 전에 쓴 일기).</p>)}
-        </section>
-      )}
-
-      {r.thoughts.length > 0 && (
-        <section className="rc-pane" aria-label="생각 목록" {...pane("thoughts")}>
-          {r.thoughts.map((t) => (
-            <article key={t.id} className="rc-item">
-              <p style={{ margin: 0 }}>
-                <span className="badge v">{kindName(t.kind)}{t.kind === "기타" && t.other ? `: ${t.other}` : ""}</span>
-                {t.grateful && <> <span className="badge g">감사</span></>} {t.text}
-                {[t.certainty, t.value && `가치 · ${t.value}`, t.topic].filter(Boolean).map((x) => <span key={x} className="badge rc-meta">{x}</span>)}
-              </p>
-              <Quote text={t.quote} />
-              {t.self_change && <p className="sub" style={{ margin: 0 }}>스스로 쓴 변화: {t.self_change}</p>}
-              {t.state?.type === "다짐" && (
-                <div className="row" style={{ marginTop: 4 }}>
-                  <span className="sub">금빛 고리 · 다짐 {VOW[vows[t.id] ?? t.state.status] ?? t.state.status}{t.state.mistake ? " · 지키지 못한 날이 있었어요" : ""}</span>
-                  {t.state.status === "열림" && !vows[t.id] && (
-                    <FeedbackButtons label="다짐 상태" target="vow" targetId={t.id} values={["지켰어요", "그만둘래요"]}
-                      onDone={(v) => setVows({ ...vows, [t.id]: v === "지켰어요" ? "지켜짐" : "그만둠" })} />
-                  )}
-                </div>
-              )}
-            </article>
-          ))}
-        </section>
-      )}
-
-      {r.relations.length > 0 && (
-        <section className="rc-pane links" aria-label="이어진 지난 생각" {...pane("links")}>
-          {r.relations.map((rel) => {
-            const p = past(rel.from), t = thought(rel.to), c = CONFLICT.has(rel.type);
-            return (
-              <article key={rel.id} className="rc-item">
-                <div className="row" style={{ gap: 6 }}>
-                  <span className={"badge " + (c ? "o" : "v")}>{rel.type}</span>
-                  <span className="badge">{rel.line === "실선" ? "실선 · 글에 직접 씀" : "점선 · AI 추정"}</span>
-                  {rel.cross_domain && <span className="badge">다른 영역</span>}
-                  {p && p.entry_id !== r.id && <Link className="sub" href={`/history?id=${encodeURIComponent(p.entry_id)}`}>그때 글 열기</Link>}
-                </div>
-                {p && <Quote pre={`그때 ${day(p.written_at)}: `} text={rel.quote ?? p.text} c={c} />}
-                {t && <Quote pre="지금: " text={t.quote} c={c} />}
-                <p className="sub" style={{ margin: 0 }}>{rel.explanation}</p>
-                {rel.line === "점선" && rel.needs_confirm && (
-                  <FeedbackButtons label="이 연결이 맞나요" target="relation" targetId={rel.id} values={["맞아요", "아니에요"]} />
-                )}
-              </article>
-            );
-          })}
-        </section>
-      )}
-
-      {same.length > 0 && (
-        <section className="rc-pane" aria-label="같은 주제의 다른 기록" {...pane("same")}>
-          <p style={{ margin: 0 }}><b>‘{star?.name}’의 다른 기록 {same.length}편</b></p>
-          <p className="sub" style={{ margin: "2px 0 8px" }}>같은 작은 별(주제)에 모인 기록이에요. AI가 이어 준 연결은 아니에요.</p>
-          <ul className="rc-list">
-            {same.map((p) => (
-              <li key={p.id}><Link href={`/history?id=${encodeURIComponent(p.id)}`}>{p.title || "제목 없는 글"}</Link> <span className="sub">{day(p.written_at)}</span></li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <div className="rc-pane" {...pane("more")}>
-        {r.observation && (
-          <section className="stack" aria-label="관측 보고서" data-testid="observation">
-            <h2>관측 보고서</h2>
-            <p className="sub" style={{ margin: 0 }}>이 글을 어떻게 읽었는지와, 그렇게 읽은 데서 알아 둘 점이에요.</p>
-            <p style={{ margin: 0 }}>이 글의 흐름 <span className="badge v">{r.observation.state}</span></p>
-            {r.observation.limits.length > 0 && (
-              <div>
-                <span className="sub">알아 둘 점</span>
-                <ul className="sub" style={{ margin: "4px 0 0", paddingLeft: 18 }}>
-                  {r.observation.limits.map((x) => <li key={x}>{x}</li>)}
-                </ul>
-              </div>
-            )}
-            <DownloadJson id={r.id} label="이 기록 파일로 내려받기(JSON)" />
+        </div>
+        {talk === r.id && r.talk && (
+          <section className="rc-talk" aria-label="그날 대화">
+            {r.talk.map((t, i) => t.role === "user"
+              ? <div key={i} className="bubble me"><p style={{ margin: 0, ...PRE }}>{t.text}</p></div>
+              : <div key={i} className="voice"><span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
+                  <div className="bubble"><p style={{ margin: 0, ...PRE }}>{t.text}</p></div></div>)}
           </section>
         )}
-        <section aria-label="불편한 점" style={{ marginTop: 16 }}>
-          <OneLine target="entry" targetId={r.id} />
+      </section>
+
+      {/* ② 별지기의 정리 */}
+      {(r.info || m?.text || r.thoughts.length > 0) && (
+        <section className="rc-sec" aria-labelledby={`ai-${r.id}`}>
+          <h2 id={`ai-${r.id}`}>{keeper}의 정리</h2>
+          <p className="sub rc-who">이 일기를 읽고 {keeper}가 정리한 것이에요.</p>
+          {r.info && <p className="rc-sum" style={PRE}>{r.info.summary}</p>}
+          {sun && star && <p className="sub rc-topic">주제 · {sun.name} › {star.name}</p>}
+          <UniverseGrew r={r} />
+          {r.reached.map((x) => (
+            <p key={x.aspiration_id + x.quote} className="rc-call g">되고 싶은 모습에 닿은 순간 · “{unquote(x.quote)}”<span className="sub"> {x.message}</span></p>
+          ))}
+          {m?.text && <KeeperWord text={m.text} checkIn={m.check_in} who={keeper} tone={m.tone} />}
+
+          {r.thoughts.length > 0 && (
+            <details className="rc-more">
+              <summary>찾은 생각 {r.thoughts.length}개</summary>
+              <ul aria-label="생각 목록">
+                {r.thoughts.map((t) => (
+                  <li key={t.id}>
+                    <span className="badge v">{kindName(t.kind)}{t.kind === "기타" && t.other ? `: ${t.other}` : ""}</span> {t.text}
+                    {t.self_change && <span className="sub"> · 스스로 쓴 변화: {t.self_change}</span>}
+                    {t.state?.type === "다짐" && <span className="sub"> · 다짐 {VOW[vows[t.id] ?? t.state.status] ?? t.state.status}</span>}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {r.relations.length > 0 && (
+            <details className="rc-more">
+              <summary>지난 일기와 이어진 곳 {r.relations.length}곳</summary>
+              <div aria-label="이어진 지난 생각">
+                {r.relations.map((rel) => {
+                  const p = past(rel.from), t = thought(rel.to), c = CONFLICT.has(rel.type);
+                  return (
+                    <article key={rel.id} className="rc-item">
+                      <p className="rc-link">
+                        <b className={c ? "o" : ""}>{linked(rel.type, p?.written_at)}</b>
+                        {rel.line === "점선" && <span className="sub"> · {keeper}의 짐작</span>}
+                      </p>
+                      {p && <Quote pre="그때 " text={rel.quote ?? p.text} c={c} />}
+                      {t && <Quote pre="오늘 " text={t.quote} c={c} />}
+                      <p className="sub" style={{ margin: 0 }}>{rel.explanation}</p>
+                      {p && p.entry_id !== r.id && <Link className="sub" href={`/history?id=${encodeURIComponent(p.entry_id)}`}>그날 일기 열기</Link>}
+                    </article>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+          {same.length > 0 && (
+            <details className="rc-more">
+              <summary>같은 주제의 다른 일기 {same.length}편</summary>
+              <ul className="rc-list" aria-label="같은 주제의 다른 기록">
+                {same.map((p) => (
+                  <li key={p.id}><Link href={`/history?id=${encodeURIComponent(p.id)}`}>{p.title || "제목 없는 일기"}</Link> <span className="sub">{shortDay(p.written_at)}</span></li>
+                ))}
+              </ul>
+            </details>
+          )}
         </section>
-      </div>
+      )}
+
+      {/* ③ 확인해 주세요 */}
+      {checks && (
+        <section className="rc-sec" aria-labelledby={`chk-${r.id}`}>
+          <h2 id={`chk-${r.id}`}>확인해 주세요</h2>
+          <p className="sub rc-who">{keeper}가 헷갈린 곳이에요. 알려 주면 다음부터 맞춰요.</p>
+          {r.day_check && <DayFix r={r} onFixed={onChange} />}
+          {asks.slice(0, all === r.id ? asks.length : SHOW)}
+          {asks.length > SHOW && all !== r.id && (
+            <button type="button" className="small link" onClick={() => setAll(r.id)}>남은 확인 {asks.length - SHOW}개 더 보기</button>
+          )}
+        </section>
+      )}
+
+      <details className="rc-more rc-extra">
+        <summary>더 보기</summary>
+        {r.observation && (
+          <section className="stack" aria-label="관측 보고서" data-testid="observation">
+            <p style={{ margin: 0 }}>이 글을 읽은 방식 <span className="badge v">{r.observation.state}</span></p>
+            {r.observation.limits.length > 0 && (
+              <ul className="sub" style={{ margin: 0, paddingLeft: 18 }}>
+                {r.observation.limits.map((x) => <li key={x}>{x}</li>)}
+              </ul>
+            )}
+            <DownloadJson id={r.id} label="이 일기 내려받기" />
+          </section>
+        )}
+        <OneLine target="entry" targetId={r.id} />
+      </details>
     </div>
+  );
+}
+
+// 별지기 한마디: 세 줄까지 보이고 누르면 다(긴 한마디가 화면을 먼저 차지하지 않게)
+function KeeperWord({ text, checkIn, who, tone }: { text: string; checkIn: string | null; who: string; tone: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="voice rc-word" aria-label="별지기 한마디" data-tone={tone}>
+      <span className="who" aria-hidden>{who.slice(0, 1)}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <button type="button" className="bubble" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="sr">{who} 한마디: </span><span className="clamp3" style={PRE}>{text}</span></button>
+        {checkIn && <p className="sub" data-testid="check-in" style={{ margin: "6px 0 0", ...PRE }}>{checkIn}</p>}
+      </div>
+    </section>
   );
 }

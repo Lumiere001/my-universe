@@ -89,20 +89,29 @@ def last(ev):
 ##################################################
 
 def test_opening_by_situation():
+    """첫 말은 늘 가볍게 '오늘 하루'(2026-11-02 동규). 지어 둔 질문 · 되고 싶은 모습 권하기는 topic 으로(대화 중 한 번)."""
     first = {"kind": "first", "text": voice.FIRST_QUESTIONS[0], "vow": None}
     vow = {"kind": "free", "text": "다음엔 뭘 써 볼까요?", "vow": {"thought_id": "t1", "text": "매일 30분 걷겠다", "overdue": True}}
     asked = {"kind": "free", "text": "요즘 진로 고민은 어떻게 돼 가요?", "vow": None}
     none = {"kind": "none", "text": "", "vow": None}
     lead = {"day": "2026-10-01", "title": "아침 걷기 시작", "summary": "걷기", "quotes": ["매일 아침 30분 걷기를 하겠다"]}
-    assert chat.opening(first) == {"kind": "first", "text": voice.FIRST_QUESTIONS[0], "sources": []}   # 첫 만남: 정해 둔 질문
-    o = chat.opening(vow)   # PRD v9 ②: 다짐을 첫 말에 대놓고 인용하지 않는다(다짐은 숨은 이유 후보로 한마디가 첫 질문을 지어 둠)
-    assert o == {"kind": "question", "text": vow["text"], "sources": []} and "매일 30분 걷겠다" not in o["text"]
-    assert chat.opening(asked) == {"kind": "question", "text": asked["text"], "sources": []}         # 남겨 둔 질문
-    assert chat.opening(none, invite=True)["text"] == voice.INVITE                                  # 되고 싶은 모습 계기
-    assert chat.opening(none)["kind"] == "free"
-    o = chat.opening(vow, from_entry=lead)                                                          # 지난 기록에서 시작이 먼저
+    light = {"kind": "free", "text": chat.FREE, "sources": []}
+    assert chat.opening(first) == {**light, "topic": None}                                          # 첫 만남도 가볍게
+    o = chat.opening(vow)
+    assert o == {**light, "topic": vow["text"]} and "매일 30분 걷겠다" not in o["text"]               # 다짐은 첫 말에 없음
+    assert chat.opening(asked) == {**light, "topic": asked["text"]}                                  # 남겨 둔 질문은 대화 중에
+    assert chat.opening(none, invite=True) == {**light, "topic": voice.INVITE}                       # 되고 싶은 모습 권하기도
+    assert chat.opening(none) == {**light, "topic": None}
+    o = chat.opening(vow, from_entry=lead)                                                          # 사용자가 고른 '이어 하기'는 첫 말로
     assert o["kind"] == "continue" and "2026-10-01" in o["text"] and "아침 걷기 시작" in o["text"]
-    assert o["sources"] == lead["quotes"]
+    assert o["sources"] == lead["quotes"] and o["topic"] is None
+
+
+def test_topic_rules():
+    assert chat.with_topic(["지난 기록 떠올리기"], "요즘 저녁엔 뭐 해요?")[-1] == "이어 둔 질문"
+    for sit in (["무거운 날"], ["대화를 마칠 때"], ["지난 기록 물음"], ["어디로 가자"]):
+        assert chat.with_topic(sit, "요즘 저녁엔 뭐 해요?") == sit                                  # 이런 턴엔 꺼내지 않음
+    assert chat.with_topic([], "") == []
 
 
 @pytest.mark.parametrize("text,want", [
@@ -170,7 +179,7 @@ def test_draft_checks_and_fallback(monkeypatch):
 
 def test_start_and_turn_without_real_names(client, env, talk):  # noqa: F811
     c = start(client)
-    assert c["turns"] == [{"role": "keeper", "kind": "first", "text": voice.FIRST_QUESTIONS[0], "at": c["turns"][0]["at"]}]
+    assert c["turns"] == [{"role": "keeper", "kind": "free", "text": chat.FREE, "at": c["turns"][0]["at"]}]   # 첫 말은 늘 가볍게
     talk.queue.append(lambda msgs: {"reply": "그랬군요. " + msgs[-1]["content"].split("지금 사용자 말:\n")[1].split()[0]
                                     + " 함께 걸어서 어땠어요?", "found": False})
     ev = say(client, c["id"], "민준이랑 아침에 30분 걸었다.")
@@ -196,7 +205,7 @@ def test_start_and_turn_without_real_names(client, env, talk):  # noqa: F811
 def test_turn_cites_real_past_and_rejects_made_up_quote(client, env, talk):  # noqa: F811
     write(client, *DAY1, "2026-10-01T22:00:00+09:00")
     c = start(client)
-    assert c["turns"][0]["kind"] in ("vow", "question", "free")                  # 기록이 있으면 첫 만남 질문이 아님
+    assert c["turns"][0]["text"] == chat.FREE                                     # 기록이 있어도 첫 말은 가볍게
     talk.queue.append(lambda msgs: {"reply": f"10/1에 '{past_quote(msgs)}'라고 하셨는데, 오늘도 걸었네요. 어땠어요?",
                                     "found": False})
     v = last(say(client, c["id"], "오늘 아침에도 걸었다."))

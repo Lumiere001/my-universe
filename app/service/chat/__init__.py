@@ -81,21 +81,16 @@ def _tone(t):
 
 def opening(p, from_entry=None, invite=False):
     """서비스가 먼저 묻는 첫 말(§6.2, 즉석에서 지어내지 않음). p = 쓰기 화면 말풍선(app.api.write.prompt)의 결과.
-    from_entry: '이 이야기 이어 하기'로 연 기록 {"day", "title", "summary", "quotes"}. invite: 되고 싶은 모습을 물을 때.
-    → {"kind": "continue|vow|first|question|aspiration|free", "text", "sources": 별지기가 인용해도 되는 지난 글}"""
+    첫 말은 늘 가볍게 '오늘 하루'(2026-11-02 동규 「지난 기록부터 말고 오늘 하루 어땠는지 간편하게」). 미리 지어 둔 질문
+    (숨은 이유 첫 질문 · 되고 싶은 모습 권하기)은 topic 으로 넘겨 대화 중 사용자 말과 닿을 때 한 번 묻는다(PRD v9 Q6 개정, 동규 A).
+    from_entry: '이 이야기 이어 하기'로 연 기록 {"day", "title", "summary", "quotes"}(사용자가 고른 것이라 첫 말로). invite: 되고 싶은 모습을 물을 때.
+    → {"kind": "continue|free", "text", "sources": 별지기가 인용해도 되는 지난 글, "topic": 대화 중 한 번 물을 질문 | None}"""
     if from_entry:
         name = from_entry.get("title") or (from_entry.get("summary") or "")[:40] or "그날"
         return {"kind": "continue", "text": f"{from_entry['day']}에 쓴 '{name}' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?",
-                "sources": list(from_entry.get("quotes") or [])}
-    if p.get("kind") == "first":
-        return {"kind": "first", "text": p["text"], "sources": []}
-    if p.get("kind") == "aspiration" and p.get("text"):
-        return {"kind": "aspiration", "text": p["text"], "sources": []}
-    if p.get("kind") in ("free", "weather") and p.get("text"):
-        return {"kind": "question", "text": p["text"], "sources": []}
-    if invite:
-        return {"kind": "aspiration", "text": voice.INVITE, "sources": []}
-    return {"kind": "free", "text": FREE, "sources": []}
+                "sources": list(from_entry.get("quotes") or []), "topic": None}
+    topic = p.get("text") if p.get("kind") in ("free", "aspiration") and p.get("text") else voice.INVITE if invite else None
+    return {"kind": "free", "text": FREE, "sources": [], "topic": topic}
 
 
 def mask_people(people, texts):
@@ -154,6 +149,13 @@ def situations(text, *, crisis=False, hour=None, recall=False, wrap=False, past=
     return out
 
 
+def with_topic(sit, topic):
+    """미리 지어 둔 질문(topic)이 있는 대화: 사용자 말과 닿을 때 한 번. 무거운 날 · 위기 · 지난 기록 물음 · 마칠 때 · '어디로 가자' 턴엔 꺼내지 않는다."""
+    if not topic or any(x in sit for x in ("무거운 날", "지난 기록 물음", "대화를 마칠 때")) or any(x.startswith("어디로 가자") for x in sit):
+        return sit
+    return [*sit, "이어 둔 질문"]
+
+
 def with_direction(sit, direction):
     """숨은 이유가 멀어짐인 대화(PRD v9 Q5-1): 사용자 말이 닿으면 한 번, 마칠 때까지 못 건넸으면 마치기 전에 한 번.
     무거운 날 · 위기엔 꺼내지 않는다."""
@@ -178,6 +180,9 @@ LINES = {
               "멀어졌다 · 못 하고 있다 같은 판정은 하지 않는다.",
     "어디로 가자(마치기 전)": "대화를 마치기 전 한 번: 오늘 이야기를 한 줄로 되짚은 뒤, 이 사람이 정한 작은 걸음(direction)을 따옴표로 "
                        "글자 그대로 인용해 묻는 꼴로 가볍게 건넨다(판정 없이). 이때만 질문 하나를 넣어도 된다.",
+    "이어 둔 질문": "지난 일기를 보고 지어 둔 질문(topic)이 있다. 사용자의 이번 말이 그 질문과 닿을 때만 이번 답에서 한 번, 오늘 이야기에 "
+               "맞게 자연스럽게 바꿔 묻는다(질문은 이것 하나). 닿지 않으면 꺼내지 않는다. 왜 묻는지(지난번 · 한동안 · 다짐 같은 이유)는 "
+               "드러내지 않는다. 물었으면 답 형식의 topic 을 true 로.",
     "긴 이야기": "사용자가 한 번에 긴 이야기를 들려줬다(말로 한 녹음 등): 다 되짚지 않는다. 들었다는 걸 한 문장으로 알리고, "
               "가장 마음이 실린 한 가지만 받아 그것만 짧게 이어 묻는다. 모두 세 문장 · 200자 안.",
 }
@@ -213,12 +218,15 @@ def messages(ctx, sit, avoid=()):
         sl.append(o["crisis"]["voice"] + " 이번 답에는 질문 · 제안을 넣지 않는다.")
     if sl:
         sys.append("[지금 상황]\n" + voice._lines(sl))
-    sys.append("[답 형식] JSON 하나만: {\"reply\": 별지기 말, \"found\": 지난 기록 물음에 맞는 기록을 찾았으면 true, 아니면 false}")
+    sys.append("[답 형식] JSON 하나만: {\"reply\": 별지기 말, \"found\": 지난 기록 물음에 맞는 기록을 찾았으면 true, 아니면 false"
+               + (", \"topic\": topic 질문을 이번 답에서 물었으면 true, 아니면 false" if "이어 둔 질문" in sit else "") + "}")
     if avoid:
         sys.append("[다시 쓰기] 지난 답에 문제가 있었다. 고칠 것:\n" + voice._lines(avoid))
     u = {k: ctx[k] for k in ("summary",) if ctx.get(k)}
     if any(x.startswith("어디로 가자") for x in sit):
         u["direction"] = ctx["direction"]
+    if "이어 둔 질문" in sit:
+        u["topic"] = ctx["topic"]
     if ctx.get("past"):
         u["past"] = ctx["past"][:PAST_IN_PROMPT]
     u["turns"] = (ctx.get("turns") or [])[-TURNS_IN_PROMPT:]
@@ -290,17 +298,19 @@ def respond(ctx):
     → {"text", "kind": "reply|recall|wrap", "mode": "normal|comfort", "tone", "check_in", "found", "checks": [문제 개수…]}"""
     ctx = voice.soften(ctx)   # 위기 턴은 팩폭도 다정하게
     tone, crisis = ctx.get("tone"), bool(ctx.get("crisis"))
-    sit = with_direction(situations(ctx.get("text"), crisis=crisis, hour=ctx.get("hour"), recall=ctx.get("recall"),
-                                    wrap=ctx.get("wrap"), past=ctx.get("past"), first=ctx.get("first"),
-                                    comfort_only=ctx.get("comfort_only")), ctx.get("direction"))
+    sit = with_topic(with_direction(situations(ctx.get("text"), crisis=crisis, hour=ctx.get("hour"), recall=ctx.get("recall"),
+                                               wrap=ctx.get("wrap"), past=ctx.get("past"), first=ctx.get("first"),
+                                               comfort_only=ctx.get("comfort_only")), ctx.get("direction")), ctx.get("topic"))
     kind = "wrap" if ctx.get("wrap") else "recall" if ctx.get("recall") else "reply"
     base = {"kind": kind, "mode": "comfort" if "무거운 날" in sit else "normal", "tone": tone,
             "check_in": voice.check_in_line(tone, ctx.get("past_check_ins")) if crisis or ctx.get("crisis_unsure") else ""}
     if kind == "recall" and not ctx.get("past"):   # 찾을 기록이 없으면 Solar 를 부르지 않고 없다고 답한다
         return {**base, "text": NOT_FOUND[_tone(tone)], "found": False, "checks": []}
-    avoid, log, text, found = [], [], "", False
+    avoid, log, text, found, used = [], [], "", False, False
     for _ in range(3 if "긴 이야기" in sit else 2):   # 긴 이야기는 한 번 더(e2e 에서 두 번 다 걸려 기본 문장이 되던 것, WS21)
-        text, found = parse(llm.chat(messages(ctx, sit, avoid), temperature=0.2 if kind == "recall" else 0.5))
+        raw = llm.chat(messages(ctx, sit, avoid), temperature=0.2 if kind == "recall" else 0.5)
+        text, found = parse(raw)
+        used = "이어 둔 질문" in sit and bool(re.search(r'"topic"\s*:\s*true', raw or ""))   # 이어 둔 질문을 건넸나(대화에서 한 번만)
         if kind == "recall":
             if found is None:   # JSON 없이 글만 옴: 지난 기록 원문을 그대로 인용했을 때만 찾은 것(인용 대조가 근거)
                 found = cited(text, ctx.get("past"))
@@ -332,7 +342,7 @@ def respond(ctx):
                 else "" if kind == "wrap" else fallback(tone, ctx.get("past_replies"), crisis, "무거운 날" in sit))
     if kind == "wrap":
         text = f"{text}\n{wrap_line(tone)}".strip()
-    return {**base, "text": text, "found": bool(found), "checks": log}
+    return {**base, "text": text, "found": bool(found), "topic_used": used and bool(text), "checks": log}
 
 
 ##################################################

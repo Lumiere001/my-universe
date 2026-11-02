@@ -12,6 +12,7 @@ export const siteMeta: Metadata = {
   title, description, applicationName: title,
   manifest: "/manifest.webmanifest",
   icons: { icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192" }], apple: "/icons/apple-touch-icon.png" },
+  // 상태 막대는 막힌 검정(black): 비치는 막대(black-translucent)는 iOS 26 홈 화면 앱에서 머리줄이 흐려지고 아래 탭 밑이 빔(2026-11-02 시뮬레이터)
   appleWebApp: { capable: true, title, statusBarStyle: "black" },
   openGraph: { type: "website", siteName: title, locale: "ko_KR", title, description, images: [image] },
   twitter: { card: "summary_large_image", title, description, images: [image.url] },

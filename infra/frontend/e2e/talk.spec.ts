@@ -30,13 +30,14 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
     await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();   // 칸이 비면 보내기는 꺼짐(답이 붙음)
   };
 
-  await test.step("별지기가 먼저 묻는다(숨은 이유 첫 질문 — 다짐을 대놓고 인용하지 않음, PRD v9 ②)", async () => {
+  await test.step("별지기가 먼저 가볍게 묻는다(오늘 하루, 2026-11-02) — 지어 둔 질문은 대화 중에", async () => {
     await page.goto("/");   // 로그인 뒤 첫 화면 = 이야기 탭(대화), 직접 쓰기는 위쪽 단추
     await expect(page.getByRole("heading", { name: "이야기하기", level: 1 })).toBeAttached();
     const tabs = page.getByRole("navigation", { name: "탭", exact: true });
     await expect(tabs.getByRole("link", { name: "이야기", exact: true })).toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("link", { name: "직접 쓰기" })).toHaveAttribute("href", "/write");
-    await expect(talk).toContainText("요즘 저녁엔 뭐 하면서 쉬어요?");
+    await expect(talk).toContainText("오늘 하루는 어땠어요?");
+    await expect(talk).not.toContainText("요즘 저녁엔");
     await expect(talk).not.toContainText("관심 있는 팀 세 곳을 직접 찾아보겠다.");
     await shot("01-start");
   });
@@ -44,6 +45,7 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
   await test.step("세 턴 → 지금까지 정리 → 끝낼 말에 정리 제안", async () => {
     await say("오늘 드디어 팀 한 곳에 메일을 보냈어.", 1);
     await say("답장은 아직인데 보내고 나니 후련했어.", 2);
+    await expect(talk).toContainText("요즘 저녁엔 뭐 하면서 쉬어요?");                         // 지어 둔 질문은 대화 중 한 번
     await say("부모님께는 아직 말 못 했어.", 3);
     await page.getByText("지금까지 정리").click();
     await expect(page.locator("main details")).toContainText("메일을 보냈어");

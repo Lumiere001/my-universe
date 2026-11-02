@@ -461,17 +461,19 @@ const talks = new Map<string, Conversation>();
 const REPLIES = ["그랬군요. 그때 마음은 어땠어요?", "지난 9/20에 '팀 세 곳을 직접 찾아보겠다'고 하셨는데, 오늘 이야기와 이어지네요. 요즘은 어때요?",
   "이야기해 줘서 고마워요. 그다음엔 어떻게 됐어요?"];
 let talkSeq = 1;
+const TOPIC = "그 얘기 들으니 궁금해졌어요. 요즘 저녁엔 뭐 하면서 쉬어요?";   // 숨은 이유 질문(PRD v9 ②): 다짐을 대놓고 인용하지 않는다
 const now = () => new Date().toISOString();
 export async function listTalks() { await sleep(100); return { conversations: [...talks.values()].reverse().map((c) => structuredClone(c)) }; }
 export async function startTalk(from?: string): Promise<Conversation> {
   await sleep(150);
   for (const [k, c] of talks) if (!c.turn_count) talks.delete(k);
   const p = from && universe.planets.find((x) => x.id === from);
+  // 첫 말은 늘 가볍게(2026-11-02). 숨은 이유 질문은 대화 중 한 번 — 가짜 데이터에선 둘째 답에서 묻고, 이유 한 줄은 그 뒤에 보인다
   const text = p ? `${p.written_at.slice(0, 10)}에 쓴 '${p.title}' 이야기를 이어 해 볼까요? 그 뒤로 어떻게 지냈어요?`
-    : "요즘 저녁엔 뭐 하면서 쉬어요?";   // 숨은 이유 첫 질문(PRD v9 ②): 다짐을 대놓고 인용하지 않는다
-  const reason = p ? null : `저녁 이야기를 물은 건, '${prompt.vow?.text ?? "바쁘다는 생각이 들면 10분만 먼저 하겠다"}'고 했던 게 떠올라서였어요.`;
+    : "오늘 하루는 어땠어요? 떠오르는 것부터 편하게 이야기해 줘요.";
+  const reason = null;
   const c: Conversation = { id: "c" + talkSeq++, created_at: now(), updated_at: now(), summary: "", from_entry: p ? from! : null,
-    entry_id: null, turn_count: 0, wrap: false, reason, turns: [{ role: "keeper", kind: p ? "continue" : "question", text, at: now() }] };
+    entry_id: null, turn_count: 0, wrap: false, reason, turns: [{ role: "keeper", kind: p ? "continue" : "free", text, at: now() }] };
   talks.set(c.id, c);
   return structuredClone(c);
 }
@@ -498,7 +500,9 @@ export async function sayTalk(id: string, text: string, onProgress: (p: TalkProg
   const crisis = CRISIS.some((w) => text.includes(w)), wrap = /그만|여기까지|잘게/.test(text) && !crisis;
   const reply = crisis ? "많이 힘들었겠어요. 이렇게 털어놓아 줘서 고마워요. 저는 여기 있을게요."
     : wrap ? "오늘은 진로 이야기를 차분히 꺼내 줬네요.\n여기까지 정리해 둘까요? '대화 마치고 정리하기'를 누르면 오늘 이야기를 일기로 정리해요."
+    : !c.from_entry && c.turn_count === 1 ? TOPIC   // 지어 둔 질문은 대화 중 한 번(둘째 답)
     : REPLIES[c.turn_count % REPLIES.length];
+  if (reply === TOPIC) c.reason = `저녁 이야기를 물은 건, '${prompt.vow?.text ?? "바쁘다는 생각이 들면 10분만 먼저 하겠다"}'고 했던 게 떠올라서였어요.`;
   c.turns.push({ role: "user", text, at: now(), via },
     { role: "keeper", kind: wrap ? "wrap" : "reply", text: reply, mode: crisis ? "comfort" : "normal", tone: settings.tone, check_in: crisis ? CHECK_IN : null, at: now() });
   c.turn_count += 1; c.wrap = wrap; c.updated_at = now();

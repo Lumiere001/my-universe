@@ -30,6 +30,17 @@ const ROOTS = ["/", "/talk", "/write", "/history", "/universe", "/insight"];   /
 const PUBLIC = ["/privacy", "/terms"];
 const OPEN = [...PUBLIC, "/consent", "/settings"];   // 동의 전에도 열리는 화면(설정 = 로그아웃 · 계정 지우기)
 
+// 이야기 탭의 두 길(2026-11-02): 대화 | 직접 쓰기. 두 화면 맨 위 같은 자리에서 바꾼다
+export function StoryModes() {
+  const write = usePathname() === "/write";
+  return (
+    <nav className="modes" aria-label="쓰는 방법">
+      <Link href="/" aria-current={write ? undefined : "page"}>대화</Link>
+      <Link href="/write" aria-current={write ? "page" : undefined}>직접 쓰기</Link>
+    </nav>
+  );
+}
+
 const titleOf = (path: string) => TITLES[path] ?? (path.startsWith("/universe/") ? "일기" : "");
 const tabOf = (path: string) => TABS.find(([, , , heads]) => heads.some((h) => (h.endsWith("/") && h !== "/" ? path.startsWith(h) : path === h)))?.[0];
 
@@ -72,7 +83,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </div></main>
     ) : <main><p className="sub">로그인을 확인하는 중…</p></main>;
 
-  // 로그인 전 · 동의 전: 틀 없이 이름 줄만
+  // 로그아웃: 받기 · 시작 화면이 머리를 따로 가진다. 로그인 확인 중 · 동의 전: 틀 없이 이름 줄만
+  if (state === "out" && !PUBLIC.includes(path)) return page;
   if (state !== "in") return (
     <>
       <header className="top"><Link href="/" className="brand"><i className="dot" aria-hidden />나의 우주</Link></header>

@@ -108,11 +108,9 @@ export default function UniversePage() {
           <button className="fab" aria-pressed={tool === "edit"} onClick={() => openTool("edit")}><Svg d={ICON.edit} /><span>우주 고치기</span></button>
           {canFull && <button className="fab" onClick={toggleFull}><Svg d={full ? ICON.exit : ICON.full} /><span>{full ? "전체 화면 끝내기" : "전체 화면"}</span></button>}
         </div>
-        <div className="tools" role="group" aria-label="사람 고르기">
+        <div className="tools people" role="group" aria-label="사람 고르기">
           {data.people.map((p) => (
-            <button key={p.id} className="small" aria-pressed={person === p.id} onClick={() => setPerson(person === p.id ? null : p.id)}>
-              {p.name} <span className="sub">{p.relation}</span>
-            </button>
+            <button key={p.id} className="small" aria-pressed={person === p.id} onClick={() => setPerson(person === p.id ? null : p.id)}>{p.name}</button>
           ))}
           <Link className="btn small" href="/people">사람 모두 보기</Link>
           {glow?.size === 0 && pick.kind !== "north" && <span className="badge" role="status">이 사람이 나온 기록이 아직 없어요</span>}
@@ -150,7 +148,12 @@ export default function UniversePage() {
               {" · "}{data.stars.find((s) => s.id === planet.star_id)?.name}</p>
             {entry?.info ? <p>{entry.info.summary}</p> : entryErr ? <p className="err" role="alert">이 기록의 요약을 불러오지 못했어요. 잠시 뒤 행성을 다시 눌러 주세요.</p>
               : <p className="sub">요약을 불러오는 중…</p>}
+            <div className="row">
+              <Link className="btn small primary" href={`/universe/${encodeURIComponent(planet.id)}`}>일기 보기</Link>
+              <Link className="btn small" href={`/?from=${encodeURIComponent(planet.id)}`}>이어 이야기하기</Link>
+            </div>
             {entry && entry.thoughts.length > 0 && (
+              <details className="pmore"><summary>찾은 생각 {entry.thoughts.length}개</summary>
               <ul style={{ paddingLeft: 18, margin: "0 0 8px" }}>
                 {entry.thoughts.map((t) => (
                   <li key={t.id}><span className="badge v">{kindName(t.kind)}</span>{t.value && <span className="badge">가치 · {t.value}</span>} {t.text}
@@ -159,10 +162,9 @@ export default function UniversePage() {
                       setEntry((e) => e && { ...e, thoughts: e.thoughts.map((y) => (y.id === x.id ? x : y)) }); reload();
                     }} /></li>
                 ))}
-              </ul>
+              </ul></details>
             )}
-            <Link href={`/universe/${encodeURIComponent(planet.id)}`}>정리한 결과 보기</Link>
-            {" · "}<Link href={`/?from=${encodeURIComponent(planet.id)}`}>이 이야기 이어 하기</Link>
+            {links.length > 0 && <details className="pmore"><summary>이어진 일기 {links.length}곳</summary>
             {links.map((l) => {
               const other = l.from_planet === planet.id ? l.to_planet : l.from_planet;
               const q = "quote" + (CONFLICT.has(l.type) && !l.ended ? " o" : "");
@@ -181,7 +183,7 @@ export default function UniversePage() {
                   {l.line === "점선" && l.needs_confirm && <FeedbackButtons label="이 연결이 맞나요" target="relation" targetId={l.id} values={["맞아요", "아니에요"]} />}
                 </div>
               );
-            })}
+            })}</details>}
           </section>
         )}
         {!tool && pick.kind === "north" && data.north_star && (
@@ -218,10 +220,12 @@ export default function UniversePage() {
         )}
         {!tool && who && !planet && !bh && pick.kind !== "north" && (
           <section className="pcard" aria-label={`${who.name}과(와) 얽힌 생각`}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <h2 style={{ margin: 0 }}>{who.name}과(와) 얽힌 생각</h2>
+            <div className="row" style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
+              <h2 style={{ margin: 0 }}>{who.name}</h2>
               <button className="small" onClick={() => setPerson(null)}>닫기</button>
             </div>
+            {who.relation && <p className="sub" style={{ margin: "4px 0 0" }}>{who.relation}</p>}
+            <h3 className="pcard-h">함께 나온 생각</h3>
             <PersonThoughts id={who.id} onPlanet={toPlanet} />
           </section>
         )}

@@ -89,7 +89,6 @@ export default function SettingsPage() {
   return (
     <main className="set-page">
       <h1 className="sr">설정</h1>
-      <p className="sub">별지기의 말투와 우주 보기를 내게 맞게 바꿔요.</p>
       {msg && <p className="toast" role="status">{msg}</p>}
       {fail && <p className="err" role="alert">{fail}</p>}
 
@@ -102,11 +101,11 @@ export default function SettingsPage() {
           <h2>{group}</h2>
 
           {group === "별지기" && (<>
-            <Row name="별지기 이름" desc="말풍선 이름표에 보여요." htmlFor="keeper">
+            <Row name="별지기 이름" htmlFor="keeper">
               {() => <KeeperNameField value={keeper} onSave={(n) => save({ keeper_name: n })} />}
             </Row>
             <section aria-label="말투">
-              <Row name="별지기 고르기" desc="모습을 고르면 그 모습의 말투로 말을 걸어요. 한마디 · 이야기하기 · 알림에 같이 써요.">
+              <Row name="별지기 고르기" desc="고른 모습의 말투로 말을 걸어요.">
                 {(by) => (
                   <div className="seg looks" role="group" aria-labelledby={by}>
                     {KEEPER_LOOKS.map((k) => (
@@ -154,7 +153,7 @@ export default function SettingsPage() {
           </>)}
 
           {group === "우주와 화면" && (<>
-            <Row name="우주 테마" desc="우주 화면의 바탕 · 해 · 별 · 행성 색이 바뀌어요. 선 · 고리 색은 뜻이 있어 그대로예요.">
+            <Row name="우주 테마" desc="바탕 · 별 색이 바뀌어요.">
               {(by) => (
                 <div className="seg" role="group" aria-labelledby={by}>
                   {THEME_NAMES.map((t) => (
@@ -167,26 +166,26 @@ export default function SettingsPage() {
                 </div>
               )}
             </Row>
-            <Row name="다른 영역과 이어진 선 보이기" desc="다른 삶의 영역끼리 이어진 선을 우주에 언제 보일지 골라요.">
+            <Row name="다른 영역과 이어진 선 보이기">
               {(by) => <Seg by={by} options={["숨김", "눌렀을 때", "항상"] as const} value={s.cross_links} onPick={(v) => save({ cross_links: v })} />}
             </Row>
           </>)}
 
           {group === "말 걸기" && (<>
-            <Row name="고른 시각 알림" desc="앱을 닫아 둬도 하루 한 번 먼저 말을 걸어요. 알림 글은 고른 별지기 말투예요.">
+            <Row name="고른 시각 알림" desc="하루 한 번, 고른 시각에 먼저 말을 걸어요.">
               {() => <PushRow />}
             </Row>
-            <Row name="되고 싶은 모습" desc="다시 정하거나, 그만 묻기를 다시 켤 수 있어요.">
+            <Row name="되고 싶은 모습">
               {() => <Link className="btn small" href="/aspiration">되고 싶은 모습 열기</Link>}
             </Row>
-            <Row name="다음 걸음 제안 빈도" desc="별지기 한마디에 작은 다음 걸음을 얼마나 자주 넣을지 골라요.">
+            <Row name="다음 걸음 제안 빈도">
               {(by) => <Seg by={by} options={["적게", "보통", "많이"] as const} value={s.suggestions} onPick={(v) => save({ suggestions: v })} />}
             </Row>
-            <Row name="마음 날씨 물어보기" desc="처음 만났을 때와 기분이 드러나지 않은 글에만 물어요.">
+            <Row name="마음 날씨 물어보기" desc="기분이 드러나지 않은 글에만 물어요.">
               {(by) => <Seg by={by} options={["묻기", "묻지 않기"] as const} value={s.weather_ask ? "묻기" : "묻지 않기"}
                 onPick={(v) => save({ weather_ask: v === "묻기" })} />}
             </Row>
-            <Row name="읽어 주기 목소리" desc="이야기하기에서 '읽어 주기'를 켜면 별지기 말을 이 목소리로 읽어요.">
+            <Row name="읽어 주기 목소리" desc="읽어 주기를 켜면 이 목소리로 읽어요.">
               {(by) => {
                 const v = (s.tts_voice ?? VOICE_NAMES[0]) as Voice;
                 return (
@@ -197,7 +196,7 @@ export default function SettingsPage() {
                 );
               }}
             </Row>
-            <Row name="오늘 상태" desc="둘 다 별지기 한마디에 붙은 버튼으로 켜고, 그날만 이어져요.">
+            <Row name="오늘 상태" desc="한마디의 버튼으로 켜고, 그날만 이어져요.">
               {() => <p className="sub" style={{ margin: 0 }}>오늘은 살살: {s.gentle_today ? "켜짐(오늘만)" : "꺼짐"} · 오늘은 위로만: {s.comfort_only_today ? "켜짐(오늘만)" : "꺼짐"}</p>}
             </Row>
           </>)}
@@ -208,7 +207,7 @@ export default function SettingsPage() {
           </>)}
 
           {group === "개인정보와 계정" && (<>
-            <Row name="동의 내용" desc="선택 동의를 보고 바꿀 수 있어요.">
+            <Row name="동의 내용">
               {() => <Link className="btn" href="/consent">동의 내용 보기 · 바꾸기</Link>}
             </Row>
             <Row name="문서">

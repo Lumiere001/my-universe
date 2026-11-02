@@ -33,13 +33,13 @@ export default function ConfirmCard({ r, reason, onSaved, onFix }:
     <section className="card confirm" aria-label="정리본 확인" data-testid="confirm-card">
       <div className="confirm-head">
         <h2>오늘 이야기를 이렇게 정리했어요</h2>
-        <p className="sub">맞으면 저장해요. 고칠 것 · 더할 것이 있으면 별지기가 다시 물어볼게요.</p>
+        <p className="sub">고칠 게 있으면 별지기가 다시 물어요.</p>
       </div>
 
       <div className="confirm-body">
-        <article>
-          {r.title && <b>{r.title}</b>}
-          <p style={{ margin: "4px 0 0", ...PRE }}>{r.text || r.info?.summary}</p>
+        <article className="paper read">
+          {r.title && <h2>{r.title}</h2>}
+          <p className="read-text" style={PRE}>{r.text || r.info?.summary}</p>
         </article>
         {r.thoughts.length > 0 && (
           <article>
@@ -48,7 +48,7 @@ export default function ConfirmCard({ r, reason, onSaved, onFix }:
               {r.thoughts.map((t) => (
                 <div key={t.id} style={{ marginTop: 8 }}>
                   <span className="badge v">{kindName(t.kind)}</span> {t.text}
-                  <p className="quote">“{unquote(t.quote)}”</p>
+                  {unquote(t.quote) !== t.text && <p className="quote">“{unquote(t.quote)}”</p>}
                 </div>
               ))}
             </details>

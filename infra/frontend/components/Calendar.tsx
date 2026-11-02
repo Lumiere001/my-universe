@@ -2,6 +2,7 @@
 // 달력(지난 기록 화면 · 사이드바 작은 달력, docs/content/U-04 · C-01). 일요일부터 한 주, 기록이 있는 날에 점, 오늘은 테두리.
 // 접근성: role="grid" 표 하나, 날마다 「10월 3일, 기록 2편」 이름의 단추. 탭 키로는 한 날만 들어가고(고른 날 · 오늘 · 1일 순),
 // 화살표 ±1일 · ±1주, Home/End 한 주의 처음/끝, PageUp/PageDown 앞/다음 달. 달 넘김은 달 이름을 aria-live 로 읽는다.
+// 달 이름을 누르면 연도 · 달 고르기(2026-11-02 동규, 기기 기본 고르기 창 = input type=month, 이번 달까지).
 import { useEffect, useId, useRef, useState } from "react";
 import { localToday } from "@/components/EntryTools";
 import { listDiary, why, type EntrySummary } from "@/lib/api";
@@ -39,9 +40,10 @@ export function useEntries(): [EntrySummary[] | null, string] {
   return [list, err];
 }
 
-const Chevron = ({ left }: { left?: boolean }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d={left ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
+const PATH = { left: "m15 18-6-6 6-6", right: "m9 18 6-6-6-6", down: "m6 9 6 6 6-6" };
+const Chevron = ({ to = "right", size = 16 }: { to?: keyof typeof PATH; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d={PATH[to]} />
   </svg>
 );
 
@@ -83,8 +85,13 @@ export default function Calendar({ marks, selected, onPick, compact }: {
   return (
     <div className={compact ? "cal compact" : "cal"}>
       <div className="cal-head">
-        <button type="button" className="icon" aria-label="이전 달" onClick={() => shift(-1)}><Chevron left /></button>
-        <b id={label} aria-live="polite">{+month.slice(0, 4)}년 {+month.slice(5)}월</b>
+        <button type="button" className="icon" aria-label="이전 달" onClick={() => shift(-1)}><Chevron to="left" /></button>
+        <label className="cal-month">
+          <b id={label} aria-live="polite">{+month.slice(0, 4)}년 {+month.slice(5)}월</b><Chevron to="down" size={14} />
+          <input type="month" aria-label="연도와 달 고르기" value={month} max={today.slice(0, 7)}
+            onChange={(e) => { if (e.target.value) { setFocus(null); setMonth(e.target.value); } }}
+            onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* 고르기 창을 못 열면 칸에 바로 입력 */ } }} />
+        </label>
         <button type="button" className="icon" aria-label="다음 달" onClick={() => shift(1)}><Chevron /></button>
         {month !== today.slice(0, 7) && <button type="button" className="small" onClick={() => shift(0, today)}>이번 달</button>}
       </div>

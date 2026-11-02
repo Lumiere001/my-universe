@@ -1,6 +1,6 @@
 // 설치형 웹앱 아이콘 · 공유 미리보기(OG) · 소개 화면 캡처를 만든다.
-// 소개 캡처는 가짜 데이터 모드(가상 인물 하늘) 화면을 지금 디자인 그대로 찍는다(2026-10-28, 옵시디언 디자인). 먼저 그 서버를 띄운다:
-//   NEXT_PUBLIC_MOCK=1 npx next dev -p 3211      (다른 터미널)
+// 받기 화면 캡처는 가짜 데이터 모드(가상 인물 하늘) 화면을 지금 디자인 그대로 찍는다(2026-11-02, 휴대폰 전용 · 손글씨 일기장). 먼저 그 서버를 띄운다:
+//   NEXT_PUBLIC_MOCK=1 npx next dev -p 3211      (다른 터미널. 가짜 데이터로 빌드해 둔 것이 있으면 npx next start -p 3211)
 //   BASE=http://localhost:3211 node scripts/make-images.mjs
 // 아이콘은 public/icons/icon.svg 하나에서 그린다. 디자인 · 테마 색 · 아이콘 그림을 바꾸면 다시 돌려 커밋한다(Playwright 의 chromium 만 씀, 외부 호출 없음).
 import { chromium } from "@playwright/test";
@@ -42,7 +42,7 @@ const shot = async (p, out, clip) => { await p.screenshot({ path: PUB(out), clip
 
 const pc = await app(false);
 await universe(pc);
-await shot(pc, "landing/universe.jpg", { x: 264, y: 49, width: 1176, height: 851 });   // 사이드바 · 머리줄 뺀 우주 칸
+await shot(pc, "landing/universe.jpg", { x: 0, y: 49, width: 1440, height: 787 });   // 머리줄 · 아래 탭 뺀 우주 칸(공유 미리보기 바탕)
 
 const phone = await app(true);
 await universe(phone);
@@ -54,12 +54,12 @@ await phone.getByLabel(/마음껏 적어/).fill(body.join("\n"));
 await phone.getByRole("button", { name: /^흐림/ }).click();
 await phone.evaluate(() => document.activeElement?.blur());
 await phone.waitForTimeout(500);
-const t = await phone.getByLabel("제목 (비워도 돼요)").boundingBox();   // 제목부터(위의 별지기 말풍선은 빼고), 페이지 좌표로 잘라 냄
+const t = await phone.locator(".paper").boundingBox();   // 종이 한 장부터(위의 별지기의 추천은 빼고), 페이지 좌표로 잘라 냄
 await phone.screenshot({ path: PUB("landing/write.jpg"), fullPage: true, clip: { x: 0, y: Math.round(t.y - 12), width: 390, height: 668 },
   ...JPG, style: HIDE + " .top { position: static !important; } .tabbar { display: none !important; }" });
 console.log("만듦: landing/write.jpg 390x668");
 await phone.getByRole("button", { name: "우주에 띄우기" }).click();
-const voice = phone.getByRole("region", { name: "별지기 한마디" });
+const voice = phone.getByTestId("saved-message");   // 저장 뒤 별지기 한마디
 await voice.waitFor({ timeout: 20_000 });
 await phone.waitForTimeout(500);
 const b = await voice.boundingBox();

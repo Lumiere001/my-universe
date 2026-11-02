@@ -43,6 +43,8 @@ class TalkState(TypedDict, total=False):
     first: bool          # 끝난 기록이 없음(첫 대화)
     lead: list           # 이어 하는 기록의 생각(앞에 둠)
     sources: list        # 별지기가 인용해도 되는 지난 글(첫 말 근거)
+    direction: str       # 대화에서 한 번 건넬 작은 걸음(멀어짐, PRD v9 Q5-1)
+    topic: str           # 대화 중 사용자 말과 닿을 때 한 번 물을, 지어 둔 질문(숨은 이유 · 되고 싶은 모습 권하기)
     crisis: bool
     crisis_unsure: bool
     past: list
@@ -134,9 +136,9 @@ def reply(state, ctx):
                                "past": pick(state.get("past") or []), "sources": list(state.get("sources") or []),
                                "users": [t["text"] for t in turns if t["role"] == "user"],
                                "keeper": [t["text"] for t in keeper], "tone_note": state.get("tone_note") or "",
-                               "direction": state.get("direction") or ""}, state["people"])
-    sources = m["users"] + [m["text"]] + m["sources"] + [f"{p['thought']} {p['quote']}" for p in m["past"]] + [m["direction"]]
-    out = chat.respond({**{k: m[k] for k in ("text", "summary", "turns", "past", "tone_note", "direction")}, "tone": state["tone"],
+                               "direction": state.get("direction") or "", "topic": state.get("topic") or ""}, state["people"])
+    sources = m["users"] + [m["text"]] + m["sources"] + [f"{p['thought']} {p['quote']}" for p in m["past"]] + [m["direction"], m["topic"]]
+    out = chat.respond({**{k: m[k] for k in ("text", "summary", "turns", "past", "tone_note", "direction", "topic")}, "tone": state["tone"],
                         "gentle": state.get("gentle"), "comfort_only": state.get("comfort_only"), "first": state.get("first"),
                         "crisis": state.get("crisis"), "crisis_unsure": state.get("crisis_unsure"), "recall": recall,
                         "wrap": wrap, "hour": datetime.now(diary.TZ).hour, "sources": sources, "past_replies": m["keeper"],
@@ -196,25 +198,26 @@ def view(c):
             "turns": c.get("turns", []), "summary": c.get("summary", ""), "from_entry": c.get("from_entry"),
             "entry_id": c.get("entry_id"), "turn_count": c["turn_count"],
             "wrap": bool(c.get("turns") and c["turns"][-1].get("kind") == "wrap"),
-            "reason": (c.get("reason") or {}).get("reveal") or None,   # 정리본 확인 화면 맨 아래 이유 한 줄(Q7)
+            # 정리본 확인 화면 맨 아래 이유 한 줄(Q7): 숨은 이유 질문을 대화 중에 실제로 건넨 뒤에만
+            "reason": (c.get("reason") or {}).get("reveal") if c.get("topic_done") else None,
             # 만든 초안 뒤로 말이 늘었거나 '고칠 게 있어요'를 눌렀으면 그 초안은 옛것(화면은 확인 카드 대신 대화를 이어 간다)
             "stale_draft": bool(c.get("entry_id")) and (c.get("drafted") != c["turn_count"]
                                                          or bool(c.get("turns")) and c["turns"][-1].get("kind") == "fix")}
 
 
 def start(s, p, from_entry=None, invite=False):
-    """새 대화: 서비스가 먼저 묻는 첫 말(LLM 없음)."""
+    """새 대화: 서비스가 먼저 묻는 첫 말(LLM 없음, 늘 가볍게). 지어 둔 질문은 topic 으로 두고 대화 중 한 번."""
     lead, _ = _lead(s, from_entry)
     o = chat.opening(p, lead, invite)
     reason = None
-    if o["kind"] == "question" and p.get("reason"):   # 지난 한마디가 지어 둔 숨은 이유 첫 질문(PRD v9 Q6)
+    if o["topic"] and o["topic"] == p.get("text") and p.get("reason"):   # 지난 한마디가 지어 둔 숨은 이유 질문(PRD v9 Q6)
         reason = dict(p["reason"])
         asp = (diary.aspirations(s) or [None])[-1]
         if reason.get("key") == "drift" and asp and asp.get("if_then"):   # 대화 안에서 한 번 건넬 말(Q5-1)
             reason["direction"] = asp["if_then"]
     return conversations.create(s, {"turns": [{"role": "keeper", "kind": o["kind"], "text": o["text"], "at": diary.iso(diary.now())}],
                                     "summary": "", "from_entry": from_entry if lead else None, "sources": o["sources"],
-                                    **({"reason": reason} if reason else {})})
+                                    **({"topic": o["topic"]} if o["topic"] else {}), **({"reason": reason} if reason else {})})
 
 
 def error_code(e):
@@ -239,7 +242,8 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
              "tone": settings["tone"], "tone_note": settings.get("tone_note") or "", "gentle": settings.get("gentle_today") == day,
              "comfort_only": settings.get("comfort_only_today") == day, "first": first, "lead": lead,
              "sources": c.get("sources", []),
-             "direction": "" if c.get("direction_done") else (c.get("reason") or {}).get("direction") or ""}
+             "direction": "" if c.get("direction_done") else (c.get("reason") or {}).get("direction") or "",
+             "topic": "" if c.get("topic_done") else c.get("topic") or ""}
     ctx = TalkCtx(repo, str(uid), cid, emit)
     n = len(users)
     try:
@@ -261,6 +265,8 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
     c["crisis"] = bool(c.get("crisis") or out.get("crisis"))   # 위기 표시는 enc 안에만(대화 · 초안 검사에 씀)
     if state["direction"] and tools.norm(state["direction"]) in tools.norm(r["text"]):
         c["direction_done"] = True   # '어디로 가자'는 대화에서 한 번만(PRD v9 Q5-1)
+    if r.get("topic_used"):
+        c["topic_done"] = True   # 이어 둔 질문도 한 번만
     ms = (time.time() - t0) * 1000
     meta = {"conversation": cid, "turn": n, "kind": r["kind"], "checks": ctx.checks, "past": len(out.get("past") or []),
             "suggested": has_suggestion(r["text"])}

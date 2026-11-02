@@ -1,6 +1,6 @@
 "use client";
-// 쓰기 화면 조각(WS13): 별지기 말풍선 · 제목 · 날짜 칸 · 글 파일(.txt · .md) 불러오기(+ 예시 일기 내려받기) · 이미 정리한 글 안내.
-// 일기장 모양(2026-10-28): 맨 위 날짜 줄(= 글이 다루는 날 칸) · 접힌 별지기 한 줄 · 도구 줄 아이콘 · 쓰는 방법 풍선 · 마크다운 미리보기.
+// 쓰기 화면 조각(WS13): 별지기의 추천 · 제목 · 날짜 칸 · 글 파일(.txt · .md) 불러오기(+ 예시 일기 내려받기) · 이미 정리한 글 안내.
+// 일기장 모양(2026-11-02): 손으로 쓰는 종이 한 장 — 맨 위 날짜 줄(= 글이 다루는 날 칸) · 제목 · 마음 날씨 · 줄 그은 글 칸 · 도구 줄 아이콘.
 import Link from "next/link";
 import { useId, useState } from "react";
 import { getPrompt, type Weather } from "@/lib/api";
@@ -12,51 +12,38 @@ import { VOICE_HELP } from "./MicButton";
 import { PHOTO_NOTE } from "./PhotoInput";
 import { FeedbackButtons, unquote } from "./ResultCard";
 
-// 쓰기 화면 위 말풍선: 첫 만남 질문 또는 지난번 '다음에 써 볼 질문' + 다짐 안부(GET /diary/prompt, LLM 없음).
-// 접힌 한 줄(별지기 · 첫 문장 · 〔다짐 안부〕)로 두고 누르면 펼친다(한 화면 규칙).
+// 쓰기 화면 위 '별지기의 추천'(2026-11-02 동규): 이름표 아래에 추천 한 줄 — 첫 만남 질문 또는 지난번 '다음에 써 볼 질문'
+// + 다짐 안부(GET /diary/prompt, LLM 없음). 추천은 두 줄까지 보이고 누르면 다 보인다.
 export function KeeperPrompt() {
   const name = useKeeperName();
   const [p] = useLoad(getPrompt);
   const [skipped, setSkipped] = useState(false);
+  const [open, setOpen] = useState(false);
   if (!p || (p.kind === "none" && !p.vow)) return null;
-  const vow = p.vow && `지난번에 적은 다짐, “${unquote(p.vow.text)}” 요즘은 어때요? 떠오르면 가볍게 적어 줘요.`;
-  const peek = p.kind !== "none" && !skipped ? p.text : vow ?? "";
   return (
-    <section className="keeper-line" aria-label="별지기 말풍선">
-      <details>
-        <summary className="voice">
-          <span className="who" aria-hidden>{name.slice(0, 1)}</span>
-          <span className="name">{name}</span>
-          <span className="peek">{peek}</span>
-          {p.vow && <span className="badge g">다짐 안부</span>}
-        </summary>
-        <div className="stack keeper-body">
-          {p.kind !== "none" && (
-            <div className="bubble" data-testid="prompt-question">
-              {!skipped && <p style={{ margin: 0, whiteSpace: "pre-line" }}>{p.text}</p>}
-              {p.kind === "aspiration" && <p style={{ margin: "8px 0 0" }}><Link href="/aspiration">되고 싶은 모습 적어 보기</Link></p>}
-              {p.kind === "weather" && <WeatherSkip onDone={() => setSkipped(true)} />}
-            </div>
-          )}
-          {p.vow && (
-            <div className="bubble" data-testid="prompt-vow">
-              <p style={{ margin: "0 0 8px" }}>{vow}</p>
-              <FeedbackButtons label="다짐 안부" target="vow" targetId={p.vow.thought_id} values={["지켰어요", "그만둘래요"]} />
-            </div>
-          )}
+    <section className="rec" aria-labelledby="rec-h">
+      <h2 id="rec-h">{name}의 추천</h2>
+      {p.kind !== "none" && !skipped && (
+        <button type="button" className="rec-text" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="prompt-question">{p.text}</button>
+      )}
+      {p.kind === "aspiration" && <Link href="/aspiration">되고 싶은 모습 적어 보기</Link>}
+      {p.kind === "weather" && <WeatherSkip onDone={() => setSkipped(true)} />}
+      {p.vow && (
+        <div className="rec-vow" data-testid="prompt-vow">
+          <p>다짐 “{unquote(p.vow.text)}” 요즘은 어때요?</p>
+          <FeedbackButtons label="다짐 안부" target="vow" targetId={p.vow.thought_id} values={["지켰어요", "그만둘래요"]} />
         </div>
-      </details>
+      )}
     </section>
   );
 }
 
-// 일기장 머리: 날짜 줄(= 글이 다루는 날, 누르면 날짜 고르기) + 보기 바꾸기(children) · 큰 제목 칸 · 마음 날씨 한 줄.
+// 일기장 머리: 날짜 줄(= 글이 다루는 날, 누르면 날짜 고르기) · 큰 제목 칸 · 마음 날씨 한 줄.
 // 날을 비우면 오늘(제목 · 짧은 첫 줄에 날짜가 있으면 그날, 서버 G2). 마음 날씨는 골라도 되고 건너뛰어도 된다.
 const longDay = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long" });
-export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWeather, disabled, children }: {
+export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWeather, disabled }: {
   title: string; day: string; weather: Weather | null; weathers: { name: string; words: string[] }[];
   onTitle: (v: string) => void; onDay: (v: string) => void; onWeather: (w: Weather | null) => void; disabled?: boolean;
-  children?: React.ReactNode;
 }) {
   const d = day || localToday();
   return (
@@ -73,7 +60,6 @@ export function EntryMeta({ title, day, weather, weathers, onTitle, onDay, onWea
           <button type="button" className="tbtn" disabled={disabled} onClick={() => onDay("")}
             aria-label="오늘로 되돌리기" title="오늘로 되돌리기"><Icon name="close" size={14} /></button>
         )}
-        {children}
       </div>
       <input id="title" className="inline-title" aria-label="제목 (비워도 돼요)" value={title} maxLength={120} disabled={disabled}
         onChange={(e) => onTitle(e.target.value)} placeholder="제목 (비워도 돼요)" />
@@ -140,14 +126,13 @@ export function FilePick({ onLoad, disabled }: { onLoad: (f: Loaded) => void; di
   );
 }
 
-// 쓰는 방법(도구 줄의 ? 단추): 마크다운 · 도구마다의 안내를 한 풍선에 모아 화면에는 늘 보이지 않게(브라우저 기본 popover)
+// 쓰는 방법(도구 줄의 ? 단추): 도구마다의 안내를 한 풍선에 모아 화면에는 늘 보이지 않게(브라우저 기본 popover)
 export function WriteHelp() {
   return (
     <>
       <button type="button" className="tbtn" popoverTarget="write-help" aria-label="쓰는 방법" title="쓰는 방법"><Icon name="help" /></button>
       <div id="write-help" popover="auto" className="pop">
         <h2>쓰는 방법</h2>
-        <p><b>마크다운</b> # 제목 · ## 작은 제목 · **굵게** · *기울임* · - 목록 · 1. 번호 목록 · &gt; 인용 · --- 나눔 선. ‘미리보기’로 꾸민 모습을 볼 수 있어요. 별지기에게는 쓴 글 그대로 가요.</p>
         <p><b>말로 쓰기</b> {VOICE_HELP}</p>
         <p><b>글 파일</b> {FILE_HELP} · <a href="/samples/haneul-2026-10-03.txt" download="하늘-2026-10-03-일기.txt">예시 일기 내려받기</a></p>
         <p><b>사진</b> {PHOTO_NOTE}</p>
@@ -156,7 +141,7 @@ export function WriteHelp() {
   );
 }
 
-// 미리보기용 작은 마크다운: # · ## · ### 제목, **굵게**, *기울임*, - · 1. 목록, > 인용, --- 나눔 선, 줄바꿈.
+// 일기 원문 보기용 작은 마크다운(쓸 때는 그냥 글, 2026-11-02 동규 「사용자는 마크다운을 신경 쓰지 않게」 — 가져온 .md 의 기호가 보기에서 드러나지 않게): # · ## · ### 제목, **굵게**, *기울임*, - · 1. 목록, > 인용, --- 나눔 선, 줄바꿈.
 // HTML 문자열을 만들지 않고 React 요소로 바로 그려서 글 속 <태그>는 글자 그대로 보인다(React 가 글자를 이스케이프, innerHTML 안 씀).
 type Block = { t: "p" | "q" | "ul" | "ol"; lines: string[] } | { t: "h"; n: number; s: string } | { t: "hr" };
 function blocks(text: string): Block[] {

@@ -79,13 +79,13 @@ function History() {
   };
 
   if (id) return (
-    <main>
-      <button className="small" onClick={() => back(open?.day)} style={{ marginBottom: 12 }}>← 목록으로 돌아가기</button>
-      {openErr ? <p className="err" role="alert">{openErr}</p> : !open ? <p className="sub">기록을 여는 중…</p> : (
+    <main className="stack">
+      <button className="small hist-back" onClick={() => back(open?.day)}>← 목록</button>
+      {openErr ? <p className="err" role="alert">{openErr}</p> : !open ? <p className="sub">일기를 여는 중…</p> : (
         <>
           <ResultCard r={open} onChange={setOpen} />
-          <p><Link href={`/?from=${encodeURIComponent(open.id)}`}>이 이야기 이어 하기</Link></p>
-          <DeleteEntry id={open.id} onDeleted={() => { setGone([...gone, open.id]); back(open.day); }} />
+          <Link className="btn small rc-next" href={`/?from=${encodeURIComponent(open.id)}`}>이 이야기 이어 하기</Link>
+          <div className="rc-danger"><DeleteEntry id={open.id} onDeleted={() => { setGone([...gone, open.id]); back(open.day); }} /></div>
         </>
       )}
     </main>
@@ -121,7 +121,7 @@ function History() {
           <summary aria-label="더 보기">⋯</summary>
           <div className="stack">
             <Link href="/import">지난 일기 가져오기</Link>
-            {all.length > 0 && <DownloadJson label="모든 기록 파일로 내려받기(JSON)" />}
+            {all.length > 0 && <DownloadJson label="모든 일기 내려받기" />}
           </div>
         </details>
       </div>

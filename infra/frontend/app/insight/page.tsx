@@ -78,7 +78,7 @@ export default function FlowPage() {
           <button type="button" aria-pressed={view === "detail"} onClick={() => setView("detail")}>자세히</button>
         </div>
       </div>
-      {view === "brief" ? <BriefView period={period} onDetail={() => setView("detail")} /> : <InsightDetail key={period} period={period} />}
+      {view === "brief" ? <BriefView period={period} onDetail={() => setView("detail")} onAll={() => setPeriod("all")} /> : <InsightDetail key={period} period={period} />}
     </main>
   );
 }
@@ -86,7 +86,7 @@ export default function FlowPage() {
 const Chips = ({ x }: { x: Sentence }) => <>{x.sources.map((s) => (
   <Link key={s.entry_id + s.day} className="src-chip" href={`/history?id=${encodeURIComponent(s.entry_id)}`}>{day(s.day, String(new Date().getFullYear()))}</Link>))}</>;
 
-function BriefView({ period, onDetail }: { period: Period; onDetail: () => void }) {
+function BriefView({ period, onDetail, onAll }: { period: Period; onDetail: () => void; onAll: () => void }) {
   const [b, setB] = useState<Brief | null>(null);
   const [err, setErr] = useState("");
   const [n, setN] = useState(0);
@@ -101,7 +101,7 @@ function BriefView({ period, onDetail }: { period: Period; onDetail: () => void 
       {!b && !err && <p className="sub" role="status">이 기간의 흐름을 정리하는 중…</p>}
       {err && <p className="err" role="alert">{err} {again}</p>}
       {b?.state === "few" && <p className="sub">아직 모으는 중이에요. 이 기간에 일기가 세 편 넘게 쌓이면 흐름을 요약해 드려요. {detail}</p>}
-      {b?.state === "none" && <p className="sub">이 기간에 쓴 일기가 없어요. <Link href="/">이야기하기</Link>로 첫 기록을 남겨 보세요.</p>}
+      {b?.state === "none" && <p className="sub">이 기간에 쓴 일기가 없어요. {period !== "all" && <button className="small" onClick={onAll}>처음부터 보기</button>}</p>}
       {b?.state === "failed" && <p className="sub" role="alert">요약을 만들지 못했어요. 원문 카드는 자세히에서 볼 수 있어요. {again} {detail}</p>}
       {b?.state === "ok" && b.sections.map((sec) => (
         <section key={sec.title} className="brief-sec" aria-label={sec.title}>
@@ -131,14 +131,14 @@ function AskBox() {
       <form className="row" onSubmit={ask} style={{ flexWrap: "nowrap" }}>
         <label htmlFor="ask" className="sr">내 일기에 묻기</label>
         <input id="ask" value={q} maxLength={300} onChange={(e) => setQ(e.target.value)} placeholder="내 일기에 물어보세요" />
-        <button type="submit" className="primary small" disabled={busy || !q.trim()}>{busy ? "찾는 중…" : "묻기"}</button>
+        <button type="submit" className="primary small" style={{ flex: "none", whiteSpace: "nowrap" }} disabled={busy || !q.trim()}>{busy ? "찾는 중…" : "묻기"}</button>
       </form>
       {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
       {a?.state === "ok" && a.sentences.map((x) => <p key={x.text} style={{ margin: 0 }}>{x.text} <Chips x={x} /></p>)}
       {a?.state === "none" && <p className="sub" style={{ margin: 0 }}>찾은 기록이 없어요. 다른 말로 물어봐 주세요.</p>}
       {a?.state === "failed" && <p className="sub" role="alert" style={{ margin: 0 }}>답을 만들지 못했어요. 다시 눌러 주세요.</p>}
       {a?.state === "crisis" && <p style={{ margin: 0 }}>{a.message}</p>}
-      <p className="sub" style={{ margin: 0, fontSize: ".8rem" }}>찾은 원문으로만 답하고, 묻고 답한 것은 일기로 남지 않아요.</p>
+      <p className="sub" style={{ margin: 0, fontSize: ".82rem" }}>내 일기에서만 찾아 답해요. 묻고 답한 건 일기로 남지 않아요.</p>
     </section>
   );
 }

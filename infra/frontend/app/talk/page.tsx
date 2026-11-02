@@ -3,7 +3,7 @@
 // '지금까지 정리'(접이식) → '대화 마치고 정리하기' → 요약 확인(ConfirmCard) → 저장 뒤 한마디 · 안부는 이 화면의 별지기 말풍선.
 // /?from=<기록 id>(옛 주소 /talk?from=) 는 그 기록을 첫 맥락으로 새 대화를 연다('이 이야기 이어 하기').
 // 말 보내기는 send(text) 하나 — 마이크(WS21)도 받아쓴 글을 여기로 보낸다.
-// 모양(2026-10-28, 한 화면 규칙): 머리줄(아이콘 셋) · 대화(그 칸 안에서만 넘김) · 아래 붙은 입력 상자(글 칸 + 도구 줄: 마이크 · 클립 | 보내기).
+// 모양(2026-10-28 · 11-02, 한 화면 규칙): 머리줄(대화 | 직접 쓰기 · 아이콘 셋) · 대화(그 칸 안에서만 넘김) · 아래 붙은 입력 상자(글 칸 + 도구 줄: 마이크 · 클립 | 보내기).
 // 드물게 쓰는 '이어 하지 않은 대화' · '이 대화 지우기'는 '더 보기'(브라우저 기본 popover) 안에.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import AfterSave from "@/components/AfterSave";
 import ConfirmCard from "@/components/ConfirmCard";
 import Icon from "@/components/Icon";
 import { useKeeperName } from "@/components/Keeper";
+import { StoryModes } from "@/components/Shell";
 import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
   deleteTalk, finishTalk, fixTalk, getDiary, getTalk, listTalks, sayTalk, startTalk, why,
@@ -124,7 +125,6 @@ export default function TalkPage() {
     setText(t); setErr("받아쓴 말이 8,000자를 넘어요. 칸에 남겨 뒀으니 조금 줄여서 보내 주세요.");
   };
 
-  const said = c?.turns.some((t) => t.role === "user");
   const left = saved ? [] : others;   // 저장한 뒤에는 다른 대화를 보이지 않는다
   const closeMore = () => moreRef.current?.hidePopover?.();   // popover 를 모르는 옛 브라우저는 칸이 그냥 펼쳐져 있다
 
@@ -132,7 +132,7 @@ export default function TalkPage() {
     <main className="chat" onClickCapture={voice.on ? voice.unlock : undefined}>
       <div className="chat-head">
         <h1 className="sr">이야기하기</h1>
-        <Link className="btn small" href="/write" style={{ flex: "none", whiteSpace: "nowrap" }}><Icon name="write" size={16} />직접 쓰기</Link>
+        <StoryModes />
         <div className="row tight">
           <button className="tbtn" aria-pressed={voice.on} onClick={voice.toggle}
             aria-label="별지기 말 읽어 주기" title={`별지기 말 읽어 주기 ${voice.on ? "켜짐" : "꺼짐"}`}>
@@ -146,7 +146,6 @@ export default function TalkPage() {
           )}
         </div>
       </div>
-      {!said && <p className="sub chat-lead">별지기와 이야기하면 내가 한 말로 일기를 정리하고, 지난 기록과 이어 드려요.</p>}
 
       <div id="talk-more" popover="auto" ref={moreRef} className="pop">
         {left.length > 0 && (
@@ -170,7 +169,6 @@ export default function TalkPage() {
         <details className="card chat-sum">
           <summary>지금까지 정리</summary>
           <div className="chat-sum-body">
-            <p className="sub" style={{ margin: "8px 0 0" }}>내가 한 말만으로 정리했어요. 대화를 마치면 이걸 바탕으로 일기를 만들어요.</p>
             <p style={{ margin: "6px 0 0", ...PRE }}>{c.summary}</p>
           </div>
         </details>

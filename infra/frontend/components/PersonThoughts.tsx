@@ -27,7 +27,7 @@ export default function PersonThoughts({ id, onPlanet }: { id: string; onPlanet?
               : t.title}
           </div>
           <div style={{ marginTop: 4 }}><span className="badge v">{kindName(t.kind)}</span> {t.text}</div>
-          {t.quote && <p className="quote">“{unquote(t.quote)}”</p>}
+          {t.quote && unquote(t.quote) !== t.text && <p className="quote">“{unquote(t.quote)}”</p>}   {/* 생각 문장과 같으면 한 번만 */}
         </li>
       ))}
     </ol>

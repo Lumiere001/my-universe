@@ -45,7 +45,7 @@ export function PushRow() {
         {at ? <button className="small" onClick={off} disabled={busy}>알림 끄기</button>
           : <button className="small primary" onClick={() => on(pick)} disabled={busy}>알림 켜기</button>}
       </div>
-      <p className="sub" style={{ margin: 0 }} role="status">{at ? `켜짐 · 매일 ${at}쯤, 그날 일기를 아직 안 썼을 때만` : msg || "꺼져 있어요. 켜면 하루 한 번, 고른 별지기 말투로 먼저 말을 걸어요."}</p>
+      <p className="sub" style={{ margin: 0 }} role="status">{at ? `켜짐 · 매일 ${at}쯤, 그날 일기를 안 썼을 때만` : msg || "꺼져 있어요."}</p>
       {at && msg && <p className="sub" style={{ margin: 0 }}>{msg}</p>}
       {(install || (!at && needsInstall())) && <InstallGuide />}
     </div>

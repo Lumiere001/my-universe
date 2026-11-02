@@ -31,7 +31,8 @@ def recent(s, limit=5):
 
 
 DATA = ("turns", "summary", "summary_at", "from_entry", "sources", "drafted", "crisis",
-        "reason", "direction_done")   # reason: 첫 말의 숨은 이유 {key, reveal, direction}(PRD v9 Q5-1 · Q7)
+        "reason", "direction_done", "topic", "topic_done")   # reason: 숨은 이유 {key, reveal, direction}(PRD v9 Q5-1 · Q7),
+# topic: 대화 중 한 번 물을 지어 둔 질문(2026-11-02, 첫 말은 늘 가볍게)
 
 
 def save(s, c):

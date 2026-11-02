@@ -54,10 +54,12 @@ def test_drift_becomes_hidden_reason_then_direction(client, env, monkeypatch):  
     assert len(ob["drift_hits"]) == 2 and ob["drift_said"]                               # 근거 · 건넨 날(7일 쉼)
     assert msg["reason"] == "drift" and msg["reveal"] and IF_THEN not in msg["next_question"]   # 첫 질문은 이유를 숨김
     c = start(client)
-    assert c["turns"][0]["text"] == msg["next_question"] and c["reason"] == msg["reveal"]   # 이유 한 줄은 정리본 화면에서
+    assert c["turns"][0]["text"] == chat.FREE and c["reason"] is None                        # 첫 말은 가볍게, 이유 한 줄은 아직
     with env.repo.session(U1) as s:
         from app.repository import conversations
-        assert conversations.get(s, c["id"])["reason"]["direction"] == IF_THEN            # 대화 안에서 한 번 건넬 말
+        stored = conversations.get(s, c["id"])
+        assert stored["reason"]["direction"] == IF_THEN                                      # 대화 안에서 한 번 건넬 말
+        assert stored["topic"] == msg["next_question"]                                        # 숨은 이유 질문은 대화 중에 한 번
 
 
 def test_direct_write_gets_direction_in_message(env, monkeypatch):  # noqa: F811
@@ -125,3 +127,27 @@ def test_push_subscribe_and_due(client, env, monkeypatch):  # noqa: F811
     monkeypatch.setattr(push, "send", lambda *a: "gone")
     assert client.post("/push/due", headers={"X-Cron-Secret": "s3"}).json()["gone"] == 1
     assert client.get("/push/subscribe", headers=H1).json()["subs"] == []                  # 만료 → 지움(설정에 '꺼졌어요')
+
+
+def test_topic_asked_once_then_reason_line(client, env, monkeypatch):  # noqa: F811
+    """PRD v9 Q6 개정(2026-11-02 동규 A): 지어 둔 질문은 사용자 말과 닿을 때 대화 중 한 번. 건넨 뒤에만 정리본 화면에 이유 한 줄."""
+    from tests.test_ws19_talk import fake_talk, say
+    talk = fake_talk(env.fake)
+    from app.api import chat as chat_api
+    monkeypatch.setattr(chat_api, "prompt", lambda s: {"kind": "free", "text": "요즘 저녁엔 뭐 하면서 쉬어요?", "vow": None,
+                                                       "reason": {"key": "commitment", "reveal": "저녁 다짐이 떠올라서 물었어요."}})
+    c = start(client)
+    assert c["turns"][0]["text"] == chat.FREE and c["reason"] is None
+    seen = []
+    def answer(msgs, used):
+        seen.append("topic" in msgs[-1]["content"] and "요즘 저녁엔" in msgs[-1]["content"])
+        return {"reply": "저녁 이야기가 나와서요. 요즘 저녁엔 뭐 하면서 쉬어요?" if used else f"그랬군요. {len(seen)}번째 이야기, 그다음엔요?",
+                "found": False, "topic": used}
+    talk.queue += [lambda m: answer(m, False), lambda m: answer(m, True), lambda m: answer(m, False)]
+    ev = say(client, c["id"], "오늘은 그냥 그랬어.")
+    assert ev[-1][0] == "turn"
+    assert client.get(f"/talk/{c['id']}", headers=H1).json()["reason"] is None                 # 아직 안 건넴
+    say(client, c["id"], "저녁엔 좀 쉬었어.")
+    assert client.get(f"/talk/{c['id']}", headers=H1).json()["reason"] == "저녁 다짐이 떠올라서 물었어요."
+    say(client, c["id"], "응 그랬지.")
+    assert seen == [True, True, False]                                                        # 건넨 뒤엔 다시 넣지 않음

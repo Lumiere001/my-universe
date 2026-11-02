@@ -55,42 +55,35 @@ test("핵심 흐름", async ({ page }, info) => {
     await expect(a.getByTestId("saved-message")).toBeVisible({ timeout: 15_000 });
     await expect(a.getByRole("group", { name: "한마디 피드백" }).getByRole("button")).toHaveCount(2);   // 겉 단추는 좋아요 · 별로
     await shot("03a-after-save");
+    await a.getByRole("group", { name: "한마디 피드백" }).getByRole("button", { name: "좋아요" }).click();   // 한마디 피드백은 저장 뒤 화면에서만
+    await expect(a.getByRole("group", { name: "한마디 피드백" }).getByText("고마워요")).toBeVisible();
     await openResult(page);
   });
 
-  await test.step("결과 카드", async () => {
+  await test.step("일기 한 편: 원문 → 별지기의 정리 → 확인해 주세요(2026-11-02)", async () => {
     const r = page.getByTestId("result");
     await expect(r).toBeVisible({ timeout: 15_000 });
-    await expect(r.getByRole("region", { name: "원문" })).toContainText("관심 있는 팀 세 곳");       // 원문이 첫 칸(PRD v9 Q19)
-    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();
-    await expect(r.getByRole("region", { name: "별지기 한마디" })).toContainText("다정하게");
-    await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("아쉬웠던 점"); // 온톨로지 보이는 이름
+    await expect(r.getByRole("region", { name: "원문" })).toContainText("관심 있는 팀 세 곳");       // 원문이 맨 위
+    await expect(r.getByRole("region", { name: "별지기 한마디" })).toHaveAttribute("data-tone", "다정하게");
+    await r.getByText(/^찾은 생각 \d+개$/).click();
+    await expect(r.getByRole("list", { name: "생각 목록" })).toContainText("아쉬웠던 점"); // 온톨로지 보이는 이름
     await expect(r.getByText("스스로 쓴 변화: 예전에는 큰 회사")).toBeVisible();
-    const parts = r.getByRole("group", { name: "나눠 보기" });   // 생각 · 이어진 생각 · 같은 주제 · 더 보기 중 하나만(한 화면에 가깝게)
-    await expect(parts.getByRole("button", { name: "이어진 생각 3" })).toBeVisible();
-    await expect(r.getByText("북극성에 닿은 순간")).toBeVisible();
-    await expect(r.getByTestId("entry-day")).toContainText("삶의 성취 › 진로");                 // 이 기록이 도는 해 › 작은 별
+    await expect(r.getByText("지난 일기와 이어진 곳 3곳")).toBeVisible();
+    await expect(r.getByText(/되고 싶은 모습에 닿은 순간/)).toBeVisible();
+    await expect(r.getByText("주제 · 삶의 성취 › 진로")).toBeVisible();                       // 이 기록이 도는 해 › 작은 별
     await shot("03-result", true);
-    await parts.getByRole("button", { name: /^같은 주제 \d+$/ }).click();                     // 같은 작은 별의 다른 기록(AI 연결 아님)
-    const same = r.getByRole("region", { name: "같은 주제의 다른 기록" });
-    await expect(same).toContainText("‘진로’의 다른 기록");
-    await expect(same).toContainText("AI가 이어 준 연결은 아니에요");
-    await expect(same.getByRole("link").first()).toHaveAttribute("href", /^\/history\?id=e\d+$/);
-    await expect(r.getByRole("region", { name: "생각 목록" })).toBeHidden();
+    await r.getByText(/^같은 주제의 다른 일기 \d+편$/).click();                              // 같은 작은 별의 다른 기록(AI 연결 아님)
+    await expect(r.getByRole("list", { name: "같은 주제의 다른 기록" }).getByRole("link").first()).toHaveAttribute("href", /^\/history\?id=e\d+$/);
   });
 
-  await test.step("피드백 누르기", async () => {
-    await page.getByRole("group", { name: "한마디 피드백" }).getByRole("button", { name: "좋아요" }).click();
-    await expect(page.getByRole("group", { name: "한마디 피드백" }).getByText("고마워요")).toBeVisible();
-    const parts = page.getByRole("group", { name: "나눠 보기" });
-    await parts.getByRole("button", { name: /^이어진 생각/ }).click();
-    await page.getByRole("group", { name: "이 연결이 맞나요" }).first().getByRole("button", { name: "맞아요" }).click();
-    await parts.getByRole("button", { name: /^생각/ }).click();
-    await page.getByRole("group", { name: "다짐 상태" }).getByRole("button", { name: "지켰어요" }).click();
-    await expect(page.getByText("다짐 지켰어요")).toBeVisible();
-    await page.getByRole("button", { name: "같은 사람" }).click();
-    await expect(page.getByText("“같은 사람”으로 기억할게요.")).toBeVisible();
-    await parts.getByRole("button", { name: "더 보기" }).click();
+  await test.step("확인해 주세요 · 불편한 점", async () => {
+    const r = page.getByTestId("result");
+    await r.getByRole("group", { name: "이 연결이 맞나요" }).first().getByRole("button", { name: "맞아요" }).click();
+    await r.getByRole("group", { name: "다짐 상태" }).getByRole("button", { name: "지켰어요" }).click();
+    await expect(r.getByText("다짐 지켰어요")).toBeVisible();                                 // 찾은 생각 목록의 다짐 상태도 바뀜
+    await r.getByRole("button", { name: "같은 사람" }).click();
+    await expect(r.getByText("“같은 사람”으로 기억할게요.")).toBeVisible();
+    await r.getByText("더 보기", { exact: true }).click();
     await page.getByRole("textbox", { name: "불편한 점 한 줄" }).fill("생각을 너무 잘게 나눈 것 같아요");
     await page.getByRole("button", { name: "보내기" }).click();
     await expect(page.getByText("불편한 점을 받았어요")).toBeVisible();
@@ -202,10 +195,10 @@ test("핵심 흐름", async ({ page }, info) => {
     const r = page.getByTestId("result");
     await expect(r).toBeVisible({ timeout: 15_000 });
     const voice = r.getByRole("region", { name: "별지기 한마디" });
-    await expect(voice).toContainText("다정하게"); // 팩폭이어도 그 글만 다정하게
+    await expect(voice).toHaveAttribute("data-tone", "다정하게"); // 팩폭이어도 그 글만 다정하게
     await expect(voice.getByTestId("check-in")).toBeVisible();
-    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();   // 첫 칸은 원문
-    await expect(r.getByRole("region", { name: "생각 목록" })).toBeVisible();
+    await r.getByText(/^찾은 생각 \d+개$/).click();
+    await expect(r.getByRole("list", { name: "생각 목록" })).toBeVisible();
     await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
     expect(await page.locator("body").innerText(), "단체 이름 · 전화번호").not.toMatch(HOTLINE);
     await shot("12-crisis", true);
@@ -221,8 +214,7 @@ test("핵심 흐름", async ({ page }, info) => {
     await shot("13-resume");
     await resume.click();
     await openResult(page);
-    await page.getByTestId("result").getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();
-    await expect(page.getByRole("region", { name: "별지기 한마디" })).toContainText("팩폭"); // 바꾼 말투가 반영됨
+    await expect(page.getByRole("region", { name: "별지기 한마디" })).toHaveAttribute("data-tone", "팩폭"); // 바꾼 말투가 반영됨
   });
 
   await test.step("사람 지우기(이름을 관계 말로, 가족을 부르는 이름은 묶음 말로)", async () => {
@@ -254,7 +246,7 @@ test("핵심 흐름", async ({ page }, info) => {
     await main.getByRole("button", { name: /9\/20 토요일 일기/ }).click();
     await expect(page).toHaveURL(/\/history\?id=e16/);
     await expect(page.getByTestId("result")).toBeVisible();
-    await page.getByRole("button", { name: "← 목록으로 돌아가기" }).click();
+    await page.getByRole("button", { name: "← 목록" }).click();
     await expect(main.getByRole("heading", { name: "9월 20일 일요일" })).toBeVisible();   // 고른 날 그대로
 
     await main.getByRole("button", { name: "9월 12일, 기록 1편" }).click();   // 큰 달력에서 같은 달의 다른 날

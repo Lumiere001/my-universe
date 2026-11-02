@@ -22,15 +22,15 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
     await page.getByLabel(/마음껏 적어/).fill("민수 형이랑 진로 이야기를 했다. 작은 팀도 알아보고 싶다.");
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     await openResult(page);   // 저장 뒤 화면 → 일기 보기
-    await result.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: "더 보기" }).click({ timeout: 15_000 });   // 관측 보고서는 '더 보기' 안
+    await result.getByText("더 보기", { exact: true }).click({ timeout: 15_000 });   // 관측 보고서는 맨 아래 '더 보기' 안
     const obs = result.getByRole("region", { name: "관측 보고서" });
     await expect(obs).toBeVisible();
-    await expect(obs).toContainText("이 글의 흐름");
+    await expect(obs).toContainText("이 글을 읽은 방식");
     await expect(obs).toContainText("바뀜");
     await expect(obs.getByRole("listitem")).toHaveCount(3);
     await obs.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${OUT}/${info.project.name}-01-observation.png` });
-    const j = await saved("이 기록 파일로 내려받기(JSON)");
+    const j = await saved("이 일기 내려받기");
     expect(j.schema).toBe("my-universe-export/1");
     expect(j.scope).toBe("entry");
     expect(j.records).toHaveLength(1);
@@ -40,9 +40,9 @@ test("관측 보고서 · JSON 내려받기", async ({ page }, info) => {
   await test.step("지난 기록: 전체 JSON", async () => {
     await menuNav(page, "지난 기록");
     await page.getByLabel("더 보기", { exact: true }).click();   // 머리줄 ⋯ 안
-    await expect(page.getByRole("button", { name: "모든 기록 파일로 내려받기(JSON)" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "모든 일기 내려받기" })).toBeVisible();
     await page.screenshot({ path: `${OUT}/${info.project.name}-02-history-export.png` });
-    const j = await saved("모든 기록 파일로 내려받기(JSON)");
+    const j = await saved("모든 일기 내려받기");
     expect(j.scope).toBe("all");
   });
 

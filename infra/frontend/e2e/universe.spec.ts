@@ -70,13 +70,13 @@ test("우주 화면", async ({ page }, info) => {
     await expect(card).toContainText("그때 2026-04-05: “혼자 있는 시간이 가장 편하다”");
     await expect(card).toContainText("지금 2026-06-20: “혼자는 충전, 함께는 성장”");
     await shot("02-planet-quotes");
-    await card.getByRole("link", { name: "정리한 결과 보기" }).click();
+    await card.getByRole("link", { name: "일기 보기" }).click();
     await expect(page).toHaveURL(/\/universe\/e11$/);
     const r = page.getByTestId("result");
-    await r.getByRole("group", { name: "나눠 보기" }).getByRole("button", { name: /^생각 \d+$/ }).click();   // 첫 칸은 원문(PRD v9 Q19)
-    await expect(r.getByRole("region", { name: "생각 목록" })).toContainText("혼자는 충전, 함께는 성장이다.");
+    await r.getByText(/^찾은 생각 \d+개$/).click();   // 원문이 맨 위, 찾은 생각은 접어 둔 칸(2026-11-02)
+    await expect(r.getByRole("list", { name: "생각 목록" })).toContainText("혼자는 충전, 함께는 성장이다.");
     await shot("03-result-card");
-    await page.getByRole("link", { name: "← 우주로 돌아가기" }).click();
+    await page.getByRole("button", { name: "뒤로" }).click();   // 머리줄 뒤로
     await expect(page.locator(".uni canvas")).toBeVisible();
     await page.waitForTimeout(500);
   });
