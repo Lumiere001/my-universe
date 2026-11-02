@@ -124,6 +124,15 @@ def _turn_queue(repo, uid, cid, text, via="text"):
     return q
 
 
+def run_turn(repo, uid, cid, text, via="text"):
+    """한 턴을 끝까지 → ("turn", 대화) | ("error", {...}). 스트림 없는 턴과 전화 대화(app/api/voice_call.py)가 같이 쓴다."""
+    q = _turn_queue(repo, uid, cid, text, via)
+    out = None
+    while (item := q.get()) is not None:
+        out = item
+    return out
+
+
 def _check(repo, uid, cid):
     with repo.session(uid) as s:
         _get(s, cid)
@@ -139,11 +148,7 @@ def turn_stream(body: TurnIn, cid: Id, user=Depends(get_user), repo=Depends(get_
 @router.post("/talk/{cid}/turn", summary="사용자 말 한 턴(스트림 없이, 시험 · curl용)")
 def turn(body: TurnIn, cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
     _check(repo, user["id"], cid)
-    q = _turn_queue(repo, user["id"], cid, body.text, body.via)
-    out = None
-    while (item := q.get()) is not None:
-        out = item
-    ev, data = out
+    ev, data = run_turn(repo, user["id"], cid, body.text, body.via)
     if ev == "error":
         raise ApiError(404 if data["code"] == "not_found" else 502, data["code"], data["message"])
     return data

@@ -332,3 +332,11 @@ Turn = 별지기 `{"role": "keeper", "kind": "first|vow|question|aspiration|cont
   - 받아쓴 글은 화면이 이야기하기면 대화 턴(`via: voice`)으로, 쓰기 화면이면 칸에 채워 기존 길(위기 판정 · 가명 처리 · '지금까지 정리' · 요약 확인)을 그대로 탄다.
 - `POST /voice/speak` `{"text": "1~2000자"}` → `audio/mpeg`(ElevenLabs `eleven_multilingual_v2`, 목소리 `ELEVENLABS_VOICE_ID`, mp3 44.1kHz 64kbps, `Cache-Control: no-store`). 별지기 답 읽어 주기(화면에서 켜고 끔, 기본 꺼짐, 이 기기에만 기억). runs 에 `tts`(meta: 글자 수, 비용 = 글자/1000 × `PRICE_TTS_PER_1K_CHARS`).
 
+
+## 11. 목소리로 이야기하기 (2026-11-03, `app/api/voice_call.py`)
+
+ElevenLabs 에이전트(실시간 대화)가 목소리 · 받아쓰기 · 말 차례를 맡고, 별지기의 말은 우리 대화 그래프가 만든다(Custom LLM). 가명 처리 · 위기 판정 · 대화 저장은 글 이야기하기(§8)와 같은 길.
+
+- `POST /voice/call`(로그인 · 동의, 본문은 `POST /talk` 와 같음) → `{"conversation_id", "first_line", "conversation_token", "call_token"}`. 새 대화를 열고 ElevenLabs WebRTC 대화 표와 우리 통화 표(20분, HMAC)를 준다. 화면은 `startSession({conversationToken, connectionType: "webrtc", dynamicVariables: {first_line}, customLlmExtraBody: {call_token}})`. 설정이 없으면 503 `call_unconfigured`, ElevenLabs 실패 502 `call_failed`.
+- `POST /voice/llm/chat/completions`(ElevenLabs 서버만, `Authorization: Bearer VOICE_LLM_KEY`) OpenAI chat completions 모양 → 마지막 사용자 말로 한 턴(`via: voice`) → 별지기 답(`stream` 이면 SSE 조각 · `[DONE]`). 통화 표는 `elevenlabs_extra_body.call_token`. 턴이 실패하면 짧은 말 한 줄(대화가 끊기지 않게).
+- 에이전트 만들기: `tools/make_voice_agent.py`(한 번만, 비밀값 출력 없음). 운영 환경 변수: `ELEVENLABS_AGENT_ID` · `VOICE_LLM_KEY`(+ ElevenAgents 권한이 있는 `ELEVENLABS_API_KEY`). 화면은 `NEXT_PUBLIC_VOICE_CALL=1` 이면 이야기 탭에 단추가 보인다.

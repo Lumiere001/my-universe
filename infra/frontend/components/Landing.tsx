@@ -2,7 +2,7 @@
 // 로그인 전 첫 화면. Shell 이 로그아웃 상태에서 머리줄 없이 보여 주고, 로그인하면 바로 앱 화면을 연다.
 // 디자인(2026-11-02 동규 「부가티 디자인 + 약간의 우주 느낌」, getdesign.md/bugatti): 검은 바탕 · 흰 글자 · 넓은 자간 ·
 // 투명한 알약 버튼 · 굵은 글자 없음 · 둥근 모서리는 버튼만. 사진 자리는 흑백(먹 테마) 우주, 바탕엔 옅은 별가루, 받기 칸엔 궤도 하나.
-//  브라우저로 연 사람 = 앱 받기 화면(맨 위 우주 → 하는 일 셋 → 약속 셋 → 받는 법)
+//  브라우저로 연 사람 = 앱 받기 화면(맨 위 우주 → 하는 일 셋 → 약속 둘 → 받는 법)
 //  홈 화면 앱으로 연 사람 = 처음이면 카드뉴스(CardNews), 다음은 시작 화면(우주 · 구글로 시작). 사진은 scripts/make-images.mjs 가 찍는다.
 import { Gowun_Batang, IBM_Plex_Mono, Saira_Condensed } from "next/font/google";
 import Link from "next/link";
@@ -25,7 +25,6 @@ const MODELS = [
 ] as const;
 const SPECS = [
   ["10편", "한 갈래 이야기가 10편 쌓이면 우주에 새 해가 떠요"],
-  ["AES-GCM", "일기는 사람마다 다른 열쇠로 잠가 둬요"],
   ["가명", "AI에는 사람 이름을 가명으로 바꿔 보내요"],
 ] as const;
 const SEEN = "cards-seen";   // 카드뉴스를 본 기기(이 기기 편의용, 못 읽으면 다시 보여 줌)

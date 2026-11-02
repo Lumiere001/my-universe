@@ -4,6 +4,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
 export const DEV_LOGIN = process.env.NEXT_PUBLIC_DEV_LOGIN === "1";
+// 전화로 이야기하기(app/call): 실시간 음성 엔진(ElevenLabs 에이전트 + Solar)을 운영에 붙이면 NEXT_PUBLIC_VOICE_CALL=1. 가짜 데이터 모드는 연습 엔진으로 늘 켬
+export const CALL_ON = MOCK || process.env.NEXT_PUBLIC_VOICE_CALL === "1";
 const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").replace(/\/$/, "");
 
 /* ---------- 타입 (docs/api-v8.md) ---------- */
@@ -563,6 +565,12 @@ export async function markPrefSeen(): Promise<{ ok: boolean }> {
 export async function undoPref(id: string): Promise<{ ok: boolean }> {
   if (MOCK) { mockPref().forEach((x) => { if (x.id === id) x.seen = true; }); return { ok: true }; }
   return json("POST", `/settings/suggestions/${encodeURIComponent(id)}/undo`);
+}
+
+/* ---------- 전화로 이야기하기 (2026-11-03, app/call) ---------- */
+// 이야기 대화를 새로 열고(별지기 첫 말) ElevenLabs 연결 토큰과, ElevenLabs 가 우리 서버(/voice/llm)로 돌아올 때 낼 표(call_token)를 받는다
+export async function startCall(): Promise<{ conversation_id: string; first_line: string; conversation_token: string; call_token: string }> {
+  return json("POST", "/voice/call");
 }
 
 /* ---------- 말로 쓰기 · 읽어 주기 (WS21, docs/api-v8.md §10) ---------- */

@@ -1,5 +1,6 @@
 // 나에 대해 알게 된 것(docs/content/U-11, GET /insight): 우주의 떠 있는 단추 '알게 된 것'으로 열고, 해마다 자주 쓴 주제 | 다섯 묶음(한 줄 고르기),
-// 날짜와 원문 인용만, 날짜를 누르면 그 기록, 글을 쓰면 바뀐 생각이 생김, 한 화면에 들어감, 비었을 때 · 이어진 생각이 없을 때 · 실패.
+// 날짜와 원문 인용만, 날짜를 누르면 그 기록, 글을 쓰면 바뀐 생각이 생김, 비었을 때 · 이어진 생각이 없을 때 · 실패.
+// 흐름 메뉴(아래 탭 바로 위 한 줄: 요약 · 묻기 · 바뀐 생각 · 자주 쓴 주제)로 나눠 한 화면에 들어가고, 바뀐 생각 카드는 옆으로 한 장씩(2026-11-03 동규 A안).
 // 가짜 데이터(가상 인물 하늘, lib/mock.ts). 기록이 많은 모양은 window.__insight 에 가상 인물 김도윤(eval/personas/pD, 두 영역 모드)의 /insight 결과를 넣는다.
 // 캡처는 docs/screens/ws-insight/<기기>-NN-이름.png
 import { expect, test, type Page } from "@playwright/test";
@@ -11,15 +12,16 @@ const OUT = path.resolve(__dirname, "../../../docs/screens/ws-insight");
 const tabs = (page: Page) => page.getByRole("group", { name: "생각 묶음 고르기" });
 const pick = (page: Page, name: string) => tabs(page).getByRole("button", { name: new RegExp(`^${name}`) });
 const shown = (page: Page) => page.getByRole("region", { name: "생각 묶음" });
+const part = (page: Page, name: string) => page.getByRole("navigation", { name: "흐름 메뉴" }).getByRole("button", { name });
 const oneScreen = async (page: Page) => {
-  expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight), "한 화면에").toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight), "한 화면에(아래로 길게 내리지 않음)").toBeLessThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), "가로로 넘치지 않음").toBeLessThanOrEqual(1);
 };
 const fake = (page: Page, v: unknown) => page.addInitScript((x) => { (window as unknown as { __insight: unknown }).__insight = x; }, v);
 
 const detail = async (page: import("@playwright/test").Page) => {
   await nav(page, "흐름");
-  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+  await part(page, "바뀐 생각").click();
 };
 
 test("나에 대해 알게 된 것", async ({ page }, info) => {
@@ -33,7 +35,7 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     await expect(page.locator(".uni canvas")).toBeVisible();
     await page.waitForTimeout(800);
     await shot("00-universe-entry");
-    await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
+    await detail(page);   // 흐름 탭 → 흐름 메뉴 '바뀐 생각'(PRD v9: 알게 된 것은 흐름 탭 안)
     await page.waitForURL("**/insight");
     await expect(page.locator(".top-title")).toHaveText("흐름");
     await expect(page.getByRole("heading", { level: 1, name: "흐름" })).toBeAttached();
@@ -41,17 +43,24 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     const suns = page.getByRole("group", { name: "해 고르기" });
     await expect(suns.getByRole("button")).toHaveCount(5);
     await expect(suns.getByRole("button", { name: /삶의 성취/ })).toHaveAttribute("aria-pressed", "true");
-    const stars = page.getByRole("region", { name: "자주 쓴 주제" });
-    await expect(stars.locator("li").first()).toContainText("진로5편");
-    await expect(stars.locator("li").first()).toContainText("3월 14일 ~ 9월 20일");
-    await expect(stars).toContainText("아쉬웠던 점 1");                     // 생각 종류는 보이는 이름으로
+    await expect(part(page, "바뀐 생각")).toHaveAttribute("aria-pressed", "true");
     await expect(tabs(page).getByRole("button")).toHaveText([/^바뀐 0/, /^맞서는 1/, /^정리된 0/, /^이어 온 2/, /^다른 영역과 이어진 2/]);
     await expect(pick(page, "맞서는")).toHaveAttribute("aria-pressed", "true");
     await expect(shown(page)).toContainText("진로안정 ↔ 배움점선 · AI 추정");
     await expect(shown(page).locator(".ins-q.o")).toHaveCount(2);
+    await expect(page.getByRole("region", { name: "자주 쓴 주제" }), "한 번에 하나만").toHaveCount(0);
     await expect(page.locator("main")).not.toContainText(/당신은|한 사람이에요/);   // 사람을 판정하지 않는다
     await oneScreen(page);
     await shot("01-first-sun");
+    await part(page, "자주 쓴 주제").click();
+    const stars = page.getByRole("region", { name: "자주 쓴 주제" });
+    await expect(stars.locator("li").first()).toContainText("진로5편");
+    await expect(stars.locator("li").first()).toContainText("3월 14일 ~ 9월 20일");
+    await expect(stars).toContainText("아쉬웠던 점 1");                     // 생각 종류는 보이는 이름으로
+    await expect(shown(page)).toHaveCount(0);
+    await oneScreen(page);
+    await shot("01b-stars");
+    await part(page, "바뀐 생각").click();
   });
 
   await test.step("다른 묶음 고르기: 이어 온 생각(처음 · 마지막), 다른 영역과 이어진 생각(고른 해가 낀 것만)", async () => {
@@ -82,7 +91,7 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
     await page.getByRole("button", { name: "우주에 띄우기" }).click();
     await openResult(page);
     await nav(page, "우주");
-    await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
+    await detail(page);   // 흐름 탭 → 흐름 메뉴 '바뀐 생각'(PRD v9: 알게 된 것은 흐름 탭 안)
     await page.waitForURL("**/insight");
     await expect(page.getByText("2026년 3월 8일 ~ 10월 3일에 남긴 기록 18편에서")).toBeVisible();
     await expect(pick(page, "바뀐")).toHaveAttribute("aria-pressed", "true");   // 바뀐 생각이 생기면 첫 탭
@@ -95,20 +104,26 @@ test("나에 대해 알게 된 것", async ({ page }, info) => {
   expect(errors).toEqual([]);
 });
 
-test("기록이 많을 때(두 영역 모드) 한 화면 · 목록은 칸 안에서만", async ({ page }, info) => {
+test("기록이 많을 때(두 영역 모드) 흐름 메뉴로 나눠 한 화면 · 카드는 옆으로 한 장씩", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await fake(page, two);
   await page.goto("/insight");
-  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+  await part(page, "바뀐 생각").click();
   await expect(page.getByText("2026년 7월 1일 ~ 10월 25일에 남긴 기록 19편에서")).toBeVisible();
   await expect(page.getByRole("group", { name: "해 고르기" }).getByRole("button")).toHaveText(["커리어 15편", "인간관계 15편"]);
+  await part(page, "자주 쓴 주제").click();
   await expect(page.getByRole("region", { name: "자주 쓴 주제" }).locator("li")).toHaveCount(two.suns[0].stars.length);
+  await part(page, "바뀐 생각").click();
   await expect(pick(page, "바뀐")).toHaveAttribute("aria-pressed", "true");
   await expect(pick(page, "인간관계와 이어진"), "두 영역이면 상대 해 이름으로").toBeVisible();
   await expect(shown(page)).toContainText("맞는 문장만 말하기 ↔ 끝까지 말해 보기");
   await pick(page, "맞서는").click();
   await expect(shown(page).locator(".ins-card")).toHaveCount(5);
+  await expect(shown(page).locator(".ins-pager"), "카드는 옆으로 한 장씩").toContainText("1 / 5");
+  await shown(page).getByRole("button", { name: "다음 카드" }).click();
+  await expect(shown(page).locator(".ins-pager")).toContainText("2 / 5");
+  await expect(shown(page).locator(".ins-card").nth(1)).toBeInViewport();
   await expect(tabs(page), "목록이 길어도 묶음 고르기 줄은 화면 안에").toBeInViewport();
   await oneScreen(page);
   await page.screenshot({ path: `${OUT}/${info.project.name}-04-many-two-domain.png` });
@@ -117,11 +132,28 @@ test("기록이 많을 때(두 영역 모드) 한 화면 · 목록은 칸 안에
   expect(errors).toEqual([]);
 });
 
+test("흐름 메뉴: 처음은 요약(날짜 칩 → 그 일기) · 묻기는 따로 한 칸", async ({ page }, info) => {
+  const shot = (name: string) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png` });
+  await page.goto("/insight");
+  await expect(part(page, "요약")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("region", { name: "한눈에" })).toContainText("배우는 느낌");
+  await expect(page.getByRole("region", { name: "내 일기에 묻기" }), "묻기는 요약과 따로").toHaveCount(0);
+  await oneScreen(page);
+  await shot("09-brief");
+  await part(page, "묻기").click();
+  const ask = page.getByRole("region", { name: "내 일기에 묻기" });
+  await ask.getByLabel("내 일기에 묻기").fill("요즘 진로 얘기 얼마나 했어?");
+  await ask.getByRole("button", { name: "묻기" }).click();
+  await expect(ask).toContainText("처음 썼어요");
+  await oneScreen(page);
+  await shot("10-ask");
+});
+
 test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 때", async ({ page }, info) => {
   const shot = (name: string) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png` });
   await fake(page, { period: null, suns: [], across: [] });
   await page.goto("/insight");
-  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+  await part(page, "바뀐 생각").click();
   await expect(page.getByText("이 기간에 모을 생각이 없어요.")).toBeVisible();
   await expect(page.locator("main").getByRole("link", { name: "직접 쓰기" })).toHaveAttribute("href", "/write");
   await shot("05-empty");
@@ -132,19 +164,20 @@ test("비었을 때 · 이어진 생각이 없을 때 · 불러오지 못했을 
     suns: [{ name: "건강", records: 1, stars: [{ name: "아침 걷기", records: 1, first: end.day, last: end.day, kinds: { 다짐: 1 } }], kept: [], changed: [], open: [], settled: [] }],
     across: [] });
   await nav(page, "우주");
-  await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
+  await detail(page);   // 흐름 탭 → 흐름 메뉴 '바뀐 생각'(PRD v9: 알게 된 것은 흐름 탭 안)
   await expect(page.getByText("2026년 10월 1일에 남긴 기록 1편에서")).toBeVisible();      // 하루면 날짜 하나
   await expect(page.getByRole("status").filter({ hasText: "아직 서로 이어진 생각이 없어요." })).toBeVisible();
   await expect(page.getByRole("group", { name: "해 고르기" })).toHaveCount(0);   // 해가 하나면 고르기 없음
-  await expect(page.getByRole("region", { name: "자주 쓴 주제" })).toContainText("아침 걷기1편10월 1일 · 다짐 1");
   await expect(pick(page, "바뀐")).toHaveAttribute("aria-pressed", "true");   // 다 비면 첫 탭과 비었을 때 문장
   await expect(shown(page)).toContainText("예전과 다르게 생각한 문장이 나오면 여기에 모여요.");
   await expect(page.locator(".ins-list")).toHaveCount(0);
+  await part(page, "자주 쓴 주제").click();
+  await expect(page.getByRole("region", { name: "자주 쓴 주제" })).toContainText("아침 걷기1편10월 1일 · 다짐 1");
   await shot("06-few-records");
 
   await page.evaluate(() => { (window as unknown as { __insight: unknown }).__insight = "fail"; });
   await nav(page, "우주");
-  await detail(page);   // 흐름 탭 → 자세히(PRD v9: 알게 된 것은 흐름 탭 안)
+  await detail(page);   // 흐름 탭 → 흐름 메뉴 '바뀐 생각'(PRD v9: 알게 된 것은 흐름 탭 안)
   await expect(page.locator("main").getByRole("alert")).toHaveText("알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
 });
 
@@ -161,7 +194,7 @@ test("점선 카드에서 맞아요 · 아니에요(사용자가 매긴 정답) 
       from: "눌렀을 때", to: "숨김", reason: "다른 영역과 이어진 선에 '아니에요'를 자주 눌렀어요." }];
   });
   await page.goto("/insight");
-  await page.getByRole("group", { name: "보기" }).getByRole("button", { name: "자세히" }).click();
+  await part(page, "바뀐 생각").click();
   await expect(page.getByText("2026년 7월 1일 ~ 10월 25일에 남긴 기록 19편에서")).toBeVisible();
   const note = page.getByRole("status").filter({ hasText: "내 반응에 맞춰 설정을 바꿨어요" });
   await expect(note).toContainText("다른 영역과 이어진 선 보이기: 눌렀을 때 → 숨김");

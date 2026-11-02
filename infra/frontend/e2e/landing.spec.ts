@@ -5,7 +5,7 @@ import path from "node:path";
 
 const OUT = path.resolve(__dirname, "../../../docs/images/v9");
 
-test("받기 화면: 우주 사진 · 하는 일 셋 · 약속 셋 · 받는 법", async ({ page }, info) => {
+test("받기 화면: 우주 사진 · 하는 일 셋 · 약속 둘 · 받는 법", async ({ page }, info) => {
   // 맨 위 칸이 화면 높이(100svh)라 전체 길이 캡처는 칸이 같이 늘어나 실패 → 화면 크기로만 찍는다
   const shot = (name: string) => page.screenshot({ path: `${OUT}/${info.project.name}-landing-${name}.png` });
   await page.goto("/?signedout");
@@ -21,7 +21,7 @@ test("받기 화면: 우주 사진 · 하는 일 셋 · 약속 셋 · 받는 법
   await shot("02-model");
   await page.locator(".lux-specs").scrollIntoViewIfNeeded();
   await shot("03-specs");
-  await expect(page.locator(".lux-specs dt")).toHaveText(["10편", "AES-GCM", "가명"]);
+  await expect(page.locator(".lux-specs dt")).toHaveText(["10편", "가명"]);
   await btn.click();
   await expect(page.getByRole("heading", { name: "지금, 홈 화면에" })).toBeInViewport();
   // 시험 브라우저는 아이폰 · 안드로이드가 아니라 컴퓨터처럼: 휴대폰으로 열 QR 과 주소

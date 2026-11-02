@@ -214,8 +214,8 @@ main.lux { --lx-ink: #fff; --lx-body: #ccc; --lx-strong: #e6e6e6; --lx-muted: #9
   --lx-serif: var(--lux-serif), "Nanum Myeongjo", AppleMyungjo, serif;
   --lx-mono: var(--lux-mono), ui-monospace, "SF Mono", monospace;
   max-width: none; margin: 0; padding: 0; color: var(--lx-body); font: 400 16px/1.6 var(--lx-serif); }
-/* 옅은 별가루: 간격이 다른 세 겹의 점(받기 화면 · 첫 실행 카드뉴스) */
-main.lux, .cnews { background-color: #000;
+/* 옅은 별가루: 간격이 다른 세 겹의 점(받기 화면 · 첫 실행 카드뉴스 · 전화) */
+main.lux, .cnews, .call { background-color: #000;
   background-image: radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, .45), transparent),
     radial-gradient(1px 1px at 150px 110px, rgba(255, 255, 255, .3), transparent),
     radial-gradient(1.5px 1.5px at 260px 210px, rgba(255, 255, 255, .35), transparent);
@@ -256,7 +256,7 @@ main.lux, .cnews { background-color: #000;
 .lux-specs dt { font: 400 32px/1.2 var(--lx-sans); letter-spacing: 2px; color: var(--lx-ink); }
 .lux-specs dd { margin: 8px 0 0; font: 400 13px/1.6 var(--lx-mono); letter-spacing: 1px; color: var(--lx-muted); }
 @media (min-width: 768px) {
-  .lux-specs dl { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--lx-line); }
+  .lux-specs dl { grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid var(--lx-line); }
   .lux-specs dl > div { padding: 32px 24px; border-bottom: 0; border-left: 1px solid var(--lx-line); }
   .lux-specs dl > div:first-child { border-left: 0; padding-left: 0; } }
 .lux-get { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 160px 24px; }
@@ -709,33 +709,37 @@ button.quote.clamp[aria-expanded="false"] { display: -webkit-box; -webkit-line-c
 .rc-next { align-self: flex-start; margin-top: 18px; }
 .rc-danger { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line); }   /* 지우기는 혼자(R-40 위험 영역) */
 
-/* 나에 대해 알게 된 것(app/insight, docs/content/U-11): 한 화면 = 머리 · 해 고르기 + 자주 쓴 주제 | 생각 묶음.
-   PC 두 칸 나란히, 휴대폰 위아래(지난 기록과 같은 규칙), 목록은 그 칸 안에서만 넘긴다.
+/* 흐름 탭(app/insight, docs/content/U-11): 한 화면 = 맨 위 기간 · 가운데 한 칸(.flow-view) · 아래 탭 바로 위 흐름 메뉴(요약 · 묻기 · 바뀐 생각 · 자주 쓴 주제).
+   한 메뉴에 정보가 많아 길게 내리던 것을 메뉴로 나누고(2026-11-03 동규 A안), 바뀐 생각 카드는 옆으로 한 장씩 넘긴다(.ins-list).
    읽기 순서: 묶음 고르기(탭) → 카드(작은 별 이름 · 그때/지금 두 줄). 날짜 · 생각 종류는 흐린 작은 글, 내 문장만 조금 크게 */
 main.ins { max-width: 1280px; height: calc(100dvh - var(--top-h)); display: flex; flex-direction: column; gap: 10px; padding: 16px 24px; }
 .ins > * { flex: none; }
 .ins-head { display: flex; align-items: center; gap: 8px; }
 .ins-head h1 { margin: 0 auto 0 0; font-size: 1.35rem; }
 .ins-lead { margin: 0; color: var(--muted); }
-.ins-bar-row { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
-.ins-note { margin: 0 0 0 auto; font-size: .8rem; color: var(--faint); }
-.ins-body { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 28px; margin-top: 2px; }
-.ins-stars, .ins-groups { min-height: 0; }
-.ins-stars { overflow: auto; padding-right: 4px; }
-.ins-groups { display: flex; flex-direction: column; gap: 8px; }
+.ins-note { margin: 0; font-size: .8rem; color: var(--faint); }
+.flow-view { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; }
+.flow-menu { display: flex; gap: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
+.flow-menu button { flex: 1; justify-content: center; min-height: 40px; padding: 4px 6px; font-size: .88rem; white-space: nowrap; border-color: transparent; color: var(--muted); }
+.flow-menu button[aria-pressed="true"] { background: none; border-color: var(--text); color: var(--text); }
+.ins-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.ins-groups { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .ins ul { list-style: none; margin: 0; padding: 0; }
-.ins-groups h2 { font-size: .8rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; margin: 0; padding: 8px 0 0; }
-.ins-stars h2 { position: sticky; top: 0; z-index: 1; background: var(--bg); font-size: .8rem; font-weight: 700; color: var(--faint); letter-spacing: .02em; margin: 0; padding: 8px 0; }
-.ins-stars li { padding: 9px 0; }
+.ins-stars li { padding: 7px 0; border-bottom: 1px solid var(--line); }
 .ins-star { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .ins-star .n, .ins-tabs .n { color: var(--faint); font-size: .82rem; font-weight: 400; font-variant-numeric: tabular-nums; }
-.ins-freq { display: block; height: 3px; min-width: 6px; border-radius: 2px; background: var(--accent); opacity: .55; margin: 6px 0 5px; }
+.ins-freq { display: block; height: 3px; min-width: 6px; border-radius: 2px; background: var(--accent); opacity: .55; margin: 4px 0 3px; }
 .ins-stars .meta { margin: 0; color: var(--faint); font-size: .8rem; line-height: 1.5; }
 .ins .ins-tabs { align-self: flex-start; margin-left: 0; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .ins-tabs button { white-space: nowrap; }
 .ins-tabs button.none:not([aria-pressed="true"]) { color: var(--faint); opacity: .7; }
 .ins-lead2 { margin: 0; font-size: .86rem; }
-.ins-list { flex: 0 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 4px 4px 0; }
+.ins-list { flex: 1 1 auto; min-height: 120px; display: flex; align-items: flex-start; overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory; scrollbar-width: none; }
+.ins-list::-webkit-scrollbar { display: none; }
+.ins-list > .ins-card { flex: 0 0 100%; max-height: 100%; overflow-y: auto; scroll-snap-align: start; scroll-snap-stop: always; }
+.ins-pager { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.ins-pager .n { color: var(--faint); font-size: .85rem; font-variant-numeric: tabular-nums; min-width: 3.5em; text-align: center; }
 .ins-card { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
 .ins-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 4px; }
 .ins-card-head .sub { font-size: .85rem; }
@@ -752,11 +756,7 @@ main.ins { max-width: 1280px; height: calc(100dvh - var(--top-h)); display: flex
   .ins-head h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .ins-head .btn { display: none; }   /* 제목은 머리줄 이름(h1 은 화면 읽기에만), 돌아가기는 아래 막대의 '우주' */
   .ins-lead { font-size: .9rem; }
-  .ins-note { margin: 0; }
-  .ins-body { display: flex; flex-direction: column; gap: 8px; }
-  .ins-stars { flex: none; max-height: 19dvh; }
   .ins-stars li { padding: 6px 0; }
-  .ins-groups { flex: 1; border-top: 1px solid var(--line); padding-top: 8px; }
   .ins-card { padding: 10px 12px; }
   .ins .ins-tabs { flex-wrap: wrap; overflow: visible; }   /* 휴대폰: 다섯 탭이 잘리지 않게 두 줄까지 */
   .ins .ins-tabs button { padding: 4px 9px; }
@@ -765,7 +765,6 @@ main.ins { max-width: 1280px; height: calc(100dvh - var(--top-h)); display: flex
 /* 아주 낮은 화면(휴대폰 가로 등)은 한 화면에 못 넣으니 보통처럼 넘긴다 */
 @media (max-height: 560px) {
   main.ins { height: auto; }
-  .ins-stars, .ins-list { overflow: visible; max-height: none; }
 }
 
 /* 내 반응에 맞춰 바꾼 설정(components/PrefNotice, docs/content/C-01): 반응을 누른 화면 위에 떠서 알리고 되돌리기. 아래 막대를 가리지 않게 */
@@ -776,6 +775,8 @@ main.ins { max-width: 1280px; height: calc(100dvh - var(--top-h)); display: flex
 .pref-item p { margin: 0; flex: 1; font-size: .9rem; }
 .pref-note > .primary { align-self: flex-end; }
 @media (max-width: 899px) { .pref-note { right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); } }
+/* 흐름 탭은 아래 탭 위에 흐름 메뉴 한 줄이 더 있어 그 위로(메뉴를 가리지 않게) */
+@media (max-width: 899px) { body:has(.flow-menu) .pref-note { bottom: calc(var(--tab-h) + 60px); } }
 
 /* 운영 화면(app/ops, 2026-10-30 동규 「기능은 그대로, 가독성 높이기」): 맨 위 '한눈에'(큰 숫자 + 괜찮아요/살펴보기) → 카드 두 칸.
    카드마다 '무엇을 보나' 한 줄, 숫자는 같은 크기 격자 · 표 숫자 칸은 오른쪽 정렬, 단계 · 오류 코드는 사람 말(원래 코드는 흐리게) */
@@ -846,8 +847,8 @@ main.ins { max-width: 1280px; height: calc(100dvh - var(--top-h)); display: flex
 button.link { background: none; border-color: transparent; color: var(--faint); }
 
 /* 흐름 탭(PRD v9 Q10 · Q11): 기간 칩 · 요약 | 자세히, 요약 문단 + 날짜 칩, 묻기 칸 */
-.flow-bar { justify-content: space-between; flex-wrap: nowrap; gap: 8px; }
-.flow-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+.flow-bar { align-self: flex-start; flex-wrap: nowrap; }
+.flow-body { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
 .brief-sec h2 { font-size: .95rem; margin: 0 0 4px; color: var(--muted); }
 .brief-sec p { margin: 0 0 6px; line-height: 1.65; }
 .src-chip { display: inline-block; font-size: .75rem; padding: 1px 8px; margin: 0 2px; border-radius: 999px; background: var(--accent-soft); color: var(--text); white-space: nowrap; }
@@ -916,3 +917,73 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   background: rgba(38, 38, 38, .92); border: 1px solid rgba(224, 191, 98, .6); color: var(--gold); font-weight: 600; animation: born-in 4s ease both; pointer-events: none; }
 @keyframes born-in { 0%, 100% { opacity: 0; } 15%, 80% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sun-born-art i, .sun-born-art b, .uni .born-note { animation: none; } .uni .born-note { opacity: 1; } }
+
+/* ---------- 부가티 느낌 조금(2026-11-03 동규 「기존 디자인은 버리지 말고 부가티 느낌을 약간 섞어서」) ----------
+   받기 화면(.lux)과 같은 결을 앱에도 조금: 더 깊은 검정 바탕 · 머리줄 이름은 넓은 자간 · 굵기 한 단계 낮춤 · 버튼은 알약(보조는 테두리만) ·
+   카드는 모서리를 줄이고 가는 선 · 달력 숫자는 고정폭 글꼴(--font-num, app/layout.tsx). 보라 강조 · 별지기 · 일기장 종이 · 우주 테마는 그대로.
+   이 묶음만 지우면 예전 모습(바탕색은 layout.tsx themeColor · manifest · offline.html 도 같이). */
+:root { --bg: #141414; --bg2: #181818; --panel: #1b1b1b; --panel2: #242424; --hover: #232323; --line: #2c2c2c; --line2: #3d3d3d; --r: 4px; }
+h1, h2, h3 { font-weight: 500; letter-spacing: .01em; }
+.top-title { font-weight: 400; font-size: .95rem; letter-spacing: .16em; text-indent: .16em; }   /* 넓은 자간(가운데 맞춤이 한쪽으로 밀리지 않게 들여쓰기) */
+.card, [popover].pop, .ins-card { border-radius: 4px; }
+/* 버튼: 보조는 투명 알약 + 가는 선, 주 버튼은 보라 알약 */
+button, .btn { border-radius: 999px; background: transparent; border-color: var(--line2); padding-inline: 18px; }
+button:hover, .btn:hover { background: var(--hover); border-color: #5c5c5c; }
+button.primary, .btn.primary { border-color: transparent; font-weight: 500; letter-spacing: .04em; }
+.btn.wide, button.wide { border-radius: 999px; }
+.cal td button, .topics li button { border-radius: var(--r); }   /* 달력 칸 · 주제 목록 줄은 각진 그대로 */
+.rec-text { border-radius: 0; }   /* 글처럼 보이는 단추(별지기의 추천, 누르면 펼침)는 알약이면 모서리에서 글자가 잘림(2026-11-03 동규) */
+.cal td button { font-family: var(--font-num), ui-monospace, monospace; letter-spacing: .04em; }
+/* 고른 것(대화 | 직접 쓰기 · 달력 | 주제별 등)은 흰 선 하나 */
+.modes a[aria-current="page"] { font-weight: 500; background: none; box-shadow: inset 0 0 0 1px var(--text); }
+.seg { border-radius: 24px; }
+.seg button[aria-pressed="true"], .set-nav button[aria-pressed="true"] { background: none; border-color: var(--text); }
+.looks, .looks .look { border-radius: 8px; }   /* 별지기 다섯 칸은 알약이면 찌그러져 보여 둥근 네모 */
+.rec h2 { font-weight: 400; letter-spacing: .14em; }
+.tabbar a { letter-spacing: .1em; }
+.file b { font-weight: 500; }
+.bubble.me { background: transparent; border: 1px solid var(--line2); }
+
+/* 목소리로 이야기하기(app/call) = 별이 태어나는 대화(2026-11-03 동규 A안 → 「깔끔하고 세련되게」): 머리줄 · 아래 탭까지 덮는 검은 화면 한 장.
+   받기 화면과 같은 결: 색은 빼고 흰 글 · 가는 선, 굵은 글자 없음. 배경 = 내 우주를 희미한 점으로(CallCosmos), 가운데 = 빛 구슬 + 가는 고리(CallNebula).
+   단추는 흰 원(받기) · 흰 선 원(나중에 · 끊기 · 마이크). 끝 = 구슬이 작은 별로 위로 → 대본(가는 선) + 일기로 정리하기 */
+.call { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 14px; color: #ededed; background: #000;
+  padding: calc(32px + env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
+.call-top { text-align: center; display: flex; flex-direction: column; gap: 6px; }
+.call-top h1 { margin: 0; font-size: 1.25rem; font-weight: 400; letter-spacing: .28em; text-indent: .28em; }
+.call-top .sub { margin: 0; font-size: .85rem; color: #8f8f8f; letter-spacing: .04em; }
+.call-cap { margin: 0; font-size: .7rem; letter-spacing: .32em; text-indent: .32em; color: #7a7a7a; }
+.call-time { margin: 0; font-family: var(--font-num), ui-monospace, monospace; font-size: .8rem; color: #7a7a7a; letter-spacing: .12em; }
+.call-cosmos, .call-nebula { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; transition: opacity .8s; }
+.call > :not(.call-cosmos, .call-nebula) { position: relative; z-index: 1; }
+.call-space { flex: 1; }   /* 가운데는 빛 구슬(캔버스)이 비어 있는 자리에 그려진다 */
+.call.ended .call-script { animation: call-rise .6s ease 1.6s both; }   /* 구슬이 별로 올라간 뒤 대본 */
+@keyframes call-rise { from { opacity: 0; transform: translateY(10px); } }
+.call.ring .call-acts { margin-top: auto; }
+.call-acts { display: flex; justify-content: center; gap: 80px; }
+.call-acts-names { display: flex; justify-content: center; gap: 80px; margin-top: -4px; font-size: .75rem; letter-spacing: .14em; color: #8f8f8f; }
+.call-acts-names span { width: 64px; text-align: center; }
+.call-btn { width: 64px; height: 64px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .55); background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: background .2s, border-color .2s; }
+.call-btn:hover { background: rgba(255, 255, 255, .08); border-color: #fff; text-decoration: none; }
+.call-btn svg { width: 24px; height: 24px; }
+.call-btn.on { background: #f2f2f2; border-color: #f2f2f2; color: #0b0b0b; }
+.call-btn.on:hover { background: #fff; }
+.call-btn.off svg { transform: rotate(135deg); }   /* 내린 수화기 */
+.call-btn.mute[aria-pressed="true"] { background: #f2f2f2; border-color: #f2f2f2; color: #0b0b0b; }
+.call-state { margin: 0; font-size: .75rem; color: #7a7a7a; letter-spacing: .14em; }
+.call-caption { margin: 0 0 6px; min-height: 3.2em; max-width: 26em; text-align: center; font-size: .95rem; line-height: 1.65; color: #d8d8d8;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.call.ended { align-items: stretch; }
+.call-script { flex: 1 1 0; min-height: 0; overflow-y: auto; list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.call-script li { display: flex; flex-direction: column; gap: 3px; max-width: 86%; }
+.call-script li.me { align-self: flex-end; align-items: flex-end; }
+.call-script .who { font-size: .68rem; letter-spacing: .18em; color: #7a7a7a; }
+.call-script p { margin: 0; padding: 2px 0 2px 12px; line-height: 1.65; font-size: .95rem; color: #e4e4e4; border-left: 1px solid rgba(255, 255, 255, .35); }
+.call-script li.me p { padding: 2px 12px 2px 0; border-left: 0; border-right: 1px solid rgba(190, 174, 255, .6); text-align: right; }
+.call-end { display: flex; flex-direction: column; gap: 8px; }
+.call-end .primary { background: #f2f2f2; color: #0b0b0b; }
+.call-end .primary:hover { background: #fff; }
+.call-end .btn { justify-content: center; border-color: rgba(255, 255, 255, .35); color: #ededed; }
+.call-err { margin: 0; max-width: 26em; text-align: center; font-size: .85rem; color: #d9b9a8; }
+@media (prefers-reduced-motion: reduce) { .call-cosmos, .call-nebula { transition: none; } .call.ended .call-script { animation: none; } }

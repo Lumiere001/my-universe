@@ -55,6 +55,7 @@ class State(TypedDict, total=False):
     crisis_unsure: bool      # 위기 2차 판정(Solar)이 실패함 → 안부 한 줄만
     people: list             # 사람 목록(가명 표). 이 글에서 자동 등록한 사람 포함
     questions: list          # 헷갈리는 이름 질문 id
+    name_hidden: list        # 보여 주지 않고 가리기만 한 이름 후보 · 「이름인지 낱말인지」 물은 후보(기록 Agent 가 사람으로 보면 등록)
     topics: dict             # 기존 작은 별 {이름: 해}
     stars_new: int           # 이 글에서 새로 생긴 작은 별 수(group_stars 가 본다)
     record_raw: dict         # 기록 Agent 추출(원래 이름)
@@ -160,7 +161,26 @@ def names(state, ctx):
         asked = {q["name"] for q in diary.questions(s)}
         qs = [diary.add_question(s, ctx.entry_id, a["name"], a["reason"]) for a in found["ask"] if a["name"] not in asked]
     logger.log("step", step="names", entry_id=ctx.entry_id, people_new=len(found["auto"]), questions=len(qs))
-    return {"people": [{k: p[k] for k in ("id", "name", "nicknames", "relation")} for p in people], "questions": qs}
+    hidden = found["quiet"] + [a["name"] for a in found["ask"] if a["reason"] == "이름인지 낱말인지"]
+    return {"people": [{k: p[k] for k in ("id", "name", "nicknames", "relation")} for p in people], "questions": qs,
+            "name_hidden": hidden}
+
+
+def confirm_names(ctx, hidden, said, people):
+    """기록 Agent 가 가명 글을 읽고 사람 칸에 넣은 말(said) 중 규칙이 가리기만 · 물어보기로 둔 후보 → 사람으로 등록하고 그 질문은 지운다.
+    규칙(글자 · 조사)만으로는 별명(똘똘이가 전화했다)과 낱말(노트 귀퉁이를 접었다)이 같은 꼴이라, 문맥은 기록 Agent 가 본다
+    (2026-11-03 동규 「일기 내용을 보고 관계를 파악하면 오탐이 줄지 않을까」). Agent 는 가명만 보니 실명이 나가지 않는다."""
+    said = {n.removesuffix("이") for n in said} | set(said)
+    new = [n for n in hidden if n in said]
+    if not new:
+        return people
+    with ctx.repo.session(ctx.uid) as s:
+        added = [diary.add_person(s, n, auto=True) for n in new]
+        for q in diary.questions(s, entry_id=ctx.entry_id):
+            if q["name"] in new:
+                s.delete("people_questions", id=q["id"])
+    logger.log("step", step="names_confirmed", entry_id=ctx.entry_id, people_new=len(added))
+    return people + [{k: p[k] for k in ("id", "name", "nicknames", "relation")} for p in added]
 
 
 ##################################################
@@ -220,7 +240,8 @@ def record_clean(state, ctx):
             t["topic"], t["domain"] = OTHER_TOPIC, topics.get(OTHER_TOPIC) or t["domain"]
     info = {k: rec[k] for k in ("summary", "addressee", "events", "record_type", "original")}
     info["summary"] = clean_text(info["summary"], source)   # G3 + 내부 번호
-    return {"record": info, "kept": kept, "dropped_quotes": len(rec["thoughts"]) - len(kept)}
+    people = confirm_names(ctx, state.get("name_hidden") or [], rec["new_people"], state["people"])
+    return {"record": info, "kept": kept, "dropped_quotes": len(rec["thoughts"]) - len(kept), "people": people}
 
 
 @node("ontology")

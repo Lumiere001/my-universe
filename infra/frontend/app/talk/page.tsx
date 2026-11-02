@@ -14,7 +14,7 @@ import { useKeeperName } from "@/components/Keeper";
 import { StoryModes } from "@/components/Shell";
 import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
-  deleteTalk, finishTalk, fixTalk, getDiary, getTalk, listTalks, sayTalk, startTalk, why,
+  deleteTalk, finishTalk, fixTalk, getDiary, getTalk, listTalks, CALL_ON, sayTalk, startTalk, why,
   type Conversation, type EntryResult, type StreamError,
 } from "@/lib/api";
 
@@ -95,6 +95,14 @@ export default function TalkPage() {
     }
     finally { setBusy(""); setSteps([]); }
   };
+  // 전화 끝에 '일기로 정리하기'(/?finish, app/call): 그 통화가 쌓인 대화를 불러오면 바로 정리한다(한 번만, 주소는 지움)
+  const auto = useRef(false);
+  useEffect(() => {
+    if (auto.current || !c?.turn_count || !new URLSearchParams(window.location.search).has("finish")) return;
+    auto.current = true;
+    history.replaceState(null, "", window.location.pathname);
+    finish();
+  }, [c]); // eslint-disable-line react-hooks/exhaustive-deps
   // 대화 지우기: 한 번 묻고, 지우지 못하면 그 대화를 그대로 둔다
   const drop = async (id: string) => {
     if (!window.confirm(ASK_DELETE)) return false;
@@ -134,6 +142,7 @@ export default function TalkPage() {
         <h1 className="sr">이야기하기</h1>
         <StoryModes />
         <div className="row tight">
+          {CALL_ON && <Link className="tbtn" href="/call" aria-label="목소리로 이야기하기" title="목소리로 이야기하기"><Icon name="phone" /></Link>}
           <button className="tbtn" aria-pressed={voice.on} onClick={voice.toggle}
             aria-label="별지기 말 읽어 주기" title={`별지기 말 읽어 주기 ${voice.on ? "켜짐" : "꺼짐"}`}>
             <Icon name={voice.on ? "speaker" : "mute"} /></button>

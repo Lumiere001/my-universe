@@ -113,6 +113,12 @@ TTS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID") or "JBFqnCBsd6RMkjVDRZzb"   # �
 # 읽어 주기 목소리(설정 tts_voice, 2026-10-28 임시 목록): 화면 이름 → ElevenLabs 기본 목소리 id, 첫 값 = 기본. 목록 밖 값은 422.
 # 화면 목록 · 미리 듣기 녹음은 infra/frontend/app/settings/page.tsx VOICES · public/voices/ (tests/test_ws21_voice.py 가 대조)
 TTS_VOICES = {"따뜻한": TTS_VOICE_ID, "차분한": "XrExE9yKIg1WjnnlVkGX", "부드러운": "EXAVITQu4vr4xnSDxMaL", "밝은": "bIHbv24MWmeRgasZH58o"}
+# 전화처럼 이야기하기(ElevenLabs Agents, app/api/voice_call.py): 만든 에이전트 id(tools/make_voice_agent.py 가 출력) ·
+# ElevenLabs 서버가 우리 /voice/llm 에 `Authorization: Bearer` 로 보내는 공유 비밀(통화 표 서명 키도 여기서 용도를 달리해 뽑음)
+ELEVENLABS_AGENT_ID = os.getenv("ELEVENLABS_AGENT_ID", "")
+# 에이전트 전용 키(ElevenAgents 권한만). 받아쓰기 · 읽어 주기 키와 나눠 둔다(2026-11-03: 기존 키에 권한이 더해지지 않음). 없으면 ELEVENLABS_API_KEY
+ELEVENLABS_AGENTS_KEY = os.getenv("ELEVENLABS_AGENTS_KEY", "") or ELEVENLABS_API_KEY
+VOICE_LLM_KEY = os.getenv("VOICE_LLM_KEY", "")
 # 한 번에 받는 녹음 조각(입력 검사, 사용 상한 아님). Vercel 본문 한도 4.5MB 아래 — 긴 녹음은 화면이 2분 조각으로 나눠 보낸다.
 VOICE_MAX_BYTES = _int("VOICE_MAX_BYTES", 4 * 1024 * 1024)
 

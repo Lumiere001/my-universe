@@ -23,7 +23,7 @@ const TABS: readonly (readonly [string, string, IconName, readonly string[]])[] 
 ];
 const TITLES: Record<string, string> = {
   "/": "이야기", "/talk": "이야기", "/write": "이야기", "/history": "일기장", "/universe": "우주", "/insight": "흐름",
-  "/people": "사람", "/aspiration": "되고 싶은 모습", "/settings": "설정", "/import": "지난 일기 가져오기",
+  "/people": "사람", "/aspiration": "되고 싶은 모습", "/settings": "설정", "/import": "지난 일기 가져오기", "/call": "전화",
   "/consent": "동의 내용", "/privacy": "개인정보처리방침", "/terms": "이용약관", "/ops": "운영",
 };
 const ROOTS = ["/", "/talk", "/write", "/history", "/universe", "/insight"];   // 뒤로 단추가 없는 화면

@@ -1,13 +1,14 @@
 "use client";
-// 흐름 탭(PRD v9 ⑥ · Q10 · Q11): 맨 위 기간 칩(이번 주 · 이번 달 · 처음부터)과 요약 | 자세히.
-// 요약 = Solar 가 기간 안 원문 재료로만 쓴 소제목 · 짧은 문단(문장마다 날짜 칩 → 그 일기) + 내 일기에 묻기(답은 일기로 안 남음).
-// 자세히 = 아래 '나에 대해 알게 된 것'(규칙만, 원문 인용 카드).
+// 흐름 탭(PRD v9 ⑥ · Q10 · Q11): 맨 위 기간 칩(이번 주 · 이번 달 · 처음부터), 아래 탭 바로 위에 흐름 메뉴 한 줄(요약 · 묻기 · 바뀐 생각 · 자주 쓴 주제).
+// 한 메뉴에 정보가 많아 아래로 길게 내리던 것을 메뉴로 나눴다(2026-11-03 동규 A안). 가운데 한 칸만 바뀌고 바뀐 생각 카드는 옆으로 한 장씩.
+// 요약 = Solar 가 기간 안 원문 재료로만 쓴 소제목 · 짧은 문단(문장마다 날짜 칩 → 그 일기). 묻기 = 내 일기에 묻기(답은 일기로 안 남음).
+// 바뀐 생각 · 자주 쓴 주제 = 아래 '나에 대해 알게 된 것'(규칙만, 원문 인용 카드).
 // 나에 대해 알게 된 것(docs/content/U-11): GET /insight 를 해마다 — 자주 쓴 주제(작은 별) | 바뀐 · 맞서는 · 정리된 · 이어 온 · 다른 영역과 이어진 생각.
 // AI 요약 · 판정 없이 날짜와 원문 인용만(서버 app/service/rules/insight.py). 날짜를 누르면 그 기록(/history?id=).
-// 한 화면: PC 두 칸 · 휴대폰 위아래, 목록은 그 칸 안에서만 넘긴다. 묶음은 한 줄 고르기(탭), 처음에는 내용이 있는 첫 묶음.
+// 묶음은 한 줄 고르기(탭), 처음에는 내용이 있는 첫 묶음.
 // 점선(AI 추정) 카드에는 '이 연결이 맞나요? 맞아요 · 아니에요'(우주의 점선과 같은 POST /feedback) — 사용자가 매긴 정답이 개인 고리로 간다.
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { unquote } from "@/components/ResultCard";
 import { CONFLICT } from "@/components/universeLook";
 import { askDiary, getBrief, getInsight, sendFeedback, why, type Answer, type Brief, type InsightEnd, type InsightPair, type Period, type Sentence } from "@/lib/api";
@@ -62,28 +63,32 @@ function Pair({ p, labels, year, o, said, onSay }: { p: InsightPair; labels?: [s
 
 
 const PERIODS: [Period, string][] = [["week", "이번 주"], ["month", "이번 달"], ["all", "처음부터"]];
+const MENU = [["brief", "요약"], ["ask", "묻기"], ["groups", "바뀐 생각"], ["stars", "자주 쓴 주제"]] as const;
+type Menu = (typeof MENU)[number][0];
 
 export default function FlowPage() {
   const [period, setPeriod] = useState<Period>("month");
-  const [view, setView] = useState<"brief" | "detail">("brief");
+  const [menu, setMenu] = useState<Menu>("brief");
   return (
     <main className="ins">
       <h1 className="sr">흐름</h1>
-      <div className="row flow-bar">
-        <div className="seg" role="group" aria-label="기간">
-          {PERIODS.map(([k, name]) => <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}>{name}</button>)}
-        </div>
-        <div className="seg" role="group" aria-label="보기">
-          <button type="button" aria-pressed={view === "brief"} onClick={() => setView("brief")}>요약</button>
-          <button type="button" aria-pressed={view === "detail"} onClick={() => setView("detail")}>자세히</button>
-        </div>
+      <div className="seg flow-bar" role="group" aria-label="기간">
+        {PERIODS.map(([k, name]) => <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}>{name}</button>)}
       </div>
-      {view === "brief" ? <BriefView period={period} onDetail={() => setView("detail")} onAll={() => setPeriod("all")} /> : <InsightDetail key={period} period={period} />}
+      <div className="flow-view">
+        {menu === "brief" ? <BriefView period={period} onDetail={() => setMenu("groups")} onAll={() => setPeriod("all")} />
+          : menu === "ask" ? <AskBox />
+          : <InsightDetail key={period} period={period} part={menu} />}
+      </div>
+      <nav className="flow-menu" aria-label="흐름 메뉴">
+        {MENU.map(([k, name]) => <button key={k} type="button" aria-pressed={menu === k} onClick={() => setMenu(k)}>{name}</button>)}
+      </nav>
     </main>
   );
 }
 
-const Chips = ({ x }: { x: Sentence }) => <>{x.sources.map((s) => (
+// 한 문장의 근거가 같은 일기를 두 번 가리킬 수 있어(재료 번호가 달라도 같은 기록) 날짜 칩은 한 번만. 저장해 둔 요약에도 있어 화면에서 거른다
+const Chips = ({ x }: { x: Sentence }) => <>{x.sources.filter((s, i, a) => a.findIndex((t) => t.entry_id === s.entry_id && t.day === s.day) === i).map((s) => (
   <Link key={s.entry_id + s.day} className="src-chip" href={`/history?id=${encodeURIComponent(s.entry_id)}`}>{day(s.day, String(new Date().getFullYear()))}</Link>))}</>;
 
 function BriefView({ period, onDetail, onAll }: { period: Period; onDetail: () => void; onAll: () => void }) {
@@ -95,14 +100,14 @@ function BriefView({ period, onDetail, onAll }: { period: Period; onDetail: () =
     getBrief(period).then(setB, (e) => setErr(why(e, "흐름 요약을 불러오지 못했어요.")));
   }, [period, n]);
   const again = <button className="small" onClick={() => setN(n + 1)}>다시 시도</button>;
-  const detail = <button className="small" onClick={onDetail}>자세히 보기</button>;
+  const detail = <button className="small" onClick={onDetail}>바뀐 생각 보기</button>;
   return (
     <div className="flow-body">
       {!b && !err && <p className="sub" role="status">이 기간의 흐름을 정리하는 중…</p>}
       {err && <p className="err" role="alert">{err} {again}</p>}
       {b?.state === "few" && <p className="sub">아직 모으는 중이에요. 이 기간에 일기가 세 편 넘게 쌓이면 흐름을 요약해 드려요. {detail}</p>}
       {b?.state === "none" && <p className="sub">이 기간에 쓴 일기가 없어요. {period !== "all" && <button className="small" onClick={onAll}>처음부터 보기</button>}</p>}
-      {b?.state === "failed" && <p className="sub" role="alert">요약을 만들지 못했어요. 원문 카드는 자세히에서 볼 수 있어요. {again} {detail}</p>}
+      {b?.state === "failed" && <p className="sub" role="alert">요약을 만들지 못했어요. 원문 카드는 바뀐 생각에서 볼 수 있어요. {again} {detail}</p>}
       {b?.state === "ok" && b.sections.map((sec) => (
         <section key={sec.title} className="brief-sec" aria-label={sec.title}>
           <h2>{sec.title}</h2>
@@ -110,7 +115,6 @@ function BriefView({ period, onDetail, onAll }: { period: Period; onDetail: () =
         </section>
       ))}
       {b?.state === "ok" && <p className="ins-note">내가 쓴 원문만으로 정리했어요. 날짜를 누르면 그 일기로 가요.</p>}
-      <AskBox />
     </div>
   );
 }
@@ -143,7 +147,27 @@ function AskBox() {
   );
 }
 
-function InsightDetail({ period: chosen }: { period: Period }) {
+// 카드는 옆으로 한 장씩(카드뉴스와 같은 넘김). 넘김 단추와 '2 / 5'
+function Swipe({ items }: { items: React.ReactNode[] }) {
+  const track = useRef<HTMLUListElement>(null);
+  const [at, setAt] = useState(0);
+  const go = (n: number) => track.current?.scrollTo({ left: n * track.current.clientWidth,
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  return (
+    <>
+      <ul ref={track} className="ins-list" onScroll={(e) => setAt(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>{items}</ul>
+      {items.length > 1 && (
+        <div className="ins-pager">
+          <button className="small" aria-label="앞 카드" disabled={at === 0} onClick={() => go(at - 1)}>‹</button>
+          <span className="n" aria-live="polite">{at + 1} / {items.length}</span>
+          <button className="small" aria-label="다음 카드" disabled={at >= items.length - 1} onClick={() => go(at + 1)}>›</button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function InsightDetail({ period: chosen, part }: { period: Period; part: "groups" | "stars" }) {
   const [data, err] = useLoad(() => getInsight(chosen), "알게 된 것을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const kindName = useKindName();
   const [pick, setPick] = useState<string | null>(null);
@@ -199,21 +223,17 @@ function InsightDetail({ period: chosen }: { period: Period }) {
 
   return (
     <>
-      <p className="ins-lead">{period.from === period.to ? day(period.from) : `${day(period.from)} ~ ${day(period.to, period.from.slice(0, 4))}`}에 남긴 기록 {period.records}편에서, 내 생각이 어디에 오래 머물고 어떻게 이어지고 바뀌었는지 모았어요.</p>
-      {bare && <p className="sub" role="status" style={{ margin: 0 }}>아직 서로 이어진 생각이 없어요. 기록이 쌓일수록 이어지고 바뀐 생각이 여기에 모여요.</p>}
-      <div className="ins-bar-row">
-        {suns.length > 1 && (
-          <div className="row tight" role="group" aria-label="해 고르기">
-            {suns.map((s) => (
-              <button key={s.name} className="small" aria-pressed={s === sun} onClick={() => { setPick(s.name); setTab(null); }}>{s.name} <span className="sub">{s.records}편</span></button>
-            ))}
-          </div>
-        )}
-        <p className="ins-note">내가 쓴 문장과 날짜만 그대로 옮겼어요. <span className="badge">점선 · AI 추정</span>이 붙은 연결은 AI가 짐작한 것이라 틀릴 수 있어요.</p>
-      </div>
+      <p className="ins-lead">{period.from === period.to ? day(period.from) : `${day(period.from)} ~ ${day(period.to, period.from.slice(0, 4))}`}에 남긴 기록 {period.records}편에서 모았어요.</p>
+      {bare && part === "groups" && <p className="sub" role="status" style={{ margin: 0 }}>아직 서로 이어진 생각이 없어요. 기록이 쌓일수록 이어지고 바뀐 생각이 여기에 모여요.</p>}
+      {suns.length > 1 && (
+        <div className="row tight" role="group" aria-label="해 고르기">
+          {suns.map((s) => (
+            <button key={s.name} className="small" aria-pressed={s === sun} onClick={() => { setPick(s.name); setTab(null); }}>{s.name} <span className="sub">{s.records}편</span></button>
+          ))}
+        </div>
+      )}
       <div className="ins-body" key={sun.name}>
-        <section className="ins-stars" aria-label="자주 쓴 주제">
-          <h2>자주 쓴 주제</h2>
+        {part === "stars" ? <section className="ins-stars" aria-label="자주 쓴 주제">
           <ul>
             {sun.stars.map((s) => (
               <li key={s.name}>
@@ -223,9 +243,7 @@ function InsightDetail({ period: chosen }: { period: Period }) {
               </li>
             ))}
           </ul>
-        </section>
-        <section className="ins-groups" aria-label="생각 묶음">
-          <h2>이어지고 바뀐 생각</h2>
+        </section> : <section className="ins-groups" aria-label="생각 묶음">
           <div className="seg ins-tabs" role="group" aria-label="생각 묶음 고르기">
             {groups.map((x) => (
               <button key={x.name} aria-pressed={x === g} className={x.items.length ? undefined : "none"} onClick={() => setTab(x.name)}>
@@ -234,8 +252,9 @@ function InsightDetail({ period: chosen }: { period: Period }) {
             ))}
           </div>
           <p className="sub ins-lead2">{g.items.length ? g.lead : g.empty}</p>
-          {g.items.length > 0 && <ul className="ins-list">{g.items}</ul>}
-        </section>
+          {g.items.length > 0 && <Swipe key={g.name} items={g.items} />}
+          <p className="ins-note">내가 쓴 문장과 날짜만 그대로 옮겼어요. <span className="badge">점선 · AI 추정</span>이 붙은 연결은 AI가 짐작한 것이라 틀릴 수 있어요.</p>
+        </section>}
       </div>
     </>
   );

@@ -6,6 +6,7 @@ app/service/safety/pseudonym.py
 """
 
 import re
+from pathlib import Path
 
 # 받침 갈래: 없음 / ㄹ / 그 밖. 원래 말과 같은 갈래의 가명을 써서 조사(이/가 · 은/는 · 으로/로 …)를 그대로 둔다.
 # ponytail: 이름 같은 가명이라 외부 AI 답에 우연히 같은 글자가 나오면 이름으로 되돌린다. 낱말과 겹치는 이름(가온 → 다가온)은 뺐다.
@@ -35,7 +36,9 @@ ENDINGS = set("에의을를는한던된와과서로고면며게")   # "오후에
 WORDY = {"하늘", "봄", "별", "바다", "솔", "나래", "은하", "사랑", "보람", "슬기", "기쁨", "다솜", "한결", "소망",
          "진주", "구슬", "여름", "가을", "겨울", "노을", "새벽", "빛나", "이슬", "초롱", "마루", "누리", "송이",
          "단비", "나비", "햇살", "온유", "믿음", "샛별", "아름"}
-CAND = re.compile(rf"(?<![가-힣])([가-힣]{{2,3}})(?:(?P<h>\s?(?:{HONOR}))|(?P<a>{AMBI})(?![가-힣])|(?:{SUFFIX})(?![가-힣]))")
+# 호칭 뒤에는 조사만(고용 형태 · 작은 씨앗의 '형 · 씨'는 호칭이 아님, 2026-11-03)
+HONOR_END = r"(?:이랑|이네|이가|이는|이를|이도|이와|이의|이한테|이에게|이하고|한테|에게|께서|께|하고|처럼|랑|이|가|은|는|을|를|과|와|도|의|만|님|네|아|야)?(?![가-힣])"
+CAND = re.compile(rf"(?<![가-힣])([가-힣]{{2,3}})(?:(?P<h>\s?(?:{HONOR})(?={HONOR_END}))|(?P<a>{AMBI})(?![가-힣])|(?:{SUFFIX})(?![가-힣]))")
 # 받침 없는 이름 + 조사(지우가 · 지우는)는 "나무가 · 버스는"과 꼴이 같다. 같은 문장에 사람과 함께 쓰는 말이 있을 때만,
 # 흔한 낱말을 빼고 "이름인지 낱말인지" 물을 후보로 올린다(가명으로는 가린다, 결정 3: 확실하지 않으면 가명).
 # ponytail: 낱말 목록 · 동사 목록이라 빠진 말은 오탐(가명으로 가려짐)이 난다. 오탐이 거슬리면 COMMON 에 더한다.
@@ -50,7 +53,8 @@ COMMON = set("""아이 애기 아기 아내 여보 이모 고모 조카 부부 �
 그냥 동료 상사 가게 남자 여자 먼저 많이 카페 서류 메모 리더 파트너 크루 스터디 파티 데이트 투어 우유 두유 고구마 과자 피자 쿠키 케이크 치즈 주스 바나나 토마토 지금
 그래 어디 이미 별로 겨우 미리 따로 마치 아니 거의 매우 아주 부디
 기다리 모르 다니 지키 그리 고르 바라 가지 보내 지내 느끼 버리 마시 고치 가르치 미루 바꾸 나누 배우 키우 비우 부르 누르 이루 다루
-""".split())   # 그래도 · 어디는: 받침 없는 부사 + 조사. 기다리는 · 모르는: 받침 없는 동사 줄기 + '는'(꾸미는 말)
+두라 하라 가라 오라 주라
+""".split())   # 그래도 · 어디는: 받침 없는 부사 + 조사. 기다리는 · 모르는: 받침 없는 동사 줄기 + '는'(꾸미는 말). 두라는: 시키는 꼴
 # 이름다움: 흔한 이름 글자(GIVEN) 두 개, 또는 성 + 그 두 글자. 보통 낱말에 잘 쓰는 글자(간 · 학 · 실 · 화 · 제 …)는 뺐다.
 # ponytail: 글자 목록이라 드문 이름 글자는 놓친다(그 이름은 호칭 · '이가'꼴 · 행동 낱말 조사로만 잡힘). 놓치면 GIVEN 에 더한다.
 GIVEN = set("가건겸경결규균근금길나남다단담대덕도동두라란람랑려련령로록루류륜률리린림만명무문미민범별병보봄봉비빈빛산상새샘"
@@ -58,6 +62,10 @@ GIVEN = set("가건겸경결규균근금길나남다단담대덕도동두라란�
             "청초춘충태하한해헌혁현형혜호홍환효후훈휘희흠")
 SURNAMES = set("김이박최정강조윤장임한오서신권황안송류유전홍고문양손배백허남심노하곽성차주우구민진나지엄채원천방공현함변염여"
                "추도소석선설마길연위표명기반라왕금옥육인맹제모탁국어은편용예경봉사부")
+# 이름 글자로만 된 보통 낱말(설명 · 대신 · 준비 · 만나 …, Kiwi 사전에서 뽑음, tools/make_common_words.py). _name_like 가 뺀다
+COMMON_WORDS = {w for w in Path(__file__).with_name("common_words.txt").read_text().split("\n") if w and not w.startswith("#")}
+# 동사 · 형용사 꼴의 끝 글자(물어도 · 않아도 · 틀려도 · 넣기는 · 묻지도 · 않냐는). 이름다운 말(서아 · 지아)은 남긴다
+VERBISH = set("어아여워져려겨켜쳐해냐기지라")
 # 조사 없이 이름 바로 뒤에 오는 사람 행동 낱말(오늘 철수 만났다 · 영희 생일)
 ACT_NEAR = r"\s(?:만나|만났|생일|연락|전화|카톡|문자|말했|말해|얘기|이야기|답장)"
 BARE = re.compile(rf"(?<![가-힣A-Za-z])([가-힣]{{2,3}})(?={ACT_NEAR})")
@@ -101,9 +109,13 @@ def _alt(words):
 def _name_like(w):
     if w[-1] in ENDINGS | set("가다지요해"):   # 하다가 · 고민을 · 대해: 낱말 끝(조사 · 어미)
         return False
-    if len(w) == 3:
-        return w[0] in SURNAMES and _name_like(w[1:])
-    return len(w) == 2 and w[0] in GIVEN and w[1] in GIVEN and w not in NOT_NAMES | COMMON
+    if len(w) == 3:   # 성 + 이름. 낱말 + 한 글자(설명하는 · 자기도)는 뺀다
+        return w[0] in SURNAMES and w[:2] not in COMMON_WORDS and _name_like(w[1:])
+    return len(w) == 2 and w[0] in GIVEN and w[1] in GIVEN and w not in NOT_NAMES | COMMON | COMMON_WORDS
+
+
+def _verbish(w):
+    return w[-1] in VERBISH and w not in WORDY and not _name_like(w)
 
 
 def _sentence(text, i):
@@ -112,34 +124,49 @@ def _sentence(text, i):
     return text[a:b]
 
 
+# 후보 단계(2026-11-03 동규 「오타 · 낱말을 사람 이름으로 잡음」): 가리기는 넓게, 보여 주기(등록 · 묻기)는 확실할 때만.
+#  sure = 사람 목록에 자동 등록 · ask = 「이름인지 낱말인지」 물어봄 · quiet = 외부 AI 로 보낼 때 가명으로 가리기만(보여 주지 않음)
 def _candidates(text, known=()):
-    """→ {이름: 확실한가}. 확실하면 자동 등록, 아니면 물어볼 것(가명으로는 가린다)."""
+    """→ {이름: "sure" | "ask" | "quiet"}. 이름다운 말이 사람에게만 붙는 꼴(호칭 · 이가)이면 sure, 이름 같은 낱말(하늘)은 ask,
+    이름답지 않은 말(귀퉁이를 · 설명이랑)은 사람 행동 낱말이 있어도 quiet."""
     text = text or ""
     if known:   # 이미 목록에 있는 말(곰돌이가 → 곰돌 ✗)은 지우고 찾는다
         text = re.sub(_alt(known), "·", text)
     out = {}
     for m in CAND.finditer(text):
         n = m.group(1)
-        if n in NOT_NAMES or n[-1] in ENDINGS or (not m.group("h") and _cls(n) == "none"):
+        if n in NOT_NAMES or n[-1] in ENDINGS or (len(n) == 3 and n[-1] in "도만") or (not m.group("h") and _cls(n) == "none"):
             continue   # '이가 · 이랑'꼴은 받침 있는 이름만(서아이가 ✗)
         if re.fullmatch(TITLE, (m.group("h") or "").strip()) and not _name_like(n):
-            continue   # 님 없는 직함 앞의 이름답지 않은 말(오늘 이사 · 영업 팀장이)
-        # '이가 · 이를'꼴은 이름답거나 같은 문장에 사람 행동 낱말이 있을 때만 확실(떡볶이를 먹었다 → 자동 등록 ✗, 물어봄 · 가명은 그대로)
-        sure = _name_like(n) or (not (m.group("h") or m.group("a")) and bool(PERSON_ACT.search(_sentence(text, m.start()))))
-        if not sure and m.group("a") and n not in WORDY and not PERSON_ACT.search(_sentence(text, m.start())):
-            continue   # 기간이랑 · 일정이네: 이름답지 않고 사람 행동 낱말도 없으면 낱말
-        out[n] = out.get(n, False) or sure
+            continue   # 님 없는 직함 앞의 이름답지 않은 말(오늘 이사 · 정규반 대신 원장쌤)
+        if re.fullmatch(TITLE, n) or (m.group("h") and len(n) == 3 and not _name_like(n)):
+            continue   # 직함 자체(원장쌤) · 호칭 앞 세 글자 낱말(노트북 팀장님). 세 글자 이름은 성 + 이름이라 이름답다
+        act = bool(PERSON_ACT.search(_sentence(text, m.start())))
+        if n in WORDY:
+            level = "ask"
+        elif _name_like(n):   # 이름 글자로만 된 보통 낱말(설명이랑 · 대신)은 COMMON_WORDS 가 뺀다
+            level = "sure"
+        elif m.group("a"):   # 이랑 · 이네는 보통 낱말 조사와 꼴이 같다(기간이랑 · 일정이네): 사람 행동 낱말이 있으면 가리기만
+            level = "quiet" if act else None
+        else:   # 호칭이 붙었으면 물어보고, '이가 · 이를'꼴의 이름답지 않은 말(귀퉁이를 · 달팽이가)은 가리기만
+            level = "ask" if m.group("h") else "quiet"
+        if level:
+            out[n] = max(out.get(n, "quiet"), level, key=LEVELS.index)
     return out
 
 
+LEVELS = ["quiet", "ask", "sure"]
+
+
 def _loose(text, known=()):
+    """→ {이름: "ask" | "quiet"}. 조사만 보고 찾은 말은 이름다울 때만 묻고, 나머지는 가리기만."""
     if known:
         text = re.sub(_alt(known), "·", text)
-    out = []
+    out = {}
 
-    def add(n):
-        if n not in out and n not in NOT_NAMES | COMMON:
-            out.append(n)
+    def add(n, level="ask"):
+        if n not in NOT_NAMES | COMMON and not _verbish(n):
+            out[n] = max(out.get(n, "quiet"), level, key=LEVELS.index)
 
     for sent in re.split(r"[.!?。\n]", text or ""):
         act = bool(PERSON_ACT.search(sent))
@@ -150,7 +177,7 @@ def _loose(text, known=()):
             if not (act or (m.group(0)[len(n):] in ("한테", "에게") and _name_like(n))):
                 continue   # 행동 낱말이 없으면 사람에게만 쓰는 조사(한테 · 에게) + 이름다운 말만
             if _cls(n) == "none" and n[-1] not in ENDINGS | set("다요죠") and (len(n) == 2 or _name_like(n)):
-                add(n)
+                add(n, "ask" if _name_like(n) or n in WORDY else "quiet")
         for m in LOOSE_B.finditer(sent):
             n, j = m.groups()
             if _cls(n) != "none" and _name_like(n) and (act or j in ("한테", "에게")):
@@ -165,25 +192,30 @@ def _loose(text, known=()):
 
 
 def find_new_names(text, people):
-    """사람 목록에 없는 이름 후보 → {"auto": [이름], "ask": [{"name", "reason"}]}.
-    reason: 동명이인(목록에 같은 이름이 둘 이상) · 별명(이미 있는 이름과 겹침) · 이름인지 낱말인지."""
+    """사람 목록에 없는 이름 후보 → {"auto": [이름], "ask": [{"name", "reason"}], "quiet": [이름]}.
+    reason: 동명이인(목록에 같은 이름이 둘 이상) · 별명(이미 있는 이름과 겹침) · 이름인지 낱말인지.
+    quiet 는 보여 주지 않고(등록 · 질문 ✗) 외부 AI 로 보낼 때 가명으로 가리기만 한다(mask)."""
     known = {t for p in people for t in _terms(p)}
     names = [p.get("name") for p in people]
     ask = [{"name": n, "reason": "동명이인"} for n in sorted({n for n in names if n and names.count(n) > 1 and n in text})]
-    auto = []
-    for c, sure in _candidates(text, known).items():
+    auto, quiet = [], []
+    for c, level in _candidates(text, known).items():
         base = c[:-1] if c.endswith("이") else c
         if c in known:
             continue
-        if c in WORDY or not sure:
+        if level == "quiet":
+            quiet.append(c)
+        elif level == "ask":
             ask.append({"name": c, "reason": "이름인지 낱말인지"})
         elif any(base in k or k in c for k in known):
             ask.append({"name": c, "reason": "별명"})
         else:
             auto.append(c)
-    seen = set(auto) | {a["name"] for a in ask}
-    ask += [{"name": n, "reason": "이름인지 낱말인지"} for n in _loose(text, known) if n not in seen]
-    return {"auto": auto, "ask": ask}
+    seen = set(auto) | set(quiet) | {a["name"] for a in ask}
+    for n, level in _loose(text, known).items():
+        if n not in seen:
+            (ask.append({"name": n, "reason": "이름인지 낱말인지"}) if level == "ask" else quiet.append(n))
+    return {"auto": auto, "ask": ask, "quiet": quiet}
 
 
 ##################################################
@@ -196,7 +228,7 @@ def mask(text, people):
     성 붙은 이름은 '가명 성 + 이름 가명'(고민석 → 한도윤, 민석 → 도윤)으로 이어 보이게 한다."""
     text = text or ""
     found = find_new_names(text, people)
-    persons = [_terms(p) for p in people] + [[c] for c in found["auto"] + [a["name"] for a in found["ask"]]]
+    persons = [_terms(p) for p in people] + [[c] for c in found["auto"] + [a["name"] for a in found["ask"]] + found["quiet"]]
     real = {t for ts in persons for t in ts}
     pools = {c: iter([pre + n for pre in PREFIX for n in POOL[c]]) for c in POOL}
     sub = {}

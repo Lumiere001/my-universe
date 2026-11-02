@@ -240,6 +240,24 @@ def test_value_or_empty_topic_goes_to_other_star(env, monkeypatch):
     assert not [h for h in env.fake.sent if f"<li>{graph.OTHER_TOPIC}</li>" in h]
 
 
+def test_record_agent_decides_hidden_names(env, monkeypatch):
+    """규칙이 가리기만 한 말(똘똘이가 · 귀퉁이를) 중 기록 Agent 가 가명 글의 문맥으로 사람 칸에 넣은 것만 사람으로 등록한다
+    (2026-11-03 동규 「일기 내용을 보고 관계를 파악」). Agent 에는 둘 다 가명으로 간다."""
+    first = env.fake._record
+
+    def record(html):
+        d = first(html)
+        for t in d["thoughts"]:
+            t["people"] = re.findall(r"(\S+?)이가 전화", t["quote"][0])   # 전화한 쪽만 사람(가명 그대로)
+        return d
+    monkeypatch.setattr(env.fake, "_record", record)
+    write(env, U1, "메모", "똘똘이가 전화해서 고마웠다. 물어보려고 노트 귀퉁이를 접었다.", "2026-10-01T22:00:00+09:00")
+    with env.repo.session(U1) as s:
+        assert [p["name"] for p in diary.people(s)] == ["똘똘"]
+        assert diary.questions(s) == []
+    assert not [h for h in env.fake.sent if "똘똘" in h or "귀퉁" in h]
+
+
 def test_creative_record_gets_no_relations(env):
     """품질 3판: 시 · 창작 글(Classify '창작')의 생각은 다른 글과 잇지 않는다. 지난 생각으로는 고르되 관계는 버리고,
     관측 입력에 '글 유형: 창작'을 적어 Agent 도 알게 한다."""

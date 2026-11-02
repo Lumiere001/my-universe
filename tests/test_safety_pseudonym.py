@@ -150,14 +150,14 @@ def test_assert_no_real_names_passes_clean_payload():
 
 def test_find_new_names_auto():
     r = find_new_names("수빈이가 짚어 줬다. 태호 형이랑 밥을 먹었다. 민준이가 웃었다.", PEOPLE)
-    assert r == {"auto": ["수빈", "태호"], "ask": []}
+    assert r == {"auto": ["수빈", "태호"], "ask": [], "quiet": []}
 
 
 @pytest.mark.parametrize("text", ["오후에 선배랑 카페에 갔다.", "졸업한 선배를 만났다.", "학교 선배랑 이야기했다.",
                                   "고양이가 울었다.", "아저씨가 길을 알려 줬다.", "마음이 무겁다.", "하나님, 감사합니다.",
                                   "서아이가 왔다."])
 def test_find_new_names_not_names(text):
-    assert find_new_names(text, PEOPLE) == {"auto": [], "ask": []}
+    assert find_new_names(text, PEOPLE) == {"auto": [], "ask": [], "quiet": []}
 
 
 def test_find_new_names_ask():
@@ -253,7 +253,7 @@ def test_loose_new_name_with_particle_is_hidden():
                                   "커피는 식었고 동료랑 웃었다.", "우유가 떨어져서 사러 갔다가 이웃을 만났다.",
                                   "나무가 예뻐서 엄마한테 보냈다. 엄마가 웃었다."])
 def test_loose_skips_common_words(text):
-    assert find_new_names(text, PEOPLE) == {"auto": [], "ask": []}
+    assert find_new_names(text, PEOPLE) == {"auto": [], "ask": [], "quiet": []}
 
 
 ##################################################
@@ -279,13 +279,13 @@ def test_unregistered_names_are_hidden(text, name):
 @pytest.mark.parametrize("text", ["시험 기간이랑 겹쳐서 힘들었다.", "공원이랑 시장을 걸었다.", "Youtube에서 강의를 봤다.",
                                   "그 문제에 대해 이야기했다.", "숙제 하다가 연락했다.", "버스 정류장 근처 카페에 갔다."])
 def test_common_words_are_not_new_names(text):
-    assert find_new_names(text, []) == {"auto": [], "ask": []}
+    assert find_new_names(text, []) == {"auto": [], "ask": [], "quiet": []}
 
 
 def test_ambiguous_particle_registers_only_name_like_words():
     assert find_new_names("준혁이랑 밥 먹었다.", [])["auto"] == ["준혁"]
-    r = find_new_names("학원이랑 연락이 안 됐다.", [])   # 이름답지 않은 말 + 행동 낱말 → 묻기만(자동 등록 ✗)
-    assert r["auto"] == [] and [a["name"] for a in r["ask"]] == ["학원"]
+    r = find_new_names("학원이랑 연락이 안 됐다.", [])   # 이름답지 않은 말 + 행동 낱말 → 가리기만(등록 · 질문 ✗)
+    assert r == {"auto": [], "ask": [], "quiet": ["학원"]}
 
 
 ##################################################
@@ -310,7 +310,7 @@ def test_titled_names_are_hidden(text, name):
 @pytest.mark.parametrize("text", ["오늘 이사했다.", "다음 주에 이사 간다.", "주일 대표 기도를 맡았다.", "영업 팀장이 바뀌었다.",
                                   "회의 끝나고 팀장님께 말했다.", "정말 간사해서 싫다.", "담임 목사님 설교가 길었다."])
 def test_titles_without_names(text):
-    assert find_new_names(text, []) == {"auto": [], "ask": []}
+    assert find_new_names(text, []) == {"auto": [], "ask": [], "quiet": []}
 
 
 def test_forget_drops_title_with_name():
@@ -320,11 +320,25 @@ def test_forget_drops_title_with_name():
 
 def test_common_words_are_not_people():
     """떡볶이를 · 그래도: 이름이 아닌데 사람으로 자동 등록 · 질문되던 말(가상 인물 A, 2026-10-30). 이름답지 않은 '이가'꼴은
-    사람 행동 낱말이 없으면 묻기만 하고(가명은 그대로) 자동 등록하지 않는다."""
+    행동 낱말이 있어도 가리기만 한다(귀퉁이를 접었다 … 물어보려고, 2026-11-03). 별명이면 기록 Agent 가 사람으로 볼 때 등록(graph.confirm_names)."""
     found = find_new_names("저녁에 떡볶이를 먹었다. 엄마는 그래도 큰 회사가 낫지 않냐고 다시 물었다.", [])
-    assert found == {"auto": [], "ask": []}
+    assert found == {"auto": [], "ask": [], "quiet": []}
     assert find_new_names("태호는 아직 결과를 기다리는 중이라 미안했다.", [{"name": "정태호", "nicknames": ["태호"]}])["ask"] == []
-    found = find_new_names("똘똘이가 어제 왔다.", [])
-    assert found["auto"] == [] and [a["name"] for a in found["ask"]] == ["똘똘"]
-    assert find_new_names("똘똘이가 전화했다.", [])["auto"] == ["똘똘"]
+    assert find_new_names("똘똘이가 어제 왔다.", []) == {"auto": [], "ask": [], "quiet": ["똘똘"]}
+    assert find_new_names("똘똘이가 전화했다.", []) == {"auto": [], "ask": [], "quiet": ["똘똘"]}
+    masked, table = mask("똘똘이가 전화했다.", [])
+    assert "똘똘" not in masked and unmask(masked, table) == "똘똘이가 전화했다."   # 보여 주지 않아도 외부로는 가린다
+
+
+@pytest.mark.parametrize("text", [
+    "물어보려고 노트 귀퉁이를 접었다. 엄마한테 얘기했다.",           # 이가꼴 낱말 + 행동 낱말(가상 인물 E, 2026-11-03 동규)
+    "재밌는 설명이랑 알아듣는 설명은 다르다고 친구가 말했다.",       # 이름 글자로만 된 낱말 + 이랑(F)
+    "지금은 정규반 대신 원장쌤이 참관하는 4주짜리로 했다.",          # 낱말 + 직함(F)
+    "물을 내용보다 물어도 되는 시점을 더 오래 생각하다 연락했다.",     # 동사 꼴 + 도(A)
+    "숙한 모습만 보여 주려고 애쓰지 않아도 된다고 말했다.",           # 동사 꼴(B)
+    "달팽이가 상추 먹는 영상을 보다가 친구랑 웃었다.",               # 이가꼴 낱말(F)
+])
+def test_words_are_not_shown_as_people(text):
+    r = find_new_names(text, [])
+    assert r["auto"] == [] and r["ask"] == []
     assert "똘똘" not in mask("똘똘이가 어제 왔다.", [])[0]   # 묻는 동안에도 밖으로는 가명
