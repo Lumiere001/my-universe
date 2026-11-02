@@ -189,7 +189,8 @@ def test_start_and_turn_without_real_names(client, env, talk):  # noqa: F811
     talk.queue.append(lambda msgs: {"reply": "그랬군요. " + msgs[-1]["content"].split("지금 사용자 말:\n")[1].split()[0]
                                     + " 함께 걸어서 어땠어요?", "found": False})
     ev = say(client, c["id"], "민준이랑 아침에 30분 걸었다.")
-    assert [d["step"] for k, d in ev if k == "progress"] == ["safety", "past", "reply", "summary"]
+    steps = [d["step"] for k, d in ev if k == "progress"]   # 위기 판정 · 지난 기록은 동시에 돌아 순서가 바뀔 수 있다
+    assert sorted(steps[:2]) == ["past", "safety"] and steps[2:] == ["reply", "summary"]
     v = last(ev)
     assert v["turn_count"] == 1 and [t["role"] for t in v["turns"]] == ["keeper", "user", "keeper"]
     assert v["turns"][-1]["text"].startswith("그랬군요. 민준이랑")              # 가명으로 받은 답을 원래 이름으로 되돌림

@@ -48,3 +48,17 @@ test("카드뉴스: 다섯 장을 넘기고 시작하기 → 시작 화면, 본 
   await expect(page.getByRole("heading", { name: "나의 우주", level: 1 })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("cards-seen"))).toBe("1");
 });
+
+// 카톡으로 받은 링크(카톡 안 브라우저)는 홈 화면에 추가가 안 돼 사파리로 여는 법을 먼저(2026-11-03)
+test.describe("카톡 안 브라우저", () => {
+  test.use({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 KAKAOTALK 10.8.0" });
+  test("받는 법 = 사파리로 열기(카톡 바깥 브라우저 주소)", async ({ page }, info) => {
+    await page.goto("/?signedout");
+    const get = page.locator("#get");
+    await expect(get).toContainText("카카오톡 안에서는 홈 화면에 둘 수 없어요");
+    await expect(get.getByRole("link", { name: "사파리로 열기" })).toHaveAttribute("href", /^kakaotalk:\/\/web\/openExternal\?url=http/);
+    await expect(get, "QR · 공유 안내는 안 보임").not.toContainText("공유 버튼");
+    await get.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${OUT}/${info.project.name}-landing-07-kakao.png` });
+  });
+});

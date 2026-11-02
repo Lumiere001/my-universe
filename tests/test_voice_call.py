@@ -151,3 +151,15 @@ def test_llm_never_drops_the_call(client, env, eleven, talk):  # noqa: F811
     j = ask(client, voice_call.call_token(U1, other["conversation_id"]), "아침에 걸었다.", stream=False).json()
     assert "찾지 못했어요" in j["choices"][0]["message"]["content"]
     assert client.get(f"/talk/{other['conversation_id']}", headers=H2).json()["turn_count"] == 0
+
+
+def test_llm_says_filler_first_when_turn_is_slow(client, env, eleven, talk, monkeypatch):  # noqa: F811
+    """답이 FILLER_AFTER 안에 안 나오면 '음…'을 먼저 내보내고 별지기 답을 잇는다(2026-11-03 「말하면 바로 반응을 안 함」).
+    답은 정리 · 저장 전에 나가고, 같은 대화의 턴은 차례로 저장된다."""
+    monkeypatch.setattr(voice_call, "FILLER_AFTER", 0)
+    out = call(client)
+    tok, cid = out["call_token"], out["conversation_id"]
+    chunks = [json.loads(p) for p in sse(ask(client, tok, "아침에 걸었다.").text)[:-1]]
+    said = [c["choices"][0]["delta"].get("content") for c in chunks if c["choices"][0]["delta"].get("content")]
+    c = client.get(f"/talk/{cid}", headers=H1).json()
+    assert said == [voice_call.FILLER, c["turns"][-1]["text"]] and c["turn_count"] == 1

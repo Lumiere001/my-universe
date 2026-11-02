@@ -133,20 +133,29 @@ export default function CallPage() {
     const timer = setInterval(() => setSec((s) => s + 1), 1000);
     return () => clearInterval(timer);
   }, [stage]);
-  useEffect(() => () => engine.current?.end(), []);
+  // 화면을 떠나거나 앱을 닫으면 대화도 끊는다(끊기를 안 눌러도 소리가 이어지지 않게)
+  useEffect(() => {
+    const off = () => engine.current?.end();
+    addEventListener("pagehide", off);
+    return () => { removeEventListener("pagehide", off); off(); };
+  }, []);
   useEffect(() => (stage === "ring" ? ringSound() : undefined), [stage]);
 
   const [err, setErr] = useState("");
+  const [connecting, setConnecting] = useState(false);
   const answer = async () => {
+    if (connecting || engine.current) return;   // 연결되는 몇 초 사이 여러 번 눌러 대화가 겹쳐 열리던 것(2026-11-03 휴대폰 시험: 3개가 동시에)
     const hooks: Hooks = { onLine: (l) => setLines((x) => [...x, l]), onMode: setMode };
     if (MOCK) { setStage("live"); engine.current = demoEngine(hooks); return; }
-    setErr("");
+    setErr(""); setConnecting(true);
     try {
       engine.current = await voiceEngine(hooks, () => setStage((s) => (s === "live" ? "ended" : s)));   // 저쪽에서 끊겨도 대본으로
       setStage("live");
     } catch (e) {
       setErr((e as Error)?.name === "NotAllowedError" ? "마이크를 쓸 수 있게 허락해 주세요. 휴대폰 설정에서 이 앱의 마이크를 켤 수 있어요."
         : why(e, "지금은 목소리로 이야기할 수 없어요. 잠시 뒤 다시 받거나, 이야기 탭에서 글로 이야기해 주세요."));
+    } finally {
+      setConnecting(false);
     }
   };
   const hangUp = () => { engine.current?.end(); setStage("ended"); };
@@ -161,9 +170,9 @@ export default function CallPage() {
           <div className="call-top"><p className="call-cap">나의 우주</p><h1>{name}</h1><p className="sub">오늘 이야기를 들으러 왔어요</p></div>
           <div className="call-acts">
             <Link className="call-btn off" href="/" aria-label="나중에"><Icon name="phone" /></Link>
-            <button className="call-btn on" onClick={answer} aria-label="받기"><Icon name="phone" /></button>
+            <button className="call-btn on" onClick={answer} disabled={connecting} aria-label={connecting ? "연결하는 중" : "받기"}><Icon name="phone" /></button>
           </div>
-          <div className="call-acts-names" aria-hidden><span>나중에</span><span>받기</span></div>
+          <div className="call-acts-names" aria-hidden><span>나중에</span><span>{connecting ? "연결하는 중…" : "받기"}</span></div>
           {err && <p className="call-err" role="alert">{err}</p>}
         </>
       )}

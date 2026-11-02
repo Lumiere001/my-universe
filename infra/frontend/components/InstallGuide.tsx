@@ -2,19 +2,25 @@
 // 홈 화면에 앱으로 받는 법(설치형 웹앱 = 우리 전용 앱). 받기 화면(Landing, bare) · 설정 · 알림 켜기에서 보인다.
 // 안드로이드 · PC 크롬: beforeinstallprompt 를 받아 '앱 설치' 버튼. 아이폰 · 아이패드 사파리: 공유 → 홈 화면에 추가 그림 안내.
 // 이미 설치한 앱으로 열었으면(display-mode: standalone) 아무것도 보이지 않는다.
+// 카톡 · 인스타그램처럼 앱 안의 브라우저로 열면 홈 화면에 추가가 안 돼서(2026-11-03, 카톡으로 링크를 받는 일이 많음) 사파리 · 크롬으로 여는 법을 먼저.
 import { useEffect, useState } from "react";
 
 type Prompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-type Mode = "none" | "prompt" | "ios" | "android";
-export type Platform = "installed" | "ios" | "android" | "other";
+type Mode = "none" | "prompt" | "ios" | "android" | "inapp";
+export type Platform = "installed" | "ios" | "android" | "inapp" | "other";
+// 앱 안의 브라우저(이름은 안내 문장에 씀). 안드로이드의 '; wv)' 는 이름 모를 앱 안 브라우저
+const IN_APP: [RegExp, string][] = [[/KAKAOTALK/i, "카카오톡"], [/Instagram/, "인스타그램"], [/FBAN|FBAV/, "페이스북"], [/\bLine\//, "라인"],
+  [/NAVER\(inapp/, "네이버 앱"], [/DaumApps/, "다음 앱"], [/; wv\)/, "앱"]];
+export const inAppName = () => IN_APP.find(([re]) => re.test(navigator.userAgent))?.[1] ?? null;
+const ios = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
 // 지금 어디서 열었나(브라우저 밖에서만 부른다)
 export function platform(): Platform {
   const nav = navigator as Navigator & { standalone?: boolean };
   if (matchMedia("(display-mode: standalone)").matches || nav.standalone) return "installed";
-  const ua = nav.userAgent;
-  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) return "ios";
-  return /Android/.test(ua) ? "android" : "other";
+  if (inAppName()) return "inapp";
+  if (ios()) return "ios";
+  return /Android/.test(nav.userAgent) ? "android" : "other";
 }
 
 export default function InstallGuide({ bare }: { bare?: boolean }) {
@@ -24,7 +30,8 @@ export default function InstallGuide({ bare }: { bare?: boolean }) {
   useEffect(() => {
     const p = platform();
     if (p === "installed") return;
-    if (p === "ios" || p === "android") setMode(p);
+    if (p === "ios" || p === "android" || p === "inapp") setMode(p);
+    if (p === "inapp") return;   // 앱 안 브라우저는 설치 창이 오지 않는다
     const got = (e: Event) => { e.preventDefault(); setEv(e as Prompt); setMode("prompt"); };
     const done = () => setMode("none");
     addEventListener("beforeinstallprompt", got);
@@ -39,6 +46,7 @@ export default function InstallGuide({ bare }: { bare?: boolean }) {
     if ((await ev.userChoice).outcome === "accepted") setMode("none");
   };
   const body = mode === "prompt" ? <button className="primary" onClick={install}>홈 화면에 설치</button>
+    : mode === "inapp" ? <InApp />
     : mode === "ios" ? (
       <ol className="steps-num">
         <li>사파리 아래 막대의 공유 버튼 <ShareIcon />을 눌러요.</li>
@@ -52,6 +60,24 @@ export default function InstallGuide({ bare }: { bare?: boolean }) {
       <h2>홈 화면에 앱으로 두기</h2>
       {body}
     </section>
+  );
+}
+
+// 앱 안 브라우저: 사파리(아이폰) · 크롬(안드로이드)으로 열기. 카톡은 바깥 브라우저로 여는 주소가 있고, 안드로이드는 크롬을 바로 부를 수 있다.
+// 그 밖(아이폰 인스타그램 등)은 오른쪽 위 메뉴로 여는 법 + 주소 복사
+function InApp() {
+  const [copied, setCopied] = useState(false);
+  const name = inAppName(), browser = ios() ? "사파리" : "크롬", here = location.href;
+  const open = /KAKAOTALK/i.test(navigator.userAgent) ? `kakaotalk://web/openExternal?url=${encodeURIComponent(here)}`
+    : !ios() ? `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end` : null;
+  const copy = () => navigator.clipboard?.writeText(here).then(() => setCopied(true), () => setCopied(false));
+  return (
+    <div className="stack">
+      <p style={{ margin: 0 }}>{name} 안에서는 홈 화면에 둘 수 없어요. <b>{browser}</b>로 열어 주세요.</p>
+      {open ? <a className="primary btn" href={open}>{browser}로 열기</a>
+        : <p className="sub" style={{ margin: 0 }}>오른쪽 위(또는 아래) 메뉴 <b>⋯</b>에서 <b>{browser}로 열기</b>(외부 브라우저로 열기)를 눌러요.</p>}
+      <button type="button" className="link inline" onClick={copy}>{copied ? "주소를 복사했어요. " + browser + " 주소창에 붙여 넣어요." : "주소 복사하기"}</button>
+    </div>
   );
 }
 

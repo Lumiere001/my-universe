@@ -99,7 +99,7 @@ def fix_talk(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
         return chat_graph.view(conversations.get(s, cid))
 
 
-def _turn_queue(repo, uid, cid, text, via="text"):
+def _turn_queue(repo, uid, cid, text, via="text", on_reply=None):
     q = queue.Queue()
 
     def work():
@@ -111,7 +111,7 @@ def _turn_queue(repo, uid, cid, text, via="text"):
 
     def _work():
         try:
-            v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)), via)
+            v = chat_graph.turn(repo, uid, cid, text, lambda p: q.put(("progress", p)), via, on_reply)
             q.put(("turn", v) if v else ("error", {"conversation_id": cid, "code": "not_found",
                                                    "message": "이 대화를 찾지 못했어요. 지워졌을 수 있어요. '새 대화 시작'을 눌러 주세요.", "resumable": False}))
         except Exception as e:
@@ -124,9 +124,10 @@ def _turn_queue(repo, uid, cid, text, via="text"):
     return q
 
 
-def run_turn(repo, uid, cid, text, via="text"):
-    """한 턴을 끝까지 → ("turn", 대화) | ("error", {...}). 스트림 없는 턴과 전화 대화(app/api/voice_call.py)가 같이 쓴다."""
-    q = _turn_queue(repo, uid, cid, text, via)
+def run_turn(repo, uid, cid, text, via="text", on_reply=None):
+    """한 턴을 끝까지 → ("turn", 대화) | ("error", {...}). 스트림 없는 턴과 목소리 대화(app/api/voice_call.py)가 같이 쓴다.
+    on_reply: 별지기 답이 나오자마자 그 글로 불림(정리 · 저장은 그 뒤에 마저)."""
+    q = _turn_queue(repo, uid, cid, text, via, on_reply)
     out = None
     while (item := q.get()) is not None:
         out = item

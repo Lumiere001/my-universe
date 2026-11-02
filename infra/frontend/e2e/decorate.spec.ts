@@ -99,16 +99,16 @@ test("꾸미기", async ({ page }, info) => {
     await shot("05-settings-decorate");
   });
 
-  await test.step("읽어 주기 목소리: 고르면 저장 · 미리 듣기는 앱에 든 짧은 녹음(유료 호출 없음)", async () => {
+  await test.step("읽어 주기 목소리: 누르면 저장하고 바로 그 목소리(앱에 든 짧은 녹음, 유료 호출 없음)", async () => {
     await group("말 걸기");
     const voices = page.getByRole("group", { name: "읽어 주기 목소리" });
     await expect(voices.getByRole("button", { name: "따뜻한" })).toHaveAttribute("aria-pressed", "true");   // 기본 = 예전 목소리
+    const heard = page.waitForRequest(/\/voices\/matilda\.mp3$/);
     await voices.getByRole("button", { name: "차분한" }).click();
+    await heard;                                                                                         // 미리 듣기 단추 없이 바로
     await expect(voices.getByRole("button", { name: "차분한" })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("status").filter({ hasText: "저장했어요." })).toBeVisible();   // 알림 줄도 status 라 거름
-    const heard = page.waitForRequest(/\/voices\/matilda\.mp3$/);
-    await page.getByRole("button", { name: "차분한 목소리 미리 듣기" }).click();
-    await heard;
+    await expect(page.getByRole("button", { name: /미리 듣기/ })).toHaveCount(0);
     await shot("06-settings-voice");
   });
 

@@ -12,6 +12,7 @@ app/agents/chat_graph.py
 시간 · 호출 수 · 비용 · 검사 문제 개수만 남긴다.
 """
 
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -61,6 +62,8 @@ class TalkCtx:
     calls: int = 0
     usd: float = 0.0
     checks: list = field(default_factory=list)
+    on_reply: Callable | None = None   # 별지기 답이 나오자마자(정리 · 저장 전) 받을 곳 — 목소리 대화가 답부터 읽게(app/api/voice_call.py)
+    lock: threading.Lock = field(default_factory=threading.Lock)   # 위기 판정 · 지난 기록이 동시에 돌아 호출 수 · 비용을 함께 더함
 
 
 def node(name):
@@ -72,7 +75,8 @@ def node(name):
                 try:
                     out = fn(state, ctx) or {}
                 finally:
-                    ctx.calls, ctx.usd = ctx.calls + m.calls, ctx.usd + m.usd
+                    with ctx.lock:
+                        ctx.calls, ctx.usd = ctx.calls + m.calls, ctx.usd + m.usd
                     trace.set(calls=m.calls, est_usd=m.usd)
             return out
         run.__name__ = name
@@ -145,6 +149,8 @@ def reply(state, ctx):
                         "past_check_ins": [t["check_in"] for t in keeper if t.get("check_in")]})
     ctx.checks = out.pop("checks")
     out["text"] = unmask(out["text"], table)
+    if ctx.on_reply:
+        ctx.on_reply(out["text"])
     return {"reply": out}
 
 
@@ -159,13 +165,15 @@ def summary(state, ctx):
 
 
 def build():
+    """위기 판정 · 지난 기록 찾기는 서로 기다리지 않고 동시에(둘 다 사용자 말만 봄, 2026-11-03 목소리 대화가 늦던 것) → 답 → 정리."""
     g = StateGraph(TalkState)
-    prev = START
     for n in (safety, past, reply, summary):
         g.add_node(n.__name__, n)
-        g.add_edge(prev, n.__name__)
-        prev = n.__name__
-    g.add_edge(prev, END)
+    g.add_edge(START, "safety")
+    g.add_edge(START, "past")
+    g.add_edge(["safety", "past"], "reply")
+    g.add_edge("reply", "summary")
+    g.add_edge("summary", END)
     return g.compile()
 
 
@@ -224,7 +232,7 @@ def error_code(e):
     return graph.error_code(e)
 
 
-def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
+def turn(repo, uid, cid, text, emit=lambda *_: None, via="text", on_reply=None):
     """사용자 말 한 턴 → 고친 대화(view). 글로 쓴 말이든 받아쓴 말이든 같은 길(via: text | voice, WS21).
     없는 대화면 None. 실패하면 사용자 말도 저장하지 않고 예외(화면은 글을 그대로 두고 다시 보냄)."""
     t0 = time.time()
@@ -244,7 +252,7 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text"):
              "sources": c.get("sources", []),
              "direction": "" if c.get("direction_done") else (c.get("reason") or {}).get("direction") or "",
              "topic": "" if c.get("topic_done") else c.get("topic") or ""}
-    ctx = TalkCtx(repo, str(uid), cid, emit)
+    ctx = TalkCtx(repo, str(uid), cid, emit, on_reply=on_reply)
     n = len(users)
     try:
         out = talk_graph.invoke(state, {"configurable": {"ctx": ctx}})

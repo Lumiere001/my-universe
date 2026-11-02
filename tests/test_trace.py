@@ -105,7 +105,8 @@ def test_talk_turn_span_tree(client, env, talk, spans):  # noqa: F811
     got, kids = tree(spans)
     (root,) = kids[None]
     assert root.name == "talk.turn" and root.attributes["app.turn"] == 1
-    assert names(kids, root) == ["safety", "past", "reply", "summary"]
+    got_names = names(kids, root)   # 위기 판정 · 지난 기록은 동시에 돌아(2026-11-03) 앞 둘의 순서는 바뀔 수 있다
+    assert sorted(got_names[:2]) == ["past", "safety"] and got_names[2:] == ["reply", "summary"]
     assert root.attributes["app.step.calls"] >= 2
     assert_metadata_only(got, *NAMES, "아침", "걸었")
 

@@ -242,10 +242,10 @@ main.lux, .cnews, .call { background-color: #000;
 .lux-body { margin: 0; color: var(--lx-body); }
 .lux-muted { color: var(--lx-muted); font-size: 14px; }
 /* 버튼: 투명 알약 + 흰 선 1px(채우지 않음) */
-.lux-btn, .lux-install button.primary { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-height: 44px; padding: 0 32px;
+.lux-btn, .lux-install button.primary, .lux-install a.primary { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-height: 44px; padding: 0 32px;
   border: 1px solid var(--lx-ink); border-radius: 9999px; background: transparent; color: var(--lx-ink); font: 400 14px/1 var(--lx-mono); letter-spacing: 2.5px; }
-.lux-btn:hover, .lux-install button.primary:hover { background: transparent; text-decoration: none; }
-.lux-btn:active, .lux-install button.primary:active { opacity: .7; }
+.lux-btn:hover, .lux-install button.primary:hover, .lux-install a.primary:hover { background: transparent; text-decoration: none; }
+.lux-btn:active, .lux-install button.primary:active, .lux-install a.primary:active { opacity: .7; }
 .lux-models { display: grid; gap: 64px; max-width: 1280px; margin: 0 auto; padding: 120px 24px; }
 @media (min-width: 900px) { .lux-models { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; } }
 .lux-model { display: flex; flex-direction: column; gap: 12px; }
@@ -270,6 +270,9 @@ main.lux, .cnews, .call { background-color: #000;
 .lux-install { color: var(--lx-strong); text-align: left; }
 .lux-install:empty { display: none; }
 .lux-install .steps-num { gap: 10px; }
+.lux-install .stack { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }   /* 앱 안 브라우저 안내(InstallGuide InApp): 열기 단추 아래 주소 복사 */
+.lux-install .stack > * + * { margin-top: 0; }
+.lux-install button.link.inline { color: var(--lx-strong); text-decoration: underline; text-underline-offset: 4px; font-family: var(--lx-mono); font-size: 13px; letter-spacing: .04em; }
 .lux-qr { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .lux-qr img { display: block; width: 132px; height: 132px; }
 .lux-addr { margin: 0; font: 400 13px/1.4 var(--lx-mono); letter-spacing: 1px; color: var(--lx-ink); overflow-wrap: anywhere; }

@@ -17,7 +17,8 @@ let lastGroup: Group = "별지기";   // 같은 탭 안에서 설정에 다시 �
 const CUSTOM: Tone = "직접 정하기";
 const NOTE_MAX = 200;
 const hex = (n: number) => "#" + n.toString(16).padStart(6, "0");
-// 읽어 주기 목소리: 서버 app/core/config.py TTS_VOICES 와 같은 이름 · 순서(첫 값 = 기본). 미리 듣기 = public/voices/ 의 짧은 녹음(유료 호출 없음)
+// 읽어 주기 목소리: 서버 app/core/config.py TTS_VOICES 와 같은 이름 · 순서(첫 값 = 기본). 누르면 저장하고 바로 그 목소리를 들려준다
+// (2026-11-03 동규 「고르고 미리 듣기를 또 누르지 않게」) = public/voices/ 의 짧은 녹음(유료 호출 없음). 고른 것을 다시 누르면 다시 들림
 const VOICES = { "따뜻한": "george", "차분한": "matilda", "부드러운": "sarah", "밝은": "will" } as const;
 type Voice = keyof typeof VOICES;
 const VOICE_NAMES = Object.keys(VOICES) as Voice[];
@@ -185,16 +186,9 @@ export default function SettingsPage() {
               {(by) => <Seg by={by} options={["묻기", "묻지 않기"] as const} value={s.weather_ask ? "묻기" : "묻지 않기"}
                 onPick={(v) => save({ weather_ask: v === "묻기" })} />}
             </Row>
-            <Row name="읽어 주기 목소리" desc="읽어 주기를 켜면 이 목소리로 읽어요.">
-              {(by) => {
-                const v = (s.tts_voice ?? VOICE_NAMES[0]) as Voice;
-                return (
-                  <div className="row">
-                    <Seg by={by} options={VOICE_NAMES} value={v} onPick={(x) => save({ tts_voice: x })} />
-                    <button type="button" className="small" aria-label={`${v} 목소리 미리 듣기`} onClick={() => listen(v)}><span aria-hidden>▶ </span>미리 듣기</button>
-                  </div>
-                );
-              }}
+            <Row name="읽어 주기 목소리" desc="누르면 그 목소리로 바로 들려줘요. 읽어 주기를 켜면 이 목소리로 읽어요.">
+              {(by) => <Seg by={by} options={VOICE_NAMES} value={(s.tts_voice ?? VOICE_NAMES[0]) as Voice}
+                onPick={(x) => { listen(x); if (x !== s.tts_voice) save({ tts_voice: x }); }} />}
             </Row>
             <Row name="오늘 상태" desc="한마디의 버튼으로 켜고, 그날만 이어져요.">
               {() => <p className="sub" style={{ margin: 0 }}>오늘은 살살: {s.gentle_today ? "켜짐(오늘만)" : "꺼짐"} · 오늘은 위로만: {s.comfort_only_today ? "켜짐(오늘만)" : "꺼짐"}</p>}
