@@ -67,15 +67,16 @@ export default function InstallGuide({ bare }: { bare?: boolean }) {
 // 그 밖(아이폰 인스타그램 등)은 오른쪽 위 메뉴로 여는 법 + 주소 복사
 function InApp() {
   const [copied, setCopied] = useState(false);
-  const name = inAppName(), browser = ios() ? "사파리" : "크롬", here = location.href;
+  const name = inAppName(), here = location.href;
+  const [browser, ro] = ios() ? ["Safari", "로"] : ["Chrome", "으로"];   // 영어 이름 + 받침 맞춘 조사(2026-11-03 동규 「크롬로 → Chrome으로」)
   const open = /KAKAOTALK/i.test(navigator.userAgent) ? `kakaotalk://web/openExternal?url=${encodeURIComponent(here)}`
     : !ios() ? `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end` : null;
   const copy = () => navigator.clipboard?.writeText(here).then(() => setCopied(true), () => setCopied(false));
   return (
     <div className="stack">
-      <p style={{ margin: 0 }}>{name} 안에서는 홈 화면에 둘 수 없어요. <b>{browser}</b>로 열어 주세요.</p>
-      {open ? <a className="primary btn" href={open}>{browser}로 열기</a>
-        : <p className="sub" style={{ margin: 0 }}>오른쪽 위(또는 아래) 메뉴 <b>⋯</b>에서 <b>{browser}로 열기</b>(외부 브라우저로 열기)를 눌러요.</p>}
+      <p style={{ margin: 0 }}>{name} 안에서는 홈 화면에 둘 수 없어요. <b>{browser}</b>{ro} 열어 주세요.</p>
+      {open ? <a className="primary btn" href={open}>{browser}{ro} 접속하기</a>
+        : <p className="sub" style={{ margin: 0 }}>오른쪽 위(또는 아래) 메뉴 <b>⋯</b>에서 <b>{browser}{ro} 열기</b>(외부 브라우저로 열기)를 눌러요.</p>}
       <button type="button" className="link inline" onClick={copy}>{copied ? "주소를 복사했어요. " + browser + " 주소창에 붙여 넣어요." : "주소 복사하기"}</button>
     </div>
   );

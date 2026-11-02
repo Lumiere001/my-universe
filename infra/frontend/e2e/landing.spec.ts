@@ -52,13 +52,27 @@ test("카드뉴스: 다섯 장을 넘기고 시작하기 → 시작 화면, 본 
 // 카톡으로 받은 링크(카톡 안 브라우저)는 홈 화면에 추가가 안 돼 사파리로 여는 법을 먼저(2026-11-03)
 test.describe("카톡 안 브라우저", () => {
   test.use({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 KAKAOTALK 10.8.0" });
-  test("받는 법 = 사파리로 열기(카톡 바깥 브라우저 주소)", async ({ page }, info) => {
+  test("받는 법 = Safari로 접속하기(카톡 바깥 브라우저 주소)", async ({ page }, info) => {
     await page.goto("/?signedout");
     const get = page.locator("#get");
     await expect(get).toContainText("카카오톡 안에서는 홈 화면에 둘 수 없어요");
-    await expect(get.getByRole("link", { name: "사파리로 열기" })).toHaveAttribute("href", /^kakaotalk:\/\/web\/openExternal\?url=http/);
+    await expect(get.getByRole("link", { name: "Safari로 접속하기" })).toHaveAttribute("href", /^kakaotalk:\/\/web\/openExternal\?url=http/);
     await expect(get, "QR · 공유 안내는 안 보임").not.toContainText("공유 버튼");
     await get.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${OUT}/${info.project.name}-landing-07-kakao.png` });
+  });
+});
+
+// 안드로이드 인스타그램 안 브라우저 = Chrome 을 바로 부르는 단추(2026-11-03 동규 「크롬로 → Chrome으로」)
+test.describe("안드로이드 인스타그램 안 브라우저", () => {
+  test.use({ userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36 Instagram 350.0.0.0" });
+  test("받는 법 = Chrome으로 접속하기", async ({ page }, info) => {
+    await page.goto("/?signedout");
+    const get = page.locator("#get");
+    await expect(get).toContainText("Chrome으로 열어 주세요");
+    await expect(get.getByRole("link", { name: "Chrome으로 접속하기" })).toHaveAttribute("href", /^intent:\/\/.*package=com\.android\.chrome/);
+    await expect(get).not.toContainText("크롬로");
+    await get.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${OUT}/${info.project.name}-landing-08-instagram.png` });
   });
 });
