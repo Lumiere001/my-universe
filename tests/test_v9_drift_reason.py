@@ -151,3 +151,32 @@ def test_topic_asked_once_then_reason_line(client, env, monkeypatch):  # noqa: F
     assert client.get(f"/talk/{c['id']}", headers=H1).json()["reason"] == "저녁 다짐이 떠올라서 물었어요."
     say(client, c["id"], "응 그랬지.")
     assert seen == [True, True, False]                                                        # 건넨 뒤엔 다시 넣지 않음
+
+
+def test_sun_grows_from_other_at_threshold(env):  # noqa: F811
+    """자라는 해(2026-11-02 동규, 기준 10편): 두 영역 모드의 '그 밖'에서 같은 기준 축(건강) 작은 별에 일기가 10편 모이면
+    '건강' 해가 생기고 그 별 · 생각 · 기록이 옮겨 간다. 9편까지는 '그 밖'에 그대로(우주에 안 뜸). 축 표시 없는 옛 별은 세지 않는다."""
+    from app.core import config
+    from app.repository import edit
+    with env.repo.session(U1) as s:
+        other = diary.ensure_sun(s, "그 밖")
+        diary.add_star(s, "s_run", "아침 달리기", other, axis="건강")
+        diary.add_star(s, "s_old", "옛 산책", other)            # 축 표시가 없는 옛 별
+        def note(i, star):
+            eid = diary.new_id("e")
+            diary.create_entry(s, eid, diary.parse_dt(when(i)), "맑음", f"글 {i}", "아침에 달렸다.")
+            diary.save_thought(s, eid, {"id": f"{eid}-t00", "thought": "달렸다", "kind": "해석", "certainty": "단정", "value": None,
+                                        "quote": "달렸다", "self_change": None, "flags": [], "original": {}, "topic": "아침 달리기",
+                                        "star_id": star, "sun_id": other, "position": 0, "people": []})
+            s.update("entries", {"star_id": star, "sun_id": other}, id=eid)
+            return eid
+        for i in range(9):
+            note(i, "s_run")
+        note(20, "s_old")
+        assert edit.grow_suns(s, "그 밖", config.SUN_GROW_AT) == []                       # 9편: 아직
+        last = note(30, "s_run")
+        assert edit.grow_suns(s, "그 밖", config.SUN_GROW_AT) == ["건강"]                  # 10편: 해가 자람
+        sun = s.rows("suns", name="건강")[0]
+        assert {x["id"]: x["sun_id"] for x in diary.stars(s)} == {"s_run": sun["id"], "s_old": other}
+        assert s.rows("entries", id=last)[0]["sun_id"] == sun["id"] and sun["axis"] == "건강"
+        assert edit.grow_suns(s, "그 밖", config.SUN_GROW_AT) == []                       # 한 번만

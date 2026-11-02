@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useKeeperName } from "@/components/Keeper";
 import { PushAsk } from "@/components/PushSetting";
 import { FeedbackButtons, unquote } from "@/components/ResultCard";
+import Link from "next/link";
 import { answerPersonQuestion, getMe, sendFeedback, why, type EntryResult } from "@/lib/api";
 
 const PRE = { whiteSpace: "pre-line" } as const;
@@ -41,6 +42,7 @@ export default function AfterSave({ r, reason, children }: { r: EntryResult; rea
 
   return (
     <section className="after stack" aria-label="저장했어요" data-testid="after-save">
+      {r.grown_sun && <SunBorn name={r.grown_sun} />}
       {m?.text && (
         <div className="voice" data-testid="saved-message">
           <span className="who" aria-hidden>{keeper.slice(0, 1)}</span>
@@ -79,5 +81,19 @@ export default function AfterSave({ r, reason, children }: { r: EntryResult; rea
       {(!c || stop) && <PushAsk first={first} />}
       {children}
     </section>
+  );
+}
+
+// 자라는 해(2026-11-02): 이 글로 한 영역 일기가 10편이 되어 새 해가 떴을 때. 빛 고리가 퍼지는 해 그림 + 우주에서 태어나는 장면 보기
+export function SunBorn({ name }: { name: string }) {
+  return (
+    <div className="card sun-born" role="status" data-testid="sun-born">
+      <div className="sun-born-art" aria-hidden><i /><b /><b /></div>
+      <div className="stack" style={{ gap: 4 }}>
+        <strong>새 해가 태어났어요 · 「{name}」</strong>
+        <p className="sub" style={{ margin: 0 }}>{name} 이야기가 10편 쌓여 우주에 새 해가 떴어요.</p>
+        <Link className="btn small primary" href={`/universe?born=${encodeURIComponent(name)}`}>태어나는 모습 보기</Link>
+      </div>
+    </div>
   );
 }

@@ -48,6 +48,8 @@ CRON_SECRET = os.getenv("CRON_SECRET", "")   # 예약 작업(POST /push/due)만 
 # 작은 별 맞추기(WS27): 기록 Agent 가 새 이름을 내도 같은 해의 기존 작은 별 중심과 중심 보정 코사인이 이만큼 이상이면
 # 그 별에 붙인다. 비우면 끔(이름이 같을 때만 같은 별 — 지금 운영). 값은 가상 인물 시험(tools/persona_eval.py)으로 정한다.
 STAR_JOIN_SIM = float(os.getenv("STAR_JOIN_SIM") or 0) or None
+# 자라는 해(2026-11-02 동규): 두 영역 모드의 '그 밖'에서 같은 기준 축 일기가 이만큼 쌓이면 그 축을 새 해로 띄운다
+SUN_GROW_AT = int(os.getenv("SUN_GROW_AT") or 10)
 # 작은 별 묶기(rules.groups, 2026-10-29): 새 작은 별이 생긴 글이 끝나면 같은 고민끼리 묶고 묶음마다 해를 고른다(Solar 두 번).
 # 0 이면 끔(시험의 비교 판 · 운영에서 문제가 생기면 배포 없이 끄기).
 STAR_GROUPS = os.getenv("STAR_GROUPS", "1") != "0"

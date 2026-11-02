@@ -357,11 +357,12 @@
 
   "weather": [
     {"name": "맑음", "words": ["기쁨", "신남"]},
+    {"name": "무지개", "words": ["설렘", "뿌듯함"]},
+    {"name": "산들바람", "words": ["홀가분", "감사"]},
     {"name": "구름 조금", "words": ["평온", "잔잔"]},
-    {"name": "흐림", "words": ["지침", "울적"]},
-    {"name": "비", "words": ["슬픔"], "comfort_only": true},
-    {"name": "천둥", "words": ["화남", "긴장"], "comfort_only": true},
-    {"name": "안개", "words": ["막막함", "혼란"]}
+    {"name": "흐림", "words": ["지침", "막막함"]},
+    {"name": "비", "words": ["슬픔", "울적"], "comfort_only": true},
+    {"name": "천둥", "words": ["화남", "긴장"], "comfort_only": true}
   ],
   "weather_rules": [
     "사용자가 고른다. 고르지 않아도 된다. 고를 때 괄호 속 감정 낱말을 함께 보여 준다.",

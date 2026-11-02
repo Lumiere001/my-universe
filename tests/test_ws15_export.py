@@ -7,7 +7,7 @@ from tests.test_graph_flow import DAY1, DAY2, NAMES, env  # noqa: F401  (env 픽
 
 RECORD_KEYS = {"id", "status", "written_at", "title", "weather", "crisis", "info", "thoughts", "relations", "past",
                "reached", "message", "next_question", "observation", "text",
-               "source", "day", "day_basis", "day_check", "confirmed", "record_type", "talk", "reason"}   # talk: 그날 대화(PRD v9 Q19), reason: 이유 한 줄(Q7)
+               "source", "day", "day_basis", "day_check", "confirmed", "record_type", "talk", "reason", "grown_sun"}   # talk: 그날 대화(PRD v9 Q19), reason: 이유 한 줄(Q7)
 THOUGHT_KEYS = {"id", "text", "kind", "grateful", "certainty", "value", "quote", "self_change", "topic", "star_id",
                 "sun_id", "domain", "people", "other", "original", "state"}
 

@@ -92,9 +92,16 @@ export default function ConsentPage() {
           <b>[필수]</b> <Link href="/terms">이용약관</Link>과 <Link href="/privacy">개인정보 수집 · 이용</Link>, 위의 외부 처리(국외 이전 포함)에 동의해요.
         </Check>
         <Check id="c-sensitive" checked={sensitive} onChange={setSensitive}>
-          <b>[필수 · 따로]</b> 일기에 담길 수 있는 <b>민감정보</b>(건강 · 신앙 · 사상 · 성생활 같은 것)를 위 목적으로 처리하는 데 동의해요.
+          <b>[필수 · 따로]</b> 일기에는 몸과 마음의 건강, 믿음처럼 깊은 이야기가 담길 수 있어요. 이런 이야기(법에서 말하는 <b>민감정보</b>)도
+          위 목적으로 정리하는 데 동의해요.
           <span className="sub"> 동의하지 않으면 일기를 정리할 수 없어 쓸 수 없어요.</span>
         </Check>
+        {/* 민감정보 항목은 법(개인정보 보호법 제23조)대로 알리되, 첫 화면에 낱말을 늘어놓지 않고 펼쳐 보게(2026-11-02 사용자 피드백 「거부감」) */}
+        <details className="sens-more">
+          <summary>민감정보에는 무엇이 있나요?</summary>
+          <p className="sub">법이 정한 민감정보는 사상 · 신념, 정치적 견해, 노동조합 · 정당 활동, 건강, 성생활 등에 관한 정보예요. 나의 우주는 따로 묻거나 모으지 않고,
+            사용자가 일기에 스스로 쓴 경우에만 일기 정리 · 지난 기록 잇기 · 별지기 말에 써요. 자세한 내용은 <Link href="/privacy">개인정보처리방침</Link> 8장.</p>
+        </details>
         <fieldset className="stack" aria-label="나이">
           <legend><b style={{ color: "var(--text)" }}>[필수]</b> 나이</legend>
           <div className="row">

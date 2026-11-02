@@ -211,8 +211,9 @@ def stars(s):
             for r in s.rows("stars", order="created_at")]
 
 
-def add_star(s, sid, name, sun_id):
-    s.upsert("stars", {"id": sid, "sun_id": sun_id, "enc": seal(s, "stars", sid, {"name": name})})
+def add_star(s, sid, name, sun_id, **extra):
+    """extra: axis(두 영역 모드 '그 밖' 별의 원래 기준 축 — 자라는 해가 센다) 같은 enc 칸."""
+    s.upsert("stars", {"id": sid, "sun_id": sun_id, "enc": seal(s, "stars", sid, {"name": name, **{k: v for k, v in extra.items() if v}})})
 
 
 def set_star(s, st, **fields):

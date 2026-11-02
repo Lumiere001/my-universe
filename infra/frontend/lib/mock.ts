@@ -53,7 +53,7 @@ const universe: Universe = {
     P("e11", "s3", "d2", "2026-06-20", "6/20 혼자와 함께", 2, { thought_count: 4, certainty: "단정" }),
     P("e12", "s5", "d3", "2026-07-10", "7/10 걷기 2주째", 2, { weather: "맑음", thought_count: 2, certainty: "단정" }),
     P("e13", "s4", "d2", "2026-07-18", "7/18 가족 여행 2일차", 0, { people: ["p2", "p3"], weather: "맑음", thought_count: 1, certainty: "단정" }),
-    P("e14", "s1", "d1", "2026-08-28", "8/28 막막함", 2, { weather: "안개", thought_count: 2, certainty: "판단 보류", has_question: true }),
+    P("e14", "s1", "d1", "2026-08-28", "8/28 막막함", 2, { weather: "흐림", thought_count: 2, certainty: "판단 보류", has_question: true }),
     P("e15", "s1", "d1", "2026-09-12", "9/12 작은 회사 탐방", 3, { thought_count: 3, certainty: "고민 중" }),
     P("e16", "s1", "d1", "2026-09-20", "9/20 토요일 일기", 4, { ring: true, ring_state: "열림", people: ["p1"], thought_count: 5, certainty: "고민 중", has_question: true }),
     P("e17", "s2", "d1", "2026-08-08", "8/8 독서노트", 1, { thought_count: 2, certainty: "단정" }),
@@ -191,6 +191,14 @@ async function run(id: string, input: DiaryInput, from: number, h: StreamHandler
         from_quote: r.relations[0].quote ?? "", to_quote: r.thoughts[1].quote },
       { id: "r2", from_planet: "e16", to_planet: id, type: "어긋남", line: "점선", cross_domain: false, needs_confirm: true, explanation: r.relations[1].explanation,
         from_quote: "팀 세 곳을 직접 찾아보겠다", to_quote: r.thoughts[0].quote });
+  }
+  // 자라는 해 보기(가짜 데이터): '취미'가 든 글이면 해 「여가」가 태어난다(진짜는 그 밖 한 축 일기 10편)
+  if (input.text.includes("취미") && !universe.suns.some((x) => x.name === "여가")) {
+    universe.suns.push({ id: "d9", name: "여가", custom: false, planet_count: 1 });
+    universe.stars.push({ id: "s9", sun_id: "d9", name: "새 취미", planet_count: 1 });
+    const me = universe.planets.find((p) => p.id === id);
+    if (me) { me.star_id = "s9"; me.sun_id = "d9"; me.order = 0; }
+    r.grown_sun = "여가";
   }
   return r;
 }
@@ -351,7 +359,7 @@ export async function sendFeedback(f: Feedback) {
   return { ok: true, state: null };
 }
 /* ---------- 쓰기 화면 말풍선 · 날짜 고치기 · 지우기(WS13) ---------- */
-let prompt: Prompt = { kind: "weather", text: "오늘 마음 날씨는 어디에 가까워요? 맑음 · 구름 조금 · 흐림 · 비 · 천둥 · 안개",
+let prompt: Prompt = { kind: "weather", text: "오늘 마음 날씨는 어디에 가까워요? 맑음 · 무지개 · 산들바람 · 구름 조금 · 흐림 · 비 · 천둥",
   vow: { thought_id: "t8", text: "관심 있는 팀 세 곳을 직접 찾아보겠다.", overdue: true } };
 const closedVows = new Set<string>();
 export async function getPrompt(): Promise<Prompt> {

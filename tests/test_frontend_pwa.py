@@ -41,8 +41,9 @@ def test_icons_and_share_image_linked():
     og = re.search(r'url: "(/og\.jpg)", width: (\d+), height: (\d+)', site)
     assert og and (PUB / og[1].lstrip("/")).exists() and (og[2], og[3]) == ("1200", "630")
     assert "siteMeta" in (WEB / "app" / "layout.tsx").read_text(encoding="utf-8")
-    for src in re.findall(r'"(/landing/[^"]+)"', (WEB / "components" / "Landing.tsx").read_text(encoding="utf-8")):
-        assert (PUB / src.lstrip("/")).exists(), src
+    for page in ("Landing.tsx", "CardNews.tsx"):   # 받기 화면 · 첫 실행 카드뉴스가 부르는 그림이 다 있다
+        for src in re.findall(r'"(/(?:landing|keeper)/[^"]+)"', (WEB / "components" / page).read_text(encoding="utf-8")):
+            assert (PUB / src.lstrip("/")).exists(), src
 
 
 def test_service_worker_caches_only_offline_page():

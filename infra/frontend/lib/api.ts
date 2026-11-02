@@ -7,7 +7,8 @@ export const DEV_LOGIN = process.env.NEXT_PUBLIC_DEV_LOGIN === "1";
 const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").replace(/\/$/, "");
 
 /* ---------- 타입 (docs/api-v8.md) ---------- */
-export type Weather = "맑음" | "구름 조금" | "흐림" | "비" | "천둥" | "안개";
+// 마음 날씨(2026-11-02 동규 「부정 줄이고 긍정 늘리기」: 무지개 · 산들바람 더함, 안개는 흐림에 합침. 옛 기록의 안개는 그대로 보임)
+export type Weather = "맑음" | "무지개" | "산들바람" | "구름 조금" | "흐림" | "비" | "천둥" | "안개";
 export type Tone = "다정하게" | "담백하게" | "고양이처럼" | "팩폭" | "직접 정하기";
 export type Thought = {
   id: string; text: string; kind: string; grateful: boolean; certainty: string; value: string | null;
@@ -23,6 +24,7 @@ export type EntryResult = {
   id: string; status: "processing" | "done" | "failed" | "confirm"; step: string; written_at: string; title: string;
   text?: string; talk?: { role: "keeper" | "user"; text: string; at?: string | null }[] | null;   // 원문 · 그날 대화(PRD v9 Q19)
   reason?: string | null;   // 그 글을 쓰게 한 첫 질문의 숨은 이유 한 줄(PRD v9 Q7, 직접 쓰기 저장 뒤)
+  grown_sun?: string | null;   // 이 글로 새로 자란 해(자라는 해 — 한 영역 일기 10편)
   weather: Weather | null; crisis: boolean;
   info: { summary: string; addressee: string; addressee_person: string | null; events: string[] } | null;
   thoughts: Thought[]; relations: Relation[];

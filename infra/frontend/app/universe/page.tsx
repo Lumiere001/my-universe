@@ -50,6 +50,8 @@ export default function UniversePage() {
   const [entry, setEntry] = useState<EntryResult | null>(null);
   const [entryErr, setEntryErr] = useState(false);
   const [tool, setTool] = useState<Tool>(null);
+  const [born, setBorn] = useState<string | null>(null);   // ?born=<해 이름>: 방금 자란 해(태어나는 효과 + 한 줄 알림)
+  useEffect(() => { setBorn(new URLSearchParams(window.location.search).get("born")); }, []);
   const [canFull, setCanFull] = useState(false);
   const [full, setFull] = useState(false);
   useEffect(() => {
@@ -100,7 +102,8 @@ export default function UniversePage() {
     <main className="wide uni-page">
       <h1 className="sr">나의 우주</h1>
       <Universe3D data={data} selected={planet?.id ?? null} glow={glow} crossLinks={me?.settings.cross_links ?? "눌렀을 때"} onPick={onPick}
-        theme={me?.settings.theme}>
+        theme={me?.settings.theme} born={born}>
+        {born && data.suns.some((s) => s.name === born) && <p className="born-note" role="status">새 해 「{born}」이 태어났어요</p>}
         {!data.planets.length && <p className="sub uni-msg" role="status">아직 우주가 비어 있어요. 이야기하기나 직접 쓰기로 첫 기록을 남기면 첫 행성이 떠요.</p>}
         <div className="fabs" role="group" aria-label="우주 도구">
           <button className="fab" aria-pressed={tool === "legend"} onClick={() => openTool("legend")}><Svg d={ICON.legend} /><span>기호 뜻</span></button>

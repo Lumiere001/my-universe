@@ -135,6 +135,7 @@ def entry_result(s, eid):
             "next_question": {"kind": NEXT_KIND.get(m[0]["next_kind"], "free"), "text": msg.get("next_question", "")} if m else None,
             "people_questions": qs,
             "reason": msg.get("shown_reason") or None,   # 직접 쓴 글: 쓰기 화면 위 질문의 숨은 이유 한 줄(PRD v9 Q7)
+            "grown_sun": d.get("grown_sun") or None,   # 이 글로 새로 자란 해(자라는 해, 화면이 태어나는 효과)
             "observation": observation(base, ts, rels, past_ids, pts)}
 
 

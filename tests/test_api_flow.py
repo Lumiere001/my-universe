@@ -20,7 +20,7 @@ RESULT_KEYS = {"id", "status", "step", "written_at", "title", "weather", "crisis
                "source", "day", "day_basis", "day_check", "confirmed", "record_type",   # 기록 칸(WS11)
                "observation",   # 관측 상태 · 한계(WS15)
                "text", "talk",   # 원문 · 그날 대화(PRD v9 Q19)
-               "reason"}   # 직접 쓴 글의 숨은 이유 한 줄(PRD v9 Q7)
+               "reason", "grown_sun"}   # 직접 쓴 글의 숨은 이유 한 줄(PRD v9 Q7), 이 글로 자란 해
 
 
 @pytest.fixture

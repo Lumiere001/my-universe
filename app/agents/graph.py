@@ -30,7 +30,7 @@ from app.service.rules import drift as drift_rules
 from app.service.rules import groups as group_rules
 from app.service.rules import advance, clean_record, clean_text, filter_relations, link_domain, place_stars, reask_trigger, to_sun
 from app.service.rules.relations import personal_filter
-from app.service.rules.topics import cos as topic_cos, profile
+from app.service.rules.topics import BASE as BASE_AXES, cos as topic_cos, profile
 from app.service.rules.normalize import key as norm_key
 from app.service.safety import RealNameLeak, detect_crisis, find_new_names
 from app.service.studio_format import parse_record
@@ -253,13 +253,18 @@ def ontology(state, ctx):
     for p in state["people"]:
         for n in [p["name"], *(p.get("nicknames") or [])]:
             people_id[n] = p["id"]
+    other = (profile() or {}).get("other")
     with ctx.repo.session(ctx.uid) as s:
         all_stars = diary.stars(s)
         stars = {st["name"]: st["id"] for st in all_stars}
+        grown = {x["name"] for x in diary.suns(s)} & set(BASE_AXES)   # 이미 자란 해(그 축 이름의 해가 있음)
         for i, t in enumerate(kept):   # ① 해 정하기
-            domain = to_sun(t["domain"] or (sun_vecs and link_domain(t["topic"], tmean[t["topic"]], sun_vecs, center, custom))
-                            or "삶의 성취")
+            axis = t["domain"] or (sun_vecs and link_domain(t["topic"], tmean[t["topic"]], sun_vecs, center, custom)) or "삶의 성취"
+            domain = to_sun(axis)
+            if domain == other and axis in grown:   # 자라는 해: 이미 띄운 축이면 '그 밖' 대신 그 해로
+                domain = axis
             items.append({"topic": by_name.get(norm_key(t["topic"]), t["topic"]), "domain": domain, "vec": tvecs[i],
+                          "axis": axis if domain == other and axis in BASE_AXES else None,
                           "sun_id": diary.ensure_sun(s, domain, custom=domain in custom), "keep_name": t["topic"] == OTHER_TOPIC})
         pools = {}
         if tau:   # 같은 해의 지난 생각 벡터를 작은 별별로. 어느 별 · 어느 해인지는 DB 가 정답(옮기기 · 합치기 · 해 표시가 없는 옛 벡터도 맞게)
@@ -273,7 +278,7 @@ def ontology(state, ctx):
         placed = place_stars(items, stars, pools, lambda: diary.new_id("s"), center, tau)   # ② 작은 별 맞추기
         for i, (t, it, (name, new, _)) in enumerate(zip(kept, items, placed)):
             if new:
-                diary.add_star(s, stars[name], name, it["sun_id"])
+                diary.add_star(s, stars[name], name, it["sun_id"], axis=it["axis"])   # '그 밖' 별은 원래 축을 남김(자라는 해)
             original = {**t["original"], **({"topic": t["topic"]} if name != t["topic"] else {})}   # 기록 Agent 가 낸 이름
             today.append({**{k: t[k] for k in ("thought", "kind", "certainty", "value", "quote", "self_change", "flags")},
                           "original": original, "topic": name, "domain": it["domain"], "domain_first": it["domain"],   # 묶기 전 해
@@ -560,6 +565,10 @@ def save(state, ctx):
             ob["reask_pending"] = True
         if ob:
             diary.save_profile(s, onboarding=ob)
+        # 자라는 해: 이 글로 '그 밖'의 한 축이 기준(SUN_GROW_AT 편)을 넘으면 새 해로 띄우고, 이 기록 결과에 남겨 화면이 태어나는 효과를 보인다
+        grown = edit.grow_suns(s, (profile() or {}).get("other"), config.SUN_GROW_AT) if profile() else []
+        if grown:
+            s.update("entries", {"enc": diary.seal(s, "entries", eid, {**data, "grown_sun": grown[0]})}, id=eid)
     return {}
 
 

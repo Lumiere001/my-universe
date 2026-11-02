@@ -13,6 +13,7 @@ type Props = {
   data: Universe; selected: string | null; glow: Set<string> | null; crossLinks: Settings["cross_links"];
   onPick: (p: Pick) => void; children?: React.ReactNode;
   theme?: string | null;   // 꾸미기(WS25): 설정의 우주 테마. 없거나 모르는 이름이면 기본(밤하늘)
+  born?: string | null;    // 자라는 해(2026-11-02): 방금 태어난 해 이름 — 카메라가 다가가고, 해가 작게 시작해 커지며 빛 고리가 퍼진다
 };
 
 const { violet: VIOLET, orange: ORANGE, gold: GOLD } = COLOR;
@@ -27,7 +28,7 @@ function glowTex() {
 }
 const orbitR = (order: number) => 9 + order * 6;
 
-export default function Universe3D({ data, selected, glow, crossLinks, onPick, children, theme }: Props) {
+export default function Universe3D({ data, selected, glow, crossLinks, onPick, children, theme, born }: Props) {
   const themeName = themeOf(theme);
   const K = themeColors(themeName);
   const wrap = useRef<HTMLDivElement>(null);
@@ -76,6 +77,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     const starPos: Record<string, THREE.Vector3> = {}, starSys: Record<string, number> = {};
     const planetPos: Record<string, THREE.Vector3> = {};
     const maxOrder = (sid: string) => Math.max(0, ...data.planets.filter((p) => p.star_id === sid).map((p) => p.order));
+    let birth = null as { id: string; mesh: THREE.Mesh; halo: THREE.Sprite; rings: THREE.Mesh[]; base: number; t: number } | null;
     // 태양계 크기를 먼저 구하고, 해들을 원 위에 겹치지 않게 놓는다
     for (const s of data.suns) {
       sunR[s.id] = 7 + 2.4 * Math.sqrt(s.planet_count || 1);
@@ -99,7 +101,15 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       const col = K.sun[i % K.sun.length];
       const m = new THREE.Mesh(new THREE.SphereGeometry(sunR[s.id], 40, 28), new THREE.MeshBasicMaterial({ color: col }));
       m.position.copy(pos); scene.add(m);
-      sprite(col, sunR[s.id] * 6, .55).position.copy(pos);
+      const halo = sprite(col, sunR[s.id] * 6, .55); halo.position.copy(pos);
+      if (born && s.name === born) {   // 태어나는 해: 빛 고리 두 겹(퍼지며 옅어짐)
+        const rings = [0, 1].map((k) => {
+          const r = new THREE.Mesh(new THREE.RingGeometry(sunR[s.id] * 1.05, sunR[s.id] * 1.25, 64),
+            new THREE.MeshBasicMaterial({ color: k ? GOLD : col, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+          r.position.copy(pos); r.lookAt(pos.clone().add(new THREE.Vector3(0, 1, 0))); scene.add(r); return r;
+        });
+        birth = { id: s.id, mesh: m, halo, rings, base: sunR[s.id] * 6, t: 0 };
+      }
       const stars = data.stars.filter((x) => x.sun_id === s.id);
       stars.forEach((st, j) => {
         const sys = orbitR(maxOrder(st.id)) + 4;
@@ -231,6 +241,11 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       fly = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos, t1: v.tgt };
     };
     controls.addEventListener("start", () => { controls.autoRotate = false; fly = null; });
+    if (birth) {   // 태어나는 해로 다가가고, 움직임 줄이기면 효과 없이 다 자란 모습
+      const b0 = birth;
+      if (reduce) birth = null;
+      else { b0.mesh.scale.setScalar(.01); b0.halo.scale.setScalar(.01); controls.autoRotate = false; flyTo(view(sunPos[b0.id], sunSys[b0.id] * .9)); }
+    }
     const ro = new ResizeObserver(() => { resize(); home = view(C, rad); });
     ro.observe(el);
 
@@ -306,6 +321,14 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (birth) {   // 약 2.5초: 해가 튀어 오르듯 커지고(easeOutBack) 빛 고리가 퍼지며 옅어짐
+        const b = birth; b.t = Math.min(1, b.t + 1 / 150);
+        const e = b.t < .15 ? 0 : Math.min(1, (b.t - .15) / .55), back = 1 + 2.2 * Math.pow(e - 1, 3) + 1.2 * Math.pow(e - 1, 2);
+        b.mesh.scale.setScalar(Math.max(.01, back)); b.halo.scale.setScalar(Math.max(.01, b.base * back * (1 + .8 * (1 - e))));
+        b.rings.forEach((r, k) => { const q = Math.max(0, Math.min(1, (b.t - .3 - k * .12) / .6));
+          r.scale.setScalar(1 + q * (6 + k * 3)); (r.material as THREE.MeshBasicMaterial).opacity = q > 0 ? .9 * (1 - q) : 0; });
+        if (b.t >= 1) { b.rings.forEach((r) => r.removeFromParent()); birth = null; }
+      }
       if (fly) {
         fly.t = Math.min(1, fly.t + .04); const k = 1 - Math.pow(1 - fly.t, 3);
         camera.position.lerpVectors(fly.p0, fly.p1, k); controls.target.lerpVectors(fly.t0, fly.t1, k);
@@ -329,7 +352,7 @@ export default function Universe3D({ data, selected, glow, crossLinks, onPick, c
       labels.forEach((d) => d.remove()); canvas.remove();
       scene.traverse((o) => { const m = o as THREE.Mesh; m.geometry?.dispose?.(); });
     };
-  }, [data, themeName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, themeName, born]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 장면을 새로 만들 때(data · 테마)마다 다시 입힌다: 새 선은 visible=true 로 생기고 영역 넘는 선을 숨기는 일은 apply 만 한다
   useEffect(() => { apply.current(selected, glow, crossLinks); }, [selected, glow, crossLinks, data, themeName]);

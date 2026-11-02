@@ -104,6 +104,30 @@ def set_sun(s, sid, sun_id, to_name):
                                     if d.get("star_id") == sid else d))
 
 
+def grow_suns(s, other, at_least):
+    """자라는 해(2026-11-02 동규, 기준 config.SUN_GROW_AT): 두 영역 모드의 '그 밖' 해에서 같은 기준 축(건강 · 여가 …) 작은 별에
+    든 일기가 at_least 편이 되면 그 축 이름의 해를 띄우고 그 별들을 옮긴다(숫자 규칙, LLM 없음). → 새로 띄운 해 이름 목록.
+    축은 작은 별이 생길 때 enc 의 axis 칸에 남긴다(graph.ontology). 축 표시가 없는 옛 별은 세지 않는다."""
+    o = s.rows("suns", name=other)
+    if not other or not o:
+        return []
+    by_axis = {}
+    for st in diary.stars(s):
+        if st["sun_id"] == o[0]["id"] and st.get("axis"):
+            by_axis.setdefault(st["axis"], []).append(st)
+    out = []
+    for axis, sts in by_axis.items():
+        entries = {r["entry_id"] for st in sts for r in s.rows("thoughts", star_id=st["id"])}
+        if len(entries) < at_least:
+            continue
+        sid = diary.ensure_sun(s, axis)
+        s.update("suns", {"axis": axis}, id=sid)
+        for st in sts:
+            set_sun(s, st["id"], sid, axis)
+        out.append(axis)
+    return out
+
+
 def group_of(s, sid):
     """작은 별 sid 와 같은 묶음의 별들(sid 가 머리면 묶음 전체, 아니면 sid 하나). 화면은 묶음 머리 id 로 고친다(rules.groups)."""
     all_ = diary.stars(s)
