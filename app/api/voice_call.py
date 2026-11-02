@@ -73,6 +73,8 @@ def read_token(tok):
 
 @router.post("/voice/call", summary="전화처럼 이야기하기 시작: 새 대화 + ElevenLabs 대화 표 + 우리 통화 표")
 def call(body: TalkIn | None = None, user=Depends(get_user), repo=Depends(get_repo)):
+    if not config.VOICE_CALL_ON:
+        raise ApiError(503, "call_off", "지금은 목소리 대화를 쉬고 있어요. 글로 이야기해 주세요.")
     if not (config.ELEVENLABS_AGENT_ID and config.VOICE_LLM_KEY and config.ELEVENLABS_AGENTS_KEY):
         raise ApiError(503, "call_unconfigured", "지금은 목소리로 이야기할 수 없어요. 운영자에게 알려 주세요.")
     c = chat_api.start(body, user, repo)   # POST /talk 와 같음(동의 · 말 없이 둔 대화 치우기 · 첫 말)

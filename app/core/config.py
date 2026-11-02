@@ -119,6 +119,9 @@ ELEVENLABS_AGENT_ID = os.getenv("ELEVENLABS_AGENT_ID", "")
 # 에이전트 전용 키(ElevenAgents 권한만). 받아쓰기 · 읽어 주기 키와 나눠 둔다(2026-11-03: 기존 키에 권한이 더해지지 않음). 없으면 ELEVENLABS_API_KEY
 ELEVENLABS_AGENTS_KEY = os.getenv("ELEVENLABS_AGENTS_KEY", "") or ELEVENLABS_API_KEY
 VOICE_LLM_KEY = os.getenv("VOICE_LLM_KEY", "")
+# 목소리 대화 켜기(2026-11-03 동규 「시연할 때만, 내가 풀어 달라고 할 때」): 기본 꺼짐 → POST /voice/call 503 call_off.
+# 켜려면 VOICE_CALL_ON=1 넣고 다시 배포. 화면 전화 단추도 GET /me 의 voice_call 로 따라감
+VOICE_CALL_ON = os.getenv("VOICE_CALL_ON") == "1"
 # 한 번에 받는 녹음 조각(입력 검사, 사용 상한 아님). Vercel 본문 한도 4.5MB 아래 — 긴 녹음은 화면이 2분 조각으로 나눠 보낸다.
 VOICE_MAX_BYTES = _int("VOICE_MAX_BYTES", 4 * 1024 * 1024)
 

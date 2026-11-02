@@ -389,7 +389,8 @@ def me(user=Depends(get_user), repo=Depends(get_repo)):
         n = len(s.rows("entries", status="done"))
     return {"user": user, "settings": st,
             "onboarding": {"entries": n, "aspiration": ob["aspiration"], "weather_asked": ob["weather_asked"],
-                           "intro": bool(ob.get("intro")) or n > 0}}   # 이미 쓰던 사람은 처음 인터뷰로 보내지 않음
+                           "intro": bool(ob.get("intro")) or n > 0},   # 이미 쓰던 사람은 처음 인터뷰로 보내지 않음
+            "voice_call": config.VOICE_CALL_ON}   # 이야기 화면의 전화 단추(켜고 끄기는 백엔드 env 하나)
 
 
 @router.delete("/me", tags=["나"], status_code=204, summary="계정과 모든 기록 지우기(되돌릴 수 없음)")

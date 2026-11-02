@@ -437,7 +437,7 @@ export async function getMe(): Promise<Me> {
   await sleep((globalThis as { __slowMe?: number }).__slowMe ?? 100);   // 시험: /me 가 /universe 보다 늦게 오는 경우
   return { user: { id: "mock", email: "haneul@example.com" }, settings: { ...settings },
     onboarding: { entries: (globalThis as { __entries?: number }).__entries ?? universe.planets.length,   // 시험: 첫 일기인 사람(알림 묻기)
-      aspiration: "set", weather_asked: true, intro: introDone() } };
+      aspiration: "set", weather_asked: true, intro: introDone() }, voice_call: true };   // 가짜 데이터 모드는 연습 엔진으로 늘 켬
 }
 export async function patchSettings(s: Partial<Settings>) {
   // 백엔드와 같은 규칙: 팩폭은 경고 확인 뒤에만

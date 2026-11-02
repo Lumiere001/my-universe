@@ -4,8 +4,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
 export const DEV_LOGIN = process.env.NEXT_PUBLIC_DEV_LOGIN === "1";
-// 전화로 이야기하기(app/call): 실시간 음성 엔진(ElevenLabs 에이전트 + Solar)을 운영에 붙이면 NEXT_PUBLIC_VOICE_CALL=1. 가짜 데이터 모드는 연습 엔진으로 늘 켬
-export const CALL_ON = MOCK || process.env.NEXT_PUBLIC_VOICE_CALL === "1";
 const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").replace(/\/$/, "");
 
 /* ---------- 타입 (docs/api-v8.md) ---------- */
@@ -80,7 +78,8 @@ export type Settings = {
   tts_voice?: string;   // 읽어 주기 목소리(값 목록은 app/settings/page.tsx VOICES = 서버 config.TTS_VOICES)
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
-  onboarding: { entries: number; aspiration: string; weather_asked: boolean; intro?: boolean } };   // intro: 처음 인터뷰를 지났나(PRD v9)
+  onboarding: { entries: number; aspiration: string; weather_asked: boolean; intro?: boolean };   // intro: 처음 인터뷰를 지났나(PRD v9)
+  voice_call?: boolean };   // 목소리로 이야기하기(app/call)를 켜 뒀나 — 백엔드 VOICE_CALL_ON(기본 꺼짐, 2026-11-03 동규 「시연할 때만」)
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
 export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string;

@@ -29,6 +29,7 @@ def eleven(monkeypatch):
             raise httpx.ConnectError("down")
         return httpx.Response(st.status, json={"token": "lk-conv-token", "conversation_id": "conv_x"} if st.status == 200 else {})
 
+    monkeypatch.setattr(config, "VOICE_CALL_ON", True)
     monkeypatch.setattr(config, "ELEVENLABS_AGENT_ID", "agent_test")
     monkeypatch.setattr(config, "VOICE_LLM_KEY", KEY)
     monkeypatch.setattr(config, "ELEVENLABS_AGENTS_KEY", "test-key")
@@ -54,6 +55,12 @@ def sse(text):
 
 
 def test_call_unconfigured_auth_consent(client, env, eleven, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(config, "VOICE_CALL_ON", False)                             # 기본 꺼짐: 설정이 다 있어도 안 엶
+    r = client.post("/voice/call", headers=H1)
+    assert r.status_code == 503 and r.json()["error"]["code"] == "call_off"
+    assert client.get("/me", headers=H1).json()["voice_call"] is False                # 화면도 전화 단추를 숨김
+    monkeypatch.setattr(config, "VOICE_CALL_ON", True)
+    assert client.get("/me", headers=H1).json()["voice_call"] is True
     for name in ("ELEVENLABS_AGENT_ID", "VOICE_LLM_KEY", "ELEVENLABS_AGENTS_KEY"):
         monkeypatch.setattr(config, name, "")
         r = client.post("/voice/call", headers=H1)

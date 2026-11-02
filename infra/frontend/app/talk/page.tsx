@@ -14,7 +14,7 @@ import { useKeeperName } from "@/components/Keeper";
 import { StoryModes } from "@/components/Shell";
 import MicButton, { useReadAloud } from "@/components/MicButton";
 import {
-  deleteTalk, finishTalk, fixTalk, getDiary, getTalk, listTalks, CALL_ON, sayTalk, startTalk, why,
+  deleteTalk, finishTalk, fixTalk, getDiary, getMe, getTalk, listTalks, sayTalk, startTalk, why,
   type Conversation, type EntryResult, type StreamError,
 } from "@/lib/api";
 
@@ -36,6 +36,8 @@ export default function TalkPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);   // '더 보기' 칸
   const voice = useReadAloud();   // 별지기 답 읽어 주기(WS21, 기본 꺼짐)
+  const [callOn, setCallOn] = useState(false);   // 목소리로 이야기하기 단추(서버가 켜 둔 때만)
+  useEffect(() => { getMe().then((m) => setCallOn(!!m.voice_call), () => {}); }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [c?.turns.length, busy, saved, draft]);
 
   const open = async (x: Conversation) => {
@@ -142,7 +144,7 @@ export default function TalkPage() {
         <h1 className="sr">이야기하기</h1>
         <StoryModes />
         <div className="row tight">
-          {CALL_ON && <Link className="tbtn" href="/call" aria-label="목소리로 이야기하기" title="목소리로 이야기하기"><Icon name="phone" /></Link>}
+          {callOn && <Link className="tbtn" href="/call" aria-label="목소리로 이야기하기" title="목소리로 이야기하기"><Icon name="phone" /></Link>}
           <button className="tbtn" aria-pressed={voice.on} onClick={voice.toggle}
             aria-label="별지기 말 읽어 주기" title={`별지기 말 읽어 주기 ${voice.on ? "켜짐" : "꺼짐"}`}>
             <Icon name={voice.on ? "speaker" : "mute"} /></button>
