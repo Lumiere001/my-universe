@@ -12,6 +12,7 @@ app/agents/chat_graph.py
 시간 · 호출 수 · 비용 · 검사 문제 개수만 남긴다.
 """
 
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -290,12 +291,36 @@ def turn(repo, uid, cid, text, emit=lambda *_: None, via="text", on_reply=None):
     return view(c)
 
 
+def unique_said(turns):
+    """대화(별지기 · 사용자 차례) → 일기로 넘길 사용자 말. 되풀이된 말은 문맥을 보고 하나로(2026-11-03 동규 「같은 말도 문맥에 따라
+    다른 말일 수도 같은 말일 수도」). 문맥 = 바로 앞 별지기 말. 문맥이 같을 때만(사이에 별지기 말이 없거나, 별지기가 같은 말을 되물음)
+    같은 말 · 앞 말의 조각이면 하나로 두고 긴 쪽을 남긴다. 다른 질문에 한 같은 대답('좋아')은 둘 다 둔다. 띄어쓰기 · 문장부호는 보지 않음."""
+    key = lambda t: re.sub(r"[\s.,!?~…·'\"]", "", t)   # noqa: E731
+    out, ctx = [], None   # out: [(문맥, 말 열쇠, 말)]
+    for t in turns:
+        k = key(t["text"])
+        if t["role"] != "user":
+            ctx = k
+            continue
+        if not k:
+            continue
+        if out and out[-1][0] == ctx:
+            pk = out[-1][1]
+            if k in pk:      # 같은 말이거나 앞 말의 조각
+                continue
+            if pk in k:      # 앞 말이 끊겨 들어온 조각 → 긴 쪽으로
+                out[-1] = (ctx, k, t["text"])
+                continue
+        out.append((ctx, k, t["text"]))
+    return [x[2] for x in out]
+
+
 def make_draft(repo, uid, cid):
     """대화 → 일기 초안 {"title", "text", "fallback"}(사용자 말만 근거, 원래 이름). 사용자 말이 없으면 None."""
     t0 = time.time()
     with repo.session(uid) as s:
         c = conversations.get(s, cid)
-        users = [t["text"] for t in c["turns"] if t["role"] == "user"] if c else []
+        users = unique_said(c["turns"]) if c else []
         people = _people(s, users) if users else []
     if not users:
         return None

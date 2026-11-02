@@ -39,8 +39,6 @@ from app.service import stt
 router = APIRouter(tags=["음성"])
 CALL_TTL_S = 20 * 60
 FALLBACK = "미안해요, 잠깐 말을 놓쳤어요. 한 번만 다시 말해 줄래요?"
-# 답이 이만큼(초) 안에 안 나오면 짧은 소리부터 내보낸다(2026-11-03 동규 「말하면 바로 반응을 안 함」). ElevenLabs 가 바로 읽기 시작한다
-FILLER_AFTER, FILLER = 1.5, "음… "
 # 같은 대화의 턴은 차례로(말을 끊고 또 말해 ElevenLabs 가 새로 불러도 앞 턴이 저장된 뒤에). ponytail: 한 서버 안에서만 지킴, 여러 대에 걸치면 DB 잠금
 _TURN_LOCKS: defaultdict = defaultdict(threading.Lock)
 
@@ -169,11 +167,7 @@ def llm(body: LlmIn, repo=Depends(get_repo)):
                 said_back = e.message
             else:
                 t0, q = time.time(), _turn(repo, uid, cid, said)
-                try:
-                    ev = q.get(timeout=FILLER_AFTER)
-                except queue.Empty:
-                    yield chunk({"content": FILLER})
-                    ev = q.get()
+                ev = q.get()   # 채움 말('음…')은 어색해서 뺐다(2026-11-03 동규). 답이 나오는 대로 바로
                 said_back = ev[1] if ev[0] == "reply" else None
                 if said_back:
                     yield chunk({"content": said_back})   # 별지기 답을 먼저 읽게 하고, 정리 · 저장은 끝까지 기다린다

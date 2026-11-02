@@ -111,6 +111,19 @@ async function voiceEngine({ onLine, onMode }: Hooks, onGone: () => void): Promi
   };
 }
 
+// 대본에 되풀이된 말은 문맥을 보고 하나로(서버 chat_graph.unique_said 와 같은 규칙): 같은 사람이 사이에 다른 말 없이 같은 말 ·
+// 앞 말의 조각을 이어 하면(받아쓰기 겹침 · 끊겨 들어온 앞부분) 하나로 두고 긴 쪽을 남긴다. 사이에 다른 사람 말이 있으면 다른 문맥이라 둘 다 둔다
+const key = (t: string) => t.replace(/[\s.,!?~…·'"]/g, "");
+const addLine = (xs: Line[], l: Line): Line[] => {
+  const last = xs.at(-1), k = key(l.text);
+  if (!k) return xs;
+  if (last && last.role === l.role) {
+    if (key(last.text).includes(k)) return xs;
+    if (k.includes(key(last.text))) return [...xs.slice(0, -1), l];
+  }
+  return [...xs, l];
+};
+
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export default function CallPage() {
@@ -145,7 +158,7 @@ export default function CallPage() {
   const [connecting, setConnecting] = useState(false);
   const answer = async () => {
     if (connecting || engine.current) return;   // 연결되는 몇 초 사이 여러 번 눌러 대화가 겹쳐 열리던 것(2026-11-03 휴대폰 시험: 3개가 동시에)
-    const hooks: Hooks = { onLine: (l) => setLines((x) => [...x, l]), onMode: setMode };
+    const hooks: Hooks = { onLine: (l) => setLines((x) => addLine(x, l)), onMode: setMode };
     if (MOCK) { setStage("live"); engine.current = demoEngine(hooks); return; }
     setErr(""); setConnecting(true);
     try {

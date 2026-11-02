@@ -61,7 +61,9 @@ def agent(sid):
                 },
             },
             "tts": {"model_id": TTS_MODEL, "voice_id": config.TTS_VOICE_ID},
-            "turn": {"speculative_turn": False},   # 말이 끝나기 전에 미리 부르면 한 차례가 두 턴으로 저장될 수 있어 끈다(기본도 꺼짐)
+            # 말이 끝나기 전에 미리 부르면 한 차례가 두 턴으로 저장될 수 있어 끈다(기본도 꺼짐).
+            # 말을 멈추면 바로 넘어가게 eager(2026-11-03 동규 「말이 끝나고 정적이 있어 기다려야 함」, 만든 에이전트는 PATCH 로 바꿈)
+            "turn": {"speculative_turn": False, "turn_eagerness": "eager"},
         },
         "platform_settings": {
             "auth": {"enable_auth": True},   # 서명된 대화 표(GET /convai/conversation/token, POST /voice/call 이 받음)로만 열림

@@ -325,3 +325,13 @@ def test_turn_uses_custom_tone_note_masked(client, env, talk):  # noqa: F811
     sys_ = talk.reply_calls[-1][0]["content"]
     assert "[사용자가 원한 말투]" in sys_ and "다정한 반말로" in sys_ and voice.NOTE_RULE in sys_
     assert not [n for n in NAMES if n in "\n".join(env.fake.sent)]
+
+
+def test_unique_said_keeps_context():
+    """되풀이된 말은 문맥(바로 앞 별지기 말)이 같을 때만 하나로(2026-11-03 동규 「같은 말도 문맥에 따라 다를 수 있음」)."""
+    from app.agents.chat_graph import unique_said
+    K, U = (lambda t: {"role": "keeper", "text": t}), (lambda t: {"role": "user", "text": t})
+    assert unique_said([K("오늘 어땠어요?"), U("팀에 메일 보냈어"), U("팀에 메일 보냈어.")]) == ["팀에 메일 보냈어"]          # 받아쓰기 겹침
+    assert unique_said([K("오늘 어땠어요?"), U("팀에 메일"), U("팀에 메일 보냈어 떨렸어")]) == ["팀에 메일 보냈어 떨렸어"]   # 끊긴 앞부분
+    assert unique_said([K("기분은요?"), U("떨렸어"), K("기분은요?"), U("떨렸어")]) == ["떨렸어"]                            # 같은 걸 되물음
+    assert unique_said([K("산책은요?"), U("좋아"), K("저녁은요?"), U("좋아")]) == ["좋아", "좋아"]                          # 다른 질문의 같은 대답
