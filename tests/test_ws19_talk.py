@@ -193,6 +193,31 @@ def test_draft_checks_and_fallback(monkeypatch):
     assert d == {"title": "", "text": "\n".join(said), "fallback": True}             # 두 번 다 실패 → 사용자 말 그대로
 
 
+def test_draft_polished_short_and_quote_hint(monkeypatch):
+    """다듬은 일기(11/5): 너무 짧은 요약은 다시 쓰고, 잘못 옮긴 인용은 가까운 사용자 원문을 다시 쓰기 지시에 넣는다."""
+    said = ["근데 요즘은 생각이 조금 달라졌어요. 덜 다듬었어도 먼저 꺼내야 같이 다듬을 수 있더라고요.",
+            "그래서 내일은 '아직 덜 다듬었는데요'로 시작해 보려고요."]
+    good = "요즘은 생각이 조금 달라졌다. 덜 다듬었어도 먼저 꺼내야 같이 다듬을 수 있더라. 그래서 내일은 '아직 덜 다듬었는데요'로 시작해 보려고 한다."
+    assert chat.draft_problems(good, said) == []
+    assert chat.draft_problems("생각이 달라졌다.", said)[0].startswith("너무 짧음")
+    sent, outs = [], [{"title": "회의 전날", "text": good.replace("다듬었는데요", "다듬는데요")}, {"title": "회의 전날", "text": good}]
+    monkeypatch.setattr(chat.llm, "chat", lambda msgs, **k: sent.append(msgs[0]["content"]) or json.dumps(outs.pop(0), ensure_ascii=False))
+    assert chat.draft(said) == {"title": "회의 전날", "text": good, "fallback": False}
+    assert "원문에 없는 인용: '아직 덜 다듬는데요' → 사용자 말 그대로: '아직 덜 다듬었는데요'" in sent[1]
+
+
+def test_draft_added_words_retry_then_keep(monkeypatch):
+    """사용자가 하지 않은 덧붙임('~다고 생각했다')은 한 번 더 쓰게 하고, 또 붙어도 말 그대로 잇지 않고 그 초안을 쓴다."""
+    said = ["오늘 그냥 좀 그랬어.", "맨날 그래 나는. 맨날 내가 끼면 민폐일 것 같아."]
+    added = "오늘은 그냥 좀 그랬다. 맨날 내가 끼면 민폐일 것 같다고 생각했다."
+    assert chat.draft_problems(added, said) == ["하지 않은 말 덧붙임: '같다고 생각했다' → 한 말의 말끝만 바꾼다"]
+    assert chat.draft_problems("배울 게 있다고 생각했다.", ["나는 배울 게 있다고 생각했었거든."]) == []   # 한 말이면 통과
+    sent = []
+    monkeypatch.setattr(chat.llm, "chat", lambda msgs, **k: sent.append(msgs) or json.dumps({"title": "민폐", "text": added}, ensure_ascii=False))
+    assert chat.draft(said) == {"title": "민폐", "text": added, "fallback": False}
+    assert len(sent) == 2 and "같다고 생각했다" in sent[1][0]["content"]
+
+
 ##################################################
 # API: 열기 · 턴 · 가명 · 지난 기록
 ##################################################
