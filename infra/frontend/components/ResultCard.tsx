@@ -53,7 +53,7 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
     e.preventDefault();
     if (!visible(text)) return setErr("불편한 점을 한 줄 적어 주세요.");
     setErr("");
-    try { await sendFeedback({ target, target_id: targetId ?? null, value: "불편한 점 한 줄", text: text.trim().slice(0, 200) }); setDone(true); }
+    try { await sendFeedback({ target, target_id: targetId ?? null, value: "불편한 점 한 줄", text: text.trim().slice(0, 200), ops: true }); setDone(true); }
     catch { setErr("보내지 못했어요. 다시 보내 주세요."); }
   };
   if (done) return <p className="toast" role="status">불편한 점을 받았어요. 고칠 곳을 찾아볼게요.</p>;
@@ -64,6 +64,7 @@ export function OneLine({ target, targetId }: { target: Feedback["target"]; targ
         <input id={"one-" + targetId} maxLength={200} value={text} onChange={(e) => setText(e.target.value)} placeholder="예: 생각을 잘못 나눴어요" />
       </div>
       <button type="submit" className="small" style={{ alignSelf: "flex-end" }}>보내기</button>
+      <p className="sub" style={{ flexBasis: "100%", margin: 0 }}>보내면 운영자가 읽고 고치는 데만 써요. 다른 사람 이름은 가명으로 보여요.</p>
       {err && <span className="err" role="alert">{err}</span>}
     </form>
   );

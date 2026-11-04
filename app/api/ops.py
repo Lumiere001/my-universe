@@ -5,7 +5,8 @@ app/api/ops.py
 - /ops/*: ADMIN_EMAILS(운영자 구글 계정)만. 아니면 403 not_admin.
   - GET /ops/summary: 모든 사용자의 숫자 · 코드만(원문 0건, app_ops 역할은 암호문 칸을 못 읽음).
   - GET /ops/feedback: 운영자 열람에 동의한 사용자(consent.operator_read)의 피드백 원문 · 대상 문장 · 목록 밖 값 후보.
-    다른 사람 이름은 가명. 볼 때마다 사용자별 열람 기록(ops_reads). 동의하지 않은 사용자 것은 숫자로만.
+    동의하지 않은 사용자는 '운영자가 읽어요' 안내를 보고 보낸 불편한 점 한 줄만(11/5 동규), 나머지는 숫자로만.
+    다른 사람 이름은 가명. 볼 때마다 사용자별 열람 기록(ops_reads).
   - POST /ops/feedback/summarize: 피드백 정리 Agent(Solar). 동의한 오답 재료를 가명으로 묶어 이유별로 나누고 고칠 곳을 제안
     (운영자가 누를 때만 돔, 실명 관문 llm.guard, 비용은 운영자 계정의 runs 에).
 - /settings/suggestions: 사용자 자기 피드백으로 "이 설정으로 바꿀까요?"(영역 넘는 선 · 제안 빈도). 바꾸는 것은 사용자.
@@ -78,6 +79,27 @@ def _consented(repo, r, days, wrong):
     return out
 
 
+def _complaints(repo, r, days, skip, start):
+    """동의하지 않은 사용자가 '운영자가 읽어요' 안내를 보고 보낸 불편한 점 한 줄만(그 사용자 세션으로 풀고 글 칸은 가명)."""
+    since = diary.now() - timedelta(days=days)
+    uids = sorted({str(f["user_id"]) for f in r.rows("feedback")
+                   if f["value"] == "불편한 점 한 줄" and f["created_at"] >= since and str(f["user_id"]) not in skip})
+    out = []
+    for uid in uids:
+        with repo.session(uid) as s:
+            items = ops.user_complaints(s, since)
+            people = diary.people(s)
+        if not items:
+            continue
+        texts = [x[k] or "" for x in items for k in ("text", "target_text")]
+        masked = iter(tools.mask_obj(texts, people)[0])
+        for x in items:
+            for k in ("text", "target_text"):
+                x[k] = next(masked) or None
+        out.append({"uid": uid, "alias": f"사용자 {start + len(out)}", "items": items})
+    return out
+
+
 @router.get("/ops/feedback", tags=["운영"],
             summary="동의한 사용자의 피드백 원문(가명) · 대상 문장 · 목록 밖 값 후보. wrong=true 면 오답 재료만. 볼 때마다 열람 기록")
 def ops_feedback(days: int = Days, wrong: bool = False, admin=Depends(get_admin), repo=Depends(get_repo)):
@@ -87,15 +109,22 @@ def ops_feedback(days: int = Days, wrong: bool = False, admin=Depends(get_admin)
         for u in users:
             r.log_read(admin["id"], u["uid"], "wrong" if wrong else "feedback", len(u["items"]))
         readers = {u["uid"] for u in users}
+        sent = _complaints(repo, r, days, readers, len(users) + 1)
+        for u in sent:
+            r.log_read(admin["id"], u["uid"], "complaint", len(u["items"]))
         rest = Counter(f["value"] for f in r.rows("feedback")
                        if str(f["user_id"]) not in readers and f["created_at"] >= since and (not wrong or f["value"] in ops.WRONG))
+        for u in sent:   # 보여 준 불편한 점 한 줄은 '숫자로만'에서 뺀다
+            rest["불편한 점 한 줄"] -= len(u["items"])
+        rest = +rest
     cands = Counter()
     for u in users:
         for c in u["cands"]:
             cands[(c["field"], c["original"])] += c["count"]
     logger.log("ops", what="feedback_read", count=sum(len(u["items"]) for u in users))
     return {"days": days, "wrong": wrong, "users": len(users),
-            "items": [{"user": u["alias"], **x} for u in users for x in u["items"]],
+            "items": [{"user": u["alias"], **x} for u in users for x in u["items"]]
+            + [{"user": u["alias"], "via": "보낼 때 열람 안내", **x} for u in sent for x in u["items"]],
             "other_candidates": [{"field": f, "original": w, "count": n}
                                  for (f, w), n in sorted(cands.items(), key=lambda x: (-x[1], x[0]))],
             "not_consented": dict(rest.most_common()),

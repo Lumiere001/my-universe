@@ -56,6 +56,8 @@ export const feedback: OpsFeedback = {
       text: "다음 걸음을 너무 자주 권해서 숙제 같았어요", target_text: "오늘도 할 일을 정리했네요. 내일은 10분만 먼저 시작해 볼까요?", config: "2/2" },
     { user: "사용자 2", at: "2026-10-18T23:40:11+09:00", target: "message", value: "별로", text: null,
       target_text: "도윤 선배와 나눈 이야기가 힘이 됐겠어요.", config: "2/2" },
+    { user: "사용자 3", at: "2026-11-05T21:02:10+09:00", target: "entry", value: "불편한 점 한 줄", via: "보낼 때 열람 안내",
+      text: "다듬은 일기가 너무 짧아졌어요", target_text: "회의에서 먼저 말해 봤다.", config: "5/4" },
   ],
   other_candidates: [{ field: "kind", original: "회상", count: 3 }, { field: "addressee", original: "미래의 나", count: 1 }],
   not_consented: { "불편한 점 한 줄": 1, "별로": 2 },

@@ -258,9 +258,9 @@ function FeedbackPanel({ counts }: { counts: OpsSummary["feedback_text"] }) {
   };
   return (
     <section className="card stack full" aria-label="피드백 원문">
-      <h2>피드백 원문 <span className="sub">(운영자 열람에 동의한 사용자만)</span></h2>
+      <h2>피드백 원문 <span className="sub">(운영자 열람에 동의한 사용자 + 보낼 때 열람 안내를 본 불편한 점 한 줄)</span></h2>
       <p className="ops-desc">
-        불편한 점 한 줄: 동의 {counts.consented}개 · 동의 안 함 {counts.not_consented}개(숫자만). 열어 볼 때마다 사용자별 열람 기록이 남고,
+        불편한 점 한 줄: 동의 {counts.consented}개 · 동의 안 함 {counts.not_consented}개. 동의 안 한 사람 것도 11/5부터 안내를 보고 보낸 한 줄은 열어 볼 수 있고, 그 전 것은 숫자만. 열어 볼 때마다 사용자별 열람 기록이 남고,
         다른 사람 이름은 가명으로 보여요.
       </p>
       <div className="row">
@@ -271,8 +271,8 @@ function FeedbackPanel({ counts }: { counts: OpsSummary["feedback_text"] }) {
       {fb && (
         <div className="stack">
           <Table label="피드백" head={["사용자", "때", "대상", "버튼", "남긴 말", "대상 문장", "설정"]}
-            rows={fb.items.map((x) => [x.user, when(x.at), x.target, x.value, x.text ?? "", x.target_text ?? "", x.config ?? ""])} />
-          <p className="sub" style={{ margin: 0 }}>동의 안 한 사용자: {Object.entries(fb.not_consented).map(([k, v]) => `${k} ${v}`).join(" · ") || "없음"}</p>
+            rows={fb.items.map((x) => [x.via ? `${x.user} (보낼 때 안내 봄)` : x.user, when(x.at), x.target, x.value, x.text ?? "", x.target_text ?? "", x.config ?? ""])} />
+          <p className="sub" style={{ margin: 0 }}>동의 안 한 사용자(숫자만): {Object.entries(fb.not_consented).map(([k, v]) => `${k} ${v}`).join(" · ") || "없음"}</p>
           <h3>공통 틀 후보 <span className="sub">(2명 이상이 같은 방향으로 고친 것 · 바꿀지는 사람이 정하고 가상 인물 · 골든셋으로 시험)</span></h3>
           <Table label="공통 틀 후보" head={["고친 것", "방향", "사람", "횟수", "자주 나온 낱말"]} num={[2, 3]}
             rows={(fb.framework_candidates ?? []).map((x) => [x.kind, x.what, `${x.users}명`, x.count, x.words.join(" · ") || "—"])} />

@@ -80,7 +80,8 @@ export type Settings = {
 export type Me = { user: { id: string; email: string }; settings: Settings;
   onboarding: { entries: number; aspiration: string; weather_asked: boolean };   // aspiration: none(아직) · set · skip(이번엔 넘어가기) · stop
   voice_call?: boolean };   // 목소리로 이야기하기(app/call)를 켜 뒀나 — 백엔드 VOICE_CALL_ON(기본 꺼짐, 2026-11-03 동규 「시연할 때만」)
-export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
+// ops: 불편한 점 한 줄을 '운영자가 읽어요' 안내를 보고 보냄 → 운영자 열람 동의와 관계없이 그 한 줄만 운영 화면에(11/5)
+export type Feedback = { target: string; target_id?: string | null; value: string; text?: string; ops?: boolean };
 export type Ontology = typeof import("./ontology.json");
 export type DiaryInput = { text: string; title?: string; written_at?: string; weather?: Weather | null; day?: string; source_ref?: string;
   source?: "텍스트" | "사진" | "지난 글 묶음" | "대화" };   // 기록 출처(기본 텍스트). 사진에서 읽은 글이면 "사진"(WS18), 인스타 가져오기는 '지난 글 묶음' + source_ref + written_at(WS17)
@@ -541,7 +542,8 @@ export type OpsSummary = {
     dials: { setting: string; moved: number; users: number; undone: number; to: Record<string, number> }[]; min: number };
 };
 export type OpsFeedback = { days: number; wrong: boolean; users: number;
-  items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null }[];
+  // via: 동의하지 않은 사용자가 보낼 때 열람 안내를 보고 보낸 불편한 점 한 줄
+  items: { user: string; at: string; target: string; value: string; text: string | null; target_text: string | null; config: string | null; via?: string }[];
   other_candidates: { field: string; original: string; count: number }[]; not_consented: Record<string, number>;
   // 공통 틀 후보(개인 맞춤 Ops ⑤): 동의한 사용자 중 2명 이상이 같은 방향으로 고친 것만
   framework_candidates?: { kind: string; what: string; users: number; count: number; words: string[] }[] };

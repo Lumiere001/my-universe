@@ -454,11 +454,12 @@ def add_aspiration(s, now_text, said, obstacle, if_then, values, why="", scene="
     return aid
 
 
-def add_feedback(s, target, target_id, value, text=None, relation=None):
-    """relation: '아니에요'로 지운 관계 {type, from, to}(오답 재료, 암호문에만)."""
+def add_feedback(s, target, target_id, value, text=None, relation=None, ops=False):
+    """relation: '아니에요'로 지운 관계 {type, from, to}(오답 재료, 암호문에만).
+    ops: 불편한 점 한 줄을 '운영자가 읽어요' 안내를 보고 보냄 — 운영 화면이 동의와 관계없이 그 글만 푼다(ops.user_complaints)."""
     fid = new_id("f")
     mood = value in MOOD_FEEDBACK
-    data = {k: v for k, v in {"text": text, "value": value if mood else None, "relation": relation}.items() if v}
+    data = {k: v for k, v in {"text": text, "value": value if mood else None, "relation": relation, "ops": ops}.items() if v}
     s.insert("feedback", {"id": fid, "target": target, "target_id": target_id, "value": MOOD_LABEL if mood else value,
                           "enc": seal(s, "feedback", fid, data) if data else None, "studio_config": run_config(s, target_id)})
 

@@ -148,6 +148,26 @@ def test_feedback_only_consented_masked_and_logged(c, env):  # noqa: F811
     assert len(env.repo.store.tables["ops_reads"]) == 2
 
 
+def test_complaint_sent_with_notice_readable_without_consent(c, env, monkeypatch):  # noqa: F811
+    """동의하지 않은 U2 라도 '운영자가 읽어요' 안내를 보고 보낸(ops) 불편한 점 한 줄은 운영 화면에(가명 · 'complaint' 열람 기록).
+    안내 없이 보낸 한 줄 · 다른 버튼은 그대로 숫자로만, 안내를 붙이기 전 글은 풀지도 않는다(11/5 동규)."""
+    _fill(c)
+    rid = next(e["id"] for e in env.repo.store.tables["entries"] if str(e["user_id"]) == str(U2))
+    c.post("/feedback", headers=H2, json={"target": "entry", "target_id": rid, "value": "불편한 점 한 줄", "ops": True,
+                                          "text": "서윤이랑 한 말을 빠뜨렸어요"})
+    c.post("/feedback", headers=H2, json={"target": "entry", "target_id": rid, "value": "별로", "ops": True})   # 한 줄이 아니면 표시 없음
+    body = c.get("/ops/feedback", headers=HA).json()
+    sent = [x for x in body["items"] if x.get("via")]
+    assert [(x["user"], x["value"]) for x in sent] == [("사용자 2", "불편한 점 한 줄")]
+    assert "빠뜨렸어요" in sent[0]["text"] and "서윤" not in json.dumps(body, ensure_ascii=False)   # 이름은 가명
+    assert "잘못 알아들었어요" not in json.dumps(body, ensure_ascii=False)                          # 안내 없이 보낸 것은 안 보임
+    assert body["not_consented"] == {"불편한 점 한 줄": 1, "별로": 1}
+    assert [(x["user_id"], x["what"], x["items"]) for x in env.repo.store.tables["ops_reads"]] == [(U1, "feedback", len(body["items"]) - 1), (U2, "complaint", 1)]
+    monkeypatch.setattr(ops, "OPS_NOTICE_SINCE", diary.now() + timedelta(days=1))   # 안내 전에 보낸 글이라면 → 풀지 않음
+    body = c.get("/ops/feedback", headers=HA).json()
+    assert not [x for x in body["items"] if x.get("via")] and body["not_consented"]["불편한 점 한 줄"] == 2
+
+
 def test_one_line_needs_visible_text_and_lands_in_its_row(c):
     """불편한 점 한 줄: 글이 없거나 안 보이는 글자뿐이면 422(남지 않음), 보낸 글은 운영 화면 그 줄의 '남긴 말'에 그대로.
     (10/15 운영 '남긴 말' 빈 칸 — 서버가 글 없는 한 줄을 받았고, 화면 trim 은 폭 없는 글자 · 채움 문자를 못 걸렀다)"""

@@ -67,6 +67,7 @@ class FeedbackIn(In):
     target_id: Optional[str] = Field(default=None, max_length=80)
     value: str
     text: Optional[str] = Field(default=None, max_length=500)
+    ops: bool = False   # 불편한 점 한 줄을 '운영자가 읽어요' 안내를 보고 보냄(11/5 동규) → 동의와 관계없이 그 글만 운영 화면에
 
     @field_validator("value")
     @classmethod

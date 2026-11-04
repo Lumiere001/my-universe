@@ -211,8 +211,9 @@ def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
             diary.save_profile(s, settings={TODAY_FLAGS[body.value]: diary.today()})
         elif body.value == "날씨 건너뜀":
             diary.save_profile(s, settings={"weather_ask": False}, onboarding={"weather_asked": True})
-        diary.add_feedback(s, body.target, body.target_id, body.value,
-                           body.text if body.value == "불편한 점 한 줄" else None, relation=removed)
+        one = body.value == "불편한 점 한 줄"
+        diary.add_feedback(s, body.target, body.target_id, body.value, body.text if one else None, relation=removed,
+                           ops=one and body.ops)
         tuned = ops.auto_pref(s)   # 개인 고리: 반응이 한쪽으로 쌓이면 그 사람 설정을 한 칸(알림 · 되돌리기는 /settings/suggestions)
     return {"ok": True, "state": changed and {"type": changed["kind"], "status": changed.get("state"),
                                               "mistake": "실수" in changed.get("marks", [])}, "tuned": tuned}

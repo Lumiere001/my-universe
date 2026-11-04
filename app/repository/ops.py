@@ -425,6 +425,23 @@ def user_feedback(s, since, wrong_only=False):
     return items, cands
 
 
+OPS_NOTICE_SINCE = datetime(2026, 11, 4, 15, tzinfo=timezone.utc)   # 11/5 0시(한국): 보내는 칸에 '운영자가 읽어요' 안내를 붙인 날
+
+
+def user_complaints(s, since):
+    """운영자 열람에 동의하지 않은 사용자 한 명의 '불편한 점 한 줄' 가운데, 보낼 때 '운영자가 읽어요' 안내를 보고 보낸 것(ops 표시)만
+    → user_feedback 과 같은 꼴. 안내를 붙이기 전 글은 표시가 있을 수 없어 풀지도 않는다(보낸 사람이 몰랐던 글)."""
+    items = []
+    for f in s.rows("feedback", order="created_at"):
+        if f["created_at"] < max(since, OPS_NOTICE_SINCE) or f["value"] != "불편한 점 한 줄" or not f.get("enc"):
+            continue
+        enc = diary.unseal(s, "feedback", f["id"], f["enc"]) or {}
+        if enc.get("ops"):
+            items.append({"at": diary.iso(f["created_at"]), "target": f["target"], "value": f["value"], "text": enc.get("text"),
+                          "target_text": _target_text(s, f["target"], f["target_id"], enc), "config": f["studio_config"]})
+    return items
+
+
 LESSONS = ("옮김", "고침", "합침", "떼어 냄", "아니에요")
 
 
