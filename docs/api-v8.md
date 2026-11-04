@@ -65,11 +65,12 @@ data: {"entry_id": "e1", "code": "studio_timeout", "message": "...", "resumable"
 ```
 
 - step 순서: `safety`(위기 확인) → `names`(사람 · 가명) → `record`(기록 Agent) → `past`(지난 생각 고르기) → `observe`(관측 Agent) → `voice`(한마디) → `save`. 위기 글도 같다(시험 단계).
-- 끊기면: `GET /diary/{id}`로 상태를 보고, `status`가 `failed`이거나 멈춰 있으면 `POST /diary/{id}/resume/stream`(같은 이벤트, 끝난 단계는 건너뜀 — 건너뛴 단계도 progress 는 다시 보낸다). 화면이 끊겨도 서버(로컬 · Docker)는 끝까지 처리한다. 서버가 다시 켜져 멈춘 기록은 `GET /diary/{id}`가 `failed`로 알려 준다.
+- 끊기면: `GET /diary/{id}`로 상태를 보고, `status`가 `failed`이거나 멈춰 있으면 `POST /diary/{id}/resume/stream`(같은 이벤트, 끝난 단계는 건너뜀 — 건너뛴 단계도 progress 는 다시 보낸다). 화면이 끊겨도(앱을 닫음) 서버는 끝까지 처리한다 — Vercel 에서도 그러도록 SSE 응답이 남은 흐름을 끝까지 읽으며 요청을 붙잡아 둔다(`_Drain`, `maxDuration` 300초 안, 2026-11-04). 서버가 다시 켜져 멈춘 기록은 `GET /diary/{id}`가 `failed`로 알려 준다.
 - `error` 이벤트의 `resumable`: 실명 검사에 걸린 경우(`real_name_leak`, 밖으로 보내지 않음)만 `false`. 그 밖의 코드: `studio_timeout` · `studio_failed` · `studio_bad_output` · `llm_failed` · `internal`.
 - 한 기록을 동시에 두 번 돌리지 않는다(409 `already_running`). 잠금은 DB(`entries.locked_until`, 조건부 update)라 서버 인스턴스가 여러 개여도 하나만 돈다. 노드가 끝날 때마다 잠금을 `RUN_LOCK_S`(기본 600초)만큼 늘리고, 끝나면 푼다. 서버가 멈춰 잠금이 만료되면 `GET /diary/{id}`가 `failed`로 알려 준다.
 - 운영 상한은 환경변수를 설정했을 때만 건다(기본 0 = 없음). 설정하면 이어 하기도 이번 달 비용 상한(`monthly_budget`)과 하루 수를 본다. 하루 수 = 오늘 처리를 시작하거나 이어 한 기록 수(오늘 이미 센 기록을 다시 이어 하는 건 더하지 않음, 지운 글도 그대로 셈, 시드한 글은 안 셈). 기록 하나당 이어 하기는 `RESUME_LIMIT`번까지(429 `resume_limit`).
 - 시험 · curl용으로 같은 본문의 `POST /diary`(스트림 없이 EntryResult 한 번)도 둔다.
+- **정리가 끝나면 알림(2026-11-04):** 정리 중에 `POST /diary/{id}/notify` 본문 `{"endpoint": "https://…", "keys": {"p256dh", "auth"}}`(이 기기의 PushSubscription) → 정리 중(잠금)이면 `entries.notify_enc`에 암호화해 두고 `{"waiting": true}`, 이미 끝났거나 알림 키(VAPID)가 없으면 `{"waiting": false}`. 그래프가 끝나면 `DONE_GRACE_S`(5초) 기다렸다가 아직 남아 있으면(화면이 거두지 않음 = 앱을 닫음) 그 기기로 한 줄(일기 내용 없음, 대화 초안은 `/talk`, 직접 쓴 글은 `/history?id=`)을 보내고 비운다. 화면이 보이는 채로 결과를 받으면 `DELETE /diary/{id}/notify`(204)로 거둔다. 칸은 `supabase/migrations/20261104000000_v9_notify_done.sql`.
 
 ## 1.1 사진 글자 읽기 (WS18, 2026-10-14)
 

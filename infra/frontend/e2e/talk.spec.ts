@@ -56,6 +56,10 @@ test("이야기하기 → 요약 확인", async ({ page }, info) => {
 
   await test.step("대화 마치고 정리하기 → 정리본 확인 → 고칠 게 있어요(다시 묻기) → 다시 정리 → 저장(PRD v9 Q9 · Q7)", async () => {
     await page.getByRole("button", { name: "대화 마치고 정리하기" }).click();
+    await expect(page.getByText("정리에 1분쯤 걸려요. 끝나면 알림으로 알려 드릴까요?")).toBeVisible();   // 정리가 끝나면 알림(2026-11-04)
+    await page.getByRole("button", { name: "끝나면 알림 받기" }).click();
+    await expect(page.getByText("끝나면 알림으로 알려 드릴게요. 앱을 닫아도 괜찮아요.")).toBeVisible();
+    await shot("03a-notify");
     const card = page.getByTestId("confirm-card");
     await expect(card).toBeVisible();
     await expect(card.getByTestId("reason-line")).toContainText("떠올라서였어요");            // 숨은 이유 한 줄은 맨 아래

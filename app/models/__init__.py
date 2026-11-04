@@ -109,9 +109,13 @@ class DayIn(In):
     day: date   # 글이 다루는 날(사용자가 고침)
 
 
-class PushIn(In):
+class NotifyIn(In):
+    """이 기기의 웹 알림 주소 · 키(브라우저 PushSubscription). 정리가 끝나면 알림(POST /diary/{id}/notify)에 그대로."""
     endpoint: str = Field(min_length=10, max_length=1000, pattern=r"^https://")
     keys: dict[str, str] = Field(max_length=4)      # {p256dh, auth}
+
+
+class PushIn(NotifyIn):
     notify_at: str = Field(pattern=r"^([01][0-9]|2[0-3]):(00|30)$")   # 한국 시각, 30분 단위
 
 

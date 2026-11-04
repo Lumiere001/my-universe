@@ -263,7 +263,8 @@ export type Insight = {
   across: { type: string; suns: [string, string]; from: InsightEnd; to: InsightEnd; rid?: string | null; line?: "실선" | "점선" | null }[];
 };
 // 고른 시각 알림(PRD v9 Q8)
-export type PushSub = { endpoint: string; keys: Record<string, string>; notify_at: string };
+export type DeviceSub = { endpoint: string; keys: Record<string, string> };   // 이 기기의 웹 알림 주소 · 키
+export type PushSub = DeviceSub & { notify_at: string };
 export async function getPushKey(): Promise<{ public_key: string | null }> {
   return MOCK ? { public_key: "mock" } : json("GET", "/push/key");
 }
@@ -276,6 +277,13 @@ export async function subscribePush(s: PushSub): Promise<{ ok: boolean; notify_a
 export async function unsubscribePush(): Promise<void> {
   if (MOCK) return (await mock()).unsubscribePush();
   await json("DELETE", "/push/subscribe");
+}
+// 정리가 끝나면 알림(2026-11-04): 정리 중일 때만 맡는다(waiting). 화면이 결과를 받으면 거둔다(앱을 닫았으면 서버가 보냄)
+export async function notifyWhenDone(id: string, d: DeviceSub): Promise<{ waiting: boolean }> {
+  return MOCK ? { waiting: true } : json("POST", `/diary/${encodeURIComponent(id)}/notify`, d);
+}
+export async function cancelNotify(id: string): Promise<void> {
+  if (!MOCK) await json("DELETE", `/diary/${encodeURIComponent(id)}/notify`);
 }
 export type Period = "week" | "month" | "all";
 export async function getInsight(period: Period = "all"): Promise<Insight> {

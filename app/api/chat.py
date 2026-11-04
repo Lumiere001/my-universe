@@ -15,7 +15,6 @@ import threading
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response
-from fastapi.responses import StreamingResponse
 
 from app.agents import chat_graph
 from app.api import consent
@@ -210,7 +209,7 @@ def finish(cid: Id, user=Depends(get_user), repo=Depends(get_repo)):
             return _ev(*diary_api._same(repo, uid, eid)), None
         return None, diary_api._start(repo, uid, eid)
 
-    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    return diary_api._Drain(gen())   # 앱을 닫아도 초안 · 정리를 끝까지(끝나면 알림)
 
 
 def _done(result):

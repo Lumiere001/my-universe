@@ -39,6 +39,15 @@ def payload(tone):
     return json.dumps({"title": "나의 우주", "body": LINES.get(tone, LINES["다정하게"]), "url": "/"}, ensure_ascii=False)
 
 
+# 정리가 끝나면 알림(2026-11-04): 잠금 화면에 보이므로 일기 내용 없이 상태만. 별지기 이름은 사람마다 달라 넣지 않는다
+DONE = {"confirm": "정리가 끝났어요. 확인하고 우주에 저장해 주세요.", "done": "정리가 끝났어요. 눌러서 확인해 보세요."}
+STOPPED = "정리하다 멈췄어요. 눌러서 이어서 해 주세요."
+
+
+def done_payload(status, url):
+    return json.dumps({"title": "나의 우주", "body": DONE.get(status, STOPPED), "url": url}, ensure_ascii=False)
+
+
 def send(sub, data, private_key, subject):
     """→ "ok" | "gone"(구독 만료 · 지워짐 → 구독을 지움) | "fail". pywebpush 가 암호화 · VAPID 서명을 한다."""
     from pywebpush import WebPushException, webpush
@@ -56,4 +65,5 @@ if __name__ == "__main__":
     assert not should_send("2026-11-02", None, "2026-11-02")
     assert should_send("2026-11-02", "2026-11-01", "2026-11-01")
     assert not should_send("2026-11-19", None, "2026-11-02") and should_send("2026-11-20", None, "2026-11-02")   # 17일: 쉼 · 18일: 보냄
+    assert "확인하고" in done_payload("confirm", "/talk") and STOPPED in done_payload(None, "/")
     print("ok")

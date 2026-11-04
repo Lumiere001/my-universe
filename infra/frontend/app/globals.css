@@ -418,6 +418,8 @@ main.chat { display: flex; flex-direction: column; gap: 8px; height: calc(100dvh
 .chat-sum-body { max-height: 26dvh; overflow-y: auto; }
 .chat > .chat-log { flex: 1 1 0; min-height: 96px; overflow-y: auto; overscroll-behavior: contain; padding: 4px 2px; }
 .chat-foot { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* 정리가 끝나면 알림(정리 중 안내 한 줄 + 단추) */
+.done-notify { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .composer { align-self: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 4px 6px 6px 12px; }
 .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .composer textarea, .composer textarea:hover, .composer textarea:focus { display: block; border: 0; box-shadow: none; background: none; border-radius: 0;

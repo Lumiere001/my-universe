@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import AfterSave from "@/components/AfterSave";
 import ConfirmCard from "@/components/ConfirmCard";
+import DoneNotify from "@/components/DoneNotify";
 import Icon from "@/components/Icon";
 import { useKeeperName } from "@/components/Keeper";
 import { StoryModes } from "@/components/Shell";
@@ -17,6 +18,7 @@ import {
   deleteTalk, finishTalk, fixTalk, getDiary, getMe, getTalk, listTalks, sayTalk, startTalk, why,
   type Conversation, type EntryResult, type StreamError,
 } from "@/lib/api";
+import { seenHere } from "@/lib/push";
 
 const PRE = { whiteSpace: "pre-line" } as const;
 // 정리하다 멈춘 서버 코드(app/api/diary.py MESSAGES). 서버 문장은 직접 쓰기의 '이어서 하기'를 가리켜서 이 화면의 문장으로 바꾼다
@@ -31,6 +33,7 @@ export default function TalkPage() {
   const [busy, setBusy] = useState("");             // 진행 문구(비면 쉬는 중)
   const [err, setErr] = useState("");
   const [steps, setSteps] = useState<string[]>([]);   // 정리하기 진행 단계
+  const [finishing, setFinishing] = useState<{ id: string | null } | null>(null);   // 정리 중(기록 id 는 초안을 만든 뒤에 옴) — 끝나면 알림
   const [draft, setDraft] = useState<EntryResult | null>(null);   // 확인을 기다리는 정리
   const [saved, setSaved] = useState<EntryResult | null>(null);   // 저장한 결과(한마디)
   const endRef = useRef<HTMLDivElement>(null);
@@ -86,16 +89,21 @@ export default function TalkPage() {
   };
   const finish = async () => {
     if (!c) return;
-    setErr(""); setSteps([]); setBusy("정리하는 중…");
+    setErr(""); setSteps([]); setBusy("정리하는 중…"); setFinishing({ id: null });
     try {
-      const r = await finishTalk(c.id, { onProgress: (p) => setSteps((s) => (s.includes(p.label) ? s : [...s, p.label])) });
+      const r = await finishTalk(c.id, { onProgress: (p) => {
+        setSteps((s) => (s.includes(p.label) ? s : [...s, p.label]));
+        if (p.entry_id) setFinishing({ id: p.entry_id });
+      } });
+      seenHere(r.id);
       if (r.status === "confirm") setDraft(r); else setSaved(r);
     } catch (e) {
       const x = e as StreamError;
+      seenHere(x.entry_id);
       setErr(STOPPED.has(x.code) ? "정리하다 멈췄어요. '대화 마치고 정리하기'를 다시 눌러 주세요."
         : why(x, "정리하지 못했어요. '대화 마치고 정리하기'를 다시 눌러 주세요."));
     }
-    finally { setBusy(""); setSteps([]); }
+    finally { setBusy(""); setSteps([]); setFinishing(null); }
   };
   // 전화 끝에 '일기로 정리하기'(/?finish, app/call): 그 통화가 쌓인 대화를 불러오면 바로 정리한다(한 번만, 주소는 지움)
   const auto = useRef(false);
@@ -189,6 +197,7 @@ export default function TalkPage() {
         {c?.turns.map(bubble)}
         {busy && <p className="sub" role="status">{busy}</p>}
         {steps.length > 0 && <ol className="steps">{steps.map((s, i) => <li key={s} className={i < steps.length - 1 ? "done" : "now"}>{s}</li>)}</ol>}
+        {finishing && <DoneNotify entryId={finishing.id} later="앱을 닫아도 정리는 이어지고, 다시 열면 여기서 볼 수 있어요." />}
         {err && <p className="err" role="alert">{err}</p>}
         <div ref={endRef} />
       </section>

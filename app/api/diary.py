@@ -3,34 +3,43 @@ app/api/diary.py
 
 일기 쓰기(SSE) · 읽기 · 지우기 · 이어 하기.
 그래프는 백그라운드 스레드에서 돌고, 응답은 그 진행을 SSE 로 흘린다(event: progress/result/error, 약 10초마다 ': keep-alive').
-손님이 끊어도 스레드는 끝까지 간다(로컬 · Docker). 끊긴 뒤에는 GET /diary/{id} → POST /diary/{id}/resume/stream.
+손님이 끊어도 스레드는 끝까지 간다. Vercel 에서도 그러도록 응답(_Drain)이 남은 흐름을 끝까지 읽으며 요청을 붙잡아 둔다.
+끊긴 뒤에는 GET /diary/{id} → POST /diary/{id}/resume/stream.
+정리가 끝나면 알림(2026-11-04): 정리 중 '끝나면 알림 받기' → POST /diary/{id}/notify 가 그 기기 알림 주소를 이 기록에 암호화해 두고,
+그래프가 끝난 뒤 화면이 결과를 받아 거두지 않았으면(앱을 닫음) 알림 한 줄을 보낸다.
 같은 기록을 두 번 돌리지 않게 DB 잠금(entries.locked_until, 조건부 update)을 쓴다 — 인스턴스가 여러 개여도 하나만 돈다.
 같은 글(같은 설정) · 같은 원본이 다시 오면 Studio 를 부르지 않고 그 기록으로 안내한다(PRD §8.5 A, 상한이 아니라 중복 막기).
 요약 확인(WS20): 대화 초안 · confirm 칸이 참인 글은 save 앞에서 멈춰 status 'confirm' 결과를 주고,
 POST /diary/{id}/confirm 이 고친 것을 넣어 저장한다. 텍스트 길(confirm 없음)은 그대로.
 """
 
+import contextlib
 import contextvars
 import json
 import queue
 import threading
+import time
+from collections import deque
 from datetime import datetime
 from typing import Annotated
 
+import anyio
 from fastapi import APIRouter, Depends, Path, Query, Response
 from fastapi.responses import StreamingResponse
 from psycopg.errors import UniqueViolation
 
 from app.agents import graph
 from app.api import consent
-from app.core import config, trace
+from app.core import config, logger, trace
 from app.deps import get_repo, get_user
 from app.exceptions import ApiError
-from app.models import ConfirmIn, DiaryIn
+from app.models import ConfirmIn, DiaryIn, NotifyIn
 from app.repository import conversations, diary, drafts, views
+from app.service import push
 
 router = APIRouter(tags=["일기"])
 KEEPALIVE_S = 10
+DONE_GRACE_S = 5   # 정리가 끝난 뒤, 결과를 받은 화면이 알림을 거둘 틈(화면에 있으면 알림을 보내지 않는다)
 Id = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,80}$")]   # id 모양만(제어 문자 · 다른 글자는 422)
 MESSAGES = {
     "studio_timeout": "생각을 나누는 데 시간이 오래 걸리고 있어요. '이어서 하기'를 눌러 주세요.",
@@ -53,7 +62,8 @@ def _start(repo, uid, eid, name="diary.stream"):
     def work():
         try:
             with trace.span(name, kind="CHAIN", entry_id=eid):
-                _work()
+                status = _work()
+            _notify_done(repo, uid, eid, status)
         finally:
             q.put(None)   # span 을 닫은 뒤 끝을 알린다
 
@@ -64,6 +74,7 @@ def _start(repo, uid, eid, name="diary.stream"):
                 r = views.entry_result(s, eid)
             trace.set(status=r["status"])
             q.put(("result", r))
+            return r["status"]
         except Exception as e:
             code = graph.error_code(e)
             trace.set(status="failed", error_code=code)
@@ -91,9 +102,48 @@ def _sse(q):
         yield f"event: {ev}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+class _Drain(StreamingResponse):
+    """SSE 응답. 손님이 끊어도(앱을 닫음) 남은 흐름을 끝까지 읽어 이 요청을 살려 둔다 — 요청이 끝나면 Vercel 이 인스턴스를 멈출 수 있어
+    정리가 멈추고 '끝나면 알림'도 못 간다(2026-11-04). 흐름은 그래프 스레드가 끝나면 끝난다(vercel.json maxDuration 300초 안)."""
+
+    def __init__(self, content):
+        self._rest = iter(content)
+        super().__init__(self._rest, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            with anyio.CancelScope(shield=True), contextlib.suppress(Exception):
+                await anyio.to_thread.run_sync(deque, self._rest, 0)   # 다 읽었으면 바로 끝남
+
+
 def _stream(q):
-    return StreamingResponse(_sse(q), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    return _Drain(_sse(q))
+
+
+def _notify_done(repo, uid, eid, status):
+    """'끝나면 알림 받기'를 맡긴 기록이면, 화면이 결과를 받아 거두지 않았을 때(앱을 닫음) 그 기기로 알림 한 줄(일기 내용 없음)."""
+    def row(s):
+        r = s.rows("entries", id=eid)
+        return r[0] if r and r[0].get("notify_enc") else None
+    try:
+        with repo.session(uid) as s:
+            if not row(s) or not config.VAPID_PRIVATE_KEY:
+                return
+        time.sleep(DONE_GRACE_S)   # 화면에 있으면 결과를 받자마자 DELETE /diary/{id}/notify 로 거둔다
+        with repo.session(uid) as s:
+            r = row(s)
+            if not r:
+                logger.log("step", step="push_done", code="seen")
+                return
+            s.update("entries", {"notify_enc": None}, id=eid)
+            sub = diary.unseal(s, "entries.notify", eid, r["notify_enc"])
+        url = "/talk" if r.get("source") == "대화" else f"/history?id={eid}"
+        res = push.send(sub, push.done_payload(status, url), config.VAPID_PRIVATE_KEY, config.VAPID_SUBJECT)
+        logger.log("step", step="push_done", code=None if res == "ok" else res)
+    except Exception as e:   # 알림은 덤: 정리 결과에는 영향 없음
+        logger.log("error", step="push_done", code="internal", what=type(e).__name__)
 
 
 def _limits(s, eid=None):
@@ -173,6 +223,27 @@ def write(body: DiaryIn, user=Depends(get_user), repo=Depends(get_repo)):
     if ev == "error":
         raise ApiError(409 if dup else 502, data["code"], data["message"])
     return data
+
+
+@router.post("/diary/{eid}/notify", summary="정리가 끝나면 이 기기로 알림(정리 중일 때만, 알림 주소 · 키는 이 기록에 암호화)")
+def notify(body: NotifyIn, eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        row = s.rows("entries", id=eid)
+        if not row:
+            raise ApiError(404, "not_found", "기록을 찾지 못했어요.")
+        if not (config.VAPID_PRIVATE_KEY and diary.is_locked(row[0])):   # 이미 끝났으면 화면이 결과를 받는다
+            return {"waiting": False}
+        # ponytail: 잠금을 본 뒤 저장하기 전에 정리가 끝나면 알림이 안 간다(그 순간 화면에 있으니 결과를 봄)
+        s.update("entries", {"notify_enc": diary.seal(s, "entries.notify", eid, {"endpoint": body.endpoint, "keys": body.keys})},
+                 id=eid)
+    return {"waiting": True}
+
+
+@router.delete("/diary/{eid}/notify", status_code=204, summary="화면이 결과를 받았으면 '끝나면 알림'을 거둔다")
+def unnotify(eid: Id, user=Depends(get_user), repo=Depends(get_repo)):
+    with repo.session(user["id"]) as s:
+        s.update("entries", {"notify_enc": None}, id=eid)
+    return Response(status_code=204)
 
 
 @router.post("/diary/{eid}/resume/stream", summary="끊긴 기록 이어 하기(SSE, 끝난 단계는 건너뜀)")

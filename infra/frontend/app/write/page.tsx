@@ -9,9 +9,11 @@ import { StoryModes } from "@/components/Shell";
 import MicButton from "@/components/MicButton";   // WS21 말로 쓰기: 받아쓴 글을 칸에 채움
 import PhotoInput from "@/components/PhotoInput";
 import AfterSave from "@/components/AfterSave";
+import DoneNotify from "@/components/DoneNotify";
 import { localToday } from "@/components/EntryTools";
 import { DuplicateNote, EntryMeta, FilePick, KeeperPrompt, WriteHelp } from "@/components/WriteParts";
 import { FAIL, getDiary, resumeDiary, writeDiary, type EntryResult, type Progress, type StreamError, type Weather } from "@/lib/api";
+import { seenHere } from "@/lib/push";
 import { useOntology } from "@/lib/use";
 
 // 정리 중인 기록 id. 새로고침 · 끊김 뒤에도 '이어서 하기'를 보이려고 이 탭에만 둔다.
@@ -47,7 +49,9 @@ export default function WritePage() {
   };
   const go = async (fn: () => Promise<EntryResult>) => {
     setBusy(true); setErr(null);
-    try { setResult(await fn()); keep(null); } catch (e) { await fail(e as StreamError); } finally { setBusy(false); setWaiting(false); }
+    try { const r = await fn(); seenHere(r.id); setResult(r); keep(null); }
+    catch (e) { seenHere((e as StreamError).entry_id); await fail(e as StreamError); }
+    finally { setBusy(false); setWaiting(false); }
   };
   // 지난 기록 달력의 '일기 쓰기'에서 오면(?day=YYYY-MM-DD) 그날을 글이 다루는 날로(오늘 뒤는 버림)
   useEffect(() => {
@@ -138,6 +142,7 @@ export default function WritePage() {
             {steps.map((s, i) => <li key={s} className={i < steps.length - 1 || !busy ? "done" : "now"}>{s}</li>)}
           </ol>
           {prog && <p className="sub" style={{ margin: 0 }}>{prog.done} / {prog.total} 단계</p>}
+          {busy && !waiting && <DoneNotify entryId={prog?.entry_id ?? null} later="앱을 닫아도 정리는 이어지고, 끝나면 일기장에서 볼 수 있어요." />}
           {waiting && <p className="sub" style={{ margin: 0 }}>화면이 끊긴 동안에도 서버에서 계속 정리하고 있어요. 끝나면 바로 보여 드릴게요.</p>}
           {err && (
             <div className="stack" role="alert">
