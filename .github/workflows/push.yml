@@ -11,5 +11,9 @@ jobs:
   due:
     if: vars.API_URL != ''
     runs-on: ubuntu-latest
+    env:   # 값은 환경 변수로 넘긴다(한 줄 run 안의 'X-Cron-Secret: '가 YAML 콜론으로 읽혀 파일 전체가 깨졌었다, 11/1~11/4)
+      API_URL: ${{ vars.API_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      - run: curl -fsS --max-time 120 -X POST -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" "${{ vars.API_URL }}/push/due"
+      - run: |
+          curl -fsS --max-time 120 -X POST -H "X-Cron-Secret: $CRON_SECRET" "$API_URL/push/due"

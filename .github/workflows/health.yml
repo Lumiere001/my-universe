@@ -17,4 +17,5 @@ jobs:
       WEB_URL: ${{ vars.WEB_URL }}
     steps:
       - run: curl -fsS --max-time 60 "$API_URL/health"
-      - run: curl -fsS --max-time 60 -o /dev/null "$WEB_URL"
+      - if: env.WEB_URL != ''   # 화면 주소 변수가 없으면 이 단계만 건너뜀(빈 주소로 curl 이 실패하던 것, 11/3~11/4)
+        run: curl -fsS --max-time 60 -o /dev/null "$WEB_URL"
