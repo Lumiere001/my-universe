@@ -157,6 +157,20 @@ def test_reply_checks():
         "2026-10-01에 '매일 걷겠다'라고 적었어요."
 
 
+def test_reply_echo_checks():
+    """사용자가 방금 한 말을 답에 그대로 옮겨 적으면 다시 만든다(11/4 시연 녹화: 세 문장을 앞에 붙이고 지난 일기 인용)."""
+    said = "요즘 회사 가는 길이 너무 무겁다. 그래도 오늘은 버텼다. 내일은 좀 나으면 좋겠다."
+    src = [said, "출근길이 무겁다"]
+    echo = "사용자 말을 그대로 옮겨 적음"
+    assert echo in chat.problems(said, sources=src, past_replies=[], said=said)                       # 통째로 같음
+    assert echo in chat.problems(f"{said} 지난 10/1에 '출근길이 무겁다'라고 적었어요. 그때와 비슷해요?",
+                                 sources=src, past_replies=[], said=said)                             # 앞에 그대로 붙임
+    assert chat.problems("좋아요. 오늘은 어디까지 걸었어요?", sources=[], past_replies=[], said="좋아요") == []   # 짧은 말은 통과
+    same = "나는 결국 내가 좋아하는 일을 하고 싶어"
+    assert chat.problems(f"9/20에도 '{same}'라고 적었어요. 지금은 어때요?", sources=[same], past_replies=[],
+                         said=same) == []                                                             # 지난 기록 인용은 통과
+
+
 def test_recall_finds_sentences_in_entry_text():
     entries = [("e1", "2026-10-01", "동아리 회의에서 축제 부스 준비를 맡았다. 시험 기간이랑 겹쳐서 걱정된다."),
                ("e2", "2026-10-05", "오늘은 도서관에서 공부했다.\n부스 도안을 그렸다.")]

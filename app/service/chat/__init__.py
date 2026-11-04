@@ -264,10 +264,14 @@ def parse(raw):
     return str(d.get("reply") or d.get("message") or "").strip(), None if found is None else found in (True, "true")
 
 
-def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=False, wrap=False, direction=False):
-    """대화 답의 문제 목록(비면 통과): 한마디와 같은 검사(넘지 않는 선 · 원문에 없는 인용 · 반복 · 사람 판정 · 위기) + 질문 하나만."""
+def problems(reply, *, sources, past_replies, tone=None, crisis=False, gentle=False, wrap=False, direction=False, said=""):
+    """대화 답의 문제 목록(비면 통과): 한마디와 같은 검사(넘지 않는 선 · 원문에 없는 인용 · 반복 · 사람 판정 · 위기) + 질문 하나만
+    + 사용자가 방금 한 말(said)을 그대로 옮겨 적지 않기."""
     out = checks.problems(reply, "", sources=sources, past=past_replies, comfort=crisis, aspiration=False, gentle=gentle,
                           tone=tone, crisis=crisis)
+    said, body = (checks._norm(checks._QUOTE.sub("", s or "")) for s in (said, reply))   # 따옴표 인용(지난 기록 등)은 빼고 본다
+    if said and (body == said or len(said) >= 20 and said in body):   # 통째로 되풀이 · 답 앞에 그대로 붙임(11/4 시연 녹화), '네' 같은 짧은 말은 통째로만
+        out.append("사용자 말을 그대로 옮겨 적음")
     if crisis and (m := ECHO.search(reply or "")):
         out.append(f"위기 바람을 다시 꺼냄: '{m.group(0)}'")
     if direction and checks.JUDGE.search(reply or ""):   # '어디로 가자'가 걸린 대화는 판정하는 말 금지(PRD v9 Q5-2)
@@ -334,11 +338,9 @@ def respond(ctx):
             else ctx.get("sources") or []
         probs = problems(text, sources=src, past_replies=ctx.get("past_replies"), tone=tone,
                          crisis=crisis, gentle=bool(ctx.get("gentle")), wrap=kind == "wrap",
-                         direction="어디로 가자(마치기 전)" in sit or "어디로 가자" in sit)
+                         direction="어디로 가자(마치기 전)" in sit or "어디로 가자" in sit, said=ctx.get("text"))
         if len(text) > MAX_REPLY:
             probs.append(f"너무 김({len(text)}자)")
-        if checks._norm(text) == checks._norm(ctx.get("text")):   # 사용자 말을 그대로 되풀이한 답(--live 에서 본 꼴)
-            probs.append("사용자 말을 그대로 되풀이함")
         if not probs and crisis:   # 위기 턴은 코드 검사를 지나도 위기 바람 동조를 Solar 로 한 번 더(한마디와 같음)
             probs = checks.llm_crisis_problems(text, "", ctx.get("text") or "")
         elif not probs and (tone == "팩폭" or voice.custom_note(ctx, sit)):   # 사용자 말투 바람을 쓴 답도 넘지 않는 선을 한 번 더
