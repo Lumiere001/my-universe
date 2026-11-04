@@ -206,6 +206,18 @@ def test_draft_polished_short_and_quote_hint(monkeypatch):
     assert "원문에 없는 인용: '아직 덜 다듬는데요' → 사용자 말 그대로: '아직 덜 다듬었는데요'" in sent[1]
 
 
+def test_draft_added_words_retry_then_keep(monkeypatch):
+    """사용자가 하지 않은 덧붙임('~다고 생각했다')은 한 번 더 쓰게 하고, 또 붙어도 말 그대로 잇지 않고 그 초안을 쓴다."""
+    said = ["오늘 그냥 좀 그랬어.", "맨날 그래 나는. 맨날 내가 끼면 민폐일 것 같아."]
+    added = "오늘은 그냥 좀 그랬다. 맨날 내가 끼면 민폐일 것 같다고 생각했다."
+    assert chat.draft_problems(added, said) == ["하지 않은 말 덧붙임: '같다고 생각했다' → 한 말의 말끝만 바꾼다"]
+    assert chat.draft_problems("배울 게 있다고 생각했다.", ["나는 배울 게 있다고 생각했었거든."]) == []   # 한 말이면 통과
+    sent = []
+    monkeypatch.setattr(chat.llm, "chat", lambda msgs, **k: sent.append(msgs) or json.dumps({"title": "민폐", "text": added}, ensure_ascii=False))
+    assert chat.draft(said) == {"title": "민폐", "text": added, "fallback": False}
+    assert len(sent) == 2 and "같다고 생각했다" in sent[1][0]["content"]
+
+
 ##################################################
 # API: 열기 · 턴 · 가명 · 지난 기록
 ##################################################
