@@ -130,13 +130,25 @@ test("핵심 흐름", async ({ page }, info) => {
     const answers = ["어디서든 배우고, 한 약속은 지키는 사람", "내 말을 믿어 주는 사람들이 있어서", "미뤄 둔 연락을 저녁 전에 끝내는 날",
       "피곤하면 다 내일로 미룬다", "피곤하면 오 분만 하고 자겠다"];
     const box = page.locator("#asp-input");
-    for (const [i, a] of answers.entries()) {
+    await box.fill("약속을 어기지 않는 사람");                                          // 피하는 말 → 왜 다시 묻는지 + 그대로 두기(2026-11-04 사용자 불편)
+    await box.press("Enter");
+    await expect(page.getByText(/'하는' 쪽으로 말해 볼까요/)).toBeVisible();
+    await shot("09-aspiration-avoid");
+    await page.getByRole("button", { name: "처음 말 그대로 둘래요" }).click();
+    await expect(page.getByText("그게 왜 나한테 중요해요?")).toBeVisible();
+    await expect(page.getByRole("button", { name: "처음 말 그대로 둘래요" })).toHaveCount(0);
+    for (const [i, a] of answers.slice(1).entries()) {
       await box.fill(a);
-      if (i === 2) await shot("09-aspiration-form");
+      if (i === 1) await shot("09-aspiration-form");
       await box.press("Enter");
     }
     const sum = page.getByRole("generic", { name: "이렇게 적어 둘게요" }).or(page.locator(".asp-sum"));
     await expect(sum).toContainText("“내 말을 믿어 주는 사람들이 있어서”");
+    await expect(sum).toContainText("“약속을 어기지 않는 사람”");                       // 처음 말 그대로
+    await sum.getByRole("button", { name: "고칠래요" }).nth(0).click();                     // 방향을 하는 쪽으로 고침(다시 돌려 묻지 않음)
+    await box.fill(answers[0]);
+    await box.press("Enter");
+    await expect(page.locator(".asp-sum")).toContainText(`“${answers[0]}”`);
     await sum.getByRole("button", { name: "고칠래요" }).nth(2).click();                     // 장면만 다시 묻기
     await box.fill("미뤄 둔 연락을 저녁 먹기 전에 끝내는 날");
     await box.press("Enter");

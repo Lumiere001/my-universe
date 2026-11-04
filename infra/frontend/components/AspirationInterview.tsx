@@ -1,7 +1,8 @@
 "use client";
 // 되고 싶은 모습 인터뷰(PRD v9 Q3): 별지기와 대화하듯 다섯 질문(방향 · 이유 · 장면 · 안쪽 걸림 · 그때) → 한 화면 요약 → 고칠 것은 다시 묻기.
 // 질문 · 받아 주는 말 · 예시는 온톨로지 aspiration.ask_steps(LLM 없음). '몰라요'나 아주 짧은 답이면 예시로 한 번만 더 묻고,
-// 그래도 모르면 그 칸은 비워 두고 다음으로. 방향이 피하는 말이면 한 번만 돌려 묻는다. 답은 사용자가 한 말 그대로 남긴다.
+// 그래도 모르면 그 칸은 비워 두고 다음으로. 방향이 피하는 말이면 왜 묻는지와 함께 한 번만 돌려 묻고, '처음 말 그대로 둘래요'로 그대로 둘 수도 있다
+// (2026-11-04 사용자 불편 「두 질문의 차이를 모르겠다」). 답은 사용자가 한 말 그대로 남긴다.
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { useKeeperName } from "@/components/Keeper";
@@ -25,7 +26,7 @@ export default function AspirationInterview({ first, onDone, onLater }:
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState("");
   const [retried, setRetried] = useState<number[]>([]);   // 예시로 한 번 더 물은 질문
-  const [avoided, setAvoided] = useState(false);
+  const [avoided, setAvoided] = useState("");   // 돌려 물은 처음 방향 답(그대로 두기 단추에 씀)
   const [fixing, setFixing] = useState<number | null>(null);   // 요약에서 '고칠래요'로 다시 묻는 질문
   const [summary, setSummary] = useState(false);
   const [values, setValues] = useState<string[]>([]);
@@ -67,8 +68,8 @@ export default function AspirationInterview({ first, onDone, onLater }:
       return next(a, t, "괜찮아요. 이건 비워 두고, 나중에 다시 여쭤볼게요.");
     }
     if (i === 0 && AVOID.test(t) && !avoided) {
-      setAvoided(true);
-      setLines([...lines, { who: "me", text: t }, { who: "keeper", text: steps[0].avoid_ask ?? "그럼 대신 어떤 사람이 되고 싶어요?" }]);
+      setAvoided(t);
+      setLines([...lines, { who: "me", text: t }, { who: "keeper", text: steps[0].avoid_ask ?? steps[0].question }]);
       return;
     }
     const a = { ...ans, [key(i)]: t };
@@ -130,6 +131,8 @@ export default function AspirationInterview({ first, onDone, onLater }:
             {fail && <p className="err" role="alert" style={{ margin: 0 }}>{fail}</p>}
           </div>
         )}
+        {avoided && step === 0 && fixing === null && ans.want === undefined && (   // 돌려 물은 말 바로 밑 답 단추
+          <button type="button" className="small" style={{ marginLeft: 36 }} onClick={() => answer(avoided)}>처음 말 그대로 둘래요</button>)}
         <div ref={endRef} />
       </div>
 
