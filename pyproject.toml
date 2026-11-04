@@ -1,6 +1,6 @@
 [project]
 name = "my-universe"
-version = "0.8.0"
+version = "0.9.0"
 description = "나의 우주 — 말을 거는 일기장 (v8 · 10/17 판 백엔드)"
 requires-python = ">=3.11"
 dependencies = [

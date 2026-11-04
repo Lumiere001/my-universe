@@ -26,7 +26,7 @@ def _float(name, default):
     return float(os.getenv(name) or default)
 
 
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 
 # Upstage (Solar Chat · Embedding · Studio)
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY", "")

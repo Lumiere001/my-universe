@@ -59,7 +59,7 @@ def write(client, title, text, when, h=H1, weather=None):
 
 
 def test_public_and_auth(client, monkeypatch):
-    assert client.get("/health").json() == {"status": "ok", "version": "0.8.0"}
+    assert client.get("/health").json() == {"status": "ok", "version": config.VERSION}
     monkeypatch.setattr(config, "DATABASE_URL", "")
     r = client.get("/health?deep=1")   # DB 주소가 없으면 503 · 종류 이름만
     assert r.status_code == 503 and r.json()["status"] == "degraded" and r.json()["checks"]["db"] == "unconfigured"
