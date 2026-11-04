@@ -1,262 +1,189 @@
 # 🌌 나의 우주
 
-## v8 · 10/17 판
+일기에서 **생각이 바뀐 순간을 내 말 그대로** 찾아 주고, **되고 싶은 모습에서 멀어지면 먼저 묻는** 일기장입니다.
 
-일기를 생각 단위로 나눠 우주(해 = 삶의 영역, 해 곁의 작은 별 = 세부 주제, 행성 = 기록)로 보여 주고 말을 거는 일기장. 10/17부터 팀원이 실제 사용자로 휴대폰 · PC에서 매일 쓴다. 계획은 [docs/plan-v8-1017.md](docs/plan-v8-1017.md), API는 [docs/api-v8.md](docs/api-v8.md).
+AI(별지기)와 이야기하듯 답하면 AI가 일기 한 편으로 정리하고, **내가 확인한 뒤에만** 저장합니다. 쌓인 일기는 커리어 · 인간관계 두 '해' 둘레의 '작은 별'(같은 고민 묶음)로 우주처럼 보이고, 내 생각이 언제 어떻게 바뀌었는지를 **원문 인용과 날짜**로 보여 줍니다.
 
-| 부분 | 위치 | 포트 |
-| --- | --- | --- |
-| 화면 (Next.js) | `infra/frontend/` | 로컬 3000 · Docker 8002 |
-| 백엔드 (FastAPI + LangGraph, SSE) | `main.py`, `app/` | 8001 |
-| 벡터 저장 (ChromaDB) | 컨테이너 / 배포는 Chroma Cloud | 8000 |
-| DB · 로그인 (Supabase, 구글 로그인) | `supabase/` | 로컬 스택 54321 |
+전남대 × 업스테이지 Agent Ops 프로그램 5조 · 최종판 v9 (2026-11-07 발표)
 
-```bash
-cp .env.example .env                 # Upstage 키 · Studio Agent ID 채우기(키는 .env 에만)
-uv sync
-
-scripts/dev_up.sh                    # 처음 한 번(Docker 켜 둔 채): 로컬 Supabase · ChromaDB · .env.local · 시험용 계정 · 하늘 데모 우주
-scripts/start.sh                     # 로컬 개발: Supabase · ChromaDB · 백엔드 8001 · 화면 → http://localhost:3000
-scripts/stop.sh                      # 끄기(데이터는 남김)
-
-scripts/start_docker.sh              # Docker 3개: ChromaDB 8000 · 백엔드 8001 · 화면 8002 → http://localhost:8002
-scripts/stop_docker.sh
-```
-
-- 로그인: 로컬은 시험용 계정(tester@my-universe.test, 비밀번호는 `.env.local`의 `DEV_TEST_PASSWORD`). API 문서 `http://localhost:8001/docs`는 로컬만 열린다(`.env.local`의 `API_DOCS=1`, 배포는 꺼짐).
-- 로컬 Supabase 를 보안 마이그레이션 전에 만들었다면 `supabase migration up --local`(통합 시험이 없으면 알려 준다).
-- Docker 3개는 로컬 Supabase(dev_up.sh)에 붙고, `.env.local`에서 컨테이너용 `.env.docker.local`을 알아서 만든다. start.sh로 켠 백엔드(8001)가 있으면 그 프로세스만 먼저 끄거나 `BACKEND_HOST_PORT` 등으로 포트를 바꾼다. 2026-10-08 실제 백엔드로 확인한 결과: [docs/docker-verify.md](docs/docker-verify.md).
-- 로컬 Supabase 스택은 같은 와이파이에 열려 있어 **가상 인물 데이터만** 넣는다(deploy/README §3).
-
-시험:
-
-```bash
-uv run --frozen pytest -q                                 # 753개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험 11개는 건너뜀)
-uv run --frozen python eval/run.py                        # 골든셋(외부 호출 없음, $0)
-uv run --frozen python eval/run.py --live --crisis-llm    # 골든셋을 서비스와 같게(유료, 약 $0.03)
-uv run --frozen python eval/run.py --check                # CI 와 같은 검사(관문 실패 · 기준선 회귀면 종료 코드 1)
-uv run --frozen python eval/experiments.py recall         # 지난 생각 고르기 재현율 · E4(외부 호출 없음). e1 · e5 · drift · e9 · e2 --live
-uv run --frozen python eval/labels.py e7-score eval/answers/e7_haneul.csv --pred eval/answers/e7_haneul_c1.json   # E7 · E6(가상 정답)
-uv run --frozen python tools/stability_v2.py              # 흔들림 2판: 서비스 길로 3편 × 3번(유료, 약 $0.45)
-uv run --frozen python scripts/e2e_local.py               # 로컬 e2e: 가상 인물 일기 3편 + 위기 1편(유료, 상한 $1.5)
-uv run --frozen python scripts/test_inputs.py --zip 2        # 입력 4종(인스타 ZIP · MD · TXT · 직접 쓰기)을 API 로 끝까지(서버가 실제면 유료, 편당 약 $0.15)
-FRONTEND_ORIGIN=http://localhost:3013 uv run --frozen python scripts/dev_fake_upstage.py 8013   # 화면 확인용 백엔드: 로컬 DB · Chroma 그대로, Upstage 만 가짜($0)
-```
-
-push · PR 마다 GitHub Actions(`.github/workflows/test.yml`, 이름 `test`)가 키 없이 pytest 와 골든셋 `--check` 를 돌리고, 실패하면 빨강이 된다.
-
-결과와 합격 기준: [docs/eval-v8.md](docs/eval-v8.md), [docs/ws5-e2e.md](docs/ws5-e2e.md), 화면 실제 모드 e2e는 [docs/e2e-real.md](docs/e2e-real.md). 유료 실행은 `runs/cost_ledger.jsonl`에 한 줄씩 남긴다.
-
-- 배포: Vercel 프로젝트 두 개(백엔드 = 저장소 루트, 화면 = `infra/frontend`) + Supabase(서울) + Chroma Cloud. 순서는 [deploy/MORNING.md](deploy/MORNING.md), 이유 · 운영 규칙(원문 없는 로그 · 비용 한도 · 오류 알림)은 [deploy/README.md](deploy/README.md). 지금은 운영 상한 없이 구글 로그인한 누구나 쓴다(`ALLOWED_EMAILS` · `DAILY_ENTRY_LIMIT` 같은 손잡이는 넣지 않음 — 실제 배포 · 수익화를 생각할 때 사용량을 보고 정함, [plan §2-9](docs/plan-v8-1017.md)).
-- 원칙: 일기 원문 · 사람 이름은 DB에 암호화해 두고, 로그 · 오류 · 통계에 남기지 않는다. 사람 이름은 외부 AI로 보낼 때 가명으로 바꾼다. 위기 신호는 규칙 + Solar 2단으로 감지해 암호문 안에 남기고, 시험 단계(2026-10-08 동규 결정)에는 단체 연결 · 따로 뜨는 화면 없이 평소 결과에 위로 한마디 + 안부 한 줄을 준다. 보안 검토: [docs/security-review-v8.md](docs/security-review-v8.md). 쉬운 설명: [docs/tech-explainer-v8.md](docs/tech-explainer-v8.md).
-- 이야기하기(WS19 · WS20): 로그인 뒤 첫 화면 `/`(옛 주소 `/talk` 도 같은 화면, 2026-10-14 결정). 별지기가 먼저 묻고(첫 만남 · 다짐 안부 · 남겨 둔 질문 · 되고 싶은 모습 · 지난 기록에서 시작, LLM 없이), 사용자 말 한 턴마다 대화 그래프(`app/agents/chat_graph.py`: safety → past → reply → summary, Solar · SSE)가 지난 생각을 원문 인용으로 떠올리며 이어 묻는다. '대화 마치고 정리하기' → 사용자 말만으로 일기 초안 → 일기 그래프가 save 앞에서 멈춤 → 요약 확인(맞아요 / 고칠래요) → 저장. 대화 턴은 서버에 암호화해 두고(다른 기기에서 이어 하기) 확인하면 지운다. 규칙 · 프롬프트는 `app/service/chat/`, 표는 `supabase/migrations/20261014000100_v8_conversations.sql`. 글로 쓰는 화면은 '직접 쓰기'(`/write`, 메뉴에 그대로).
-- 인스타 가져오기(`/import`, WS17): 브라우저가 '내 정보 다운로드' ZIP 에서 글만 꺼내 미리 보기(`POST /import/instagram/preview`, `app/service/importer`)로 글 수 · 예상 시간 · 비용을 보여 주고, 고른 글을 오래된 것부터 한 편씩 `/diary/stream` 으로 보낸다(같은 원본은 다시 정리하지 않음, 멈추기 · 이어 하기). 상한 없음(`IMPORT_MAX_POSTS` 비움). 예시 ZIP: 가상 인물 도담.
-- 우주 고치기(WS16): 우주 화면 아래 '우주 고치기'에서 해 추가(가까운 기준 축은 AI 제안, 바꿀 수 있음) · 작은 별을 다른 해로 옮기기 · 합치기 제안 확인, 행성 카드에서 생각 종류 · 가치 고치기, 사람 목록에서 '그 사람이 나온 생각도 지우기'. 고친 내용은 오답 재료로 남는다. API: `app/api/edit.py`, [docs/api-v8.md §4.1](docs/api-v8.md).
-- 말로 쓰기 · 읽어 주기(WS21): 이야기하기 · 쓰기 화면의 '말로 하기'(마이크) · '녹음 파일 올리기'(m4a · mp3 · wav · webm). 받아쓰기 · 읽어 주기는 ElevenLabs(`app/service/stt.py`, `POST /voice/transcribe` · `/voice/speak` — `app/api/voice_input.py`), 녹음은 받아쓴 뒤 바로 버린다. 4.5MB 넘는 녹음은 화면(`infra/frontend/components/MicButton.tsx`)이 16kHz 모노 2분 조각으로 나눠 보낸다. 키는 `ELEVENLABS_API_KEY`. 실제 e2e: `scripts/e2e_voice.py`(가상 음성 `say -v Yuna`, 결과 `docs/ws21-e2e.md`).
-- 동의: 첫 로그인 때 `/consent`에서 필수 · 민감정보(따로) · 만 14세 이상 · 선택(운영자 피드백 열람)을 받는다. 동의 전에는 기록을 만들 수 없다(백엔드도 403 `consent_required`). 문구 판은 `app/api/consent.py`의 `VERSION`, 이용약관 `/terms` · 개인정보처리방침 `/privacy`, 문의 메일은 화면 환경변수 `NEXT_PUBLIC_CONTACT_EMAIL`(비우면 '준비 중').
-- JSON 내려받기: 결과 카드의 관측 보고서(관측 상태 · 한계)에서 기록 하나, 지난 기록 화면에서 전체를 내려받는다(`app/api/export.py`, `GET /export` · `/export/{id}`, 모양은 [docs/api-v8.md](docs/api-v8.md) §2.1). 다른 사람 이름은 가리지 않는다(본인 기록).
-- 사진(손글씨) 입력: 쓰기 화면에서 사진 여러 장(쪽 순서 바꾸기) → 화면이 4MB 아래 JPEG 로 줄여 한 장씩 `POST /photo/read`(Upstage Document Parse 로 글자만 — 줄 공책 표는 줄마다 풀고, `PHOTO_READ_MODEL=ocr` 로 되돌림, 사진 · 읽은 글은 저장 안 함, `app/api/upload.py` · `app/service/ocr.py`) → 읽은 글을 쓰기 칸에서 고쳐 띄움(`source=사진`, 그 뒤는 텍스트와 같은 길). 시험 사진은 가상 손글씨 `tests/fixtures/photos`(`uv run --frozen --with pillow python tools/photo_samples.py make`), 실제 글자 읽기 화면 확인은 `infra/frontend/e2e-real/ws18.spec.ts`(유료, 쪽당 $0.01).
-- 운영 화면: `/ops`(메뉴에 없음). 백엔드 환경변수 `ADMIN_EMAILS`(운영자 구글 계정) 계정만 열린다. 모든 사용자의 숫자 · 코드만(실행 · 관문 · 평균 시간 · 추정 비용 합계와 $50 경고 · 실패 · 골든셋 · 만족 · 지향 · 대화 · 말 걸기 지표, DB 역할 `app_ops` 는 암호문 칸을 못 읽음), 피드백 원문은 열람에 동의한 사용자 것만 가명으로 · 볼 때마다 열람 기록, 피드백 정리(Solar)는 누를 때만. 주 1회 오답 모으기: `OPS_TOKEN=… uv run --frozen python scripts/collect_feedback.py --api <백엔드>`(로컬은 `--local`). 설정 화면에는 내 피드백으로 본 "이 설정으로 바꿀까요?"(영역 넘는 선 · 제안 빈도)가 뜬다. API: [docs/api-v8.md §6.2](docs/api-v8.md).
-- 요청 추적(Trace, 과제 · 로컬 확인용): OpenTelemetry span(단계 순서 · 시간 · 호출 수 · 토큰 · 추정 비용 · 오류 코드만, 원문 · 이름 · 프롬프트 · 답 없음). `OTEL_EXPORTER_OTLP_ENDPOINT` 가 있을 때만 켜지고 운영 배포는 끔. 로컬 Phoenix(`uvx arize-phoenix serve`) + `scripts/trace_demo.py`(유료 호출 0) — [docs/trace.md](docs/trace.md).
-
-### v8 백엔드 한눈에 (업스테이지 2차 가이드 ⑥ Step 5)
-
-일기 한 편(`app/agents/graph.py`, LangGraph Super Graph, 노드가 끝날 때마다 암호화 체크포인트 → 끊기면 끝난 단계를 건너뛰고 이어 하기):
-
-```
-safety → names → record[ record_input → record_agent(Studio 기록 Agent) → record_clean(관문) → ontology(해 → 작은 별 → Chroma) ]
-       → observer[ past(지난 생각 고르기) → observe(Studio 관측 Agent) → rules(관계 규칙) ] → voice(Solar 한마디)
-       → (대화 초안이면 요약 확인까지 멈춤) → save
-```
-
-| 1차(Streamlit, 저장소 루트) | 2차(v8 백엔드) |
+| | 주소 |
 | --- | --- |
-| `agent_client.py` | `app/agents/studio.py`(Files · Jobs API, 1회 재시도, 429 뒤 쉬기) |
-| `service.py` | `app/agents/graph.py` · `app/api/*.py`(SSE `/diary/stream`) |
-| `gates.py` · `universe.py` | `app/service/rules/`(gate · topics · past · relations · states · view · insight) |
-| `embedder.py` | `app/core/llm.py` · `app/agents/tools.py`(Solar Embedding, 가명 글로) |
-| `importer.py` | `app/service/importer/` |
-| `runlog.py` | `app/core/logger.py` · DB `runs` 표 · `app/core/trace.py`(OpenTelemetry) |
+| 데모(설치형 웹앱, 휴대폰은 홈 화면에 추가) | https://my-universe-seven.vercel.app |
+| 백엔드 상태 | https://my-universe-api.vercel.app/health |
+| 저장소 | https://github.com/Lumiere001/my-universe |
 
-- 환경변수 전체는 `.env.example`(v8 칸), API 표는 [docs/api-v8.md](docs/api-v8.md). 준비 확인: `GET /health?deep=1`(DB · ChromaDB까지, 안 되면 503).
-- **두 영역 모드(10/28 멘토링):** `ONTOLOGY_PROFILE=two` 면 해를 커리어 · 인간관계 둘로 묶고 나머지는 '그 밖'(저장만, 우주에 안 띄움). `STAR_JOIN_SIM` 을 주면 기록 Agent 가 새 이름을 내도 같은 해의 가까운 작은 별에 붙인다. 둘 다 운영은 끔. `GET /insight` = 나에 대해 알게 된 것(해 → 작은 별 → 이어 온 · 바뀐 · 맞서는 · 정리된 생각, 원문 인용). **작은 별 묶기**(`STAR_GROUPS`, 기본 켬): 새 작은 별이 생긴 글이 끝나면 쌓인 작은 별 전체를 Solar 가 같은 고민끼리 묶고 묶음마다 해를 고른다 — 화면 · 알게 된 것 · 관측 · 관계 규칙은 묶음 단위(작은 별은 지우지 않음, `app/service/rules/groups.py`).
-- **가상 인물 시험:** `eval/personas/p{A,B,C}.json`(Codex 가 지은 가상 일기 20편 + 심어 둔 정답) → `tools/persona_eval.py check | run | tune | score`.
-
-### GHCR 이미지
-
-master 에 push 하면 GitHub Actions(`.github/workflows/main.yml`, 이름 `ghcr`)가 이미지 3개를 만들어 GHCR 에 올린다. 인증은 GitHub 이 실행마다 주는 `GITHUB_TOKEN`만 쓴다(따로 만든 토큰 없음). 태그는 `latest` · `sha-<커밋 7자리>`. 문서(`*.md` · `docs/`)만 바뀐 push 는 건너뛴다.
-
-| 이미지 | Dockerfile |
-| --- | --- |
-| `ghcr.io/lumiere001/my-universe-backend` | `Dockerfile` |
-| `ghcr.io/lumiere001/my-universe-frontend` | `infra/frontend/Dockerfile` |
-| `ghcr.io/lumiere001/my-universe-chroma` | `infra/chroma/Dockerfile` (`chromadb/chroma:1.5.9` 그대로) |
-
-```bash
-docker login ghcr.io -u Lumiere001        # 비밀번호 칸에 읽기 토큰(아래)
-docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
-scripts/stop_docker.sh                    # 끄기
-```
-
-- 패키지는 비공개라 받으려면 `docker login ghcr.io`가 필요하다. 토큰: GitHub Settings → Developer settings → Personal access tokens **(classic)** → `read:packages`만(GHCR 은 classic 토큰만 받는다).
-- 공개로 바꿀지는 동규가 정한다: `https://github.com/users/Lumiere001/packages/container/<이미지 이름>/settings` → Danger Zone → Change visibility. 공개하면 로그인 없이 받지만 **다시 비공개로 못 돌리고**, 백엔드 이미지 안의 코드(`main.py` · `app/`)를 누구나 받게 된다.
-- 화면 이미지는 빌드할 때 값이 박힌다. 저장소 Settings → Secrets and variables → Actions 에 변수 `DOCKER_API_BASE`(없으면 `http://localhost:8001`) · `SUPABASE_URL`, 비밀 `SUPABASE_ANON_KEY`. 비어 있어도 빌드는 되지만 화면이 "로그인 설정이 없어요"를 보인다. 넣은 뒤 Actions → ghcr → Run workflow 로 다시 만든다. 자세한 것: [deploy/README.md](deploy/README.md) §3.
+| 처음 오면: 되고 싶은 모습 인터뷰 | 이야기: 별지기와 대화 | 마치면: 정리본 확인 | 우주 |
+| --- | --- | --- | --- |
+| ![인터뷰](docs/screens/v9-ios/02-인터뷰%20첫%20질문.png) | ![첫 말](docs/screens/v9-ios/03-이야기%20첫%20말.png) | ![확인](docs/images/v8/mobile-talk-03-confirm.png) | ![우주](docs/images/v9/mobile-sun-02-universe.png) |
 
 ---
 
-아래는 1차 MVP(2026-10-03) 설명 그대로다. 1차 Streamlit 앱은 새 작업 없이 남겨 둔다.
+## 1. 서비스 소개
 
-**내가 쓴 글에서 지켜 온 생각, 바뀐 생각, 아직 풀지 못한 긴장을 근거와 함께 보여 주는 서비스.**
-**말을 거는 일기장**입니다. 대화(목업) · 글 · 손글씨 사진으로 쓴 일기를 정리해 쌓고, 글 한 편은 별, 삶의 영역은 태양계, 세부 주제는 그 해를 도는 행성, 생각 사이의 관계는 별자리로 그립니다. 전남대 생성형 AI 트랙 LLMOps 1차 프로젝트 · 5조.
+**누가:** 하루를 돌아보고 싶지만 일기를 쓰다 마는 20대(파일럿은 커리어 고민이 있는 20대).
 
-- 입력: 직접 쓴 글, MD·TXT 파일, 인스타그램 "내 정보 다운로드" ZIP
-- Studio 에이전트 2개: **기록 Agent**(글 → 생각 구조화), **관측 Agent**(오늘 생각 vs 과거 생각 → 관계 판정)
-- 결과: **관측 보고서 JSON**(근거 인용 · 관측 상태 · 다음에 써 볼 질문)과 **2D 우주 화면**
-- 로그인 없음: 우주는 "정리된 기록 파일"(JSON)로 내려받았다가 다시 올립니다. 서버는 글을 저장하지 않습니다.
+**문제:** 빈 일기장 앞에서 무엇을 쓸지 막막하다. 써도 쌓인 글로 지금의 나를 이해하지 못한다. 생각이 어떻게 바뀌었는지 알려면 지난 글을 직접 찾아 대조해야 한다.
 
-![서비스 흐름](docs/images/workflow.png)
+**나의 우주가 하는 일**
 
-## 왜 만드는가
-
-일기는 남는데 그 일기로 지금의 나를 이해하지 못합니다. 생각이 어떻게 바뀌었는지 알려면 지난 글을 직접 찾아 대조해야 하고, 처음 쓰는 사람은 쓸 거리가 막연해 기록이 쌓이지 않습니다.
-나의 우주는 사람을 판정하지 않고 **관측**합니다. 원문에 적힌 생각만 별로 띄우고, 원문으로 확인되는 관계는 실선, AI 추정은 점선으로 그리며, 모르는 것은 질문으로 남깁니다.
-
-| 대화로 쓰기 (목업) | 요약 확인 (목업) | 한마디 (목업) |
+| | 기능 | 어떻게 |
 | --- | --- | --- |
-| ![대화](docs/images/chat-1-conversation.png) | ![요약 확인](docs/images/chat-2-confirm.png) | ![한마디](docs/images/chat-3-encourage.png) |
+| 1 | **되고 싶은 모습 정하기** | 처음 오면 다섯 질문 인터뷰(방향 · 이유 · 장면 · 안쪽 걸림 · 그때). '~하지 않는 사람'처럼 피하는 말로 답하면 이유와 예시를 들어 한 번 더 묻는다 |
+| 2 | **별지기와 대화** | 앱을 열면 별지기가 가볍게 오늘 하루를 묻고, 지난 일기에 아직 답이 안 난 고민은 대화가 그 이야기에 닿을 때 한 번 꺼낸다. 고른 시각에 알림으로도 부른다 |
+| 3 | **말하듯 기록 → 내가 확인** | 글 · 말(받아쓰기) · 목소리 대화 · 손글씨 사진 · 지난 일기 파일. 대화를 마치면 정리본을 한 화면에서 보고 '고칠 게 있어요'로 고친 뒤 저장. 원문(대화 대본)도 남는다 |
+| 4 | **내 우주와 알게 된 것** | 생각 하나하나를 해(커리어 · 인간관계) → 작은 별(같은 고민) → 행성(기록)으로 놓고, 이어 온 · 바뀐 · 맞서는 · 정리된 생각을 원문 인용으로. 실선은 글에 직접 쓴 것, 점선은 AI 추정 |
+| 5 | **멀어지면 방향 던지기** | 일기 속 걸림이 되고 싶은 모습과 멀어지는 쪽으로 반복되면 대화 안에서 "어디로 가 볼까요" |
+| 6 | **사람마다 맞춰지는 운영** | 맞아요 · 아니에요 · 별로 반응이 쌓이면 그 사람 설정만 한 칸 자동 조정(알림 · 되돌리기). 운영자는 사람 이름 없이 분포만 본다 |
 
-## 온톨로지 — 미리 정해 둔 표
+**지키는 원칙:** 일기 원문 · 사람 이름은 사용자별 키로 암호화(운영자도 못 읽음), 외부 AI에는 이름을 가명으로, 로그 · 통계에는 원문 없음. 위기 신호는 규칙 + Solar 두 단계로 살펴 암호문 안에 남기고, 평소 결과에 위로 한마디와 안부 한 줄을 준다(상담 기관 안내는 정식 운영 때 정함).
 
-![온톨로지](docs/images/ontology.png)
+---
 
-- **닫힌 목록(객관식):** AI가 정해 둔 보기 안에서만 고른다. 글 유형 4, 생각 종류 6, 확신 3, 가치 10, 관계 6, **삶의 영역 9**.
-- **열린 목록(주관식):** 세부 주제 · 긴장 축 · 역할은 글에서 나온 말을 쓰고 사용자가 확인한다.
-- **삶의 영역 9개**는 주관적 안녕감 척도 PWI(Personal Wellbeing Index, International Wellbeing Group — OECD 2013 측정 지침이 영역 평가에서 인용)의 7개 영역(삶의 성취 · 관계 · 공동체 · 건강 · 생활 수준 · 미래 안정 · 안전) + 선택 영역 영성·신앙, WHO 삶의 질 척도 WHOQOL의 여가에서 가져왔다. 세부 주제는 가장 가까운 영역 하나에 붙는다(`universe.py`의 `DOMAINS`).
+## 2. 아키텍처
 
-## 1차 MVP(10/03, Streamlit) — 전체 구조
+```mermaid
+flowchart LR
+  U["휴대폰 · PC<br/>Next.js 설치형 웹앱<br/>(infra/frontend)"] -->|"SSE · REST<br/>Supabase 로그인 토큰"| API["FastAPI 백엔드<br/>(main.py · app/, Vercel)"]
+  API --> TALK["대화 그래프 LangGraph<br/>safety → past → reply → summary"]
+  API --> DIARY["일기 그래프 LangGraph<br/>(아래)"]
+  TALK -->|Solar| UP[("Upstage<br/>Solar · Embedding<br/>Studio · Document Parse")]
+  DIARY --> UP
+  DIARY --> CH[("Chroma<br/>생각 벡터 + 해 메타")]
+  API --> DB[("Supabase Postgres<br/>RLS · 사용자별 암호화")]
+  API -->|"받아쓰기 · 읽어 주기 · 목소리 대화"| EL["ElevenLabs"]
+  GH["GitHub Actions<br/>시험 · 이미지 · 알림 예약"] -->|"POST /push/due"| API
+  API -->|"웹 푸시(VAPID)"| U
+```
 
-![전체 구조](docs/images/architecture.png)
+**일기 한 편의 길** (`app/agents/graph.py`, 노드마다 암호화 체크포인트 → 끊기면 끝난 단계를 건너뛰고 이어 하기)
 
-| 계층 | 파일 | 하는 일 |
+```
+safety → names → record_input → record_agent → record_clean → ontology → group_stars
+       → past → observe → rules → voice → (대화 정리본이면 사용자 확인까지 멈춤) → save
+```
+
+| 단계 | 하는 일 | 쓰는 것 |
 | --- | --- | --- |
-| 화면 | `streamlit_app.py`, `universe_view.py` | 우주 · 관측 보고서 / 글쓰기 / 가져오기 / 운영(Ops) |
-| 서비스 | `service.py` | 글 한 편 → 관측 보고서 파이프라인, 세션 실행 한도 |
-| 코드 | `importer.py` | 출처와 무관한 공통 기록, 인스타 글자 깨짐 복원 · 이어진 게시물 묶기 · 제목 속 날짜 · 소제목, HTML 변환 |
-| | `gates.py` | 관문 G1 원문에 없는 인용 · G2 날짜 · G3 사람 단정 표현 · G4 실명 가리기 |
-| | `universe.py` | 세부 주제 → 삶의 영역 연결, 관련 과거 생각 고르기, 관계 규칙, 별 자리 |
-| | `observe_builder.py` | 관측 Agent에 보낼 비교 입력 HTML (오늘 생각 T1… · 과거 생각 P1…) |
-| | `embedder.py` | Solar Embedding (같은 이야기인가만 판단) |
-| 에이전트 | `agent_client.py`, `agent_configs/` | Studio 에이전트 실행(Files API + Jobs API, 재시도), Studio에서 내보낸 설정 |
-| 운영 | `runlog.py`, `tools/` | 원문 없는 실행 기록, 가상 데이터 평가, 흔들림 측정, 입력 3종 시험, 그림 |
+| safety · names | 위기 신호(규칙 + Solar), 사람 이름 가명 | Solar |
+| record_agent | **Studio 기록 Agent**: Parse → Classify(글 유형) → Extract(생각 · 종류 · 확신 · 가치 · 원문 인용) | Upstage Studio |
+| record_clean | 관문: 원문에 없는 인용 · 날짜 · 단정 표현 · 실명 거르기 | 코드 |
+| ontology · group_stars | 생각 → 해(커리어 · 인간관계) → 작은 별, Solar가 쌓인 작은 별을 같은 고민끼리 묶기 | Solar Embedding · Solar · Chroma |
+| past · observe · rules | 지난 생각 고르기(Chroma `where` 해 필터) → **Studio 관측 Agent**(Parse → Classify 관측 상태 → Extract 관계) → 시간 · 감정 규칙과 실선/점선 규칙 | Chroma · Upstage Studio |
+| voice · save | 근거 있는 한마디, 저장 · 정리가 끝나면 알림 | Solar · Supabase |
 
-## Studio 에이전트
+| 부분 | 기술 | 위치 |
+| --- | --- | --- |
+| 화면 | Next.js 16 · React 19 · Three.js, 설치형 웹앱(서비스 워커 · 웹 푸시) | `infra/frontend/` |
+| 백엔드 | FastAPI · LangGraph, SSE 스트림 | `main.py`, `app/api` · `app/agents` · `app/service` |
+| 온톨로지 | 해 · 작은 별 · 생각 종류 · 관계(닫힌 목록 + 열린 이름) | `app/core/ontology/v8.json` |
+| DB · 로그인 | Supabase(구글 · 메일 코드 로그인, RLS, AES-GCM 사용자별 키) | `supabase/migrations/` |
+| 벡터 | Chroma(로컬 · Docker는 컨테이너, 배포는 Chroma Cloud) | `app/agents/tools.py` |
+| Studio 설정 | 기록 Agent · 관측 Agent 내보낸 원본 | `agent_configs/` |
+| 평가 | 골든셋 · 가상 인물 A~F × 일기 20편(정답 심음) · 흔들림 | `eval/`, `tools/persona_eval.py` |
+| 배포 | Vercel 두 프로젝트(백엔드 = 저장소 루트, 화면 = `infra/frontend`), GHCR 이미지 | `vercel.json`, `.github/workflows/` |
 
-![두 에이전트](docs/images/agents.png)
+더 자세한 설명: [쉬운 기술 설명](docs/tech-explainer-v8.md) · [보안 검토](docs/security-review-v8.md) · [요청 추적](docs/trace.md) · [평가](docs/eval-v8.md).
 
-HR 예시의 `Resume·JD Agent → matching_builder → Matching Agent`와 같은 모양입니다.
+---
 
-| 에이전트 | 노드 | Classify 갈래 | Extract 스키마 |
-| --- | --- | --- | --- |
-| **기록 Agent** | Parse → Classify → Extract | 경험 기록 / 생각·성찰 / 창작 / 기타 | `summary` `period` `triggers` `addressee` `roles`(실명 X) `references` `events` `thoughts[]` = topic · thought · kind(해석·신념·원칙·질문·다짐·반성·감정) · certainty · quote(원문 그대로) · self_change · value |
-| **관측 Agent** | Parse → Classify → Extract | 해소 / 바뀜 / 긴장 / 어긋남 / 이어짐 / 처음 쓰는 주제 | `state` `summary` `question` `relations[]` = type · today_id · past_id · topic · explanation · author_stated · axis |
+## 3. 실행 방법
 
-- 설정 파일: `agent_configs/Record Agent.json`, `agent_configs/Observe Agent.json` (Studio에서 내보낸 원본, config #1)
-- `tools/make_agent_configs.py`가 처음 가져오기(import)용 설정을 만들었습니다. Studio에서 고친 뒤에는 다시 내보내 `agent_configs/`를 바꿉니다.
-
-**코드가 하는 판단 (에이전트 밖)**: 원문에 없는 인용은 버림 · 실명은 ○○ · 이어짐/바뀜/긴장/해소/어긋남은 같은 삶의 영역끼리만 · 다짐 뒤 30일 안의 반성은 어긋남 · 바뀜은 7일 이상, 긴장은 30일 이내 · 목표 충돌은 14일 안의 다짐 둘 · 감정이 달라진 것은 바뀜 · 해소가 아님 · 다짐이 지켜지면 이어짐 · 작성자가 직접 쓴 변화 · 정리만 실선.
-
-## 1차 MVP — 실행 방법
+### Docker (3개: ChromaDB · 백엔드 · 화면)
 
 ```bash
-uv venv --python 3.11 .venv && source .venv/bin/activate
-uv pip install -r requirements.txt
-cp .env.example .env        # 키와 에이전트 ID를 채운다
-
-python app.py               # 가상 인물 "하늘"의 인스타그램 ZIP(게시물 30개 → 글 29편)을 처리
-python app.py data/samples/2026-09-25-독서노트.md
-streamlit run streamlit_app.py
+cp .env.example .env              # UPSTAGE_API_KEY · Studio Agent ID · DIARY_ENC_KEY 등(값은 .env 에만)
+supabase start                    # 로그인 · DB(로컬 Supabase). 처음이면 scripts/dev_up.sh 가 시험용 계정 · 데모 우주까지
+scripts/start_docker.sh           # ChromaDB 8000 · 백엔드 8001 · 화면 8002 → http://localhost:8002
+scripts/stop_docker.sh            # 끄기(데이터는 볼륨에 남김)
 ```
 
-`python app.py` 결과: `output/records.json`(정리된 기록 파일), `result/reports/<기록ID>.json`(글마다 관측 보고서), `result/observation_report.json`(마지막 글).
+- 포트를 바꾸려면 `CHROMA_HOST_PORT=18000 BACKEND_HOST_PORT=18001 FRONTEND_HOST_PORT=18002 scripts/start_docker.sh`.
+- 빌드 없이 받기: `docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && … up -d`(GHCR 이미지 `ghcr.io/lumiere001/my-universe-{backend,frontend,chroma}`, master 에 push 하면 Actions 가 만듦).
+- 2026-11-04 v9 확인: 이미지 세 개 빌드 → `GET /health` ok · `GET /health?deep=1` DB · 벡터 ok · 화면 200 · 토큰 없이 `/me` 401 · ChromaDB heartbeat. 기록: [docs/docker-verify.md](docs/docker-verify.md).
 
-### 환경변수
+### 로컬 개발
 
-| 이름 | 설명 |
-| --- | --- |
-| `UPSTAGE_API_KEY` | Upstage Console 키 (Studio 에이전트와 같은 조직) |
-| `RECORD_AGENT_ID`, `RECORD_CONFIG_ID` | 기록 Agent ID와 설정 번호 |
-| `OBSERVE_AGENT_ID`, `OBSERVE_CONFIG_ID` | 관측 Agent ID와 설정 번호 |
-| `MAX_JOBS_PER_SESSION` (선택, 기본 40) | 세션당 Studio 실행 상한 (공개 배포에서 크레딧 보호) |
-| `MAX_IMPORT_POSTS` (선택, 기본 10) | 가져오기 한 번에 관측하는 글 수 |
-| `DISK_CACHE` (선택, 기본 0) | 1이면 추출 결과를 디스크에 캐시 (로컬 개발 전용) |
-
-### 배포 (Streamlit Community Cloud)
-
-1. [share.streamlit.io](https://share.streamlit.io)에 GitHub 계정으로 로그인 → 이 저장소 접근 허용
-2. Create app → 저장소 `my-universe`, 브랜치 `master`, 파일 `streamlit_app.py`
-3. Advanced settings → Python 3.11, Secrets에 아래를 붙여 넣기 (최상위 값이 환경변수로 들어간다)
-
-```toml
-UPSTAGE_API_KEY = "..."
-RECORD_AGENT_ID = "agt_..."
-RECORD_CONFIG_ID = "1"
-OBSERVE_AGENT_ID = "agt_..."
-OBSERVE_CONFIG_ID = "1"
+```bash
+uv sync
+scripts/dev_up.sh                 # 처음 한 번(Docker 켜 둔 채): 로컬 Supabase · ChromaDB · .env.local · 시험용 계정
+scripts/start.sh                  # 백엔드 8001 + 화면 3000 → http://localhost:3000
+cd infra/frontend && NEXT_PUBLIC_MOCK=1 npm run dev   # 서버 없이 가짜 데이터 화면
 ```
 
-4. Deploy → 접속하면 데모 우주(가상 인물 하늘)가 먼저 보입니다. Railway에서도 `Procfile` 그대로 돌아갑니다.
+### 시험
 
-## 평가와 운영(Ops)
+```bash
+uv run --frozen pytest -q                              # 810개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험은 건너뜀)
+uv run --frozen python eval/run.py --check             # 골든셋 관문 · 기준선 회귀(외부 호출 없음)
+cd infra/frontend && npx playwright test               # 휴대폰 화면 e2e(가짜 데이터, 캡처를 docs/images 에 다시 씀)
+uv run --frozen python tools/persona_eval.py run …     # 가상 인물 서비스 길 평가(유료, 글 한 편 약 $0.10)
+```
 
-![Ops](docs/images/ops.png)
+push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검사를 돌린다. 유료 실행은 `runs/cost_ledger.jsonl` 에 한 줄씩 남긴다.
 
-- **관문 (0건이어야 함)**: G1 원문에 없는 인용, G2 추정 표시 없는 틀린 날짜, G3 사람을 단정하는 표현, G4 다른 사람 실명 노출. 평가 때만이 아니라 **모든 실행에서** 결과를 내보내기 전에 거릅니다.
-- **실행 기록**: `runs/run_log.jsonl`. 글 원문과 인용은 남기지 않고 실행 ID · 설정 번호 · 시간 · 페이지 · 추정 비용 · 관문 결과 · 개수만 남깁니다. 화면의 🛠 운영 탭에서 봅니다.
-- **가상 데이터 평가**: `python tools/eval_virtual.py`. 가상 글을 쓸 때 심어 둔 관계 8개(바뀜 · 긴장 · 해소 · 어긋남 · 목표 충돌 · 이어짐)와 금지 관계 1개(감정만 달라진 것)를 얼마나 찾는지 잽니다. 결과: `data/ops/eval_virtual.json`.
-- **흔들림 측정**: `python tools/stability.py`. 같은 글 3편을 3번씩 돌려 유형 · 생각 수 · 종류 · 인용이 같은지 잽니다. 결과: `data/ops/stability.json`.
-- **입력 3종 시험**: `python tools/test_inputs.py` (MD, TXT, 직접 쓰기) + `python app.py` (인스타그램 ZIP).
-- **설정 버전**: 실행은 `.env`의 `*_CONFIG_ID`로 고정합니다. Studio 설명을 고치면 새 config 번호가 생기고, 같은 평가 세트로 다시 재서 나아졌을 때만 번호를 올립니다. 나빠지면 이전 번호로 되돌립니다.
+---
 
-평가 결과 요약은 아래 "MVP 측정 결과"에 있습니다.
+## 4. 환경변수
 
-## 데이터 원칙
+전체 목록과 설명은 [`.env.example`](.env.example)(백엔드) · [`infra/frontend/.env.example`](infra/frontend/.env.example)(화면). 값(키)은 저장소에 넣지 않는다.
 
-- 시연과 평가 숫자는 **가상 인물 "하늘"**의 글로만 만듭니다(`tools/make_virtual_data.py`). 실제 인스타그램 내보내기와 구조(글자 깨짐, 이어진 게시물, 제목 속 날짜, P1 소제목)만 같습니다.
-- 공개 서버는 사용자의 글을 저장하지 않습니다(디스크 캐시 꺼짐). 우주는 브라우저 세션에만 있고, 사용자가 정리된 기록 파일로 보관합니다.
-- 사람 이름은 역할로 바꾸거나 ○○로 가립니다.
-
-## 가이드 고도화 포인트 적용
-
-| 포인트 | 적용 |
-| --- | --- |
-| 1 서비스 정체성 | 이름 · 한 줄 소개 · 사이드바 · 푸터 · 어두운 우주 테마 |
-| 2 입력 경험 | ZIP · MD · TXT 업로드, 형식 안내, "저장하고 관측하기" |
-| 3 결과 화면 | 2D 우주(별 카드, 가치 보기), 관측 보고서, 처리 시간 · 추정 비용 표시 |
-| 4 에이전트 품질 | 감정 규칙 · 관측 상태 우선순위를 Studio 설명에 넣음, 생각 종류 경계 설명 |
-| 5 안정성과 진행 표시 | 실패 시 한 번 재시도, 단계별 진행 표시, 실패해도 글 유지 · 이어서 진행 |
-| 6 결과 활용 | 관측 보고서 JSON, 정리된 기록 파일 내려받기 · 올리기 |
-| 8 구조 확장 | 일괄 분석(인스타그램 ZIP 가져오기, 이어진 게시물 묶기) |
-
-## MVP 측정 결과 (2026-10-03, 기록 Agent config #1 · 관측 Agent config #1)
-
-| 측정 | 결과 | 비고 |
+| 묶음 | 이름 | 꼭 필요 |
 | --- | --- | --- |
-| 입력 3종 + ZIP | MD · TXT · 직접 쓰기 · 인스타그램 ZIP 모두 끝까지 실행 | `data/ops/input_tests.json` |
-| 관문 G1~G4 | 원문에 없는 인용 0 · 날짜 문제 0 · 단정 표현 0 · 보고서 속 실명 노출 0 (이름 2개를 ○○로 가림) | 가상 글 29편 |
-| 설계한 관계 찾기 | 두 글 짝 8/8, 관계 종류 7/8, 실선/점선 일치 7/7, 금지 관계(감정만 달라짐 → 바뀜) 0건 | `data/ops/eval_virtual.json` |
-| 흔들림 | 같은 글 3편 × 3번: 글 유형 · 생각 수 · 생각 종류 3/3 같음, 인용 겹침 1.0 | `data/ops/stability.json` |
-| 지연 | 기록 Agent 평균 30.6초, 관측 Agent 평균 32.6초 → 글 한 편 약 1분 | Studio Jobs API |
-| 비용 | 가상 글 29편 첫 처리: Studio 실행 50회, 추정 $2.40 (글당 약 $0.08) | Parse $0.01 + Extract $0.04 / 쪽 |
+| Upstage | `UPSTAGE_API_KEY`, `RECORD_AGENT_ID` · `OBSERVE_AGENT_ID`, `V8_RECORD_CONFIG_ID` · `V8_OBSERVE_CONFIG_ID`(운영 5 · 4) | ✓ |
+| Supabase | `SUPABASE_URL` · `SUPABASE_ANON_KEY` · `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`(계정 지우기만) | ✓ |
+| 암호화 | `DIARY_ENC_KEY`(base64 32바이트, 잃으면 일기를 못 연다) | ✓ |
+| Chroma | `CHROMA_HOST` · `CHROMA_PORT`(로컬 · Docker) 또는 `CHROMA_API_KEY` · `CHROMA_TENANT` · `CHROMA_DATABASE`(Cloud) | ✓ |
+| 화면 주소 | `FRONTEND_ORIGIN`(CORS) | ✓ |
+| 온톨로지 | `ONTOLOGY_PROFILE=two`(커리어 · 인간관계), `STAR_GROUPS`, `SUN_GROW_AT` | |
+| 목소리 | `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` · `VOICE_LLM_KEY`, `VOICE_CALL_ON=1`(목소리 대화, 기본 꺼짐) | |
+| 알림 | `VAPID_PUBLIC_KEY` · `VAPID_PRIVATE_KEY` · `VAPID_SUBJECT`, `CRON_SECRET` | |
+| 운영 | `ADMIN_EMAILS`(운영 화면), `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD`(비우면 상한 없음), `DRAFT_KEEP_HOURS`(확인 전 초안 보관, 72) | |
+| 추적 | `OTEL_EXPORTER_OTLP_ENDPOINT`(로컬 Phoenix만, 원문 없는 span) | |
+| 화면 | `NEXT_PUBLIC_API_BASE` · `NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_ANON_KEY` · `NEXT_PUBLIC_SITE_URL` · `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_MOCK=1`(가짜 데이터) | ✓(MOCK 아니면) |
 
-**놓친 것과 한계**
+---
 
-- 놓친 1개: 4/5 "혼자가 편하다" → 4/12 "함께해야 성장한다, 어느 쪽이 진짜 나일까"를 긴장이 아니라 바뀜(작성자가 직접 씀)으로 읽었습니다. 두 해석 모두 가능한 글입니다.
-- 설계 밖에서 찾은 관계 31개를 눈으로 보니 약 3분의 2는 그럴듯하고 약 3분의 1은 약하거나 틀렸습니다(예: 리더십 질문 → 독서노트 사이의 바뀜). 다음 평가 루프에서 관측 Agent 설명을 고칠 대상입니다.
-- 관계 규칙 4개(같은 두 글 사이 관계 하나, 질문 → 신념은 해소, 실선은 스스로 쓴 변화가 있을 때만, 주제는 PWI · WHOQOL 기반 삶의 영역 9개에 붙임)는 이 가상 데이터를 보고 PRD 규칙을 코드로 옮긴 것이라, 같은 데이터로 잰 위 숫자는 낙관적입니다. 팀원 둘이 따로 쓴 글로 다시 잽니다(E7).
-- 주제 낱말은 Solar Embedding 2로 그대로 비교하면 어떤 쌍이든 0.70~0.87이 나와서(실측), 흔한 주제 낱말 50개의 평균 벡터를 빼고 비교합니다.
+## 5. API
 
-| 우주 화면 | 관측 보고서 |
+모든 요청은 Supabase 로그인 토큰(`Authorization: Bearer …`)이 필요하고, 동의 전에는 기록을 만들 수 없다(403 `consent_required`). 자세한 모양: [docs/api-v8.md](docs/api-v8.md). 로컬은 `API_DOCS=1` 이면 `http://localhost:8001/docs`.
+
+| 묶음 | 주요 엔드포인트 |
 | --- | --- |
-| ![우주](docs/images/app-universe.jpg) | ![보고서](docs/images/app-report.jpg) |
+| 이야기(대화) | `POST /talk` · `GET /talk` · `GET /talk/{cid}` · `POST /talk/{cid}/turn/stream`(SSE) · `POST /talk/{cid}/finish/stream`(정리본 만들기) · `POST /talk/{cid}/fix`(고칠 게 있어요) · `DELETE /talk/{cid}` |
+| 일기 | `POST /diary/stream`(SSE, 일기 그래프) · `GET /diary` · `GET /diary/{id}` · `POST /diary/{id}/confirm` · `POST /diary/{id}/resume/stream` · `POST`/`DELETE /diary/{id}/notify`(끝나면 알림) · `DELETE /diary/{id}` |
+| 입력 | `POST /photo/read`(손글씨 사진, Document Parse) · `POST /import/instagram/preview` · `POST /voice/transcribe` · `POST /voice/speak` · `POST /voice/call`(목소리 대화 토큰) |
+| 우주 · 알게 된 것 · 흐름 | `GET /universe` · `GET /insight` · `GET /insight/brief` · `POST /insight/ask` · `GET`/`POST`/`PATCH /suns` · `PATCH /stars/{sid}` · `POST /stars/{sid}/detach` · `GET`/`POST /stars/merge` · `PATCH /thoughts/{tid}` · `GET`/`PATCH`/`DELETE /people…` |
+| 되고 싶은 모습 | `GET`/`POST /aspiration` · `POST /aspiration/values` · `POST /aspiration/decline` |
+| 계정 · 설정 | `GET`/`DELETE /me` · `GET`/`POST /consent` · `PATCH /settings` · `GET /settings/suggestions` · `POST /feedback` · `GET /export` |
+| 알림 | `GET /push/key` · `POST`/`GET`/`DELETE /push/subscribe` · `POST /push/due`(예약 작업, `CRON_SECRET`) |
+| 운영 | `GET /ops/summary` · `GET /ops/feedback` · `POST /ops/feedback/summarize`(`ADMIN_EMAILS` 계정만, 숫자 · 코드만) |
+| 상태 | `GET /health` · `GET /health?deep=1`(DB · 벡터) · `GET /ontology` |
 
-Studio 관측 Agent 실행 화면: ![Studio](docs/images/studio-observe-agent.jpg)
+---
+
+## 6. 평가와 운영
+
+| 무엇 | 결과 |
+| --- | --- |
+| 가상 인물 6명 × 일기 20편, 서비스와 같은 길(10/31) | 해 맞힘 **90%**, 같은 주제 F1 **0.73**, 심어 둔 연결 **40/58**, 실패 0편, 글 한 편 약 96초 · $0.10 |
+| 알려진 한계 | 같은 글을 3번 정리하면 묶음이 모두 같은 경우 0/24(겹침 0.46). 글 하나에 묶음이 바뀌는 비율 13% |
+| 실제 사용자(11/3~) | 가입 12명. 받은 불편은 다음 날 고쳐 운영에 반영(되고 싶은 모습 다시 묻기 · 정리가 끝나면 알림) |
+| 시험 | pytest 810 · 휴대폰 e2e · GitHub Actions `test` |
+
+운영 화면 `/ops`: 전체 관리(실행 · 관문 · 시간 · 추정 비용 · 실패) · 개인 맞춤 관리(사람 이름 없는 분포) · 사용자 목소리(열람 동의한 사람만, 볼 때마다 열람 기록).
+
+---
+
+## 7. 팀원 (5조)
+
+| 이름 | 맡은 일 |
+| --- | --- |
+| 김동규 | 기획 · 설계 · 개발(화면 · 백엔드 · 에이전트) · 평가 · 운영 · 발표 |
+| 최현호 | 첫 사용자 · 사용 의견 · 회의 · 멘토링 참여 |
+
+---
+
+## 8. 지난 판
+
+- 1차 MVP(10/03, Streamlit, 저장소 루트의 `streamlit_app.py` 등)와 v8(10/17) 설명: [docs/README-v8-1017.md](docs/README-v8-1017.md)
+- 계획 · 결정: [docs/plan-v8-1017.md](docs/plan-v8-1017.md) · [docs/plan-v8-next.md](docs/plan-v8-next.md)

@@ -57,3 +57,21 @@ entrypoint = "main:app"
 
 - compose의 ChromaDB는 새 볼륨이라 하늘 데모의 생각 벡터가 없다. 우주 · 목록은 DB만 쓰니 그대로 보이고, "지난 생각 고르기"는 Docker 안에서 쓴 글부터 쌓인다.
 - 로그 시각은 컨테이너 시간대를 따른다(앱의 `APP_TIMEZONE`과 따로). Vercel(UTC)에서는 로그 시각이 UTC로 찍힌다.
+
+## v9 다시 확인 (2026-11-04)
+
+최종 발표 전, feat/mobile-flow `e7cc0d8` 코드(알림 · 목소리 · pywebpush 의존성 포함)로 다시 빌드해 띄웠다. 개발용 스택과 겹치지 않게 project 이름 `v9check`, 포트 18000 · 18001 · 18002. 유료 호출은 하지 않았다.
+
+```bash
+COMPOSE_PROJECT_NAME=v9check CHROMA_HOST_PORT=18000 BACKEND_HOST_PORT=18001 FRONTEND_HOST_PORT=18002 scripts/start_docker.sh
+docker compose -p v9check down -v --rmi local
+```
+
+| 확인 | 결과 |
+| --- | --- |
+| 이미지 빌드 | 백엔드 1.35GB · 화면 1.18GB, 오류 없음 |
+| `GET /health` | `{"status":"ok"}` |
+| `GET /health?deep=1` | `checks: {db: ok, vectors: ok}`(로컬 Supabase · compose ChromaDB) |
+| 화면 `GET :18002/` | 200 |
+| 토큰 없이 `GET /me` | 401 |
+| ChromaDB heartbeat | 응답 |
