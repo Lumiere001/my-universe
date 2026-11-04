@@ -16,8 +16,7 @@ const DONT_KNOW = /^(몰라|모르|글쎄|없어|없음|잘 ?모르|패스|pass)
 const AVOID = /(않는|안 하는|안하는|안 되는|하지 않|말자|않기)/;
 const PRE = { whiteSpace: "pre-line" } as const;
 
-export default function AspirationInterview({ first, onDone, onLater }:
-  { first?: boolean; onDone: (a: Aspiration) => void; onLater: () => void }) {
+export default function AspirationInterview({ onDone, onLater }: { onDone: (a: Aspiration) => void; onLater: () => void }) {
   const onto = useOntology();
   const keeper = useKeeperName();
   const steps = onto?.aspiration.ask_steps ?? [];
@@ -38,8 +37,7 @@ export default function AspirationInterview({ first, onDone, onLater }:
 
   useEffect(() => {   // 처음 말: 인사 + 첫 질문
     if (!steps.length || lines.length) return;
-    const hi = first ? "처음 만나서 반가워요. 일기를 시작하기 전에, 되고 싶은 모습을 다섯 가지만 천천히 물어볼게요. 답하기 어려우면 '나중에 할래요'를 눌러도 괜찮아요."
-      : "되고 싶은 모습을 다섯 가지만 천천히 물어볼게요.";
+    const hi = "되고 싶은 모습을 다섯 가지만 천천히 물어볼게요. 답하기 어려우면 '나중에 할래요'를 눌러도 괜찮아요.";
     setLines([{ who: "keeper", text: hi }, { who: "keeper", text: steps[0].question }]);
   }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 

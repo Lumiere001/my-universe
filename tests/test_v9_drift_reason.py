@@ -75,6 +75,20 @@ def test_direct_write_gets_direction_in_message(env, monkeypatch):  # noqa: F811
     assert seen[-1]["direction"] == IF_THEN and seen[-1]["drift"] is None                # 직접 쓴 날: 이번 한마디 자리에서(점검 3)
 
 
+def test_no_aspiration_skips_drift(env, monkeypatch):  # noqa: F811
+    """처음 온 사람은 일기부터(2026-11-05 동규 A안): 되고 싶은 모습이 없으면 멀어짐을 보지 않고 조용히 건너뛴다."""
+    hit = lambda state, asp, ctx: {"day": state["day"], "entry_id": ctx.entry_id, "quote": "피곤해서 또 미뤘다"}  # noqa: E731
+    monkeypatch.setattr(graph, "_obstacle_hit", hit)
+    seen = []
+    orig = graph.tools.speak
+    monkeypatch.setattr(graph.tools, "speak", lambda ctx, people: seen.append(ctx) or orig(ctx, people))
+    put(env, "글 1", "피곤해서 연락을 미뤘다.", when(2))
+    put(env, "글 2", "피곤해서 또 연락을 미뤘다.", when(1))
+    assert len(seen) == 2 and all(c["aspiration"] is None and c["drift"] is None and c["direction"] == "" for c in seen)
+    with env.repo.session(U1) as s:
+        assert not diary.profile(s)[1].get("drift_hits")
+
+
 def test_flow_brief_and_ask(client, env):  # noqa: F811
     """PRD v9 Q10 · Q11: 흐름 요약은 기간 안 원문 재료로만, 문장마다 출처(없는 출처는 버림) · 새 기록이 없으면 저장한 것.
     내 일기에 묻기는 찾은 원문으로만 답하고 일기를 만들지 않는다. 기록이 셋보다 적으면 요약하지 않는다."""

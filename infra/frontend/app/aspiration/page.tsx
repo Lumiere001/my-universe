@@ -1,8 +1,8 @@
 "use client";
 // (마) 되고 싶은 모습(PRD v9): 별지기와 대화하듯 다섯 질문(components/AspirationInterview) → 한 화면 요약 → 북극성. 이력 보존.
-// ?interview=1 = 처음 시작 인터뷰(온보딩, Shell 이 보냄): 띄우거나 '나중에 할래요'면 첫 대화(/)로 간다.
+// ?interview=1 = 바로 인터뷰(일기 3편 뒤 저장 화면의 '지금 할게요', components/AfterSave). '나중에 할래요' = 이번엔 넘어가기.
 // 며칠 뒤 다시 권할 때(should_ask)는 허락을 구한 뒤 같은 인터뷰를 연다. 지금 모습 카드는 다섯 답 · 닿은 순간.
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import AspirationInterview from "@/components/AspirationInterview";
 import { useKeeperName } from "@/components/Keeper";
@@ -38,7 +38,6 @@ export default function AspirationPage() {
 }
 
 function Page() {
-  const router = useRouter();
   const intro = useSearchParams().has("interview");
   const [data, err, reload] = useLoad(getAspiration, "되고 싶은 모습을 불러오지 못했어요. 잠시 뒤 화면을 새로 고쳐 주세요.");
   const keeper = useKeeperName();
@@ -50,20 +49,19 @@ function Page() {
   if (!data) return <main><p className="sub">되고 싶은 모습을 불러오는 중…</p></main>;
   const showAsk = mode === "view" && !data.current && data.ask.should_ask;
 
-  const decline = async (m: "skip" | "stop" | "later") => {
+  const decline = async (m: "skip" | "stop") => {
     setFail("");
     try { await declineAspiration(m); }
     catch (e) { return setFail(why(e, "고른 것을 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.")); }
-    if (intro) return router.replace("/");
     setDeclined(m === "stop" ? "더 묻지 않을게요. 언제든 여기서 다시 적을 수 있어요." : "알겠어요. 지금은 묻지 않을게요. 나중에 계기가 생기면 다시 여쭤볼게요.");
     setMode("declined");
   };
-  const done = () => { if (intro) return router.replace("/"); setMode("done"); reload(); };
+  const done = () => { setMode("done"); reload(); };
 
   if (mode === "talk") return (
     <main className="asp-page">
       <h1 className="sr">되고 싶은 모습</h1>
-      <AspirationInterview first={intro} onDone={done} onLater={() => decline(intro ? "later" : "skip")} />
+      <AspirationInterview onDone={done} onLater={() => decline("skip")} />
       {fail && <p className="err" role="alert">{fail}</p>}
     </main>
   );

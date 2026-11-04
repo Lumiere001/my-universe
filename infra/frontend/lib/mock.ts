@@ -408,25 +408,25 @@ export async function deletePerson(id: string) {
   people = people.filter((x) => x.id !== id);
   return { ok: true, replaced };
 }
-export async function getAspiration() { await sleep(100); return structuredClone(aspiration); }
-// 처음 인터뷰를 지났나(PRD v9). 가짜 데이터 모드는 지난 것으로 시작하고(e2e), 주소에 ?intro 를 붙여 열면 처음 사람처럼.
-// 새로 고쳐도 남게 이 기기에 둔다
-const INTRO = "mock-intro";
-const introDone = () => {
-  try {
-    if (new URLSearchParams(location.search).has("intro")) localStorage.setItem(INTRO, "0");
-    return localStorage.getItem(INTRO) !== "0";
-  } catch { return true; }
-};
-const passIntro = () => { try { localStorage.setItem(INTRO, "1"); } catch { /* 저장소 막힘 */ } };
-export async function declineAspiration(mode: "skip" | "stop" | "later") { await sleep(150); if (mode === "later") passIntro(); return { ok: true }; }
+// 되고 싶은 모습을 정했나(onboarding.aspiration). 가짜 데이터 모드는 정한 사람으로 시작하고(e2e), 주소에 ?intro 를 붙여 열면
+// 처음 사람처럼 아직 안 정함(none) → 저장 화면 권유(AfterSave). 새로 고쳐도 남게 이 기기에 둔다
+const ASKED = "mock-aspiration";
+try { if (new URLSearchParams(location.search).has("intro")) localStorage.setItem(ASKED, "none"); } catch { /* 저장소 막힘 */ }
+const asked = () => { try { return localStorage.getItem(ASKED) ?? "set"; } catch { return "set"; } };
+const setAsked = (v: string) => { try { localStorage.setItem(ASKED, v); } catch { /* 저장소 막힘 */ } };
+export async function getAspiration(): Promise<AspirationState> {
+  await sleep(100);
+  return asked() === "set" ? structuredClone(aspiration) : { current: null, history: [], ask: { should_ask: false, step: 1 } };
+}
+// 이미 정한 사람이 인터뷰에서 '나중에 할래요'를 눌러도 지금 모습은 그대로(진짜도 지금 모습은 남음)
+export async function declineAspiration(mode: "skip" | "stop") { await sleep(150); if (asked() !== "set") setAsked(mode); return { ok: true }; }
 export async function suggestValues(why: string) {
   await sleep(300);   // 진짜는 임베딩 비슷함. 가짜는 낱말 몇 개로 흉내
   const hit = ontology.values.filter((v) => [v.name, ...v.definition.split(/[ ,·]+/)].some((w) => w.length > 1 && why.includes(w)));
   return { values: (hit.length ? hit : ontology.values.filter((v) => v.name === "배려")).slice(0, 2).map((v) => v.name) };
 }
 export async function saveAspiration(a: { want: string; why: string; scene: string; obstacle: string; if_then: string; values: string[] }) {
-  passIntro();
+  setAsked("set");
   const n: Aspiration = { id: "a" + (aspiration.history.length + 3), said: a.want, why: a.why, scene: a.scene, values: a.values, obstacle: a.obstacle,
     if_then: a.if_then, said_at: new Date().toISOString(), reached: [] };
   aspiration = { ...aspiration, current: n, history: aspiration.current ? [aspiration.current, ...aspiration.history] : aspiration.history };
@@ -437,7 +437,7 @@ export async function getMe(): Promise<Me> {
   await sleep((globalThis as { __slowMe?: number }).__slowMe ?? 100);   // 시험: /me 가 /universe 보다 늦게 오는 경우
   return { user: { id: "mock", email: "haneul@example.com" }, settings: { ...settings },
     onboarding: { entries: (globalThis as { __entries?: number }).__entries ?? universe.planets.length,   // 시험: 첫 일기인 사람(알림 묻기)
-      aspiration: "set", weather_asked: true, intro: introDone() }, voice_call: true };   // 가짜 데이터 모드는 연습 엔진으로 늘 켬
+      aspiration: asked(), weather_asked: true }, voice_call: true };   // 가짜 데이터 모드는 연습 엔진으로 늘 켬
 }
 export async function patchSettings(s: Partial<Settings>) {
   // 백엔드와 같은 규칙: 팩폭은 경고 확인 뒤에만

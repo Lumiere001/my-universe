@@ -6,6 +6,7 @@
 // /privacy(개인정보처리방침) · /terms(이용약관)는 로그인 없이 보인다(구글 OAuth 브랜딩 링크, 정적 HTML 에도 들어감).
 // 로그인 뒤 지금 판 동의가 없으면(GET /consent needed) /consent 로 보낸다. 그동안 열리는 화면은 OPEN 뿐(기록 화면은 못 감).
 // 백엔드도 동의 없는 기록 만들기를 403 consent_required 로 막는다. 동의 확인이 실패하면 화면은 열고 백엔드가 막는다.
+// 처음 온 사람도 동의 뒤 바로 이야기(첫 대화)로 간다. 되고 싶은 모습은 일기 3편 뒤 저장 화면에서 한 번 권한다(AfterSave, 2026-11-05 동규 A안).
 // 로그아웃 상태의 다른 화면은 소개(Landing)를 보인다. 서비스 워커(설치형 웹앱, public/sw.js)는 여기서 등록한다.
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,22 +49,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [state, setState] = useState<"loading" | "in" | "out" | "not_allowed" | "consent">("loading");
-  const [intro, setIntro] = useState(false);   // 처음 인터뷰를 아직 안 지남(PRD v9 Q13: 동의 → 되고 싶은 모습 인터뷰 → 첫 대화)
   // 화면을 옮기면 맨 위부터(머리줄에 가려 시작하지 않게)
   useEffect(() => { window.scrollTo(0, 0); }, [path]);
   useEffect(() => { navigator.serviceWorker?.register("/sw.js").catch(() => { /* 설치만 못 할 뿐 */ }); }, []);
 
   useEffect(() => { if (state === "consent" && !OPEN.includes(path)) router.replace("/consent"); }, [state, path, router]);
-  useEffect(() => {
-    if (state !== "in" || !intro) return;
-    if (path === "/aspiration") { setIntro(false); return; }   // 한 번만 보낸다(나중에 할래요 · 띄우기 뒤 첫 대화로)
-    if (!OPEN.includes(path)) router.replace("/aspiration?interview=1");
-  }, [state, intro, path, router]);
 
   useEffect(() => {
     const sb = supabase();
     const consent = () => getConsent().then((c) => setState(c.needed ? "consent" : "in"), () => setState("in"));
-    const signedIn = () => getMe().then((me) => { setIntro(me.onboarding.intro === false); return consent(); },
+    const signedIn = () => getMe().then(consent,
       (e) => setState(e instanceof ApiError && e.code === "not_allowed" ? "not_allowed" : "in"));
     // 가짜 데이터 모드: ?signedout 이면 소개 화면을 본다(로그인은 처음 사람처럼 ?intro 로)
     if (MOCK) { if (new URLSearchParams(window.location.search).has("signedout")) setState("out"); else signedIn(); return; }

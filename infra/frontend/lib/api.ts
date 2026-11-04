@@ -78,7 +78,7 @@ export type Settings = {
   tts_voice?: string;   // 읽어 주기 목소리(값 목록은 app/settings/page.tsx VOICES = 서버 config.TTS_VOICES)
 };
 export type Me = { user: { id: string; email: string }; settings: Settings;
-  onboarding: { entries: number; aspiration: string; weather_asked: boolean; intro?: boolean };   // intro: 처음 인터뷰를 지났나(PRD v9)
+  onboarding: { entries: number; aspiration: string; weather_asked: boolean };   // aspiration: none(아직) · set · skip(이번엔 넘어가기) · stop
   voice_call?: boolean };   // 목소리로 이야기하기(app/call)를 켜 뒀나 — 백엔드 VOICE_CALL_ON(기본 꺼짐, 2026-11-03 동규 「시연할 때만」)
 export type Feedback = { target: string; target_id?: string | null; value: string; text?: string };
 export type Ontology = typeof import("./ontology.json");
@@ -345,8 +345,8 @@ export async function saveAspiration(a: AspirationInput): Promise<Aspiration> {
 export async function suggestValues(why: string): Promise<{ values: string[] }> {
   return MOCK ? (await mock()).suggestValues(why) : json("POST", "/aspiration/values", { why });
 }
-// later = 처음 인터뷰의 '나중에 할래요'(며칠 뒤 다시 권함)
-export async function declineAspiration(mode: "skip" | "stop" | "later"): Promise<{ ok: boolean }> {
+// skip = 이번엔 넘어가기 · 저장 화면 권유의 '나중에'(생각이 크게 바뀐 날 한 번만 다시 여쭘), stop = 그만 묻기
+export async function declineAspiration(mode: "skip" | "stop"): Promise<{ ok: boolean }> {
   return MOCK ? (await mock()).declineAspiration(mode) : json("POST", "/aspiration/decline", { mode });
 }
 
