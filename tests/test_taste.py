@@ -41,7 +41,8 @@ def test_suggest_precedence():
     yes, no = {"taste": {"suggest": True}}, {"taste": {"suggest": False}}
     assert voice._suggest(yes, ["무거운 날"]) is False and voice._suggest(yes, ["쉼 권하기"]) is False
     assert voice._suggest({**yes, "settings": {"suggest": "안 함"}}, []) is False
-    assert voice._suggest({**no, "settings": {"suggest": "자주"}}, []) is False   # 다이얼보다 이 사람 반응이 먼저
+    assert voice._suggest({**no, "settings": {"suggest": "자주"}}, []) is True    # 설정 양 끝(안 함 · 자주)은 반응보다 먼저
+    assert voice._suggest({**no, "settings": {"suggest": "가끔"}}, []) is False   # 가끔이면 이 사람 반응대로
     assert voice._suggest(yes, []) is True
     assert voice._suggest({"taste": {"suggest": None}, "past_messages": ["걸어 볼까요?"]}, []) is False   # 없으면 옛 규칙(가끔)
 

@@ -224,12 +224,12 @@ def _suggest(ctx, sit):
     if "무거운 날" in sit or "쉼 권하기" in sit:
         return False
     freq = (ctx.get("settings") or {}).get("suggest", "가끔")
-    if freq == "안 함":
-        return False
-    if (ctx.get("taste") or {}).get("suggest") is not None:   # 취향 고리: 이 사람 좋아요 · 별로로 뽑은 쪽
+    if freq in ("안 함", "자주"):   # 설정 양 끝(사용자가 직접 · 개인 고리가 옮긴 것)은 그대로 따른다
+        return freq == "자주"
+    if (ctx.get("taste") or {}).get("suggest") is not None:   # 취향 고리: '가끔'일 때 이 사람 좋아요 · 별로로 뽑은 쪽
         return ctx["taste"]["suggest"]
     past = ctx.get("past_messages") or []
-    return freq == "자주" or not (past and checks.has_suggestion(past[-1]))
+    return not (past and checks.has_suggestion(past[-1]))
 
 
 def next_question_kind(ctx):
