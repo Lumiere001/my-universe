@@ -226,6 +226,8 @@ def _suggest(ctx, sit):
     freq = (ctx.get("settings") or {}).get("suggest", "가끔")
     if freq in ("안 함", "자주"):   # 설정 양 끝(사용자가 직접 · 개인 고리가 옮긴 것)은 그대로 따른다
         return freq == "자주"
+    if ctx.get("direction"):   # 되고 싶은 모습에서 멀어진 날의 '그때 해 볼 것'은 취향보다 먼저(방향은 되고 싶은 모습이 정한다)
+        return True
     if (ctx.get("taste") or {}).get("suggest") is not None:   # 취향 고리: '가끔'일 때 이 사람 좋아요 · 별로로 뽑은 쪽
         return ctx["taste"]["suggest"]
     past = ctx.get("past_messages") or []
@@ -368,7 +370,7 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     size = "두세 문장, 120자 안팎"
     if "무거운 날" not in sit and "위기" not in sit:   # 취향 고리(taste): 위로가 먼저인 날엔 빼고, [답 형식] 바로 앞에
         if taste.lines(ctx.get("taste") or {}):
-            sys.append("[이 사람에게 맞춘 말하기 방식 — 좋아요 · 별로로 배운 것]\n" + _lines(taste.lines(ctx["taste"])))
+            sys.append("[이 사람에게 맞춘 말하기 방식 — 좋아요 · 별로로 배운 것, 되고 싶은 모습에 다가간 글도 셈]\n" + _lines(taste.lines(ctx["taste"])))
             if ctx["taste"].get("short"):   # [답 형식]의 길이도 같게(두 지시가 어긋나면 기본 길이로 쓴다)
                 size = "한두 문장, 80자 안"
         if ctx.get("liked"):

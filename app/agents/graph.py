@@ -511,9 +511,14 @@ def speak(state, ctx):
         hits = drift_rules.merge_hits(hits, hit, ctx.entry_id)
         dk = drift_rules.kind(hits, day, since, after, said)
         drift = {"kind": dk, "said": asp["said"], "why": asp.get("why", ""), "if_then": asp["if_then"]} if dk else None
-    if react:   # 취향 고리(voice.taste): 방식별 좋아요 · 별로 → 이번 한마디의 방식, 좋아한 한마디 끝부분
+    # 되고 싶은 모습 쪽 결과(taste.goal_pairs): 한마디를 받은 뒤 쓴 다음 글에 닿은 순간(다가감) · 멀어진 근거(멀어짐)
+    goal = taste.goal_pairs([e["id"] for e in reversed(done)] + [ctx.entry_id],
+                            {r["entry_id"]: m.get("text", "") for r, m in zip(rows, msgs)},
+                            {x["entry_id"] for x in asp["reached"]} | ({ctx.entry_id} if state.get("reached") else set()),
+                            {h["entry_id"] for h in hits}) if config.TASTE_LOOP and asp else []
+    if react or goal:   # 취향 고리(voice.taste): 방식별 좋아요 · 별로 + 다가감 · 멀어짐 → 이번 한마디의 방식, 좋아한 한마디 끝부분
         pairs = [(m.get("text", ""), react[r["entry_id"]]) for r, m in zip(rows, msgs) if r["entry_id"] in react and m.get("text")]
-        ctx_v["taste"] = taste.plan(taste.tally(pairs))
+        ctx_v["taste"] = taste.plan(taste.tally(pairs + goal))
         ctx_v["liked"] = [t for t, v in pairs if v == taste.LIKE][-2:]
     ctx_v["last_reason"] = (msgs[-1].get("reason") or "") if msgs else ""
     ctx_v["drift"] = drift if src == "대화" else None
