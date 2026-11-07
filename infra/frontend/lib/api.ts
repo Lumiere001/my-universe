@@ -266,6 +266,14 @@ export type Insight = {
 // 고른 시각 알림(PRD v9 Q8)
 export type DeviceSub = { endpoint: string; keys: Record<string, string> };   // 이 기기의 웹 알림 주소 · 키
 export type PushSub = DeviceSub & { notify_at: string };
+// AI 비서에 연결(원격 MCP 시험판, app/api/mcp_link.py): 주소는 만들 때 한 번만 받는다
+export type McpLink = { connected: boolean; expires_at: string | null };
+export const getMcpLink = async (): Promise<McpLink> => (await req("GET", "/mcp/link")).json();
+export async function makeMcpLink(): Promise<{ url: string; expires_at: string }> {
+  const r = await (await req("POST", "/mcp/link")).json();
+  return { url: `${BASE}/mcp/${r.key}`, expires_at: r.expires_at };
+}
+export async function cutMcpLink(): Promise<void> { await req("DELETE", "/mcp/link"); }
 export async function getPushKey(): Promise<{ public_key: string | null }> {
   return MOCK ? { public_key: "mock" } : json("GET", "/push/key");
 }

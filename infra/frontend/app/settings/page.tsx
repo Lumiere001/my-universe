@@ -8,7 +8,7 @@ import { PushRow } from "@/components/PushSetting";
 import { KeeperNameField, KEEPER, rememberSettings } from "@/components/Keeper";
 import { OneLine } from "@/components/ResultCard";
 import { KEEPER_LOOKS, KEEPER_SVG, LOOK_TONE, THEME_NAMES, THEMES, themeOf, type KeeperLook } from "@/components/universeLook";
-import { deleteMe, getMe, MOCK, patchSettings, supabase, why, type Settings, type Tone } from "@/lib/api";
+import { cutMcpLink, deleteMe, getMcpLink, getMe, makeMcpLink, MOCK, patchSettings, supabase, why, type McpLink, type Settings, type Tone } from "@/lib/api";
 import { useLoad, useOntology } from "@/lib/use";
 
 const GROUPS = ["별지기", "우주와 화면", "말 걸기", "앱", "개인정보와 계정"] as const;
@@ -197,6 +197,7 @@ export default function SettingsPage() {
 
           {group === "앱" && (<>
             <InstallGuide />
+            {!MOCK && <AiLink />}
             <div className="set-row set-one"><OneLine target="app" /></div>
           </>)}
 
@@ -213,6 +214,53 @@ export default function SettingsPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+// AI 비서에 연결(원격 MCP 시험판): 주소 하나를 Claude 앱 '커스텀 커넥터 추가'에 붙이면 노션 · 메모의 일기를 가져와 넣는다.
+// 주소에 이 사람 전용 열쇠가 들어 있어 만들 때 한 번만 보여 준다. 30일 뒤 만료, '연결 끊기'나 새 주소를 만들면 예전 주소는 바로 끊김.
+function AiLink() {
+  const [st, setSt] = useState<McpLink | null>(null);
+  const [url, setUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState("");
+  const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("ko-KR", { month: "long", day: "numeric" }) : "");
+  useEffect(() => { getMcpLink().then(setSt).catch(() => setSt({ connected: false, expires_at: null })); }, []);
+  const make = async () => {
+    setErr(""); setCopied(false);
+    try { const r = await makeMcpLink(); setUrl(r.url); setSt({ connected: true, expires_at: r.expires_at }); }
+    catch (e) { setErr(why(e, "연결 주소를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.")); }
+  };
+  const cut = async () => {
+    setErr("");
+    try { await cutMcpLink(); setUrl(""); setSt({ connected: false, expires_at: null }); }
+    catch (e) { setErr(why(e, "연결을 끊지 못했어요. 잠시 뒤 다시 눌러 주세요.")); }
+  };
+  const copy = async () => { await navigator.clipboard?.writeText(url).catch(() => null); setCopied(true); };
+  return (
+    <section className="set-row stack" aria-label="AI 비서에 연결">
+      <div className="set-k">
+        <b>AI 비서에 연결</b>
+        <p className="sub">Claude 같은 AI 비서에게 &ldquo;노션에 쓴 일기 가져와 줘&rdquo;라고 하면 나의 우주에 넣어 줘요.</p>
+      </div>
+      <div className="set-v stack">
+        {url ? (<>
+          <label htmlFor="mcp-url">연결 주소(지금 한 번만 보여요)</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input id="mcp-url" readOnly value={url} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: 0 }} />
+            <button className="primary" onClick={copy}>{copied ? "복사했어요" : "복사"}</button>
+          </div>
+          <p className="sub" style={{ margin: 0 }}>Claude 앱 → 설정 → 커넥터 → <b>커스텀 커넥터 추가</b>에 붙여 넣으세요. {day(st?.expires_at ?? null)}까지 쓸 수 있어요.</p>
+        </>) : st?.connected ? (
+          <p className="sub" style={{ margin: 0 }}>연결돼 있어요({day(st.expires_at)}까지). 주소를 잃어버렸으면 새로 만드세요(예전 주소는 끊겨요).</p>
+        ) : null}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {!url && <button className="primary" onClick={make} disabled={!st}>{st?.connected ? "새 연결 주소 만들기" : "연결 주소 만들기"}</button>}
+          {st?.connected && <button onClick={cut}>연결 끊기</button>}
+        </div>
+        {err && <p className="err" role="alert">{err}</p>}
+      </div>
+    </section>
   );
 }
 
