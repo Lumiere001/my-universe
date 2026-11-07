@@ -99,6 +99,7 @@ scripts/stop_docker.sh            # 끄기(데이터는 볼륨에 남김)
 
 - 포트를 바꾸려면 `CHROMA_HOST_PORT=18000 BACKEND_HOST_PORT=18001 FRONTEND_HOST_PORT=18002 scripts/start_docker.sh`.
 - 빌드 없이 받기: `docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && … up -d`(GHCR 이미지 `ghcr.io/lumiere001/my-universe-{backend,frontend,chroma}`, master 에 push 하면 Actions 가 만듦).
+- 2026-11-07 제출 전 다시 확인(master a833ab8): 로컬에서 이미지 세 개 빌드 → 포트 18000 · 18001 · 18002 로 띄워 `GET /health` ok · `GET /health?deep=1` DB · 벡터 ok · 토큰 없이 `/me` 401 · ChromaDB heartbeat 200 · 화면 200(GHCR 이미지는 비공개라 받으려면 `docker login ghcr.io` 필요).
 - 2026-11-04 v9 확인: 이미지 세 개 빌드 → `GET /health` ok · `GET /health?deep=1` DB · 벡터 ok · 화면 200 · 토큰 없이 `/me` 401 · ChromaDB heartbeat. 기록: [docs/docker-verify.md](docs/docker-verify.md).
 
 ### 로컬 개발
@@ -113,7 +114,7 @@ cd infra/frontend && NEXT_PUBLIC_MOCK=1 npm run dev   # 서버 없이 가짜 데
 ### 시험
 
 ```bash
-uv run --frozen pytest -q                              # 825개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험은 건너뜀)
+uv run --frozen pytest -q                              # 826개(로컬 Supabase 가 꺼져 있으면 DB 통합 시험은 건너뜀)
 uv run --frozen python eval/run.py --check             # 골든셋 관문 · 기준선 회귀(외부 호출 없음)
 cd infra/frontend && npx playwright test               # 휴대폰 화면 e2e(가짜 데이터, 캡처를 docs/images 에 다시 씀)
 uv run --frozen python tools/persona_eval.py run …     # 가상 인물 서비스 길 평가(유료, 글 한 편 약 $0.10)
@@ -202,7 +203,7 @@ push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검�
 | 실제 사용자(11/3~11/7) | 가입 17명 → 한마디라도 말함 4명 → 일기 저장 3명. 첫 대화 화면 이탈을 보고 11/5 일기 먼저 시작으로 바꿈(그 뒤 3명 중 2명이 말하고 저장). 받은 불편은 다음 날 고쳐 운영에 반영(되고 싶은 모습 다시 묻기 · 정리가 끝나면 알림) |
 | 프롬프트 인젝션(11/7) | 로컬에서 일기 3 · 대화 3가지(지시 따르기 · 지시문 빼내기 · 없는 인용 · 역할 바꾸기 · 위기 검사 끄기)를 넣어 6/6 막음. 한 번씩 돌린 작은 시험 |
 | 개인 맞춤 취향 고리(11/7) | 기준은 둘: 지금 듣기 좋았나(좋아요 · 별로)와 그 한마디를 들은 뒤 쓴 다음 글이 되고 싶은 모습에 다가갔나(닿은 순간 = 다가감, 멀어진 근거 = 멀어짐, 같은 무게). 한마디의 말하는 방식 셋(제안 · 지난 기록 · 짧게)마다 이 둘을 세어(베타 분포 = 맞을 확률의 어림) 다음 방식을 톰슨 샘플링으로 고름 — 맛있던 식당은 자주, 한두 번 가 본 식당도 가끔 가 보는 제비뽑기(`app/service/voice/taste.py`). 방향은 되고 싶은 모습이 정함: 멀어진 날의 '그때 해 볼 것'은 취향보다 먼저. 가상 사용자 1,000명 시뮬레이션(가정 모형, 11~20번째): 좋아요만 세면 좋아요 57% → 71% · 다가간 글 27% → 28%, 되고 싶은 모습도 세면 다가간 글 31% · 좋아요 66%(`tools/taste_sim.py --goal`). Solar 지시 따름 지난 기록 7/8 · 짧게 6/8 · 제안 1/4(`tools/taste_adherence.py`). 위기 · 무거운 날 · 제안 설정 양 끝이 먼저 |
-| 시험 | pytest 825(CI 814 통과 · 실제 서버가 필요한 11개 건너뜀) · 휴대폰 e2e · GitHub Actions `test` |
+| 시험 | pytest 826(CI 815 통과 · 실제 서버가 필요한 11개 건너뜀) · 휴대폰 e2e · GitHub Actions `test` |
 
 운영 화면 `/ops`: 전체 관리(실행 · 관문 · 시간 · 추정 비용 · 실패) · 개인 맞춤 관리(사람 이름 없는 분포) · 사용자 목소리(열람 동의한 사람만, 볼 때마다 열람 기록).
 
