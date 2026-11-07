@@ -6,18 +6,21 @@ app/api/mcp_link.py — AI 비서에 연결(원격 MCP, 시험판 2026-11-07).
 열쇠 = 사용자 id · 열쇠 id · 만료를 사용자별 HMAC(security.digest)으로 서명한 것. 저장하는 건 지금 열쇠 id · 만료뿐(설정, 암호화).
 30일 뒤 만료, '연결 끊기'나 새 주소를 만들면 예전 주소는 바로 안 된다. 이 열쇠로는 아래 도구 셋만 쓸 수 있다(다른 API 는 안 열림).
 MCP 는 Streamable HTTP 의 상태 없는 JSON 응답만 한다(initialize · tools/list · tools/call · ping) — 의존성 추가 없음.
-도구 이름 · 설명 · 입력 검사는 로컬 stdio 판(tools/mcp_diary.py)과 같다. 정리는 앱 가져오기처럼 오래된 글부터 한 편씩, 응답과 따로 도는 스레드에서.
+도구 이름 · 설명 · 입력 검사는 로컬 stdio 판과 같다(app/service/mcp_input.py). 정리는 앱 가져오기처럼 오래된 글부터 한 편씩.
+Vercel 은 응답이 끝나면 함수를 멈출 수 있어서, 도구는 바로 답하고 정리는 이 주소로 한 번 더 보낸 내부 요청(x/run)이 맡는다:
+그 응답은 흘려보내는 SSE(/diary/stream 과 같은 _Drain)라 보낸 쪽이 끊어도 끝까지 돌고, 5분 한도(maxDuration 300)에 가까우면
+남은 글을 다음 x/run 으로 넘긴다. 하루 글 수 · 월 비용 상한은 /diary 와 같은 _create 가 건다.
 """
 
 import hmac
 import json
+import queue
 import secrets
-import threading
 import time
-from collections import Counter
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Body, Depends, Path, Response
+import httpx
+from fastapi import APIRouter, Body, Depends, Path, Request, Response
 from pydantic import ValidationError
 
 from app.api import consent
@@ -27,12 +30,12 @@ from app.deps import get_repo, get_user
 from app.exceptions import ApiError
 from app.models import DiaryIn
 from app.repository import diary, views
-from tools import mcp_diary as stdio
+from app.service import mcp_input as mi
 
 router = APIRouter(tags=["AI 비서 연결"])
 DAYS = 30
 VERSION = "2025-06-18"   # 클라이언트가 다른 판을 말하면 그 판으로 답한다(도구만 쓰니 판마다 같음)
-_waiting = Counter()     # 사용자별 아직 정리 차례를 기다리는 편수. ponytail: 프로세스 안에만 — 운영(Vercel)은 DB 큐로
+NEW_ENTRY_UNTIL_S = 170  # x/run 하나가 새 글을 시작하는 시한(한 편 60~120초, 함수 한도 300초 안에서 끝나게). 넘으면 다음 x/run 으로
 
 
 def _sign(uid, kid, exp):
@@ -80,24 +83,47 @@ def _owner(repo, key):
     return uid
 
 
-def _send(repo, uid, bodies):
-    """오래된 글부터 한 편씩: 기록 만들기(동의 · 한도 · 같은 글 확인은 /diary 와 같음) → 정리가 끝날 때까지 기다림 → 다음 글."""
-    def work():
-        for b in bodies:
+def _kick(url, bodies):
+    """정리를 이 주소의 x/run 에 맡긴다: 응답 머리만 받고 끊는다(받는 쪽은 _Drain 이라 끝까지 돎). 못 맡기면 RuntimeError."""
+    msg = {"jsonrpc": "2.0", "id": 0, "method": "x/run", "params": {"bodies": bodies}}
+    try:
+        with httpx.stream("POST", url, json=msg, timeout=20) as r:
+            ok = r.status_code == 200
+    except httpx.HTTPError:
+        ok = False
+    if not ok:
+        raise RuntimeError("정리를 시작하지 못했어요. 잠시 뒤 다시 넣어 주세요(이미 넣은 글은 건너뛰어요).")
+
+
+def _run(repo, uid, url, bodies):
+    """x/run 의 SSE 흐름: 오래된 글부터 기록 만들기(/diary 와 같은 동의 · 한도 · 같은 글 확인) → 정리 끝까지 기다림 → 다음 글."""
+    t0 = time.monotonic()
+    yield ": run\n\n"
+    for i, b in enumerate(bodies):
+        if time.monotonic() - t0 > NEW_ENTRY_UNTIL_S:
             try:
-                eid, dup = diary_api._create(repo, uid, DiaryIn(**b))
-                if not dup:
-                    q = diary_api._start(repo, uid, eid, "mcp.import")
-                    while q.get() is not None:
-                        pass
-            except Exception as e:   # noqa: BLE001 — 한 편이 어떻게 실패하든 다음 글로(멈춘 글은 앱에서 '이어서 하기')
-                logger.log("error", step="mcp_import", code=getattr(e, "code", type(e).__name__))
-            finally:
-                _waiting[uid] -= 1
-    _waiting[uid] += len(bodies)
-    threading.Thread(target=work, name=f"mcp-{uid[:8]}", daemon=True).start()
-    return {"accepted": len(bodies), "waiting": _waiting[uid], "est_minutes": _waiting[uid],
-            "note": "정리는 한 편에 1분쯤, 오래된 글부터 차례로 해요. recent_diaries 로 상태(done = 끝)를 볼 수 있어요."}
+                _kick(url, bodies[i:])
+            except RuntimeError:
+                logger.log("error", step="mcp_import", code="kick_failed", left=len(bodies) - i)
+            return
+        try:
+            eid, dup = diary_api._create(repo, uid, DiaryIn(**b))
+            if dup:
+                continue
+            q = diary_api._start(repo, uid, eid, "mcp.import")
+            while True:
+                try:
+                    if q.get(timeout=diary_api.KEEPALIVE_S) is None:
+                        break
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        except Exception as e:   # noqa: BLE001 — 한 편이 어떻게 실패하든 다음 글로(멈춘 글은 앱에서 '이어서 하기')
+            logger.log("error", step="mcp_import", code=getattr(e, "code", type(e).__name__))
+
+
+def _send(repo, uid, url, bodies):
+    _kick(url, bodies)
+    return {"accepted": len(bodies), "est_minutes": len(bodies), "note": mi.NOTE}
 
 
 def _ready(repo, uid):
@@ -106,47 +132,38 @@ def _ready(repo, uid):
             raise ValueError("나의 우주 앱에서 이용 동의를 먼저 해 주세요(처음 로그인할 때 나오는 화면).")
 
 
-def _import(repo, uid, a):
-    entries = a.get("entries") or []
-    if not entries:
-        raise ValueError("가져올 글이 없어요.")
-    if len(entries) > stdio.MAX_BATCH:
-        raise ValueError(f"한 번에 {stdio.MAX_BATCH}편까지 넣을 수 있어요(받은 글 {len(entries)}편). 나눠서 넣어 주세요.")
-    bodies = [stdio._body(i, stdio.Diary(**e), stdio.IMPORTED) for i, e in enumerate(entries, 1)]
+def _import(repo, uid, url, a):
+    bodies = mi.batch(a.get("entries") or [])
     _ready(repo, uid)
-    return _send(repo, uid, sorted(bodies, key=lambda b: b.get("day") or "9999"))
+    return _send(repo, uid, url, bodies)
 
 
-def _write(repo, uid, a):
-    b = stdio._body(1, stdio.Diary(**a), stdio.WRITTEN)
+def _write(repo, uid, url, a):
+    b = mi.body(1, mi.Diary(**a), mi.WRITTEN)
     _ready(repo, uid)
-    return _send(repo, uid, [b])
+    return _send(repo, uid, url, [b])
 
 
-def _recent(repo, uid, a):
+def _recent(repo, uid, url, a):
     with repo.session(uid) as s:
         got = views.entry_list(s, max(1, min(int(a.get("n") or 10), 100)))
     return {"diaries": [{"date": e["day"], "title": e["title"], "status": e["status"], "source": e["source"]} for e in got],
-            "waiting": _waiting[uid]}
+            "processing": sum(e["status"] == "processing" for e in got)}
 
 
-ITEM = stdio.Diary.model_json_schema()
+ITEM = mi.Diary.model_json_schema()
 TOOLS = {
-    "import_diaries": (_import, stdio.import_diaries.__doc__, {
+    "import_diaries": (_import, mi.DOCS["import_diaries"], {
         "type": "object", "required": ["entries"],
-        "properties": {"entries": {"type": "array", "maxItems": stdio.MAX_BATCH, "items": ITEM}}}),
-    "write_diary": (_write, stdio.write_diary.__doc__, ITEM),
-    "recent_diaries": (_recent, stdio.recent_diaries.__doc__, {
+        "properties": {"entries": {"type": "array", "maxItems": mi.MAX_BATCH, "items": ITEM}}}),
+    "write_diary": (_write, mi.DOCS["write_diary"], ITEM),
+    "recent_diaries": (_recent, mi.DOCS["recent_diaries"], {
         "type": "object", "properties": {"n": {"type": "integer", "minimum": 1, "maximum": 100, "default": 10}}}),
 }
-INSTRUCTIONS = ("사용자의 일기를 나의 우주(일기 앱)로 넘기는 도구. 본문은 고치지 말고 그대로, 여러 편이면 먼저 recent_diaries 로 "
-                "이미 있는지 보고, 몇 편을 넣을지 사용자에게 확인한 뒤 import_diaries 로.")
-
-
-def _answer(repo, uid, method, params):
+def _answer(repo, uid, url, method, params):
     if method == "initialize":
         return {"protocolVersion": params.get("protocolVersion") or VERSION, "capabilities": {"tools": {}},
-                "serverInfo": {"name": "나의 우주", "version": "0.1"}, "instructions": INSTRUCTIONS}
+                "serverInfo": {"name": "나의 우주", "version": "0.1"}, "instructions": mi.INSTRUCTIONS}
     if method == "ping":
         return {}
     if method == "tools/list":
@@ -156,21 +173,46 @@ def _answer(repo, uid, method, params):
         if name not in TOOLS:
             raise LookupError(f"없는 도구예요: {name}")
         try:
-            out = TOOLS[name][0](repo, uid, params.get("arguments") or {})
-        except (ValueError, ValidationError, ApiError) as e:   # 입력 · 동의 · 한도: AI 비서가 읽고 사용자에게 전할 안내
+            out = TOOLS[name][0](repo, uid, url, params.get("arguments") or {})
+        except (ValueError, ValidationError, ApiError, RuntimeError) as e:   # 입력 · 동의 · 한도: AI 비서가 사용자에게 전할 안내
             msg = e.message if isinstance(e, ApiError) else str(e)
             return {"content": [{"type": "text", "text": msg}], "isError": True}
         return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False)}], "structuredContent": out, "isError": False}
     raise LookupError(f"모르는 요청이에요: {method}")
 
 
+def _bodies(params):
+    """x/run 이 받은 본문: 우리가 만든 모양(가져온 글 · 텍스트)만, 50편까지. 열쇠를 가진 사람이 바로 불러도 도구보다 넓게 열리지 않게."""
+    bodies = params.get("bodies")
+    if not isinstance(bodies, list) or not 0 < len(bodies) <= mi.MAX_BATCH:
+        raise ApiError(422, "invalid_input", "입력을 확인해 주세요: bodies")
+    for b in bodies:
+        if not isinstance(b, dict) or b.get("source") not in (mi.IMPORTED, mi.WRITTEN) or b.get("confirm"):
+            raise ApiError(422, "invalid_input", "입력을 확인해 주세요: bodies")
+        DiaryIn(**b)
+    return bodies
+
+
+def _self_url(request: Request):
+    """이 요청이 들어온 주소(Vercel 은 앞단이 https 를 끊어 주므로 x-forwarded-proto 를 따름)."""
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    return f"{proto}://{request.headers.get('host', request.url.netloc)}{request.url.path}"
+
+
 @router.post("/mcp/{key}", include_in_schema=False)
-def mcp(key: str = Path(max_length=200), msg: dict = Body(...), repo=Depends(get_repo)):
+def mcp(request: Request, key: str = Path(max_length=200), msg: dict = Body(...), repo=Depends(get_repo)):
     uid = _owner(repo, key)
     if "id" not in msg:   # 알림(notifications/initialized 등): 답 없음
         return Response(status_code=202)
+    url = _self_url(request)
+    if msg.get("method") == "x/run":   # 내부: 정리 맡기(흘려보내는 응답, 보낸 쪽이 끊어도 끝까지)
+        try:
+            bodies = _bodies(msg.get("params") or {})
+        except ValidationError:
+            raise ApiError(422, "invalid_input", "입력을 확인해 주세요: bodies")
+        return diary_api._Drain(_run(repo, uid, url, bodies))
     try:
-        return {"jsonrpc": "2.0", "id": msg["id"], "result": _answer(repo, uid, msg.get("method"), msg.get("params") or {})}
+        return {"jsonrpc": "2.0", "id": msg["id"], "result": _answer(repo, uid, url, msg.get("method"), msg.get("params") or {})}
     except LookupError as e:
         return {"jsonrpc": "2.0", "id": msg["id"], "error": {"code": -32601, "message": str(e)}}
 
