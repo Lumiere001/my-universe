@@ -107,3 +107,14 @@ def test_graph_counts_goal_outcome_of_previous_message(env, monkeypatch):  # noq
         first = diary.message(s, s.rows("messages")[0])["text"]
     put(env, "글 2", "피곤해서 또 연락을 미뤘다.", when(1))
     assert seen and (first, taste.AWAY) in seen[-1]                              # 첫 한마디 뒤 멀어짐 → 그 방식에 별로 한 번
+
+
+def test_date_must_come_from_records():
+    """11/7 실제 흐름 점검: 지시 예시 날짜를 베낀 '7월 20일에는'을 막는다. 근거 있는 날짜(지난 기록 · 오늘 글)는 된다."""
+    from app.service.voice import checks
+    assert "7월 20일" not in taste.WAYS["recall"][1]
+    ctx = {"past_thoughts": [{"day": "2026-11-03"}], "written_at": "2026-11-07T22:00:00+09:00", "text": "12월 1일에 발표가 있다"}
+    ok = voice._days(ctx)
+    assert {(11, 3), (11, 7), (12, 1)} <= ok
+    assert checks.date_problems("7월 20일에는 조용히 넘겼죠", ok) == ["근거 없는 날짜: '7월 20일'"]
+    assert checks.date_problems("11월 3일에도, 12월 1일 발표도", ok) == []

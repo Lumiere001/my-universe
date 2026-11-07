@@ -439,6 +439,15 @@ def _sources(ctx):
             + [(ctx.get("widen") or {}).get("past") or ""])
 
 
+def _days(ctx):
+    """한마디에 써도 되는 날짜 {(월, 일)}: 지난 기록 · 바뀐 생각 · 사람 기록 · 다짐 기한 · 오늘, 오늘 글 · 요약에 쓴 날짜."""
+    ds = [p.get("day") for p in ctx.get("past_thoughts") or []] + [c.get("day") for c in ctx.get("changes") or []]
+    ds += [c.get("due") for c in ctx.get("commitments") or []] + [str(h)[:10] for h in ctx.get("person_history") or []]
+    ds.append(str(ctx.get("written_at") or "")[:10])
+    out = {(int(d[5:7]), int(d[8:10])) for d in ds if isinstance(d, str) and re.match(r"\d{4}-\d{2}-\d{2}", d)}
+    return out | {(int(a), int(b)) for a, b in checks.MD.findall(f"{ctx.get('text') or ''} {ctx.get('summary') or ''}")}
+
+
 def generate(ctx):
     """ctx → {"message", "next_question", "mode": "normal" | "comfort", "tone", "check_in", "checks", "situations", "next_kind"}.
     위기 글도 평소처럼 만들되 위로(제안 · 다음 질문 없음), 팩폭은 그 글만 다정하게(tone 은 실제로 쓴 말투).
@@ -464,7 +473,7 @@ def generate(ctx):
         check = lambda m: checks.problems(m, nq, sources=_sources(ctx), past=ctx.get("past_messages"),   # noqa: E731
                                           comfort=comfort, aspiration=bool(ctx.get("aspiration")),
                                           gentle="오늘은 살살" in sit, tone=ctx.get("tone"), crisis=bool(ctx.get("crisis")),
-                                          max_len=checks.MESSAGE_LEN)
+                                          max_len=checks.MESSAGE_LEN, days=_days(ctx))
         hidden = checks.hidden_problems(nq, reveal) if kind == "reason" else []
         if reason and not hidden:
             good = (nq, reason, reveal)

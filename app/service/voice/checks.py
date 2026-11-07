@@ -132,7 +132,16 @@ def cut_to_len(msg, n=MAX_LEN):
     return head[: i + 1].strip() if i >= n // 3 else None
 
 
-def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False, max_len=MAX_LEN):
+MD = re.compile(r"(\d{1,2})월\s?(\d{1,2})일")
+
+
+def date_problems(text, allowed):
+    """한마디 속 '○월 ○일'이 근거(지난 기록 · 오늘 글 · 다짐 기한)에 있는 날인가. allowed: {(월, 일)}.
+    2026-11-07 실제 흐름 점검: 지시 예시의 날짜('7월 20일')를 Solar 가 그대로 베낀 것을 막는다."""
+    return [f"근거 없는 날짜: '{m.group(0)}'" for m in MD.finditer(text or "") if (int(m.group(1)), int(m.group(2))) not in allowed]
+
+
+def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, tone=None, crisis=False, max_len=MAX_LEN, days=None):
     """생성된 한마디 · 다음 질문의 문제 목록. crisis: 위기 글(기관 · 연락처 안내도 막음)."""
     both = f"{msg}\n{next_q}"
     out = line_problems(both)
@@ -140,6 +149,8 @@ def problems(msg, next_q, *, sources, past, comfort, aspiration, gentle=False, t
     if judged(both):   # 사람을 판정 · 진단하지 않기(PRD §8.0 바닥)
         out.append("사람 판정 · 진단")
     out += quote_problems(both, sources) + repeat_problems(msg, past)
+    if days is not None:
+        out += date_problems(both, days)
     if comfort and (has_suggestion(msg) or next_q):
         out.append("무거운 날인데 제안이 있음")
     if crisis and (m := re.search(_HELP, both)):
