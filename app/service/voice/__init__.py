@@ -17,6 +17,9 @@ ctx (모두 선택, 없으면 기본값):
   written_at      쓴 시각(ISO 문자열 또는 datetime)
   past_messages   그 사용자의 지난 한마디 전체(오래된 것 → 최근)
   disliked        그 사용자가 '별로'를 누른 한마디(최근 5개) — 같은 말 · 비슷한 말로 다시 쓰지 않는다(개인 금지 목록)
+  taste           취향 고리(voice.taste.plan) {"suggest" | "recall" | "short": True | False | None} — None 이면 기본대로.
+                  무거운 날 · 쉼 권하기 · 제안 '안 함'이 먼저, 위기 · 무거운 날엔 방식 지시를 넣지 않는다
+  liked           그 사용자가 '좋아요'를 누른 한마디(최근 2개) — 끝부분 결만 참고(같은 말 되풀이 없이)
   aspiration      {"said", "value", "obstacle", "if_then"} 또는 None
   reached         되고 싶은 모습에 닿은 순간 [{"quote", "note"}] (관측 Agent가 원문 근거로 찾은 것)
   commitments     [{"text", "state", "due", "overdue"}]  (열린 다짐 · 기한 지난 다짐)
@@ -42,7 +45,7 @@ from datetime import datetime
 
 from app.core import llm
 from app.core.ontology import load
-from app.service.voice import checks
+from app.service.voice import checks, taste
 
 # 운영 기본값(연구 근거 아님, 피드백으로 맞춘다)
 LATE_HOURS = {23, 0, 1, 2, 3, 4}
@@ -223,6 +226,8 @@ def _suggest(ctx, sit):
     freq = (ctx.get("settings") or {}).get("suggest", "가끔")
     if freq == "안 함":
         return False
+    if (ctx.get("taste") or {}).get("suggest") is not None:   # 취향 고리: 이 사람 좋아요 · 별로로 뽑은 쪽
+        return ctx["taste"]["suggest"]
     past = ctx.get("past_messages") or []
     return freq == "자주" or not (past and checks.has_suggestion(past[-1]))
 
@@ -360,6 +365,15 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     sl.append("이번 한마디에는 작은 다음 걸음을 질문으로 하나 넣는다(팩폭은 명령형 가능)." if suggest
               else "이번 한마디에는 다음 걸음 제안을 넣지 않는다(질문 · 명령 · '~만 해 보기' 모두 없이).")
     sys.append("[오늘 상황]\n" + _lines(sl))
+    size = "두세 문장, 120자 안팎"
+    if "무거운 날" not in sit and "위기" not in sit:   # 취향 고리(taste): 위로가 먼저인 날엔 빼고, [답 형식] 바로 앞에
+        if taste.lines(ctx.get("taste") or {}):
+            sys.append("[이 사람에게 맞춘 말하기 방식 — 좋아요 · 별로로 배운 것]\n" + _lines(taste.lines(ctx["taste"])))
+            if ctx["taste"].get("short"):   # [답 형식]의 길이도 같게(두 지시가 어긋나면 기본 길이로 쓴다)
+                size = "한두 문장, 80자 안"
+        if ctx.get("liked"):
+            tails = [("…" + d[-DISLIKED_CUT:]) if len(d) > DISLIKED_CUT else d for d in ctx["liked"]]
+            sys.append("[이 사람이 '좋아요'를 누른 한마디의 끝부분 — 결만 참고하고 같은 말은 되풀이하지 않는다]\n" + _lines(tails))
 
     w = ctx.get("widen") or {}
     nq = {"commitment": "next_question 에는 기한 지난 다짐의 안부를 묻는 질문 하나를 쓴다.",
@@ -370,14 +384,14 @@ def build_messages(ctx, kind, sit, suggest, avoid=()):
     if kind == "reason":
         cands = reason_candidates(ctx, sit)
         sys.append("[숨은 이유 후보]\n" + _lines([f"{c['key']}: {c['what']}" for c in cands] + ["none: 오늘은 이유 없이 가벼운 질문"]))
-        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(두세 문장, 120자 안팎), \"next_question\": 다음에 앱을 열면 먼저 건넬 첫 질문, "
+        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(" + size + "), \"next_question\": 다음에 앱을 열면 먼저 건넬 첫 질문, "
                    "\"reason\": 고른 후보 key, \"reveal\": 이유를 밝히는 한 줄}. 숨은 이유 후보 중 오늘 글과 가장 어울리는 하나를 고르고"
                    "(어울리는 게 없으면 none), next_question 은 그 이유를 드러내지 않는 가벼운 일상 질문 하나로 쓴다: 지난 글을 인용하거나 "
                    "'지난번' · '한동안' · '다짐' · '되고 싶은' 같은 말을 쓰지 않고, 한 단어로도 답할 수 있게. reveal 은 '~를 물은 건, ~가 "
                    "떠올라서였어요.'처럼 이 사람이 했던 말 · 바람에 이어 이유를 밝히는 한 줄(멀어졌다 · 못 했다 같은 판정 없이). none 이면 빈 글. "
                    "message 의 따옴표 안에는 아래 원문을 글자 그대로 옮긴다(바꿔 말하면 따옴표 없이). 지난 한마디와 표현을 겹치지 않는다.")
     else:
-        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(두세 문장, 120자 안팎), \"next_question\": 다음 질문}. "
+        sys.append("[답 형식] JSON 하나만: {\"message\": 한마디(" + size + "), \"next_question\": 다음 질문}. "
                "따옴표 안에는 아래 원문을 글자 그대로 옮긴다(바꿔 말하면 따옴표 없이). 지난 한마디와 표현을 겹치지 않는다. " + nq)
     if avoid:
         sys.append("[다시 쓰기] 지난 답에 문제가 있었다. 고칠 것:\n" + _lines(avoid))

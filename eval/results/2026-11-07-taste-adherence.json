@@ -1,0 +1,278 @@
+{
+ "date": "2026-11-07",
+ "persona": "pG(가상)",
+ "adherence": {
+  "suggest": {
+   "on": "2/8",
+   "off": "8/8"
+  },
+  "recall": {
+   "on": "0/8",
+   "off": "8/8"
+  },
+  "short": {
+   "on": "2/8",
+   "off": "7/8"
+  }
+ },
+ "calls": 22,
+ "est_usd": 0.0239,
+ "rows": [
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 130,
+   "message": "근거 두 글자를 밤새 붙들고 있었을 마음이 먼저 보여요. 혼자 평가표까지 만들 뻔한 것도, 확인하고 나면 바로 묻는 쪽으로 바꾼 것도 그대로 괜찮아요. 태린 선배에게 내가 이해한 내용을 붙여 다시 물어보는 건 오늘 어떻게 해 볼까요?"
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 146,
+   "message": "근거 두 글자를 혼자 오래 품고 있었네요. 물어보니 원문 위치를 달아 달라는 말이었다니, 그 해석이 풀린 순간이 보여요. 태린 선배에게 이해한 내용을 붙여 다시 묻기로 한 것도 좋습니다. 짧게라도 묻는 쪽이 밤새 들여다보는 것보다 낫다는 마음, 그대로 괜찮아요."
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 128,
+   "message": "두 글자만 남았는데도 혼자 평가표를 만들 뻔했네요. 원문이 어디에 있는지 물어본 뒤엔, 밤을 새우기보다 짧게 묻는 쪽을 택했어요. 태린 선배 댓글의 진짜 뜻을 살피고, 확인할 건 이해한 내용을 붙여 다시 묻는 흐름을 잘 지켰어요."
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 108,
+   "message": "근거 두 글자를 밤새 곱씹을 뻔한 마음이 보여요. 혼자 평가표까지 만들 뻔했는데, 그 두 글자를 원문 자리로 이어 붙일 질문을 먼저 떠올린 게 참 잘했어요. 오늘은 여기서 잠시 쉬어도 괜찮아요."
+  },
+  {
+   "entry": 8,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 60,
+   "message": "손가락으로 노트 모서리만 접다가 회의가 끝났군요. 그래도 메신저로 보내고 세 번이나 고쳐 본 마음이 보여요."
+  },
+  {
+   "entry": 8,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 124,
+   "message": "회의실 노트 모서리를 접기만 하다가 결국 메신저로 보냈군요. 기초적인 얘기인가 싶어 세 번이나 고쳐 쓴 마음이 보여요. 늦은 점심과 밤 간식 중 어디부터 볼지 정하면, 그 다음엔 입에서 선택지가 자연스럽게 나올지도 몰라요."
+  },
+  {
+   "entry": 8,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 117,
+   "message": "회의가 끝난 뒤에도 점심이 늦어진 장면을 붙들고 있었네요. 노트 모서리를 접다가 끝내 메신저로 보낸 손끝이 보여요. 세 번 고쳐 보낸 말, 기초적인 얘기라기보다 상황을 살리고 싶었던 마음이 그대로 남아 있어요."
+  },
+  {
+   "entry": 8,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 109,
+   "message": "손가락만 노트 모서리를 접다가 회의가 끝났어도, 메신저로 보내기 전 세 번 고친 마음이 그 자리에 남아 있어요. 늦은 점심과 밤 간식 중 어디부터 볼지 정하는 일, 오늘은 여기까지 해도 괜찮아요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 111,
+   "message": "고개만 끄덕였어도 수정 방향을 적어 보내고 맞는지 다시 물은 건 오늘 손에서 놓치지 않은 일이에요. 입이 굳어도 묻는 손은 멈추지 않았네요. 내일은 첫 문장 하나를 미리 골라 두는 정도면 충분할까요?"
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 33,
+   "message": "오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 127,
+   "message": "준비 시간이 모자라 첫 문장을 고르지 못한 순간도, 선배의 답장 길이로 마음을 재려던 손을 멈춘 순간도 그대로 보여요. 오늘 고개 끄덕인 자리와 태린 선배의 한 줄 답장이 함께 남았네요. 그런 멈춤을 한 번 지나온 오늘이었어요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 33,
+   "message": "오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요."
+  },
+  {
+   "entry": 11,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 81,
+   "message": "완성되지 않은 페이지를 보여도 회의가 망가지지 않았다는 걸, 오늘 스스로 확인했네요. 남이 적어 준 메모가 반갑게 느껴진 순간도 그대로 괜찮아요."
+  },
+  {
+   "entry": 11,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 149,
+   "message": "완성되지 않은 페이지를 보였는데도 회의가 망가지지 않았다는 말, 그대로 믿음이 가요. 혼자 붙잡고 있던 빈칸이 회의 중에 채워진 것도, 남이 적어 준 메모가 반갑게 느껴진 것도 오늘 글이 다 말해 줘요. 돌아오는 지하철에서 파일을 다시 열었던 그 순간이 참 좋았어요."
+  },
+  {
+   "entry": 11,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 138,
+   "message": "덜 끝난 페이지를 그대로 띄운 그 순간이, 오늘 회의 흐름을 바꾸었네요. 점심시간을 놓친 장면부터 먼저 꺼내고, 목소리 한 번 더 보태며 빈칸 세 개를 함께 채운 모습이 그대로 보여요. 남이 적어 준 메모가 반갑게 느껴진 마음도 그대로 전해지고요."
+  },
+  {
+   "entry": 11,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 111,
+   "message": "완성되지 않은 페이지를 그대로 띄웠는데도 회의가 망가지지 않았고, 혼자 붙잡고 있던 빈칸 세 개가 회의 중에 채워졌군요. 돌아오는 지하철에서 남이 적어 준 메모가 반갑게 느껴진 그 순간도 잘 보여요."
+  }
+ ]
+}

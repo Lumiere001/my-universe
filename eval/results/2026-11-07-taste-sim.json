@@ -1,0 +1,170 @@
+{
+ "date": "2026-11-07",
+ "seed": 20261107,
+ "users": 1000,
+ "messages": 20,
+ "p_react": 0.6,
+ "model": "P(좋아요|누름)=0.15+0.75×맞춘 비율, 대조군 0.5",
+ "policies": {
+  "A": "옛 다이얼(제안만, 3번 · 2배) + 지난 기록 · 길이 50%",
+  "B": "taste.plan 방식별 톰슨 샘플링(반응 없으면 A 기본, 다이얼 '안 함' 먼저)"
+ },
+ "adherence": {
+  "완벽": {
+   "suggest": [
+    1.0,
+    1.0
+   ],
+   "recall": [
+    1.0,
+    1.0
+   ],
+   "short": [
+    1.0,
+    1.0
+   ]
+  },
+  "잰 값": {
+   "suggest": [
+    0.25,
+    1.0
+   ],
+   "recall": [
+    0.75,
+    1.0
+   ],
+   "short": [
+    0.9,
+    0.9
+   ]
+  }
+ },
+ "results": {
+  "취향 있음": {
+   "A": {
+    "1-5": {
+     "reactions": 2956,
+     "like_share": 0.515,
+     "ci95": 0.018,
+     "style_match": 0.492
+    },
+    "6-10": {
+     "reactions": 3025,
+     "like_share": 0.542,
+     "ci95": 0.018,
+     "style_match": 0.522
+    },
+    "11-20": {
+     "reactions": 5966,
+     "like_share": 0.572,
+     "ci95": 0.013,
+     "style_match": 0.564
+    }
+   },
+   "B": {
+    "1-5": {
+     "reactions": 2956,
+     "like_share": 0.561,
+     "ci95": 0.018,
+     "style_match": 0.547
+    },
+    "6-10": {
+     "reactions": 3025,
+     "like_share": 0.651,
+     "ci95": 0.017,
+     "style_match": 0.662
+    },
+    "11-20": {
+     "reactions": 5966,
+     "like_share": 0.714,
+     "ci95": 0.011,
+     "style_match": 0.743
+    }
+   }
+  },
+  "취향 있음 · 따름 잰 값": {
+   "A": {
+    "1-5": {
+     "reactions": 2956,
+     "like_share": 0.526,
+     "ci95": 0.018,
+     "style_match": 0.503
+    },
+    "6-10": {
+     "reactions": 3025,
+     "like_share": 0.53,
+     "ci95": 0.018,
+     "style_match": 0.51
+    },
+    "11-20": {
+     "reactions": 5966,
+     "like_share": 0.537,
+     "ci95": 0.013,
+     "style_match": 0.515
+    }
+   },
+   "B": {
+    "1-5": {
+     "reactions": 2956,
+     "like_share": 0.544,
+     "ci95": 0.018,
+     "style_match": 0.538
+    },
+    "6-10": {
+     "reactions": 3025,
+     "like_share": 0.61,
+     "ci95": 0.017,
+     "style_match": 0.608
+    },
+    "11-20": {
+     "reactions": 5966,
+     "like_share": 0.632,
+     "ci95": 0.012,
+     "style_match": 0.646
+    }
+   }
+  },
+  "취향 없음(대조군)": {
+   "A": {
+    "1-5": {
+     "reactions": 2975,
+     "like_share": 0.509,
+     "ci95": 0.018,
+     "style_match": null
+    },
+    "6-10": {
+     "reactions": 3016,
+     "like_share": 0.497,
+     "ci95": 0.018,
+     "style_match": null
+    },
+    "11-20": {
+     "reactions": 5962,
+     "like_share": 0.507,
+     "ci95": 0.013,
+     "style_match": null
+    }
+   },
+   "B": {
+    "1-5": {
+     "reactions": 2975,
+     "like_share": 0.509,
+     "ci95": 0.018,
+     "style_match": null
+    },
+    "6-10": {
+     "reactions": 3016,
+     "like_share": 0.497,
+     "ci95": 0.018,
+     "style_match": null
+    },
+    "11-20": {
+     "reactions": 5962,
+     "like_share": 0.507,
+     "ci95": 0.013,
+     "style_match": null
+    }
+   }
+  }
+ }
+}

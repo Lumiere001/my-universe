@@ -26,6 +26,7 @@ from app.core import config, llm, logger, trace
 from app.core.ontology import load
 from app.repository import diary, edit
 from app.service import voice as voice_rules
+from app.service.voice import taste
 from app.service.rules import drift as drift_rules
 from app.service.rules import groups as group_rules
 from app.service.rules import advance, clean_record, clean_text, filter_relations, link_domain, place_stars, reask_trigger, to_sun
@@ -450,6 +451,9 @@ def speak(state, ctx):
         msgs = [diary.message(s, r) for r in rows]
         bad = {f["target_id"] for f in s.rows("feedback", target="message", value="별로")}   # 개인 금지: 이 사람이 '별로'라 한 한마디
         disliked = [m.get("text", "") for r, m in zip(rows, msgs) if r["entry_id"] in bad and m.get("text")][-5:]
+        # 취향 고리: 한마디마다 마지막으로 누른 좋아요 · 별로
+        react = {f["target_id"]: f["value"] for f in s.rows("feedback", target="message", order="created_at")
+                 if f["value"] in (taste.LIKE, taste.DISLIKE)} if config.TASTE_LOOP else {}
         done = [e for e in diary.entries(s, status="done") if e["id"] != ctx.entry_id]
         states = diary.states(s)
         asp = (diary.aspirations(s) or [None])[-1]
@@ -507,6 +511,10 @@ def speak(state, ctx):
         hits = drift_rules.merge_hits(hits, hit, ctx.entry_id)
         dk = drift_rules.kind(hits, day, since, after, said)
         drift = {"kind": dk, "said": asp["said"], "why": asp.get("why", ""), "if_then": asp["if_then"]} if dk else None
+    if react:   # 취향 고리(voice.taste): 방식별 좋아요 · 별로 → 이번 한마디의 방식, 좋아한 한마디 끝부분
+        pairs = [(m.get("text", ""), react[r["entry_id"]]) for r, m in zip(rows, msgs) if r["entry_id"] in react and m.get("text")]
+        ctx_v["taste"] = taste.plan(taste.tally(pairs))
+        ctx_v["liked"] = [t for t, v in pairs if v == taste.LIKE][-2:]
     ctx_v["last_reason"] = (msgs[-1].get("reason") or "") if msgs else ""
     ctx_v["drift"] = drift if src == "대화" else None
     ctx_v["direction"] = drift["if_then"] if drift and src != "대화" else ""

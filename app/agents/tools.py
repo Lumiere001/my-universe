@@ -181,7 +181,7 @@ def search_past(repo, uid, entry_id, today):
 # 한마디
 ##################################################
 
-VOICE_TEXT = ("text", "summary", "thoughts", "reached", "aspiration", "commitments", "kept", "open_questions", "disliked",
+VOICE_TEXT = ("text", "summary", "thoughts", "reached", "aspiration", "commitments", "kept", "open_questions", "disliked", "liked",
               "person_history", "past_messages", "past_thoughts", "changes", "widen", "tone_note", "drift", "direction")
 
 

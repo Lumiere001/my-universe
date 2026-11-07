@@ -1,0 +1,150 @@
+{
+ "date": "2026-11-07",
+ "persona": "pG(가상)",
+ "adherence": {
+  "suggest": {
+   "on": "1/4",
+   "off": "4/4"
+  },
+  "recall": {
+   "on": "3/4",
+   "off": "4/4"
+  },
+  "short": {
+   "on": "4/4",
+   "off": "2/4"
+  }
+ },
+ "calls": 11,
+ "est_usd": 0.0121,
+ "rows": [
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": true,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 74,
+   "message": "7월 20일에는 삼켰던 그 말, 오늘은 직접 물어 확인했네요. 그 두 글자, 혼자 밤새 붙들고 있을 뻔했는데 이제야 숨을 돌리셨군요."
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 115,
+   "message": "근거 두 글자를 밤새 혼자 읽지 않고, 이해한 내용을 붙여 다시 묻기로 한 판단이 보여요. 야근 간식과 늦은 점심을 나눠 보겠다는 순서도 그대로 지킨 셈이네요. 오늘처럼 짧게라도 묻는 쪽이 맞을 때가 있죠."
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "mode": "normal",
+   "len": 140,
+   "message": "7월 20일에는 목구멍까지 왔다가 삼킨 얘기를 메모에만 남겼는데, 오늘은 그 대목을 따로 모으고 순서도 지켰네요. 근거 두 글자를 혼자 평가표까지 만들 뻔한 마음도 보였는데, 태린 선배에게 내가 이해한 내용을 붙여 다시 묻기로 한 쪽이 훨씬 낫겠어요."
+  },
+  {
+   "entry": 6,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 70,
+   "message": "혼자 평가표까지 만들 뻔한 마음을 먼저 내려놓아도 괜찮아요. 태린 선배에게 이해한 내용을 붙여 다시 묻는 쪽이 훨씬 낫겠네요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "got": {
+    "suggest": true,
+    "recall": true,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 70,
+   "message": "7월 20일에도 삼켰던 말이 있었는데, 오늘은 한 줄만 바로잡아 달라고 보냈네요. 예상 때문에 질문을 접지 않은 손이 보여요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": true,
+    "recall": false,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 33,
+   "message": "오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": false,
+    "recall": true,
+    "short": false
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 33,
+   "message": "오늘도 기록해 줘서 고마워요. 적어 둔 마음, 잘 읽었어요."
+  },
+  {
+   "entry": 10,
+   "plan": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "got": {
+    "suggest": false,
+    "recall": false,
+    "short": true
+   },
+   "mode": "normal",
+   "len": 59,
+   "message": "고개만 끄덕인 순간도, 수정 방향을 먼저 적어 보낸 손도 그대로 보여요. 질문을 접지 않은 오늘이 있네요."
+  }
+ ]
+}

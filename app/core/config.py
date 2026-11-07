@@ -53,6 +53,8 @@ SUN_GROW_AT = int(os.getenv("SUN_GROW_AT") or 10)
 # 작은 별 묶기(rules.groups, 2026-10-29): 새 작은 별이 생긴 글이 끝나면 같은 고민끼리 묶고 묶음마다 해를 고른다(Solar 두 번).
 # 0 이면 끔(시험의 비교 판 · 운영에서 문제가 생기면 배포 없이 끄기).
 STAR_GROUPS = os.getenv("STAR_GROUPS", "1") != "0"
+# 취향 고리(voice.taste, 2026-11-07): 좋아요 · 별로로 말하는 방식(제안 · 지난 기록 · 길이)을 사람마다 톰슨 샘플링. 0 이면 끔(옛 다이얼만)
+TASTE_LOOP = os.getenv("TASTE_LOOP", "1") != "0"
 
 # Studio 기록 · 관측 Agent. 1판(RECORD_CONFIG_ID=1)은 Streamlit 데모가 계속 쓰고, 새 백엔드는 V8_* (기본 2판).
 RECORD_AGENT_ID = os.getenv("RECORD_AGENT_ID", "")
