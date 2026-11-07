@@ -136,6 +136,7 @@ push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검�
 | 화면 주소 | `FRONTEND_ORIGIN`(CORS) | ✓ |
 | 온톨로지 | `ONTOLOGY_PROFILE=two`(커리어 · 인간관계), `STAR_GROUPS`, `SUN_GROW_AT` | |
 | 목소리 | `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` · `VOICE_LLM_KEY`, `VOICE_CALL_ON=1`(목소리 대화, 기본 꺼짐) | |
+| 개인 맞춤 | `TASTE_LOOP`(취향 고리, 기본 켬 — `0` 이면 끔) | |
 | 알림 | `VAPID_PUBLIC_KEY` · `VAPID_PRIVATE_KEY` · `VAPID_SUBJECT`, `CRON_SECRET` | |
 | 운영 | `ADMIN_EMAILS`(운영 화면), `DAILY_ENTRY_LIMIT` · `MONTHLY_COST_CAP_USD`(비우면 상한 없음), `DRAFT_KEEP_HOURS`(확인 전 초안 보관, 72) | |
 | 추적 | `OTEL_EXPORTER_OTLP_ENDPOINT`(로컬 Phoenix만, 원문 없는 span) | |
@@ -169,6 +170,7 @@ push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검�
 | 알려진 한계 | 같은 글을 3번 정리하면 묶음이 모두 같은 경우 0/24(겹침 0.46). 글 하나에 묶음이 바뀌는 비율 13% |
 | 실제 사용자(11/3~11/7) | 가입 17명 → 한마디라도 말함 4명 → 일기 저장 3명. 첫 대화 화면 이탈을 보고 11/5 일기 먼저 시작으로 바꿈(그 뒤 3명 중 2명이 말하고 저장). 받은 불편은 다음 날 고쳐 운영에 반영(되고 싶은 모습 다시 묻기 · 정리가 끝나면 알림) |
 | 프롬프트 인젝션(11/7) | 로컬에서 일기 3 · 대화 3가지(지시 따르기 · 지시문 빼내기 · 없는 인용 · 역할 바꾸기 · 위기 검사 끄기)를 넣어 6/6 막음. 한 번씩 돌린 작은 시험 |
+| 개인 맞춤 취향 고리(11/7) | 좋아요 · 별로로 한마디의 말하는 방식 셋(제안 · 지난 기록 · 짧게)을 사람마다 따로 세고(베타 분포) 다음 방식을 톰슨 샘플링으로 고름(`app/service/voice/taste.py`). 가상 사용자 1,000명 시뮬레이션에서 11~20번째 좋아요 57% → 71%(`tools/taste_sim.py`), Solar 지시 따름 지난 기록 7/8 · 짧게 6/8 · 제안 1/4(`tools/taste_adherence.py`). 위기 · 무거운 날 · 제안 설정 양 끝이 먼저 |
 | 시험 | pytest 815(CI 804 통과 · 실제 서버가 필요한 11개 건너뜀) · 휴대폰 e2e · GitHub Actions `test` |
 
 운영 화면 `/ops`: 전체 관리(실행 · 관문 · 시간 · 추정 비용 · 실패) · 개인 맞춤 관리(사람 이름 없는 분포) · 사용자 목소리(열람 동의한 사람만, 볼 때마다 열람 기록).
