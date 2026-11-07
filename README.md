@@ -142,6 +142,24 @@ push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검�
 | 추적 | `OTEL_EXPORTER_OTLP_ENDPOINT`(로컬 Phoenix만, 원문 없는 span) | |
 | 화면 | `NEXT_PUBLIC_API_BASE` · `NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_ANON_KEY` · `NEXT_PUBLIC_SITE_URL` · `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_MOCK=1`(가짜 데이터) | ✓(MOCK 아니면) |
 
+필수 값과 예시(실제 키는 `.env` 에만, 아래는 모양만):
+
+| 이름 | 설명 | 필수 | 예시 |
+| --- | --- | --- | --- |
+| `UPSTAGE_API_KEY` | Upstage 키(Solar · Studio · Document Parse · 임베딩) | ✓ | `up_xxxxxxxx` |
+| `RECORD_AGENT_ID` · `OBSERVE_AGENT_ID` | Studio 기록 · 관측 Agent ID | ✓ | `<Studio 에이전트 ID>` |
+| `V8_RECORD_CONFIG_ID` · `V8_OBSERVE_CONFIG_ID` | 고정해 쓰는 Studio 설정 번호 | ✓ | `5` · `4` |
+| `SUPABASE_URL` · `SUPABASE_ANON_KEY` | 로그인 확인 · DB(Supabase) | ✓ | `http://127.0.0.1:54321` · `<anon key>` |
+| `DATABASE_URL` | Postgres 접속 | ✓ | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
+| `SUPABASE_SERVICE_ROLE_KEY` | 계정 지우기에만 씀 | 계정 삭제 시 | `<service role key>` |
+| `DIARY_ENC_KEY` | 일기 원문 암호화 키(base64 32바이트) | ✓ | `python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"` 로 만든 값 |
+| `CHROMA_HOST` · `CHROMA_PORT` | 벡터 DB(ChromaDB) | ✓ | `localhost` · `8000` |
+| `FRONTEND_ORIGIN` | CORS 허용 화면 주소 | ✓ | `http://localhost:3000` |
+| `ONTOLOGY_PROFILE` | 온톨로지 모드 | | `two`(커리어 · 인간관계) |
+| `TASTE_LOOP` | 개인 맞춤 취향 고리 | | `1`(끔 `0`) |
+| `VOICE_CALL_ON` | 목소리 대화(전화) | | 비움(꺼짐) · `1` |
+| `NEXT_PUBLIC_API_BASE` | 화면이 부르는 백엔드(`infra/frontend/.env.local`) | ✓ | `http://localhost:8001` |
+
 ---
 
 ## 5. API
@@ -159,6 +177,19 @@ push · PR 마다 GitHub Actions `test` 가 키 없이 pytest 와 골든셋 검�
 | 알림 | `GET /push/key` · `POST`/`GET`/`DELETE /push/subscribe` · `POST /push/due`(예약 작업, `CRON_SECRET`) |
 | 운영 | `GET /ops/summary` · `GET /ops/feedback` · `POST /ops/feedback/summarize`(`ADMIN_EMAILS` 계정만, 숫자 · 코드만) |
 | 상태 | `GET /health` · `GET /health?deep=1`(DB · 벡터) · `GET /ontology` |
+
+핵심 엔드포인트 요청 · 응답 예시(SSE 는 `text/event-stream`, 화면은 `fetch` 로 읽음 — 모양 전체는 [docs/api-v8.md](docs/api-v8.md)):
+
+| 메서드 | 경로 | 요청 예시 | 응답 예시 | SSE |
+| --- | --- | --- | --- | --- |
+| POST | `/talk` | 본문 없음 또는 `{"from_entry": "e…"}` | Conversation(별지기가 먼저 묻는 첫 말, LLM 없음) | |
+| POST | `/talk/{cid}/turn/stream` | `{"text": "오늘 회의에서 처음 먼저 말해 봤어", "via": "text"}` | `event: progress` `{"step": "reply", …}` → `event: turn` Conversation | ✓ |
+| POST | `/talk/{cid}/finish/stream` | 없음 | `progress`(초안 → 일기 그래프 단계) → `event: result` EntryResult(`status: "confirm"`, 다듬은 일기) | ✓ |
+| POST | `/diary/{id}/confirm` | `{"summary": null, "fixes": [], "agreed": ["summary"]}` | 저장된 EntryResult(한마디 · 다음 질문 포함) | |
+| POST | `/diary/stream` | `{"text": "…", "title": "월요일"}` | `event: progress` `{"entry_id": "e1", "step": "safety", "done": 1, "total": 7}` … `event: result` EntryResult / `event: error` `{"code": "studio_timeout", "resumable": true}` | ✓ |
+| GET | `/universe` | 없음 | Universe(해 · 작은 별 · 행성 · 관계) | |
+| POST | `/feedback` | `{"target": "message", "target_id": "e1", "value": "좋아요"}` | 반영 결과(취향 고리 · 개인 설정에 쓰임) | |
+| GET | `/health?deep=1` | 없음 | `{"status": "ok", "version": "0.9.0", "checks": {"db": "ok", "vectors": "ok"}}` | |
 
 ---
 
