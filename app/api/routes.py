@@ -34,7 +34,7 @@ _DEEP = {"at": 0.0, "out": None}   # deep 점검 결과를 10초 둔다(로그�
 def health(response: Response, deep: bool = False):
     """deep=1 이면 DB(select 1) · ChromaDB(컬렉션 열기)까지 닿는지 본다(업스테이지 가이드 ④ Step 5 · ⑥ Step 3).
     하나라도 안 되면 503 · degraded. 오류는 종류 이름만(주소 · 메시지는 내보내지 않음)."""
-    out = {"status": "ok", "version": config.VERSION}
+    out = {"status": "ok", "version": config.VERSION, "closed": config.SERVICE_CLOSED}
     if not deep:
         return out
     if _DEEP["out"] and time.time() - _DEEP["at"] < 10:
@@ -185,8 +185,8 @@ def _visible(text):
 
 @router.post("/feedback", tags=["피드백"])
 def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
-    if body.value == "불편한 점 한 줄" and not _visible(body.text):   # 그냥 받으면 운영 화면 '남긴 말'이 빈 칸으로 남는다
-        raise ApiError(422, "invalid_input", "불편한 점을 한 줄 적어 주세요.")
+    if body.value in diary.TEXT_FEEDBACK and not _visible(body.text):   # 그냥 받으면 운영 화면 '남긴 말'이 빈 칸으로 남는다
+        raise ApiError(422, "invalid_input", "하고 싶은 말을 적어 주세요." if body.value == "마치며 의견" else "불편한 점을 한 줄 적어 주세요.")
     changed = removed = None
     with repo.session(user["id"]) as s:
         if body.value in ("맞아요", "아니에요", "지켰어요", "그만둘래요"):
@@ -211,7 +211,7 @@ def feedback(body: FeedbackIn, user=Depends(get_user), repo=Depends(get_repo)):
             diary.save_profile(s, settings={TODAY_FLAGS[body.value]: diary.today()})
         elif body.value == "날씨 건너뜀":
             diary.save_profile(s, settings={"weather_ask": False}, onboarding={"weather_asked": True})
-        one = body.value == "불편한 점 한 줄"
+        one = body.value in diary.TEXT_FEEDBACK
         diary.add_feedback(s, body.target, body.target_id, body.value, body.text if one else None, relation=removed,
                            ops=one and body.ops)
         tuned = ops.auto_pref(s)   # 개인 고리: 반응이 한쪽으로 쌓이면 그 사람 설정을 한 칸(알림 · 되돌리기는 /settings/suggestions)
@@ -354,7 +354,7 @@ def push_due(x_cron_secret: Annotated[str | None, Header()] = None, repo=Depends
     보낼 사람만 app_ops 로 고르고(평문 칸), 구독을 풀어 보내는 일은 그 사용자 세션에서. 만료된 구독은 지운다."""
     if not config.CRON_SECRET or x_cron_secret != config.CRON_SECRET:
         raise ApiError(403, "forbidden", "예약 작업만 부를 수 있어요.")
-    if not (config.VAPID_PUBLIC_KEY and config.VAPID_PRIVATE_KEY):
+    if config.SERVICE_CLOSED or not (config.VAPID_PUBLIC_KEY and config.VAPID_PRIVATE_KEY):   # 닫히면 알림도 멈춤
         return {"off": True, "sent": 0}
     now = datetime.now(diary.TZ)
     at, today = push.slot(now), now.date()

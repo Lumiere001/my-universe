@@ -7,15 +7,16 @@
 // 로그인 뒤 지금 판 동의가 없으면(GET /consent needed) /consent 로 보낸다. 그동안 열리는 화면은 OPEN 뿐(기록 화면은 못 감).
 // 백엔드도 동의 없는 기록 만들기를 403 consent_required 로 막는다. 동의 확인이 실패하면 화면은 열고 백엔드가 막는다.
 // 처음 온 사람도 동의 뒤 바로 이야기(첫 대화)로 간다. 되고 싶은 모습은 일기 3편 뒤 저장 화면에서 한 번 권한다(AfterSave, 2026-11-05 동규 A안).
-// 로그아웃 상태의 다른 화면은 소개(Landing)를 보인다. 서비스 워커(설치형 웹앱, public/sw.js)는 여기서 등록한다.
+// 로그아웃 상태의 다른 화면은 소개(Landing)를 보인다(닫힌 뒤에는 마침 화면 Closed, 2026-11-25). 서비스 워커(설치형 웹앱, public/sw.js)는 여기서 등록한다.
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
+import Closed from "@/components/Closed";
 import Landing from "@/components/Landing";
 import PrefNotice from "@/components/PrefNotice";
 import { KeeperLook } from "@/components/Keeper";
-import { ApiError, getConsent, getMe, MOCK, supabase } from "@/lib/api";
+import { ApiError, CLOSED, getConsent, getMe, MOCK, supabase } from "@/lib/api";
 
 // 탭: [주소, 이름, 아이콘, 이 탭에 속한 주소 머리]
 const TABS: readonly (readonly [string, string, IconName, readonly string[]])[] = [
@@ -57,7 +58,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const sb = supabase();
-    const consent = () => getConsent().then((c) => setState(c.needed ? "consent" : "in"), () => setState("in"));
+    const consent = () => CLOSED ? setState("in") : getConsent().then((c) => setState(c.needed ? "consent" : "in"), () => setState("in"));
     const signedIn = () => getMe().then(consent,
       (e) => setState(e instanceof ApiError && e.code === "not_allowed" ? "not_allowed" : "in"));
     // 가짜 데이터 모드: ?signedout 이면 소개 화면을 본다(로그인은 처음 사람처럼 ?intro 로)
@@ -68,6 +69,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     const { data } = sb.auth.onAuthStateChange((_e, s) => { if (s) setTimeout(signedIn, 0); else setState("out"); });
     return () => data.subscription.unsubscribe();
   }, []);
+
+  // 닫힘(CLOSED): 개인정보처리방침 · 이용약관 · 운영 화면 밖은 모두 마침 화면(탭 없이 이름 줄만)
+  if (CLOSED && !PUBLIC.includes(path) && path !== "/ops" && (state === "in" || state === "out")) return (
+    <>
+      <header className="top"><Link href="/" className="brand"><i className="dot" aria-hidden />나의 우주</Link></header>
+      <Closed signedIn={state === "in"} />
+    </>
+  );
 
   const page = state === "in" || PUBLIC.includes(path) || (state === "consent" && OPEN.includes(path)) ? children
     : state === "out" ? <Landing /> : state === "not_allowed" ? (

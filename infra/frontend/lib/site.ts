@@ -17,3 +17,6 @@ export const siteMeta: Metadata = {
   openGraph: { type: "website", siteName: title, locale: "ko_KR", title, description, images: [image] },
   twitter: { card: "summary_large_image", title, description, images: [image.url] },
 };
+
+// 시험 기간 끝(2026-11-25): 이날까지 내 일기를 받을 수 있고, 그 뒤 모든 기록과 계정을 지운다(마침 화면 · 개인정보처리방침 6장)
+export const KEEP_UNTIL = "2026년 12월 31일";

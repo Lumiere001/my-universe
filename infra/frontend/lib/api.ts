@@ -3,6 +3,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
+// 시험 기간 끝(2026-11-25): 기본 닫힘 → 모든 화면이 마침 화면(components/Closed). 다시 열려면 NEXT_PUBLIC_SERVICE_CLOSED=0
+export const CLOSED = process.env.NEXT_PUBLIC_SERVICE_CLOSED !== "0";
 export const DEV_LOGIN = process.env.NEXT_PUBLIC_DEV_LOGIN === "1";
 const BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001").replace(/\/$/, "");
 
@@ -225,8 +227,11 @@ export async function deleteDiary(id: string): Promise<void> {
 }
 // JSON 내려받기(WS15, docs/api-v8.md §2.1): id 가 있으면 기록 하나, 없으면 전체. 다른 사람 이름은 가리지 않는다.
 export async function exportDiary(id?: string): Promise<unknown> {
-  if (MOCK) return { schema: "my-universe-export/1", exported_at: new Date().toISOString(), scope: id ? "entry" : "all",
-    records: id ? [await getDiary(id)] : [], domains: [] };
+  if (MOCK) {   // 전체는 가짜 일기 전부(먼저 쓴 것부터, 마침 화면의 '내 일기 받기' 미리 보기)
+    const ids = id ? [id] : (await (await mock()).listDiary()).entries.map((e) => e.id).reverse();
+    return { schema: "my-universe-export/1", exported_at: new Date().toISOString(), scope: id ? "entry" : "all",
+      records: await Promise.all(ids.map((x) => getDiary(x))), domains: [] };
+  }
   return json("GET", id ? `/export/${encodeURIComponent(id)}` : "/export");
 }
 // 지난 기록 전부(최근에 쓴 것부터). 달력 · 찾기 · 주제별 · 사이드바가 같은 한 번의 읽기를 나눠 쓴다.

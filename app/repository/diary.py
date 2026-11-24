@@ -24,6 +24,7 @@ ONBOARDING = {"aspiration": "none", "aspiration_step": None, "weather_asked": Fa
               "intro": False}   # intro: 처음 시작 인터뷰(PRD v9 Q13)를 지났는지(정했거나 '나중에 할래요')
 ENC_TABLES = ("entries", "thoughts", "relations", "messages", "stars", "aspirations", "aspiration_reached", "people_questions",
               "feedback", "conversations", "push_subs")
+TEXT_FEEDBACK = ("불편한 점 한 줄", "마치며 의견")   # 글을 받는 피드백(암호문 enc.text). 마치며 의견 = 닫을 때 마침 화면(11/25)
 MOOD_FEEDBACK = ("오늘은 위로만", "오늘은 살살")   # 마음 상태 버튼: 값은 enc 에만, 평문 칸에는 MOOD_LABEL
 MOOD_LABEL = "상태 버튼"
 

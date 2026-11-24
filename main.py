@@ -8,6 +8,7 @@ main.py — 나의 우주 v8 백엔드(FastAPI) 진입점.
 import time
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import exceptions
@@ -30,6 +31,18 @@ app = FastAPI(title="나의 우주 API", version=config.VERSION,
               description="말을 거는 일기장 v8. 로그인: Supabase access token 을 `Authorization: Bearer` 로.",
               docs_url="/docs" if docs else None, redoc_url="/redoc" if docs else None,
               openapi_url="/openapi.json" if docs else None)
+CLOSED_OPEN = {"/feedback", "/push/due"}   # 닫혀도 받는 쓰기: 마치며 의견 · 알림 예약(예약은 보내지 않고 0을 돌려줌)
+
+
+@app.middleware("http")
+async def closed_gate(request: Request, call_next):
+    """시험 기간 끝(config.SERVICE_CLOSED): 새 기록 · 대화 · 고치기(POST · PATCH · PUT)는 403 service_closed. 읽기 · 지우기는 그대로."""
+    if config.SERVICE_CLOSED and request.method in ("POST", "PATCH", "PUT") and request.url.path not in CLOSED_OPEN:
+        return JSONResponse(exceptions.body("service_closed", "시험 기간이 끝나 새 일기는 받지 않아요. 지금까지 쓴 일기는 받아 갈 수 있어요."),
+                            status_code=403)
+    return await call_next(request)
+
+
 app.add_middleware(CORSMiddleware, allow_origins=[config.FRONTEND_ORIGIN], allow_credentials=False,
                    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
                    allow_headers=["Authorization", "Content-Type", "Accept"])

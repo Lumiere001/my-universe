@@ -96,7 +96,7 @@ def test_summary_numbers_only(c, env):  # noqa: F811
     assert "오늘은 위로만" not in dump                           # 마음 상태 버튼 값은 평문 칸에 없음
     assert body["voice"]["messages"] == 3 and body["voice"]["suggested_ratio"] is not None   # 새 칸(제안 표시)이 채워짐
     assert body["voice"]["repeat_ratio"] is not None
-    assert body["feedback_text"] == {"consented": 1, "not_consented": 1}
+    assert body["feedback_text"] == {"consented": 1, "not_consented": 1, "closing": 0}
     assert body["cost"]["budget_usd"] == 50 and body["cost"]["warn"] is False
     assert body["direction"]["closer_feeling"] is None          # 묻지 않음(2026-10-13)
     assert body["direction"]["multi_sun"]["users"] == 2

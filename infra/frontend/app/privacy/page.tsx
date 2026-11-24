@@ -6,6 +6,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Contact from "@/components/Contact";
+import { KEEP_UNTIL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "개인정보처리방침 · 나의 우주" };
 
@@ -99,6 +100,7 @@ export default function PrivacyPage() {
         <h2>6. 보관 기간</h2>
         <ul style={UL}>
           <li>기록 · 동의 기록은 <b>계정을 지울 때까지</b> 보관해요.</li>
+          <li><b>시험 기간 끝(2026년 11월 25일)</b>: 새 기록은 받지 않고, 지금까지 쓴 일기는 <b>{KEEP_UNTIL}까지</b> 내려받을 수 있게 둬요. 그 뒤에는 모든 기록과 계정을 지워요.</li>
           <li>사진은 저장하지 않고, 녹음은 받아쓴 뒤 바로 버려요. 확인해 저장한 대화는 그 일기를 지우거나 계정을 지울 때까지 보관해요.</li>
           <li><b>계정 지우기</b>: 설정 맨 아래 &quot;계정과 모든 기록 지우기&quot;에서 &apos;지우기&apos;를 입력하면 벡터(Chroma) → DB의 내 기록 전부(동의 기록 · 확인 전 대화 포함) → 로그인 계정이 함께 지워져요. 되돌릴 수 없어요.
             벡터를 못 지우면 아무것도 지우지 않고 오류를 보여 줘요. 다시 시도하면 돼요.</li>

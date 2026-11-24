@@ -21,7 +21,7 @@ export default defineConfig({
   webServer: {
     command: `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
-    env: { NEXT_PUBLIC_MOCK: "1" },
+    env: { NEXT_PUBLIC_MOCK: "1", NEXT_PUBLIC_SERVICE_CLOSED: "0" },   // 닫힘 화면은 열린 앱 e2e 밖(2026-11-25)
     timeout: 300_000,
     reuseExistingServer: !!process.env.E2E_REUSE,   // 고치는 동안 떠 있는 가짜 데이터 서버(web-mock)에 붙이기: E2E_REUSE=1 E2E_PORT=3020
   },

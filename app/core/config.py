@@ -124,6 +124,9 @@ VOICE_LLM_KEY = os.getenv("VOICE_LLM_KEY", "")
 # 목소리 대화 켜기(2026-11-03 동규 「시연할 때만, 내가 풀어 달라고 할 때」): 기본 꺼짐 → POST /voice/call 503 call_off.
 # 켜려면 VOICE_CALL_ON=1 넣고 다시 배포. 화면 전화 단추도 GET /me 의 voice_call 로 따라감
 VOICE_CALL_ON = os.getenv("VOICE_CALL_ON") == "1"
+# 시험 기간 끝(2026-11-25 동규 「시스템 닫고 일기 받기 · 마치며 의견」): 새 기록 · 대화 · 설정 바꾸기를 막고(POST · PATCH),
+# 읽기 · 내려받기 · 지우기 · 마치며 의견(POST /feedback)만 연다. 다시 열려면 SERVICE_CLOSED=0.
+SERVICE_CLOSED = os.getenv("SERVICE_CLOSED", "1") != "0"
 # 한 번에 받는 녹음 조각(입력 검사, 사용 상한 아님). Vercel 본문 한도 4.5MB 아래 — 긴 녹음은 화면이 2분 조각으로 나눠 보낸다.
 VOICE_MAX_BYTES = _int("VOICE_MAX_BYTES", 4 * 1024 * 1024)
 

@@ -43,7 +43,7 @@ WARN_AT = 0.8            # 추정 비용 합계가 예산의 80% 를 넘으면 �
 DROP_AFTER = timedelta(hours=24)   # 마지막 턴 뒤 이만큼 지나도 '정리하기'가 없으면 그만둔 대화
 RECENT = 30
 WRONG = ("아니에요", "별로", "불편한 점 한 줄")   # 오답 재료(PRD §8.7 '모아서 개선')
-REACTIONS = ("맞아요", "아니에요", "좋아요", "별로", "불편한 점 한 줄", "지켰어요", "그만둘래요")
+REACTIONS = ("맞아요", "아니에요", "좋아요", "별로", "불편한 점 한 줄", "지켰어요", "그만둘래요", "마치며 의견")
 
 
 ##################################################
@@ -379,7 +379,8 @@ def summary(r, version, budget, now=None):
         "personal": personal_spread(personal(fb, entries, today)),
         "personal_loop": personal_loop(fb),
         "feedback_text": {"consented": sum(str(f["user_id"]) in readers and f["value"] == "불편한 점 한 줄" for f in fb),
-                          "not_consented": sum(str(f["user_id"]) not in readers and f["value"] == "불편한 점 한 줄" for f in fb)},
+                          "not_consented": sum(str(f["user_id"]) not in readers and f["value"] == "불편한 점 한 줄" for f in fb),
+                          "closing": sum(f["value"] == "마치며 의견" for f in fb)},
     }
 
 
@@ -418,7 +419,7 @@ def user_feedback(s, since, wrong_only=False):
             continue
         enc = diary.unseal(s, "feedback", f["id"], f["enc"]) if f["value"] != diary.MOOD_LABEL else {}
         items.append({"at": diary.iso(f["created_at"]), "target": f["target"], "value": f["value"],
-                      "text": enc.get("text") if f["value"] == "불편한 점 한 줄" else None,
+                      "text": enc.get("text") if f["value"] in diary.TEXT_FEEDBACK else None,
                       "target_text": _target_text(s, f["target"], f["target_id"], enc), "config": f["studio_config"]})
     cands = [] if wrong_only else other_candidates(
         diary.thoughts(s) + [{"original": e["data"].get("original") or {}} for e in diary.entries(s, status="done")])
@@ -433,7 +434,7 @@ def user_complaints(s, since):
     → user_feedback 과 같은 꼴. 안내를 붙이기 전 글은 표시가 있을 수 없어 풀지도 않는다(보낸 사람이 몰랐던 글)."""
     items = []
     for f in s.rows("feedback", order="created_at"):
-        if f["created_at"] < max(since, OPS_NOTICE_SINCE) or f["value"] != "불편한 점 한 줄" or not f.get("enc"):
+        if f["created_at"] < max(since, OPS_NOTICE_SINCE) or f["value"] not in diary.TEXT_FEEDBACK or not f.get("enc"):
             continue
         enc = diary.unseal(s, "feedback", f["id"], f["enc"]) or {}
         if enc.get("ops"):

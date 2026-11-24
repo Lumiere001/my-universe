@@ -83,7 +83,7 @@ def _complaints(repo, r, days, skip, start):
     """동의하지 않은 사용자가 '운영자가 읽어요' 안내를 보고 보낸 불편한 점 한 줄만(그 사용자 세션으로 풀고 글 칸은 가명)."""
     since = diary.now() - timedelta(days=days)
     uids = sorted({str(f["user_id"]) for f in r.rows("feedback")
-                   if f["value"] == "불편한 점 한 줄" and f["created_at"] >= since and str(f["user_id"]) not in skip})
+                   if f["value"] in diary.TEXT_FEEDBACK and f["created_at"] >= since and str(f["user_id"]) not in skip})
     out = []
     for uid in uids:
         with repo.session(uid) as s:
@@ -114,8 +114,9 @@ def ops_feedback(days: int = Days, wrong: bool = False, admin=Depends(get_admin)
             r.log_read(admin["id"], u["uid"], "complaint", len(u["items"]))
         rest = Counter(f["value"] for f in r.rows("feedback")
                        if str(f["user_id"]) not in readers and f["created_at"] >= since and (not wrong or f["value"] in ops.WRONG))
-        for u in sent:   # 보여 준 불편한 점 한 줄은 '숫자로만'에서 뺀다
-            rest["불편한 점 한 줄"] -= len(u["items"])
+        for u in sent:   # 보여 준 글(불편한 점 한 줄 · 마치며 의견)은 '숫자로만'에서 뺀다
+            for x in u["items"]:
+                rest[x["value"]] -= 1
         rest = +rest
     cands = Counter()
     for u in users:

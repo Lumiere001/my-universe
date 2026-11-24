@@ -14,7 +14,7 @@ export default defineConfig({
   webServer: {
     command: `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
-    env: { NEXT_PUBLIC_MOCK: "0" },
+    env: { NEXT_PUBLIC_MOCK: "0", NEXT_PUBLIC_SERVICE_CLOSED: "0" },
     timeout: 300_000,
     reuseExistingServer: false,
   },
